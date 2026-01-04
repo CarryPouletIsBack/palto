@@ -74,7 +74,8 @@ const HumanBodyModelOBJ = ({ modelPath }: { modelPath: string }) => {
       },
       (error) => {
         console.error('Error loading OBJ:', error)
-        setError(error.message || 'Failed to load model')
+        const errorMessage = error instanceof Error ? error.message : 'Failed to load model'
+        setError(errorMessage)
         setLoading(false)
       }
     )

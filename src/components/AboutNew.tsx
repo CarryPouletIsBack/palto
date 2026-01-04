@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { TreeNode } from './flow/FlowTree'
 import { flowData } from '../data/flowData'
 import type { FlowNodeData } from '../data/flowData'
+// @ts-expect-error - DotGrid is a JSX file without type declarations
 import DotGrid from './DotGrid.jsx'
 import HoverCard from './HoverCard'
 import { aboutData } from '../data/aboutData'
