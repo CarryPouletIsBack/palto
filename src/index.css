@@ -14,7 +14,7 @@
 
 body {
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-  background: #509ED8 !important; /* Bleu ciel pour l'accueil */
+  background: #509ED8; /* Bleu ciel pour l'accueil */
   color: white;
   line-height: 1.6;
   height: 100vh;
@@ -23,6 +23,11 @@ body {
   overflow-y: auto;
   overflow-x: hidden;
   position: relative;
+}
+
+/* Supprimer le background du body sur AboutNew */
+body:has(.apropos-new-page.active) {
+  background: transparent;
 }
 
 /* Fond noir avec 5% de luminosité et teinte bleue pour le menu */

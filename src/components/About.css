@@ -2,7 +2,8 @@
 .apropos-page {
   position: relative;
   min-height: 100vh;
-  background: transparent;
+  width: 100%;
+  background: #111;
 }
 
 .main-apropos {

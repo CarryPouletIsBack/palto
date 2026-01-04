@@ -20,6 +20,7 @@ const GridPattern = ({
   const directionRef = useRef(1) // Persister la direction
   const [isMenuActive, setIsMenuActive] = useState(false)
   const [isAccueilActive, setIsAccueilActive] = useState(false)
+  const [isAproposNewActive, setIsAproposNewActive] = useState(false)
   const [opacity, setOpacity] = useState(0.25)
   const [mousePos, setMousePos] = useState({ x: 0, y: 0 })
   const [isPaused, setIsPaused] = useState(false)
@@ -33,15 +34,25 @@ const GridPattern = ({
       const currentPage = window.location.pathname === '/' || 
         document.querySelector('.accueil-page.active') !== null
       
+      // Vérifier si on est sur AboutNew
+      const aproposNewPage = document.querySelector('.apropos-new-page.active')
+      const isOnAproposNew = aproposNewPage !== null
+      
       setIsMenuActive(hasMenuActive)
       setIsAccueilActive(currentPage)
+      setIsAproposNewActive(isOnAproposNew)
     }
 
     checkPageActive()
     const observer = new MutationObserver(checkPageActive)
-    observer.observe(document.body, { attributes: true, attributeFilter: ['class'] })
+    observer.observe(document.body, { attributes: true, attributeFilter: ['class'], childList: true, subtree: true })
 
-    return () => observer.disconnect()
+    const interval = setInterval(checkPageActive, 100)
+
+    return () => {
+      observer.disconnect()
+      clearInterval(interval)
+    }
   }, [])
 
   // Suivre la position de la souris
@@ -194,6 +205,9 @@ const GridPattern = ({
       window.removeEventListener('resize', resize)
     }
   }, [lineColor, lineWidth, spacing, animate, isMenuActive, isAccueilActive, opacity, mousePos])
+
+  // Ne pas afficher sur AboutNew
+  if (isAproposNewActive) return null
 
   if (!isMenuActive && !isAccueilActive) return null
 

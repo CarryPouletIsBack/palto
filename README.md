@@ -41,6 +41,8 @@ Portfolio personnel créé avec React, TypeScript et Vite, présentant une colle
 - **Swiper.js** pour les carousels
 - **Shadcn/ui** pour les composants UI (file-tree, scroll-area, button)
 - **Radix UI** pour les primitives d'accessibilité
+- **React Three Fiber** pour le rendu 3D
+- **Three.js** pour la manipulation de modèles 3D et nuages de points
 
 ## 📱 Pages
 
@@ -60,6 +62,7 @@ Portfolio personnel créé avec React, TypeScript et Vite, présentant une colle
 - `Hero` - Page d'accueil avec projets récents et cartes d'information
 - `Menu` - Grille de projets par catégories avec filtrage
 - `About` - Parcours professionnel et formations
+- `AboutNew` - Page à propos améliorée avec navigation par sections et modèle 3D
 - `SingleProjectNew` - Page projet structurée en sections
 
 ### Composants UI Réutilisables
@@ -75,6 +78,7 @@ Portfolio personnel créé avec React, TypeScript et Vite, présentant une colle
 - `Skeleton` - Loading states
 - `ProgressiveBlur` - Effet de blur progressif en bas de page
 - `Tree`, `Folder`, `File` - Composants file-tree pour afficher les wireframes
+- `HumanBody3D` - Modèle 3D en nuage de points avec React Three Fiber
 
 ## 📊 Architecture du Projet
 
@@ -96,6 +100,15 @@ Toutes les données sont centralisées dans `/src/data/` :
 9. **Impacts & Résultats** - Métriques et retours
 
 ## ✨ Fonctionnalités Récentes
+
+### Page AboutNew
+- **Navigation par sections** : Menu de navigation avec 3 sections (Introduction, Description, Arbre de compétences)
+- **Modèle 3D en nuage de points** : Affichage d'un modèle 3D humain converti en nuage de points dans la section Introduction
+- **Layout 3 colonnes** : Structure en 3 colonnes avec le modèle 3D centré dans la colonne du milieu
+- **Navigation fluide** : Scroll automatique vers les sections avec état actif des boutons
+- **Responsive** : Adaptation mobile avec ajustements de positionnement du modèle 3D
+- **OrbitControls** : Rotation automatique et contrôles interactifs du modèle 3D
+- **Chargement OBJ** : Support des modèles 3D au format OBJ avec conversion en nuage de points
 
 ### Page d'Accueil
 - **Layout 2 colonnes** : Titre principal à gauche (fixe en bas), cartes à droite
@@ -166,6 +179,8 @@ src/
 │   ├── Hero.tsx            # Page d'accueil
 │   ├── Menu.tsx            # Page menu avec recherche
 │   ├── About.tsx           # Page à propos
+│   ├── AboutNew.tsx        # Page à propos améliorée avec navigation et 3D
+│   ├── HumanBody3D.tsx    # Composant 3D avec nuage de points
 │   ├── MobileSearchBar.tsx # Search bar mobile
 │   ├── SingleProjectNew.tsx # Page projet (sections)
 │   ├── ProjectItem.tsx     # Carte projet réutilisable
@@ -245,6 +260,10 @@ src/
 - ✅ Amélioration du responsive mobile : paragraphes en pleine largeur
 - ✅ Nettoyage du code CSS et JavaScript (suppression des duplications)
 - ✅ Code prêt pour le déploiement sur Vercel/GitHub Pages
+- ✅ Ajout de la page AboutNew avec navigation par sections
+- ✅ Intégration d'un modèle 3D en nuage de points avec React Three Fiber
+- ✅ Conversion de modèles OBJ en nuage de points pour affichage optimisé
+- ✅ Responsive design pour le modèle 3D sur mobile et desktop
 
 ## 📦 Déploiement
 
@@ -268,4 +287,4 @@ Le projet inclut :
 
 ---
 
-*Dernière mise à jour : Janvier 2025 - Code propre et optimisé, prêt pour production*
+*Dernière mise à jour : Janvier 2025 - Ajout du modèle 3D en nuage de points et navigation par sections dans AboutNew*

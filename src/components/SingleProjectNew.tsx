@@ -1001,29 +1001,29 @@ const SingleProjectNew: React.FC<SingleProjectProps> = ({ projectData, onBackCli
                   return uniqueFonts.map((font, fontIndex) => {
                     const fontFamily = 'Inter, sans-serif';
                     const specialChars = '!@#$%&*()[]{}+-=_|\\:;"\'<>,.?/~`';
-                    
-                    return (
+                  
+                  return (
                       <div key={fontIndex} className="alphabet-font-group">
-                        <div className="alphabet-font-name">
+                      <div className="alphabet-font-name">
                           <h3>{font}</h3>
-                        </div>
-                        <div className="alphabet-letters" style={{ fontFamily }}>
-                          {alphabet.split('').map((letter, idx) => (
-                            <span key={idx} className="alphabet-letter">{letter}</span>
-                          ))}
-                        </div>
-                        <div className="alphabet-numbers" style={{ fontFamily }}>
-                          {numbers.split('').map((number, idx) => (
-                            <span key={idx} className="alphabet-number">{number}</span>
-                          ))}
-                        </div>
+                      </div>
+                      <div className="alphabet-letters" style={{ fontFamily }}>
+                        {alphabet.split('').map((letter, idx) => (
+                          <span key={idx} className="alphabet-letter">{letter}</span>
+                        ))}
+                      </div>
+                      <div className="alphabet-numbers" style={{ fontFamily }}>
+                        {numbers.split('').map((number, idx) => (
+                          <span key={idx} className="alphabet-number">{number}</span>
+                        ))}
+                      </div>
                         <div className="alphabet-special-chars" style={{ fontFamily }}>
                           {specialChars.split('').map((char, idx) => (
                             <span key={idx} className="alphabet-special-char">{char}</span>
                           ))}
                         </div>
                       </div>
-                    );
+                  );
                   });
                 })()}
               </div>
