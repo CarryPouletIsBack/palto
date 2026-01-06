@@ -202,10 +202,23 @@ npm run preview
 
 Le projet intègre l'API Strava pour afficher vos données sportives. 
 
-**Configuration :**
+**Configuration en développement :**
 1. Obtenez vos tokens Strava via votre projet Node.js (`C:\Users\Anthony\strava-api-client`)
 2. Créez un fichier `.env.local` avec les variables `VITE_STRAVA_*`
 3. Les données seront automatiquement chargées et mises en cache
+
+**Configuration en production (Vercel) :**
+1. Allez sur [vercel.com](https://vercel.com) → Votre projet → **Settings** → **Environment Variables**
+2. Ajoutez les 5 variables avec le préfixe `VITE_` :
+   - `VITE_STRAVA_CLIENT_ID`
+   - `VITE_STRAVA_CLIENT_SECRET`
+   - `VITE_STRAVA_ACCESS_TOKEN`
+   - `VITE_STRAVA_REFRESH_TOKEN`
+   - `VITE_STRAVA_TOKEN_EXPIRES_AT`
+3. Cochez **Production** (et optionnellement Preview/Development)
+4. Redéployez votre projet après avoir ajouté les variables
+
+⚠️ **Important** : Les tokens Strava expirent après 6 heures. Si les données ne s'affichent pas en production, vérifiez que les tokens sont à jour sur Vercel.
 
 **Système de cache :**
 - Cache localStorage de 5 minutes pour limiter les appels API
@@ -218,7 +231,7 @@ Le projet intègre l'API Strava pour afficher vos données sportives.
 - Activités 2025 avec statistiques
 - Graphiques de performance (radar, journal d'entraînement)
 
-Voir [STRAVA_TOKEN_MANAGEMENT.md](./STRAVA_TOKEN_MANAGEMENT.md) pour plus de détails.
+Voir [STRAVA_TOKEN_MANAGEMENT.md](./STRAVA_TOKEN_MANAGEMENT.md) et [VERCEL_STRAVA_SETUP.md](./VERCEL_STRAVA_SETUP.md) pour plus de détails.
 
 ## 📂 Structure du Projet
 
@@ -386,6 +399,7 @@ Le projet inclut :
 ## 📚 Documentation Additionnelle
 
 - [STRAVA_TOKEN_MANAGEMENT.md](./STRAVA_TOKEN_MANAGEMENT.md) - Gestion des tokens Strava
+- [VERCEL_STRAVA_SETUP.md](./VERCEL_STRAVA_SETUP.md) - Configuration Strava sur Vercel (Production)
 - [VERCEL_API_SETUP.md](./VERCEL_API_SETUP.md) - Configuration des routes API Vercel
 - [VERCEL_ENV_VARS.md](./VERCEL_ENV_VARS.md) - Variables d'environnement Vercel
 - [DEPLOY.md](./DEPLOY.md) - Guide de déploiement
