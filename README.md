@@ -348,6 +348,18 @@ src/
 
 ## 🔧 Corrections Récentes (Janvier 2025)
 
+### Ajustements CSS Page AboutNew
+- ✅ Ajustement des espacements dans le layout 3 colonnes :
+  - `gap` du conteneur `.intro-columns-container` : `24px` → `0px`
+  - `margin-bottom` des colonnes `.intro-column-left/right` : `16px` → `0px`
+- ✅ Alignement des colonnes :
+  - Ajout de `justify-content: flex-start` sur `.intro-column`
+  - Ajout de `align-items: center` sur `.intro-column`
+- ✅ Optimisation des cartes Strava (`.hero-card.services-card`) :
+  - `gap` : `16px` → `0px`
+  - `margin-bottom` : `0px` → `12px`
+  - `padding-top` et `padding-bottom` : `11px` → `12px`
+
 ### Modifications Page d'accueil (Hero)
 - ✅ Simplification de l'architecture : retrait de la classe `page active` pour utiliser uniquement `accueil-page`
 - ✅ Ajustements des styles de scroll pour `.hero-right-column-scroll` :
