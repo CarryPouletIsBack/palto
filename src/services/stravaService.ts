@@ -1,17 +1,31 @@
 // Service pour récupérer les données Strava
-// IMPORTANT: Les access tokens Strava expirent après 6 heures seulement!
-// Voir: https://developers.strava.com/docs/authentication/
+// 
+// ⚠️ IMPORTANT: Ce service utilise maintenant les endpoints API Vercel (/api/strava/*)
+// Les tokens sont gérés côté serveur de manière sécurisée.
+// Plus besoin de gérer les tokens côté client !
+//
+// Les endpoints utilisés:
+// - /api/strava/athlete : Informations de l'athlète
+// - /api/strava/activities : Liste des activités
+// - /api/strava/activities/[id] : Détails d'une activité
+// - /api/strava/athlete/stats : Statistiques de l'athlète
+//
+// Les variables d'environnement suivantes doivent être configurées dans Vercel:
+// - STRAVA_ACCESS_TOKEN (ou VITE_STRAVA_ACCESS_TOKEN)
+// - STRAVA_REFRESH_TOKEN (ou VITE_STRAVA_REFRESH_TOKEN)
+// - STRAVA_CLIENT_ID (ou VITE_STRAVA_CLIENT_ID)
+// - STRAVA_CLIENT_SECRET (ou VITE_STRAVA_CLIENT_SECRET)
+//
+// Note: Les fonctions getValidAccessToken() et refreshAccessToken() ci-dessous
+// sont conservées pour compatibilité mais ne sont plus utilisées par ce service.
+
 const STRAVA_CLIENT_ID = import.meta.env.VITE_STRAVA_CLIENT_ID || '193706';
 const STRAVA_CLIENT_SECRET = import.meta.env.VITE_STRAVA_CLIENT_SECRET || '294ac27e5949d20abedb6f3c54a50b4c848a2240';
 const STRAVA_ACCESS_TOKEN = import.meta.env.VITE_STRAVA_ACCESS_TOKEN || '372e8b59c1825f8ff0d6dfa3a8635d44fe9abf96';
 const STRAVA_REFRESH_TOKEN = import.meta.env.VITE_STRAVA_REFRESH_TOKEN || '04fff756dc055d1335b1936dda03f98cc25027dd';
 const STRAVA_TOKEN_EXPIRES_AT = import.meta.env.VITE_STRAVA_TOKEN_EXPIRES_AT || 1767643565; // Timestamp Unix
-// Les tokens Strava expirent après 6 heures (21600 secondes)
-// Si vous avez une date d'expiration, convertissez-la en timestamp
-// Pour l'instant, on assume que le token expire dans 6 heures s'il n'est pas en cache
-// Appeler directement l'API Strava depuis le frontend
-// Note: En production sur Vercel, vous pouvez utiliser des API routes pour cacher les tokens
-const STRAVA_API_BASE_URL = 'https://www.strava.com/api/v3';
+// Note: STRAVA_API_BASE_URL n'est plus utilisé car on utilise les endpoints API Vercel
+const STRAVA_API_BASE_URL = 'https://www.strava.com/api/v3'; // Conservé pour compatibilité
 const TOKEN_STORAGE_KEY = 'strava_access_token';
 const TOKEN_EXPIRY_KEY = 'strava_token_expiry';
 const REFRESH_TOKEN_STORAGE_KEY = 'strava_refresh_token';
@@ -337,25 +351,21 @@ export async function getStravaActivities(perPage: number = 10, page: number = 1
       }
     }
     
-    // Appeler directement l'API Strava avec le token
-    const token = await getValidAccessToken();
-    console.log('📡 Appel API:', `${STRAVA_API_BASE_URL}/athlete/activities?per_page=${perPage}&page=${page}`);
+    // Utiliser l'endpoint API Vercel (le token est géré côté serveur)
+    const url = `/api/strava/activities?per_page=${perPage}&page=${page}`;
+    console.log('📡 Appel API via endpoint Vercel:', url);
     
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 10000); // Timeout de 10 secondes
     
     try {
-      const response = await fetch(
-        `${STRAVA_API_BASE_URL}/athlete/activities?per_page=${perPage}&page=${page}`,
-        {
-          method: 'GET',
-          headers: {
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json',
-          },
-          signal: controller.signal,
-        }
-      );
+      const response = await fetch(url, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        signal: controller.signal,
+      });
 
       clearTimeout(timeoutId);
 
@@ -369,18 +379,9 @@ export async function getStravaActivities(perPage: number = 10, page: number = 1
       // Si on a une erreur 401, vérifier les détails
       if (response.status === 401) {
         const errorText = await response.text();
-        const cleanToken = token.trim();
         console.error('❌ Token rejeté (401)', {
           errorDetails: errorText,
-          tokenUsed: cleanToken.substring(0, 20) + '...',
-          tokenExpected: STRAVA_ACCESS_TOKEN.trim().substring(0, 20) + '...',
-          tokensMatch: cleanToken === STRAVA_ACCESS_TOKEN.trim()
         });
-      
-      // Vérifier si le token utilisé correspond bien au token configuré
-      if (cleanToken !== STRAVA_ACCESS_TOKEN.trim()) {
-        throw new Error(`Token mismatch: Le token utilisé ne correspond pas au token configuré. Utilisé: "${cleanToken.substring(0, 15)}..." vs Configuré: "${STRAVA_ACCESS_TOKEN.trim().substring(0, 15)}..."`);
-      }
       
       // Parser l'erreur pour voir si c'est un problème de permissions
       let errorMessage = `Token Strava rejeté (401).`;
@@ -458,8 +459,6 @@ export async function getStravaActivitiesByYear(year: number = 2025): Promise<St
       }
     }
     
-    // Appeler directement l'API Strava avec le token
-    const token = await getValidAccessToken();
     // Calculer les timestamps pour le début et la fin de l'année
     const startDate = new Date(`${year}-01-01T00:00:00Z`);
     const endDate = new Date(`${year}-12-31T23:59:59Z`);
@@ -471,17 +470,15 @@ export async function getStravaActivitiesByYear(year: number = 2025): Promise<St
     let page = 1;
     let hasMore = true;
     
+    // Utiliser l'endpoint API Vercel (le token est géré côté serveur)
     while (hasMore) {
-      const response = await fetch(
-        `${STRAVA_API_BASE_URL}/athlete/activities?after=${after}&before=${before}&per_page=${perPage}&page=${page}`,
-        {
-          method: 'GET',
-          headers: {
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json',
-          },
-        }
-      );
+      const url = `/api/strava/activities?after=${after}&before=${before}&per_page=${perPage}&page=${page}`;
+      const response = await fetch(url, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
       
       if (!response.ok) {
         // Gérer l'erreur 429 (Too Many Requests)
@@ -529,18 +526,14 @@ export async function getStravaActivitiesByYear(year: number = 2025): Promise<St
  */
 export async function getStravaActivityDetails(activityId: number): Promise<StravaActivity> {
   try {
-    // Appeler directement l'API Strava avec le token
-    const token = await getValidAccessToken();
-    const response = await fetch(
-      `${STRAVA_API_BASE_URL}/activities/${activityId}`,
-      {
-        method: 'GET',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json',
-        },
-      }
-    );
+    // Utiliser l'endpoint API Vercel (le token est géré côté serveur)
+    const url = `/api/strava/activities/${activityId}`;
+    const response = await fetch(url, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    });
 
     if (!response.ok) {
       // Gérer l'erreur 429 (Too Many Requests)
@@ -575,19 +568,14 @@ export async function getStravaAthlete(): Promise<StravaAthlete> {
       return cached;
     }
     
-    // Appeler directement l'API Strava avec le token
-    const token = await getValidAccessToken();
-    console.log('📡 Appel API Athlète:', `${STRAVA_API_BASE_URL}/athlete`);
-    const response = await fetch(
-      `${STRAVA_API_BASE_URL}/athlete`,
-      {
-        method: 'GET',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json',
-        },
-      }
-    );
+    // Utiliser l'endpoint API Vercel (le token est géré côté serveur)
+    console.log('📡 Appel API Athlète via endpoint Vercel:', '/api/strava/athlete');
+    const response = await fetch('/api/strava/athlete', {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    });
     
     console.log('📡 Réponse API Athlète:', {
       status: response.status,
@@ -709,18 +697,14 @@ export interface StravaAthleteStats {
  */
 export async function getStravaAthleteStats(athleteId: number): Promise<StravaAthleteStats> {
   try {
-    // Note: Cette route n'est pas encore implémentée dans les API routes
-    // Pour l'instant, utiliser directement l'API Strava ou ajouter la route
-    const response = await fetch(
-      `https://www.strava.com/api/v3/athletes/${athleteId}/stats`,
-      {
-        method: 'GET',
-        headers: {
-          'Authorization': `Bearer ${STRAVA_ACCESS_TOKEN}`,
-          'Content-Type': 'application/json',
-        },
-      }
-    );
+    // Utiliser l'endpoint API Vercel (le token est géré côté serveur)
+    const url = `/api/strava/athlete/stats?athlete_id=${athleteId}`;
+    const response = await fetch(url, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    });
 
     if (!response.ok) {
       const errorText = await response.text();

@@ -25,6 +25,9 @@ export default async function handler(
   }
 
   try {
+    // Log pour diagnostic
+    console.log('[Strava API] Token utilisé:', !!process.env.STRAVA_ACCESS_TOKEN || !!process.env.VITE_STRAVA_ACCESS_TOKEN);
+    
     const page = parseInt(req.query.page as string) || 1;
     const perPage = parseInt(req.query.per_page as string) || 10;
     const after = req.query.after as string;

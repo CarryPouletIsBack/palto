@@ -282,15 +282,6 @@ const AboutNew = () => {
             ============================================ */}
         {activeSection === 'about-intro' && (
           <div id="about-intro" className="intro-three-columns">
-            {/* Header avec (C) theme / about */}
-            <div className="skill-tree-header">
-              <div className="skill-tree-header-left">
-                <span>(C)</span>
-                <span>theme</span>
-              </div>
-              <div className="skill-tree-header-right">about</div>
-            </div>
-            
             {/* ============================================
                 .intro-columns-container
                 Container principal pour le layout en 3 colonnes
@@ -758,13 +749,6 @@ const AboutNew = () => {
         {/* Section Arbre de compétences */}
         {activeSection === 'about-tree' && (
           <div className="skill-tree-wrapper">
-            <div className="skill-tree-header">
-              <div className="skill-tree-header-left">
-                <span>(C)</span>
-                <span>theme</span>
-              </div>
-              <div className="skill-tree-header-right">about</div>
-            </div>
             <div id="about-tree" className="skill-tree-container">
             <TreeNode 
               data={flowData} 

@@ -14,10 +14,11 @@ Portfolio personnel créé avec React, TypeScript et Vite, présentant une colle
 
 ### Intégration Strava
 - **Données Strava en temps réel** : Profil athlète, activités, statistiques
+- **Architecture sécurisée** : Appels API via endpoints Vercel (tokens gérés côté serveur)
 - **Cache intelligent** : Système de cache localStorage (5 minutes) pour limiter les appels API
 - **Graphiques de performance** : Graphique radar et journal d'entraînement
 - **Limitation des appels API** : Réduction automatique des requêtes grâce au cache
-- **Gestion des tokens** : Support des tokens Strava avec expiration automatique
+- **Gestion des tokens** : Refresh automatique des tokens côté serveur via Vercel Functions
 
 ### Composants & Animations
 - **Composants réutilisables** (Button, ProjectItem, HoverCard, etc.)
@@ -182,13 +183,18 @@ npm install
 
 # Configuration des variables d'environnement
 # Créez un fichier .env.local à la racine :
-VITE_STRAVA_CLIENT_ID=votre_client_id
-VITE_STRAVA_CLIENT_SECRET=votre_client_secret
-VITE_STRAVA_ACCESS_TOKEN=votre_access_token
-VITE_STRAVA_REFRESH_TOKEN=votre_refresh_token
-VITE_STRAVA_TOKEN_EXPIRES_AT=timestamp_unix_expiration
+# Pour le développement local avec Vercel CLI (recommandé)
+STRAVA_CLIENT_ID=votre_client_id
+STRAVA_CLIENT_SECRET=votre_client_secret
+STRAVA_ACCESS_TOKEN=votre_access_token
+STRAVA_REFRESH_TOKEN=votre_refresh_token
+STRAVA_TOKEN_EXPIRES_AT=timestamp_unix_expiration
 
 # Lancement en développement
+# Option 1: Avec Vercel CLI (pour tester les API routes)
+vercel dev
+
+# Option 2: Avec Vite uniquement (frontend seulement)
 npm run dev
 
 # Build de production
@@ -200,25 +206,52 @@ npm run preview
 
 ### Intégration Strava
 
-Le projet intègre l'API Strava pour afficher vos données sportives. 
+Le projet intègre l'API Strava pour afficher vos données sportives via des **endpoints API Vercel sécurisés**.
+
+**Architecture :**
+```
+Browser → /api/strava/* → Vercel Server (ajoute Bearer token) → Strava API → Données ✅
+```
+
+**Avantages de cette architecture :**
+- ✅ Tokens gérés côté serveur (pas d'exposition dans le code client)
+- ✅ Refresh automatique des tokens expirés
+- ✅ Protection contre les erreurs CORS
+- ✅ Meilleure sécurité et respect des limites de taux
 
 **Configuration en développement :**
-1. Obtenez vos tokens Strava via votre projet Node.js (`C:\Users\Anthony\strava-api-client`)
-2. Créez un fichier `.env.local` avec les variables `VITE_STRAVA_*`
-3. Les données seront automatiquement chargées et mises en cache
+1. Installez Vercel CLI : `npm install -g vercel`
+2. Obtenez vos tokens Strava via votre projet Node.js (`C:\Users\Anthony\strava-api-client`)
+3. Créez un fichier `.env.local` avec les variables **sans** le préfixe `VITE_` :
+   ```env
+   STRAVA_CLIENT_ID=votre_client_id
+   STRAVA_CLIENT_SECRET=votre_client_secret
+   STRAVA_ACCESS_TOKEN=votre_access_token
+   STRAVA_REFRESH_TOKEN=votre_refresh_token
+   STRAVA_TOKEN_EXPIRES_AT=timestamp_unix_expiration
+   ```
+4. Lancez avec `vercel dev` (les variables seront téléchargées automatiquement)
 
 **Configuration en production (Vercel) :**
 1. Allez sur [vercel.com](https://vercel.com) → Votre projet → **Settings** → **Environment Variables**
-2. Ajoutez les 5 variables avec le préfixe `VITE_` :
-   - `VITE_STRAVA_CLIENT_ID`
-   - `VITE_STRAVA_CLIENT_SECRET`
-   - `VITE_STRAVA_ACCESS_TOKEN`
-   - `VITE_STRAVA_REFRESH_TOKEN`
-   - `VITE_STRAVA_TOKEN_EXPIRES_AT`
+2. Ajoutez les 5 variables **SANS** le préfixe `VITE_` (pour les API routes) :
+   - `STRAVA_CLIENT_ID`
+   - `STRAVA_CLIENT_SECRET`
+   - `STRAVA_ACCESS_TOKEN`
+   - `STRAVA_REFRESH_TOKEN`
+   - `STRAVA_TOKEN_EXPIRES_AT`
 3. Cochez **Production** (et optionnellement Preview/Development)
 4. Redéployez votre projet après avoir ajouté les variables
 
-⚠️ **Important** : Les tokens Strava expirent après 6 heures. Si les données ne s'affichent pas en production, vérifiez que les tokens sont à jour sur Vercel.
+⚠️ **Important** : 
+- Utilisez les variables **SANS** `VITE_` pour les API routes Vercel (plus sécurisé)
+- Les tokens Strava expirent après 6 heures, mais sont automatiquement rafraîchis par les endpoints API
+
+**Endpoints API disponibles :**
+- `GET /api/strava/athlete` - Informations de l'athlète
+- `GET /api/strava/activities` - Liste des activités (avec pagination et filtres)
+- `GET /api/strava/activities/:id` - Détails d'une activité
+- `GET /api/strava/athlete/stats?athlete_id=XXX` - Statistiques de l'athlète
 
 **Système de cache :**
 - Cache localStorage de 5 minutes pour limiter les appels API
@@ -231,7 +264,7 @@ Le projet intègre l'API Strava pour afficher vos données sportives.
 - Activités 2025 avec statistiques
 - Graphiques de performance (radar, journal d'entraînement)
 
-Voir [STRAVA_TOKEN_MANAGEMENT.md](./STRAVA_TOKEN_MANAGEMENT.md) et [VERCEL_STRAVA_SETUP.md](./VERCEL_STRAVA_SETUP.md) pour plus de détails.
+Voir [STRAVA_TOKEN_MANAGEMENT.md](./STRAVA_TOKEN_MANAGEMENT.md), [VERCEL_STRAVA_SETUP.md](./VERCEL_STRAVA_SETUP.md) et [VERCEL_ENV_VARS.md](./VERCEL_ENV_VARS.md) pour plus de détails.
 
 ## 📂 Structure du Projet
 
@@ -263,12 +296,13 @@ src/
 │   └── stravaService.ts    # Service Strava avec cache
 ├── lib/                    # Utilitaires
 │   └── utils.ts            # Fonction cn() pour Tailwind
-├── api/                    # Routes API Vercel (optionnel)
-│   └── strava/             # Endpoints Strava
+├── api/                    # Routes API Vercel (Serverless Functions)
+│   └── strava/             # Endpoints Strava sécurisés
 │       ├── athlete.ts      # GET /api/strava/athlete
 │       ├── activities.ts   # GET /api/strava/activities
 │       ├── activities/[id]/index.ts  # GET /api/strava/activities/:id
-│       └── utils.ts        # Utilitaires (refresh token, etc.)
+│       ├── athlete/stats.ts # GET /api/strava/athlete/stats
+│       └── utils.ts        # Utilitaires (refresh token, gestion tokens)
 ├── App.tsx                 # Composant racine
 ├── main.tsx               # Point d'entrée
 └── index.css              # Styles globaux + Tailwind
@@ -325,28 +359,57 @@ src/
 
 ## 🏃 Intégration Strava
 
+### Architecture Sécurisée
+Le projet utilise des **endpoints API Vercel** pour tous les appels Strava :
+- ✅ Tokens gérés côté serveur (jamais exposés dans le code client)
+- ✅ Refresh automatique des tokens expirés
+- ✅ Protection contre les erreurs CORS et 401
+- ✅ Meilleure sécurité et gestion des secrets
+
+**Flow des données :**
+```
+React Component → /api/strava/athlete → Vercel Function (ajoute token) → Strava API → Données
+```
+
 ### Fonctionnalités
 - **Données en temps réel** : Profil, activités, statistiques depuis l'API Strava
 - **Cache intelligent** : Système de cache localStorage (5 minutes) pour limiter les appels API
 - **Graphiques de performance** : Graphique radar et journal d'entraînement avec Recharts
-- **Gestion des tokens** : Support automatique des tokens avec expiration
+- **Gestion des tokens** : Refresh automatique côté serveur via Vercel Functions
 
 ### Configuration
 1. Obtenez vos tokens Strava (voir [STRAVA_TOKEN_MANAGEMENT.md](./STRAVA_TOKEN_MANAGEMENT.md))
-2. Créez un fichier `.env.local` avec les variables `VITE_STRAVA_*`
-3. Les données seront automatiquement chargées au chargement de la page AboutNew
+2. **En développement** : Créez un fichier `.env.local` avec les variables **SANS** `VITE_` :
+   ```env
+   STRAVA_CLIENT_ID=votre_client_id
+   STRAVA_ACCESS_TOKEN=votre_access_token
+   # ... etc
+   ```
+3. Lancez avec `vercel dev` (les API routes fonctionneront)
+4. **En production** : Configurez les variables dans Vercel (voir [VERCEL_ENV_VARS.md](./VERCEL_ENV_VARS.md))
+
+### Endpoints API Disponibles
+- `GET /api/strava/athlete` - Informations de l'athlète
+- `GET /api/strava/activities?page=1&per_page=10` - Liste des activités
+- `GET /api/strava/activities/:id` - Détails d'une activité
+- `GET /api/strava/athlete/stats?athlete_id=XXX` - Statistiques de l'athlète
 
 ### Cache et Performance
 - **Cache localStorage** : 5 minutes pour les activités, athlète et activités 2025
 - **Réduction des appels API** : Limite automatique des requêtes Strava
 - **Respect des limites** : Prévention des erreurs 429 (Too Many Requests)
 
-### Routes API Vercel (Optionnel)
-- Routes API disponibles dans `/api/strava/` pour production
-- Refresh automatique des tokens côté serveur
-- Variables d'environnement configurées dans Vercel
-
 ## 🔧 Corrections Récentes (Janvier 2025)
+
+### Architecture Strava Corrigée (Janvier 2025)
+- ✅ **Migration vers endpoints API Vercel** : Tous les appels Strava passent maintenant par des endpoints serveur sécurisés
+- ✅ **Sécurité renforcée** : Tokens gérés côté serveur, jamais exposés dans le code client
+- ✅ **Correction des erreurs 401** : Plus d'appels directs depuis le navigateur vers Strava API
+- ✅ **Nouvel endpoint créé** : `/api/strava/athlete/stats` pour les statistiques de l'athlète
+- ✅ **Variables d'environnement** : Utilisation des variables sans préfixe `VITE_` pour les API routes
+- ✅ **Documentation mise à jour** : README et guides mis à jour avec la nouvelle architecture
+
+### Ajustements CSS Page AboutNew
 
 ### Ajustements CSS Page AboutNew
 - ✅ Ajustement des espacements dans le layout 3 colonnes :

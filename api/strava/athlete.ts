@@ -25,6 +25,15 @@ export default async function handler(
   }
 
   try {
+    // Log pour diagnostic
+    console.log('[Strava API] Token utilisé:', !!process.env.STRAVA_ACCESS_TOKEN || !!process.env.VITE_STRAVA_ACCESS_TOKEN);
+    console.log('[Strava API] Variables disponibles:', {
+      hasAccessToken: !!process.env.STRAVA_ACCESS_TOKEN || !!process.env.VITE_STRAVA_ACCESS_TOKEN,
+      hasRefreshToken: !!process.env.STRAVA_REFRESH_TOKEN || !!process.env.VITE_STRAVA_REFRESH_TOKEN,
+      hasClientId: !!process.env.STRAVA_CLIENT_ID || !!process.env.VITE_STRAVA_CLIENT_ID,
+      hasClientSecret: !!process.env.STRAVA_CLIENT_SECRET || !!process.env.VITE_STRAVA_CLIENT_SECRET,
+    });
+
     const response = await stravaRequest('/athlete');
 
     if (!response.ok) {
