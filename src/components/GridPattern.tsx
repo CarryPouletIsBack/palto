@@ -35,7 +35,7 @@ const GridPattern = ({
         document.querySelector('.accueil-page.active') !== null
       
       // Vérifier si on est sur AboutNew
-      const aproposNewPage = document.querySelector('.apropos-new-page.active')
+      const aproposNewPage = document.querySelector('.apropos-new-page')
       const isOnAproposNew = aproposNewPage !== null
       
       setIsMenuActive(hasMenuActive)

@@ -537,9 +537,7 @@ const SingleProject: React.FC<SingleProjectProps> = ({ projectData, onBackClick 
           <h2>Approche méthodologique</h2>
           <p>Cette section présente l'approche méthodologique adoptée pour ce projet, en mettant l'accent sur les processus de recherche, de conception et de validation qui ont guidé le développement de la solution.</p>
           
-          <div className="methodology-image">
-            <img src="/images/261061ca92433cd63b52fe7f2093041e9d831bbc.png" alt="Méthodologie de conception UX" />
-          </div>
+          {/* Image de méthodologie supprimée */}
         </div>
         
       </div>

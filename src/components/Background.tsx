@@ -19,11 +19,16 @@ const Background = () => {
       const aproposPage = document.querySelector('.apropos-page.active')
       const isOnApropos = aproposPage !== null
       
-      const aproposNewPage = document.querySelector('.apropos-new-page.active')
+      // Vérification explicite pour AboutNew - ne jamais afficher l'image sur cette page
+      const aproposNewPage = document.querySelector('.apropos-new-page')
       const isOnAproposNew = aproposNewPage !== null
       
+      // Vérification supplémentaire via l'URL ou le chemin de la page
+      const isOnAproposNewByPath = window.location.pathname.includes('aproposnew') || 
+                                    window.location.hash.includes('aproposnew')
+      
       setIsMenuActive(hasMenuActive)
-      setIsAccueilActive(isOnAccueil || isOnProject || isOnApropos || isOnAproposNew)
+      setIsAccueilActive(isOnAccueil || isOnProject || isOnApropos || isOnAproposNew || isOnAproposNewByPath)
     }
 
     checkPageActive()
@@ -45,19 +50,13 @@ const Background = () => {
   }, [])
 
   // Ne pas afficher l'image sur le menu, l'accueil, les projets et les pages À propos
-  if (isMenuActive || isAccueilActive) {
+  // Spécifiquement exclure AboutNew
+  const aproposNewPage = document.querySelector('.apropos-new-page')
+  if (isMenuActive || isAccueilActive || aproposNewPage) {
     return null
   }
 
-  return (
-    <div className="background-wrapper">
-      <img 
-        src="/images/261061ca92433cd63b52fe7f2093041e9d831bbc.png" 
-        alt="Image de fond décorative" 
-        className="background-img"
-      />
-    </div>
-  )
+  return null // Image supprimée
 }
 
 export default Background

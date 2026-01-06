@@ -1,24 +1,29 @@
-import { StrictMode } from 'react'
-import { createRoot } from 'react-dom/client'
+import React from 'react'
+import ReactDOM from 'react-dom/client'
+import App from './App'
+import './styles/globals.css'
 import './index.css'
-import App from './App.tsx'
-import Background from './components/Background.tsx'
-import GridPattern from './components/GridPattern.tsx'
 
-// Render background
-const backgroundRoot = document.getElementById('background-root')
-if (backgroundRoot) {
-  createRoot(backgroundRoot).render(
-    <StrictMode>
-      <Background />
-      <GridPattern lineColor="rgba(255, 255, 255, 0.15)" lineWidth={0.5} spacing={80} />
-    </StrictMode>
+try {
+  const rootElement = document.getElementById('root')
+  if (!rootElement) {
+    throw new Error('Root element not found')
+  }
+  
+  ReactDOM.createRoot(rootElement).render(
+    <React.StrictMode>
+      <App />
+    </React.StrictMode>,
   )
+} catch (error) {
+  console.error('Error rendering app:', error)
+  const rootElement = document.getElementById('root')
+  if (rootElement) {
+    rootElement.innerHTML = `
+      <div style="padding: 20px; color: red;">
+        <h1>Erreur de chargement</h1>
+        <p>${error instanceof Error ? error.message : String(error)}</p>
+      </div>
+    `
+  }
 }
-
-// Render app
-createRoot(document.getElementById('root')!).render(
-  <StrictMode>
-    <App />
-  </StrictMode>,
-)

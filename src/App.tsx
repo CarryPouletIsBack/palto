@@ -1,11 +1,10 @@
 import { useState, useEffect } from 'react'
-import { SpeedInsights } from '@vercel/speed-insights/react'
+// import { SpeedInsights } from '@vercel/speed-insights/react'
 import Header from './components/Header'
 import Hero from './components/Hero'
 import About from './components/About'
 import AboutNew from './components/AboutNew'
 import Project from './components/Project'
-import MobileSearchBar from './components/MobileSearchBar'
 import './App.css'
 
 function App() {
@@ -15,6 +14,18 @@ function App() {
   const [currentProjectImage, setCurrentProjectImage] = useState<string | null>(null)
   const [currentProjectCategory, setCurrentProjectCategory] = useState<string | null>(null)
   const [projectSwipeY, setProjectSwipeY] = useState(0)
+  const [error, setError] = useState<Error | null>(null)
+
+  // Gestion d'erreur globale
+  useEffect(() => {
+    const handleError = (event: ErrorEvent) => {
+      console.error('Global error:', event.error)
+      setError(event.error)
+    }
+    
+    window.addEventListener('error', handleError)
+    return () => window.removeEventListener('error', handleError)
+  }, [])
 
   useEffect(() => {
     // Si on est sur le menu, activer le fond menu
@@ -118,6 +129,16 @@ function App() {
     )
   }
 
+  if (error) {
+    return (
+      <div style={{ padding: '20px', color: 'red' }}>
+        <h1>Erreur de chargement</h1>
+        <p>{error.message}</p>
+        <button onClick={() => window.location.reload()}>Recharger la page</button>
+      </div>
+    )
+  }
+
   return (
     <div className={`container ${currentPage === 'menu' ? 'menu-active' : ''}`}>
       <Header 
@@ -126,24 +147,15 @@ function App() {
         onLogoClick={handleLogoClick}
         currentPage={currentPage}
         onSearchChange={handleSearchChange}
+        onPageChange={handlePageChange}
+        onProjectClose={() => setCurrentPage(previousPage)}
+        projectSwipeY={projectSwipeY}
       />
       {renderCurrentPage()}
       
       
-      {/* Search bar mobile - affichée sur toutes les pages en mobile */}
-      <MobileSearchBar 
-        onSearchChange={handleSearchChange}
-        onMenuClick={handleMenuClick}
-        onSearchClick={() => {
-          // Ne pas rediriger, permettre l'utilisation de la search bar depuis n'importe quelle page
-        }}
-        onPageChange={handlePageChange}
-        currentPage={currentPage}
-        onProjectClose={() => setCurrentPage(previousPage)}
-        onContactClick={handleContactClick}
-        projectSwipeY={projectSwipeY}
-      />
-      <SpeedInsights />
+      {/* Search bar mobile - maintenant dans le Header */}
+      {/* <SpeedInsights /> */}
     </div>
   )
 }

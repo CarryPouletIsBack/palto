@@ -1,5 +1,5 @@
 import { Canvas } from '@react-three/fiber'
-import { OrbitControls, PerspectiveCamera } from '@react-three/drei'
+import { OrbitControls } from '@react-three/drei'
 import { Suspense, useRef, useEffect, useState } from 'react'
 import * as THREE from 'three'
 import { OBJLoader } from 'three/examples/jsm/loaders/OBJLoader.js'
@@ -83,7 +83,7 @@ const HumanBodyModelOBJ = ({ modelPath }: { modelPath: string }) => {
 
   if (loading) {
     return (
-      <group>
+      <group position={[0, 1.5, 0]}>
         <mesh position={[0, 1.6, 0]}>
           <sphereGeometry args={[0.15, 32, 32]} />
           <meshStandardMaterial color="#ffffff" opacity={0.3} transparent />
@@ -116,7 +116,7 @@ const HumanBodyModelOBJ = ({ modelPath }: { modelPath: string }) => {
     console.error('Model loading error:', error)
     // Afficher un modèle de base même en cas d'erreur
     return (
-      <group>
+      <group position={[0, 1.5, 0]}>
         <mesh position={[0, 1.6, 0]}>
           <sphereGeometry args={[0.15, 32, 32]} />
           <meshStandardMaterial color="#f1582a" opacity={0.5} transparent />
@@ -148,7 +148,7 @@ const HumanBodyModelOBJ = ({ modelPath }: { modelPath: string }) => {
   if (!obj) {
     // Afficher un modèle de base si aucun modèle n'est chargé
     return (
-      <group>
+      <group position={[0, 1.5, 0]}>
         <mesh position={[0, 1.6, 0]}>
           <sphereGeometry args={[0.15, 32, 32]} />
           <meshStandardMaterial color="#ffffff" opacity={0.3} transparent />
@@ -178,7 +178,7 @@ const HumanBodyModelOBJ = ({ modelPath }: { modelPath: string }) => {
   }
 
   return (
-    <group ref={meshRef} position={[0, 0, 0]}>
+    <group ref={meshRef} position={[0, 1.5, 0]}>
       <primitive 
         object={obj} 
       />
@@ -199,9 +199,10 @@ const HumanBody3D = () => {
     <div className="human-body-3d-container">
       <Canvas
         camera={{ position: [0, 0, 22], fov: 65 }}
-        style={{ background: 'transparent' }}
+        style={{ background: 'transparent', width: '100%', height: '100%' }}
+        gl={{ preserveDrawingBuffer: true, antialias: true }}
+        dpr={[1, Math.min(window.devicePixelRatio, 2)]}
       >
-        <PerspectiveCamera makeDefault position={[0, 0, 22]} fov={65} />
         <Suspense fallback={
           <mesh>
             <boxGeometry args={[0.2, 0.2, 0.2]} />

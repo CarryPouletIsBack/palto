@@ -72,7 +72,7 @@ export const menuCategories: MenuCategory[] = [
     title: 'Logo',
     projects: [
       { 
-        imageSrc: "/images/261061ca92433cd63b52fe7f2093041e9d831bbc.png", 
+        imageSrc: "", 
         imageAlt: "My spir", 
         title: "My spir" 
       },

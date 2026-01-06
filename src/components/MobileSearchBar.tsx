@@ -441,8 +441,8 @@ const MobileSearchBar = ({ onSearchChange, onMenuClick, onSearchClick, onPageCha
 
   return (
     <>
-      {/* Overlay pour assombrir l'arrière-plan quand la search bar est active */}
-      {isSearchActive && (
+      {/* Overlay pour assombrir l'arrière-plan quand la search bar est active - DÉSACTIVÉ */}
+      {false && isSearchActive && (
         <div className={`mobile-search-bar-overlay active`} />
       )}
       {/* Temporairement masqué sur les pages de projet */}
@@ -543,57 +543,59 @@ const MobileSearchBar = ({ onSearchChange, onMenuClick, onSearchClick, onPageCha
       {/* Search bar normale pour les autres pages */}
       {!isOnProjectPage && (
         <>
-          {/* Bouton de fermeture pour la search bar active */}
-          {isSearchActive && showCloseButton && (
-            <button
-              className="search-close-button"
-              onClick={handleCloseSearch}
-              aria-label="Fermer la recherche"
-            >
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path d="M18 6L6 18M6 6L18 18" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-              </svg>
-            </button>
-          )}
           <MagicBento 
             className={`search-bar ${showResults && hasResults ? 'has-results' : ''}`}
             style={showResults && hasResults && maxHeight ? { maxHeight } : undefined}
           >
-            <div className="search-input-row">
-              <svg width="20" height="20" viewBox="0 0 25 25" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path fillRule="evenodd" clipRule="evenodd" d="M10.5 4.5C8.9087 4.5 7.38258 5.13214 6.25736 6.25736C5.13214 7.38258 4.5 8.9087 4.5 10.5C4.5 11.2879 4.65519 12.0681 4.95672 12.7961C5.25825 13.5241 5.70021 14.1855 6.25736 14.7426C6.81451 15.2998 7.47595 15.7417 8.2039 16.0433C8.93185 16.3448 9.71207 16.5 10.5 16.5C11.2879 16.5 12.0681 16.3448 12.7961 16.0433C13.5241 15.7417 14.1855 15.2998 14.7426 14.7426C15.2998 14.1855 15.7417 13.5241 16.0433 12.7961C16.3448 12.0681 16.5 11.2879 16.5 10.5C16.5 8.9087 15.8679 7.38258 14.7426 6.25736C13.6174 5.13214 12.0913 4.5 10.5 4.5ZM4.84315 4.84315C6.34344 3.34285 8.37827 2.5 10.5 2.5C12.6217 2.5 14.6566 3.34285 16.1569 4.84315C17.6571 6.34344 18.5 8.37827 18.5 10.5C18.5 11.5506 18.2931 12.5909 17.891 13.5615C17.6172 14.2226 17.2565 14.8425 16.8196 15.4054L22.2071 20.7929C22.5976 21.1834 22.5976 21.8166 22.2071 22.2071C21.8166 22.5976 21.1834 22.5976 20.7929 22.2071L15.4054 16.8196C14.8425 17.2565 14.2226 17.6172 13.5615 17.891C12.5909 18.2931 11.5506 18.5 10.5 18.5C9.44943 18.5 8.40914 18.2931 7.43853 17.891C6.46793 17.489 5.58601 16.8997 4.84315 16.1569C4.10028 15.414 3.511 14.5321 3.10896 13.5615C2.70693 12.5909 2.5 11.5506 2.5 10.5C2.5 8.37827 3.34285 6.34344 4.84315 4.84315Z" fill="white"/>
-              </svg>
-              <div className="search-input-container">
-                {!searchTerm && (
-                  <div 
-                    className={`search-placeholder ${isPlaceholderVisible ? 'visible' : 'hidden'}`}
-                    onClick={handleSearchClick}
-                  >
-                    {placeholders[placeholderIndex]}
-                  </div>
-                )}
-                <div className="input-wrapper">
-                  <input 
-                    type="text" 
-                    value={searchTerm}
-                    onChange={handleSearchChange}
-                    onKeyDown={handleKeyDown}
-                    onClick={handleSearchClick}
-                    className="search-input"
-                  />
-                  {searchTerm && (
-                    <button
-                      className="clear-button"
-                      onClick={handleClearSearch}
-                      type="button"
+            <div className="search-input-row-wrapper">
+              <div className="search-input-row">
+                <svg width="20" height="20" viewBox="0 0 25 25" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path fillRule="evenodd" clipRule="evenodd" d="M10.5 4.5C8.9087 4.5 7.38258 5.13214 6.25736 6.25736C5.13214 7.38258 4.5 8.9087 4.5 10.5C4.5 11.2879 4.65519 12.0681 4.95672 12.7961C5.25825 13.5241 5.70021 14.1855 6.25736 14.7426C6.81451 15.2998 7.47595 15.7417 8.2039 16.0433C8.93185 16.3448 9.71207 16.5 10.5 16.5C11.2879 16.5 12.0681 16.3448 12.7961 16.0433C13.5241 15.7417 14.1855 15.2998 14.7426 14.7426C15.2998 14.1855 15.7417 13.5241 16.0433 12.7961C16.3448 12.0681 16.5 11.2879 16.5 10.5C16.5 8.9087 15.8679 7.38258 14.7426 6.25736C13.6174 5.13214 12.0913 4.5 10.5 4.5ZM4.84315 4.84315C6.34344 3.34285 8.37827 2.5 10.5 2.5C12.6217 2.5 14.6566 3.34285 16.1569 4.84315C17.6571 6.34344 18.5 8.37827 18.5 10.5C18.5 11.5506 18.2931 12.5909 17.891 13.5615C17.6172 14.2226 17.2565 14.8425 16.8196 15.4054L22.2071 20.7929C22.5976 21.1834 22.5976 21.8166 22.2071 22.2071C21.8166 22.5976 21.1834 22.5976 20.7929 22.2071L15.4054 16.8196C14.8425 17.2565 14.2226 17.6172 13.5615 17.891C12.5909 18.2931 11.5506 18.5 10.5 18.5C9.44943 18.5 8.40914 18.2931 7.43853 17.891C6.46793 17.489 5.58601 16.8997 4.84315 16.1569C4.10028 15.414 3.511 14.5321 3.10896 13.5615C2.70693 12.5909 2.5 11.5506 2.5 10.5C2.5 8.37827 3.34285 6.34344 4.84315 4.84315Z" fill="white"/>
+                </svg>
+                <div className="search-input-container">
+                  {!searchTerm && (
+                    <div 
+                      className={`search-placeholder ${isPlaceholderVisible ? 'visible' : 'hidden'}`}
+                      onClick={handleSearchClick}
                     >
-                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                        <path d="M18 6L6 18M6 6L18 18" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                      </svg>
-                    </button>
+                      {placeholders[placeholderIndex]}
+                    </div>
                   )}
+                  <div className="input-wrapper">
+                    <input 
+                      type="text" 
+                      value={searchTerm}
+                      onChange={handleSearchChange}
+                      onKeyDown={handleKeyDown}
+                      onClick={handleSearchClick}
+                      className="search-input"
+                    />
+                    {searchTerm && (
+                      <button
+                        className="clear-button"
+                        onClick={handleClearSearch}
+                        type="button"
+                      >
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                          <path d="M18 6L6 18M6 6L18 18" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                        </svg>
+                      </button>
+                    )}
+                  </div>
                 </div>
               </div>
+              {/* Bouton de fermeture pour la search bar active */}
+              {isSearchActive && showCloseButton && (
+                <button
+                  className="search-close-button"
+                  onClick={handleCloseSearch}
+                  aria-label="Fermer la recherche"
+                >
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M18 6L6 18M6 6L18 18" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                  </svg>
+                </button>
+              )}
             </div>
 
             {/* Résultats de recherche en dessous de l'input */}

@@ -57,3 +57,16 @@
   padding-top: 16px;
   padding-bottom: 16px;
 }
+
+/* S'assurer que le blur fonctionne dans MagicBento quand la search bar est active */
+.mobile-search-bar.search-active .magic-bento.search-bar,
+.mobile-search-bar.search-active .magic-bento.search-bar:focus-within {
+  isolation: auto !important;
+  backdrop-filter: blur(40px) saturate(2) brightness(1.2) !important;
+  -webkit-backdrop-filter: blur(40px) saturate(2) brightness(1.2) !important;
+}
+
+.header-search-wrapper .mobile-search-bar.search-active .magic-bento.search-bar,
+.header-search-wrapper .mobile-search-bar:has(.search-bar:focus-within) .magic-bento.search-bar {
+  isolation: auto !important;
+}

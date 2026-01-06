@@ -180,7 +180,7 @@ export const projectsDataNew: { [key: string]: ProjectData } = {
       title: 'Wireframes & Prototype',
       items: [
         {
-          image: '/images/261061ca92433cd63b52fe7f2093041e9d831bbc.png',
+          image: '',
           description: 'Ce wireframe présente l\'architecture globale de l\'application avec la navigation principale et les fonctionnalités clés de gestion. La structure a été pensée pour faciliter l\'accès rapide aux informations essentielles.'
         }
       ]

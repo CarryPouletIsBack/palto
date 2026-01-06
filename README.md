@@ -9,8 +9,15 @@ Portfolio personnel créé avec React, TypeScript et Vite, présentant une colle
 - **Design responsive** adapté mobile et desktop
 - **Page d'accueil** avec hero section, carousel de projets et cartes d'information
 - **Page menu** avec recherche et filtrage en temps réel par catégories
-- **Page à propos** avec parcours professionnel, compétences et formations
+- **Page à propos** avec intégration Strava en temps réel (profil, activités, performance, entraînement)
 - **Pages projets individuelles** structurées en sections professionnelles
+
+### Intégration Strava
+- **Données Strava en temps réel** : Profil athlète, activités, statistiques
+- **Cache intelligent** : Système de cache localStorage (5 minutes) pour limiter les appels API
+- **Graphiques de performance** : Graphique radar et journal d'entraînement
+- **Limitation des appels API** : Réduction automatique des requêtes grâce au cache
+- **Gestion des tokens** : Support des tokens Strava avec expiration automatique
 
 ### Composants & Animations
 - **Composants réutilisables** (Button, ProjectItem, HoverCard, etc.)
@@ -43,6 +50,10 @@ Portfolio personnel créé avec React, TypeScript et Vite, présentant une colle
 - **Radix UI** pour les primitives d'accessibilité
 - **React Three Fiber** pour le rendu 3D
 - **Three.js** pour la manipulation de modèles 3D et nuages de points
+- **Strava API** pour l'intégration des données sportives
+- **Recharts** pour les graphiques de performance Strava
+- **MUI X Charts** pour les visualisations de données
+- **Vercel API Routes** pour les endpoints serveur (optionnel)
 
 ## 📱 Pages
 
@@ -105,10 +116,20 @@ Toutes les données sont centralisées dans `/src/data/` :
 - **Navigation par sections** : Menu de navigation avec 3 sections (Introduction, Description, Arbre de compétences)
 - **Modèle 3D en nuage de points** : Affichage d'un modèle 3D humain converti en nuage de points dans la section Introduction
 - **Layout 3 colonnes** : Structure en 3 colonnes avec le modèle 3D centré dans la colonne du milieu
+  - **Desktop** : Grid layout avec `grid-template-columns: 1fr auto 1fr` (colonnes gauche/droite flexibles, centre auto)
+  - **Tablette/Mobile (≤1024px)** : Passage en layout vertical avec ordre : Colonne gauche → Modèle 3D → Colonne droite
+  - **Gestion de largeur** : Les colonnes s'adaptent automatiquement avec `width: 100%` et `box-sizing: border-box`
+  - **Cartes Strava** : Largeur adaptative avec surcharge de la largeur fixe (508px → 100%)
 - **Navigation fluide** : Scroll automatique vers les sections avec état actif des boutons
 - **Responsive** : Adaptation mobile avec ajustements de positionnement du modèle 3D
 - **OrbitControls** : Rotation automatique et contrôles interactifs du modèle 3D
 - **Chargement OBJ** : Support des modèles 3D au format OBJ avec conversion en nuage de points
+- **Intégration Strava** : 4 cartes affichant les données Strava en temps réel :
+  - **Profil** : Informations personnelles de l'athlète (nom, ville, poids)
+  - **Performance** : Graphique radar avec total kilométrique 2025
+  - **Entraînement** : Journal d'entraînement avec graphique d'évolution
+  - **Activités** : Liste des 5 dernières activités avec détails (carousel Swiper)
+- **Système de cache** : Cache localStorage de 5 minutes pour limiter les appels API Strava
 
 ### Page d'Accueil
 - **Layout 2 colonnes** : Titre principal à gauche (fixe en bas), cartes à droite
@@ -159,6 +180,14 @@ Toutes les données sont centralisées dans `/src/data/` :
 # Installation des dépendances
 npm install
 
+# Configuration des variables d'environnement
+# Créez un fichier .env.local à la racine :
+VITE_STRAVA_CLIENT_ID=votre_client_id
+VITE_STRAVA_CLIENT_SECRET=votre_client_secret
+VITE_STRAVA_ACCESS_TOKEN=votre_access_token
+VITE_STRAVA_REFRESH_TOKEN=votre_refresh_token
+VITE_STRAVA_TOKEN_EXPIRES_AT=timestamp_unix_expiration
+
 # Lancement en développement
 npm run dev
 
@@ -168,6 +197,28 @@ npm run build
 # Prévisualisation du build
 npm run preview
 ```
+
+### Intégration Strava
+
+Le projet intègre l'API Strava pour afficher vos données sportives. 
+
+**Configuration :**
+1. Obtenez vos tokens Strava via votre projet Node.js (`C:\Users\Anthony\strava-api-client`)
+2. Créez un fichier `.env.local` avec les variables `VITE_STRAVA_*`
+3. Les données seront automatiquement chargées et mises en cache
+
+**Système de cache :**
+- Cache localStorage de 5 minutes pour limiter les appels API
+- Réduction automatique des requêtes Strava
+- Meilleures performances et respect des limites de taux
+
+**Fonctionnalités :**
+- Affichage du profil athlète
+- 5 dernières activités avec détails
+- Activités 2025 avec statistiques
+- Graphiques de performance (radar, journal d'entraînement)
+
+Voir [STRAVA_TOKEN_MANAGEMENT.md](./STRAVA_TOKEN_MANAGEMENT.md) pour plus de détails.
 
 ## 📂 Structure du Projet
 
@@ -193,9 +244,18 @@ src/
 ├── data/                   # Données centralisées
 │   ├── projectsNew.ts      # Projets (structure sections)
 │   ├── menuCategories.ts   # Catégories et projets menu
-│   └── aboutData.ts        # Données page À propos
+│   ├── aboutData.ts        # Données page À propos
+│   └── flowData.ts         # Données pour l'arbre de compétences
+├── services/               # Services API
+│   └── stravaService.ts    # Service Strava avec cache
 ├── lib/                    # Utilitaires
 │   └── utils.ts            # Fonction cn() pour Tailwind
+├── api/                    # Routes API Vercel (optionnel)
+│   └── strava/             # Endpoints Strava
+│       ├── athlete.ts      # GET /api/strava/athlete
+│       ├── activities.ts   # GET /api/strava/activities
+│       ├── activities/[id]/index.ts  # GET /api/strava/activities/:id
+│       └── utils.ts        # Utilitaires (refresh token, etc.)
 ├── App.tsx                 # Composant racine
 ├── main.tsx               # Point d'entrée
 └── index.css              # Styles globaux + Tailwind
@@ -250,7 +310,38 @@ src/
 - Contraste de couleurs respecté
 - Labels descriptifs
 
+## 🏃 Intégration Strava
+
+### Fonctionnalités
+- **Données en temps réel** : Profil, activités, statistiques depuis l'API Strava
+- **Cache intelligent** : Système de cache localStorage (5 minutes) pour limiter les appels API
+- **Graphiques de performance** : Graphique radar et journal d'entraînement avec Recharts
+- **Gestion des tokens** : Support automatique des tokens avec expiration
+
+### Configuration
+1. Obtenez vos tokens Strava (voir [STRAVA_TOKEN_MANAGEMENT.md](./STRAVA_TOKEN_MANAGEMENT.md))
+2. Créez un fichier `.env.local` avec les variables `VITE_STRAVA_*`
+3. Les données seront automatiquement chargées au chargement de la page AboutNew
+
+### Cache et Performance
+- **Cache localStorage** : 5 minutes pour les activités, athlète et activités 2025
+- **Réduction des appels API** : Limite automatique des requêtes Strava
+- **Respect des limites** : Prévention des erreurs 429 (Too Many Requests)
+
+### Routes API Vercel (Optionnel)
+- Routes API disponibles dans `/api/strava/` pour production
+- Refresh automatique des tokens côté serveur
+- Variables d'environnement configurées dans Vercel
+
 ## 🔧 Corrections Récentes (Janvier 2025)
+
+### Modifications Page d'accueil (Hero)
+- ✅ Simplification de l'architecture : retrait de la classe `page active` pour utiliser uniquement `accueil-page`
+- ✅ Ajustements des styles de scroll pour `.hero-right-column-scroll` :
+  - Configuration du scroll vertical avec `overflow-y: auto`
+  - Ajustement des propriétés flexbox pour permettre le scroll correctement
+  - Padding-bottom pour assurer la visibilité complète du contenu
+- ✅ Configuration des styles de scroll dans `.hero-right-column` pour permettre l'affichage complet du contenu
 
 - ✅ Correction de toutes les erreurs TypeScript du build
 - ✅ Suppression des imports non utilisés (`Menu`, `swiper/css/navigation`)
@@ -264,6 +355,11 @@ src/
 - ✅ Intégration d'un modèle 3D en nuage de points avec React Three Fiber
 - ✅ Conversion de modèles OBJ en nuage de points pour affichage optimisé
 - ✅ Responsive design pour le modèle 3D sur mobile et desktop
+- ✅ Intégration Strava avec affichage des données en temps réel
+- ✅ Système de cache localStorage pour limiter les appels API Strava
+- ✅ Graphiques de performance (radar, journal d'entraînement)
+- ✅ Routes API Vercel configurées pour le refresh automatique des tokens (production)
+- ✅ Gestion des tokens avec expiration et validation
 
 ## 📦 Déploiement
 
@@ -287,4 +383,13 @@ Le projet inclut :
 
 ---
 
-*Dernière mise à jour : Janvier 2025 - Ajout du modèle 3D en nuage de points et navigation par sections dans AboutNew*
+## 📚 Documentation Additionnelle
+
+- [STRAVA_TOKEN_MANAGEMENT.md](./STRAVA_TOKEN_MANAGEMENT.md) - Gestion des tokens Strava
+- [VERCEL_API_SETUP.md](./VERCEL_API_SETUP.md) - Configuration des routes API Vercel
+- [VERCEL_ENV_VARS.md](./VERCEL_ENV_VARS.md) - Variables d'environnement Vercel
+- [DEPLOY.md](./DEPLOY.md) - Guide de déploiement
+
+---
+
+*Dernière mise à jour : Janvier 2025*

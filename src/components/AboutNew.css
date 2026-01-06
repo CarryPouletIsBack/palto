@@ -14,7 +14,7 @@
 /* Menu de navigation sous la search bar */
 .about-new-nav-menu {
   position: fixed;
-  top: 161px; /* Position sous la search bar (104px top + 57px hauteur) */
+  top: 80px; /* Position sous la search bar (104px top + 57px hauteur) */
   left: 0;
   right: 0;
   z-index: 100;
@@ -99,7 +99,7 @@
   flex-direction: column;
   align-items: flex-start;
   padding: 120px 48px 120px 48px;
-  padding-top: 180px; /* Ajouter de l'espace pour le menu de navigation */
+  padding-top: 64px; /* Ajouter de l'espace pour le menu de navigation */
   position: relative;
   width: 100%;
   min-width: fit-content;
@@ -120,50 +120,102 @@
   gap: 32px;
 }
 
-/* Structure à 3 colonnes pour Introduction */
+/* ============================================
+   STRUCTURE À 3 COLONNES POUR INTRODUCTION
+   ============================================ */
+
+/* Wrapper principal pour la section Introduction */
 .intro-three-columns {
   width: 100%;
   max-width: 1416px;
   margin: 0 auto;
   display: flex;
   flex-direction: column;
-  gap: 48px;
-}
-
-.intro-columns-container {
-  display: grid;
-  grid-template-columns: 1fr auto 1fr;
-  gap: 48px;
-  align-items: center;
-  justify-items: center;
-  width: 100%;
-  min-height: 600px;
-  place-items: center;
-  margin-top: -197px;
-}
-
-.intro-columns-container > .intro-column-center {
-  grid-column: 2;
-  justify-self: center;
-  align-self: center;
-}
-
-.intro-column {
-  display: flex;
-  flex-direction: column;
   gap: 24px;
 }
 
-.intro-column-left,
-.intro-column-right {
-  min-height: 400px;
+/* ============================================
+   .intro-columns-container
+   Container principal avec layout en Grid CSS
+   
+   Structure:
+   - Grid 3 colonnes: [Gauche] [Centre] [Droite]
+   - grid-template-columns: 1fr auto 1fr
+     * 1fr: Colonne gauche (flexible, prend l'espace disponible)
+     * auto: Colonne centre (taille basée sur le contenu 3D)
+     * 1fr: Colonne droite (flexible, prend l'espace disponible)
+   
+   Responsive:
+   - Desktop: 3 colonnes côte à côte
+   - Tablet/Mobile: 1 colonne empilée verticalement
+   ============================================ */
+.intro-columns-container {
+  display: grid;
+  grid-template-columns: 300px auto 300px; /* [Gauche] [Centre auto] [Droite] */
+  gap: 24px; /* Espacement entre les colonnes */
+  align-items: center; /* Alignement vertical centré */
+  justify-items: center; /* Alignement horizontal centré */
+  width: 100%;
+  min-height: 600px; /* Hauteur minimale pour éviter le collapse */
+  place-items: center; /* Centre les items dans leur cellule */
+  margin-top: 0px; /* Ajustement pour positionner sous le header */
 }
 
+/* Colonne centrale - forcée en position 2 du grid */
+.intro-columns-container > .intro-column-center {
+  grid-column: 2; /* Force la colonne centre à être au milieu */
+  justify-self: center; /* Centre horizontalement */
+  align-self: center; /* Centre verticalement */
+}
+
+/* ============================================
+   COLONNES INDIVIDUELLES
+   ============================================ */
+
+/* Style de base pour toutes les colonnes */
+.intro-column {
+  display: flex;
+  flex-direction: column; /* Empilement vertical des cartes */
+  gap: 12px; /* Espacement entre les cartes dans la colonne */
+}
+
+/* Colonnes gauche et droite - contiennent les cartes Strava */
+.intro-column-left,
+.intro-column-right {
+  min-height: 400px; /* Hauteur minimale pour assurer la présence */
+  width: 100%; /* Prend toute la largeur disponible dans la cellule grid */
+  max-width: 100%; /* Ne dépasse pas la largeur de la cellule */
+  min-width: 0; /* Permet aux colonnes de rétrécir si nécessaire */
+  box-sizing: border-box; /* Inclut padding et border dans la largeur */
+}
+
+/* Surcharge de la largeur des cartes Strava dans AboutNew */
+.apropos-new-page .intro-column .hero-card.services-card {
+  width: 100%; /* Prend toute la largeur de la colonne au lieu de 508px fixe */
+  max-width: 100%; /* S'assure que la carte ne dépasse pas la colonne */
+  box-sizing: border-box; /* Inclut padding et border dans la largeur */
+}
+
+/* S'assurer que le Swiper des activités Strava prend toute la largeur */
+.apropos-new-page .strava-activities-swiper {
+  width: 100%;
+  max-width: 100%;
+}
+
+/* S'assurer que le contenu des cartes Strava prend toute la largeur */
+.apropos-new-page .services-content.strava-stats-content,
+.apropos-new-page .services-content.strava-radar-content {
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+/* Colonne centrale - contient le modèle 3D */
 .intro-column-center {
   display: flex;
   align-items: center;
   justify-content: center;
-  min-height: 700px;
+  min-height: 400px; /* Hauteur minimale plus grande pour le 3D */
   width: 100%;
   margin: 0 auto;
 }
@@ -196,31 +248,39 @@
   display: block;
 }
 
-/* Responsive pour les 3 colonnes */
+/* ============================================
+   RESPONSIVE - TABLET (max-width: 1024px)
+   ============================================
+   Passage de 3 colonnes horizontales à 1 colonne verticale
+   Ordre: [Gauche] → [Centre 3D] → [Droite]
+   ============================================ */
 @media (max-width: 1024px) {
   .intro-columns-container {
-    grid-template-columns: 1fr;
-    gap: 32px;
+    grid-template-columns: auto 1fr auto; /* 1 seule colonne au lieu de 3 */
+    gap: 32px; /* Espacement réduit */
     justify-items: center;
     align-items: center;
-    margin-top: -197px;
+    /*margin-top: -197px;*/
   }
   
+  /* Modèle 3D passe en deuxième position (order: 2) */
   .intro-column-center {
-    min-height: 100vh;
-    order: 2;
+    min-height: 100vh; /* Pleine hauteur sur tablette */
+    order: 2; /* Affiche en deuxième après la colonne gauche */
     width: 100%;
     display: flex;
     justify-content: center;
     align-items: center;
-    margin-top: -65px;
-    margin-left: -50px;
+    margin-top: -65px; /* Ajustement de position */
+    margin-left: -50px; /* Ajustement de position */
   }
   
+  /* Colonne gauche en premier (order: 1) */
   .intro-column-left {
     order: 1;
   }
   
+  /* Colonne droite en dernier (order: 3) */
   .intro-column-right {
     order: 3;
   }
@@ -242,6 +302,11 @@
   }
 }
 
+/* ============================================
+   RESPONSIVE - MOBILE (max-width: 768px)
+   ============================================
+   Même comportement que tablette: 1 colonne verticale
+   ============================================ */
 @media (max-width: 768px) {
   .intro-columns-container {
     justify-items: center;
@@ -249,7 +314,7 @@
   }
   
   .intro-column-center {
-    min-height: 100vh;
+    min-height: 100vh; /* Modèle 3D en pleine hauteur */
     width: 100%;
     display: flex;
     justify-content: center;
@@ -274,7 +339,12 @@
   }
 }
 
-/* iPhone 15 Pro Max et autres smartphones */
+/* ============================================
+   RESPONSIVE - SMARTPHONE (max-width: 480px)
+   ============================================
+   iPhone 15 Pro Max et autres petits écrans
+   Même comportement que mobile standard
+   ============================================ */
 @media (max-width: 480px) {
   .intro-columns-container {
     justify-items: center;
@@ -282,7 +352,7 @@
   }
   
   .intro-column-center {
-    min-height: 100vh;
+    min-height: 100vh; /* Pleine hauteur d'écran */
     width: 100%;
     display: flex;
     justify-content: center;
@@ -375,7 +445,7 @@
 /* Responsive */
 @media (max-width: 768px) {
   .about-new-nav-menu {
-    top: 161px; /* Même position que desktop */
+    top: 80px; /* Même position que desktop */
     padding: 10px 16px;
     gap: 12px;
     overflow-x: auto;

@@ -1,0 +1,36 @@
+# Configuration MCP pour MUI
+
+Pour utiliser le MCP (Model Context Protocol) de MUI dans Cursor/Windsurf :
+
+## Configuration dans Cursor/Windsurf
+
+1. Ouvrez les paramètres de Cursor/Windsurf
+2. Allez dans "Settings" -> "MCP" -> "Add Server"
+3. Ajoutez la configuration suivante :
+
+```json
+{
+  "mcp": {
+    "servers": {
+      "mui-mcp": {
+        "type": "stdio",
+        "command": "npx",
+        "args": ["-y", "@mui/mcp@latest"]
+      }
+    }
+  }
+}
+```
+
+## Test du MCP
+
+Pour tester le MCP dans l'inspecteur MCP, exécutez :
+```bash
+npx -y @mui/mcp@latest
+```
+
+## Documentation
+
+Pour plus d'informations, consultez : https://mui.com/x/introduction/mcp/
+
+
