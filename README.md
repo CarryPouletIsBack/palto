@@ -245,7 +245,9 @@ Browser → /api/strava/* → Vercel Server (ajoute Bearer token) → Strava API
 
 ⚠️ **Important** : 
 - Utilisez les variables **SANS** `VITE_` pour les API routes Vercel (plus sécurisé)
-- Les tokens Strava expirent après 6 heures, mais sont automatiquement rafraîchis par les endpoints API
+- Les tokens Strava expirent après 6 heures, mais sont **automatiquement rafraîchis** par les endpoints API
+- Le refresh automatique utilise votre `STRAVA_REFRESH_TOKEN` (qui expire rarement)
+- Vous n'avez normalement **PAS besoin** de mettre à jour manuellement les tokens dans Vercel
 
 **Endpoints API disponibles :**
 - `GET /api/strava/athlete` - Informations de l'athlète
@@ -394,6 +396,21 @@ React Component → /api/strava/athlete → Vercel Function (ajoute token) → S
 - `GET /api/strava/activities/:id` - Détails d'une activité
 - `GET /api/strava/athlete/stats?athlete_id=XXX` - Statistiques de l'athlète
 
+### Refresh Automatique des Tokens
+
+**🎉 Bonne nouvelle :** Les tokens sont automatiquement rafraîchis par les endpoints API Vercel !
+
+**Comment ça fonctionne :**
+1. Quand un appel API est fait et que le token est expiré (vérifié avec `STRAVA_TOKEN_EXPIRES_AT`)
+2. L'endpoint utilise automatiquement le `STRAVA_REFRESH_TOKEN` pour obtenir un nouveau token
+3. Le nouveau token est utilisé pour l'appel Strava
+4. ✅ **Aucune manipulation manuelle nécessaire !**
+
+**⚠️ Note importante :**
+- Le refresh automatique fonctionne tant que votre `STRAVA_REFRESH_TOKEN` est valide (il expire très rarement)
+- Les nouveaux tokens rafraîchis ne sont **pas** automatiquement sauvegardés dans Vercel (mais ça n'empêche pas le fonctionnement)
+- Si vous voulez mettre à jour les tokens dans Vercel manuellement, utilisez votre script `strava-api-client` pour obtenir les nouveaux tokens, puis mettez-les à jour dans Vercel
+
 ### Cache et Performance
 - **Cache localStorage** : 5 minutes pour les activités, athlète et activités 2025
 - **Réduction des appels API** : Limite automatique des requêtes Strava
@@ -401,13 +418,34 @@ React Component → /api/strava/athlete → Vercel Function (ajoute token) → S
 
 ## 🔧 Corrections Récentes (Janvier 2025)
 
-### Architecture Strava Corrigée (Janvier 2025)
+### Architecture Strava Corrigée et Opérationnelle (Janvier 2025)
 - ✅ **Migration vers endpoints API Vercel** : Tous les appels Strava passent maintenant par des endpoints serveur sécurisés
 - ✅ **Sécurité renforcée** : Tokens gérés côté serveur, jamais exposés dans le code client
 - ✅ **Correction des erreurs 401** : Plus d'appels directs depuis le navigateur vers Strava API
 - ✅ **Nouvel endpoint créé** : `/api/strava/athlete/stats` pour les statistiques de l'athlète
 - ✅ **Variables d'environnement** : Utilisation des variables sans préfixe `VITE_` pour les API routes
+- ✅ **Gestion automatique des tokens** : Refresh automatique des tokens expirés côté serveur
+- ✅ **Corrections techniques** :
+  - Correction de l'erreur `ERR_MODULE_NOT_FOUND` (ajout des extensions `.js` dans les imports)
+  - Correction de l'erreur `body stream already read` (utilisation de `response.clone()`)
+  - Amélioration des messages d'erreur avec diagnostics détaillés
 - ✅ **Documentation mise à jour** : README et guides mis à jour avec la nouvelle architecture
+
+### Refresh Automatique des Tokens
+
+**Bonne nouvelle :** Les tokens sont automatiquement rafraîchis par les endpoints API Vercel ! 🎉
+
+Quand un token expire :
+1. L'endpoint API détecte que le token est expiré (vérification avec `STRAVA_TOKEN_EXPIRES_AT`)
+2. Il utilise automatiquement le `STRAVA_REFRESH_TOKEN` pour obtenir un nouveau token
+3. Le nouveau token est utilisé pour l'appel Strava
+
+**⚠️ Important :** Les nouveaux tokens rafraîchis ne sont PAS automatiquement sauvegardés dans Vercel. Pour une solution complètement automatique à long terme, vous pouvez :
+- Utiliser **Vercel KV** pour stocker les tokens dynamiquement
+- Créer un endpoint `/api/refresh-token` qui met à jour les variables Vercel via l'API
+- Ou simplement mettre à jour manuellement les tokens dans Vercel tous les quelques jours si nécessaire
+
+**Note :** Le refresh automatique fonctionne tant que le `STRAVA_REFRESH_TOKEN` est valide (il expire rarement, contrairement à l'access token qui expire toutes les 6 heures).
 
 ### Ajustements CSS Page AboutNew
 
