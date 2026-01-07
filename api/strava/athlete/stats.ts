@@ -1,5 +1,5 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
-import { stravaRequest } from '../utils';
+import { stravaRequest } from '../utils.js';
 
 /**
  * API Route Vercel pour récupérer les statistiques de l'athlète Strava
