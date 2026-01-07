@@ -290,9 +290,10 @@ async function refreshAccessToken(): Promise<string> {
 
 /**
  * Gère les erreurs de réponse API avec messages détaillés
+ * ⚠️ Important: Le body d'une Response ne peut être lu qu'UNE SEULE FOIS
  */
 async function handleApiError(response: Response): Promise<never> {
-  // Gérer l'erreur 429 (Too Many Requests)
+  // Gérer l'erreur 429 (Too Many Requests) - on peut lire les headers sans toucher au body
   if (response.status === 429) {
     const retryAfter = response.headers.get('Retry-After');
     const retrySeconds = retryAfter ? parseInt(retryAfter, 10) : 900; // 15 minutes par défaut
@@ -301,45 +302,56 @@ async function handleApiError(response: Response): Promise<never> {
     throw new Error(errorMessage);
   }
   
-  // Gérer l'erreur 500 (Variables d'environnement manquantes sur Vercel)
-  if (response.status === 500) {
+  // Lire le body UNE SEULE FOIS (en clonant la réponse pour pouvoir le lire plusieurs fois si besoin)
+  let errorText: string;
+  let errorData: any = null;
+  
+  try {
+    // Cloner la réponse pour pouvoir lire le body sans le consommer
+    const clonedResponse = response.clone();
+    errorText = await clonedResponse.text();
+    
+    // Essayer de parser en JSON
     try {
-      const errorData = await response.json();
-      if (errorData.missing && errorData.hint) {
-        const errorMessage = `❌ Variables d'environnement manquantes sur Vercel: ${errorData.missing.join(', ')}. ${errorData.hint}`;
-        console.error('❌', errorMessage);
-        throw new Error(errorMessage);
-      }
-      if (errorData.error && typeof errorData.error === 'string') {
-        throw new Error(errorData.error);
-      }
+      errorData = JSON.parse(errorText);
     } catch (e) {
-      // Si ce n'est pas du JSON ou si on a déjà lancé une erreur, continuer
-      if (e instanceof Error && e.message.includes('Variables d\'environnement')) {
-        throw e;
-      }
+      // Ce n'est pas du JSON, on garde juste le texte
+    }
+  } catch (e) {
+    // Si la lecture échoue, utiliser un message générique
+    errorText = `Erreur lors de la lecture de la réponse: ${e instanceof Error ? e.message : 'Erreur inconnue'}`;
+  }
+  
+  // Gérer l'erreur 500 (Variables d'environnement manquantes sur Vercel)
+  if (response.status === 500 && errorData) {
+    if (errorData.missing && errorData.hint) {
+      const errorMessage = `❌ Variables d'environnement manquantes sur Vercel: ${errorData.missing.join(', ')}. ${errorData.hint}`;
+      console.error('❌', errorMessage);
+      throw new Error(errorMessage);
+    }
+    if (errorData.error && typeof errorData.error === 'string') {
+      throw new Error(errorData.error);
     }
   }
   
-  const errorText = await response.text();
+  // Construire le message d'erreur
   let errorMessage = `Erreur Strava API: ${response.status} ${response.statusText}`;
   
-  // Essayer de parser l'erreur pour avoir plus de détails
-  try {
-    const errorData = JSON.parse(errorText);
+  if (errorData) {
     if (errorData.error && typeof errorData.error === 'string') {
       errorMessage = errorData.error;
     } else if (errorData.message) {
       errorMessage = errorData.message;
     }
-  } catch (e) {
-    // Ignorer si ce n'est pas du JSON
+  } else if (errorText && errorText.length > 0) {
+    errorMessage = errorText;
   }
   
   console.error('Erreur Strava API:', {
     status: response.status,
     statusText: response.statusText,
     errorText: errorText,
+    errorData: errorData
   });
   
   throw new Error(errorMessage);
