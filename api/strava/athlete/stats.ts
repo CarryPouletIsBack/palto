@@ -25,6 +25,24 @@ export default async function handler(
   }
 
   try {
+    // Vérification des variables d'environnement
+    const hasClientId = !!process.env.STRAVA_CLIENT_ID || !!process.env.VITE_STRAVA_CLIENT_ID;
+    const hasClientSecret = !!process.env.STRAVA_CLIENT_SECRET || !!process.env.VITE_STRAVA_CLIENT_SECRET;
+    const hasRefreshToken = !!process.env.STRAVA_REFRESH_TOKEN || !!process.env.VITE_STRAVA_REFRESH_TOKEN;
+
+    if (!hasClientId || !hasClientSecret || !hasRefreshToken) {
+      const missing = [];
+      if (!hasClientId) missing.push('STRAVA_CLIENT_ID');
+      if (!hasClientSecret) missing.push('STRAVA_CLIENT_SECRET');
+      if (!hasRefreshToken) missing.push('STRAVA_REFRESH_TOKEN');
+      
+      return res.status(500).json({ 
+        error: 'Variables d\'environnement manquantes sur Vercel',
+        missing: missing,
+        hint: 'Configurez ces variables dans Vercel → Settings → Environment Variables'
+      });
+    }
+
     const athleteId = req.query.athlete_id as string;
 
     if (!athleteId) {
@@ -36,7 +54,23 @@ export default async function handler(
 
     if (!response.ok) {
       const errorData = await response.json();
-      console.error('[Strava API] Erreur:', errorData);
+      console.error('[Strava API] ❌ Erreur Strava API:', {
+        status: response.status,
+        statusText: response.statusText,
+        error: errorData
+      });
+      
+      // Gestion spéciale du Rate Limit
+      if (response.status === 429) {
+        const retryAfter = response.headers.get('Retry-After');
+        return res.status(429).json({ 
+          error: 'Rate Limit Exceeded - Trop de requêtes Strava',
+          message: errorData.message || 'Limite de taux dépassée',
+          retryAfter: retryAfter ? parseInt(retryAfter) : null,
+          hint: 'Attendez 15 minutes avant de réessayer'
+        });
+      }
+      
       res.status(response.status).json({ error: errorData });
       return;
     }

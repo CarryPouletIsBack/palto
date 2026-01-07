@@ -25,9 +25,40 @@ export default async function handler(
   }
 
   try {
-    // Log pour diagnostic
-    console.log('[Strava API] Token utilisé:', !!process.env.STRAVA_ACCESS_TOKEN || !!process.env.VITE_STRAVA_ACCESS_TOKEN);
+    // Log détaillé pour diagnostic
+    const envVars = {
+      STRAVA_ACCESS_TOKEN: !!process.env.STRAVA_ACCESS_TOKEN,
+      VITE_STRAVA_ACCESS_TOKEN: !!process.env.VITE_STRAVA_ACCESS_TOKEN,
+      STRAVA_REFRESH_TOKEN: !!process.env.STRAVA_REFRESH_TOKEN,
+      VITE_STRAVA_REFRESH_TOKEN: !!process.env.VITE_STRAVA_REFRESH_TOKEN,
+      STRAVA_CLIENT_ID: !!process.env.STRAVA_CLIENT_ID,
+      VITE_STRAVA_CLIENT_ID: !!process.env.VITE_STRAVA_CLIENT_ID,
+      STRAVA_CLIENT_SECRET: !!process.env.STRAVA_CLIENT_SECRET,
+      VITE_STRAVA_CLIENT_SECRET: !!process.env.VITE_STRAVA_CLIENT_SECRET,
+    };
     
+    console.log('[Strava API] 🔍 Diagnostic des variables d\'environnement:', envVars);
+
+    // Vérification explicite des variables REQUISES
+    const hasClientId = !!process.env.STRAVA_CLIENT_ID || !!process.env.VITE_STRAVA_CLIENT_ID;
+    const hasClientSecret = !!process.env.STRAVA_CLIENT_SECRET || !!process.env.VITE_STRAVA_CLIENT_SECRET;
+    const hasRefreshToken = !!process.env.STRAVA_REFRESH_TOKEN || !!process.env.VITE_STRAVA_REFRESH_TOKEN;
+
+    if (!hasClientId || !hasClientSecret || !hasRefreshToken) {
+      const missing = [];
+      if (!hasClientId) missing.push('STRAVA_CLIENT_ID');
+      if (!hasClientSecret) missing.push('STRAVA_CLIENT_SECRET');
+      if (!hasRefreshToken) missing.push('STRAVA_REFRESH_TOKEN');
+      
+      console.error('[Strava API] ❌ Variables manquantes:', missing);
+      return res.status(500).json({ 
+        error: 'Variables d\'environnement manquantes sur Vercel',
+        missing: missing,
+        hint: 'Configurez ces variables dans Vercel → Settings → Environment Variables (sans préfixe VITE_ pour les API routes)',
+        envVars: envVars
+      });
+    }
+
     const page = parseInt(req.query.page as string) || 1;
     const perPage = parseInt(req.query.per_page as string) || 10;
     const after = req.query.after as string;
@@ -37,11 +68,28 @@ export default async function handler(
     if (after) endpoint += `&after=${after}`;
     if (before) endpoint += `&before=${before}`;
 
+    console.log('[Strava API] ✅ Variables OK, appel Strava:', endpoint);
     const response = await stravaRequest(endpoint);
 
     if (!response.ok) {
       const errorData = await response.json();
-      console.error('[Strava API] Erreur:', errorData);
+      console.error('[Strava API] ❌ Erreur Strava API:', {
+        status: response.status,
+        statusText: response.statusText,
+        error: errorData
+      });
+      
+      // Gestion spéciale du Rate Limit
+      if (response.status === 429) {
+        const retryAfter = response.headers.get('Retry-After');
+        return res.status(429).json({ 
+          error: 'Rate Limit Exceeded - Trop de requêtes Strava',
+          message: errorData.message || 'Limite de taux dépassée',
+          retryAfter: retryAfter ? parseInt(retryAfter) : null,
+          hint: 'Attendez 15 minutes avant de réessayer. Vérifiez vos limites sur https://www.strava.com/settings/api'
+        });
+      }
+      
       res.status(response.status).json({ error: errorData });
       return;
     }

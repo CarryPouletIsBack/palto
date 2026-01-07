@@ -289,6 +289,63 @@ async function refreshAccessToken(): Promise<string> {
 }
 
 /**
+ * Gère les erreurs de réponse API avec messages détaillés
+ */
+async function handleApiError(response: Response): Promise<never> {
+  // Gérer l'erreur 429 (Too Many Requests)
+  if (response.status === 429) {
+    const retryAfter = response.headers.get('Retry-After');
+    const retrySeconds = retryAfter ? parseInt(retryAfter, 10) : 900; // 15 minutes par défaut
+    const errorMessage = `⚠️ Limite de taux Strava dépassée. Veuillez réessayer dans ${Math.ceil(retrySeconds / 60)} minutes.`;
+    console.error('⚠️', errorMessage);
+    throw new Error(errorMessage);
+  }
+  
+  // Gérer l'erreur 500 (Variables d'environnement manquantes sur Vercel)
+  if (response.status === 500) {
+    try {
+      const errorData = await response.json();
+      if (errorData.missing && errorData.hint) {
+        const errorMessage = `❌ Variables d'environnement manquantes sur Vercel: ${errorData.missing.join(', ')}. ${errorData.hint}`;
+        console.error('❌', errorMessage);
+        throw new Error(errorMessage);
+      }
+      if (errorData.error && typeof errorData.error === 'string') {
+        throw new Error(errorData.error);
+      }
+    } catch (e) {
+      // Si ce n'est pas du JSON ou si on a déjà lancé une erreur, continuer
+      if (e instanceof Error && e.message.includes('Variables d\'environnement')) {
+        throw e;
+      }
+    }
+  }
+  
+  const errorText = await response.text();
+  let errorMessage = `Erreur Strava API: ${response.status} ${response.statusText}`;
+  
+  // Essayer de parser l'erreur pour avoir plus de détails
+  try {
+    const errorData = JSON.parse(errorText);
+    if (errorData.error && typeof errorData.error === 'string') {
+      errorMessage = errorData.error;
+    } else if (errorData.message) {
+      errorMessage = errorData.message;
+    }
+  } catch (e) {
+    // Ignorer si ce n'est pas du JSON
+  }
+  
+  console.error('Erreur Strava API:', {
+    status: response.status,
+    statusText: response.statusText,
+    errorText: errorText,
+  });
+  
+  throw new Error(errorMessage);
+}
+
+/**
  * Vérifie si les données en cache sont encore valides
  */
 function isCacheValid(cacheKey: string): boolean {
@@ -401,25 +458,7 @@ export async function getStravaActivities(perPage: number = 10, page: number = 1
     }
 
     if (!response.ok) {
-      // Gérer l'erreur 429 (Too Many Requests)
-      if (response.status === 429) {
-        const retryAfter = response.headers.get('Retry-After');
-        const retrySeconds = retryAfter ? parseInt(retryAfter, 10) : 900; // 15 minutes par défaut
-        const errorMessage = `Limite de taux Strava dépassée. Veuillez réessayer dans ${Math.ceil(retrySeconds / 60)} minutes.`;
-        console.error('⚠️', errorMessage);
-        throw new Error(errorMessage);
-      }
-      
-      const errorText = await response.text();
-      let errorMessage = `Erreur Strava API: ${response.status} ${response.statusText}`;
-      
-      console.error('Erreur Strava API:', {
-        status: response.status,
-        statusText: response.statusText,
-        errorText: errorText,
-      });
-      
-      throw new Error(errorMessage);
+      await handleApiError(response);
     }
 
       const data = await response.json();
@@ -481,15 +520,7 @@ export async function getStravaActivitiesByYear(year: number = 2025): Promise<St
       });
       
       if (!response.ok) {
-        // Gérer l'erreur 429 (Too Many Requests)
-        if (response.status === 429) {
-          const retryAfter = response.headers.get('Retry-After');
-          const retrySeconds = retryAfter ? parseInt(retryAfter, 10) : 900; // 15 minutes par défaut
-          const errorMessage = `Limite de taux Strava dépassée. Veuillez réessayer dans ${Math.ceil(retrySeconds / 60)} minutes.`;
-          console.error('⚠️', errorMessage);
-          throw new Error(errorMessage);
-        }
-        throw new Error(`Erreur Strava API: ${response.status} ${response.statusText}`);
+        await handleApiError(response);
       }
       
       const activities: StravaActivity[] = await response.json();
@@ -536,15 +567,7 @@ export async function getStravaActivityDetails(activityId: number): Promise<Stra
     });
 
     if (!response.ok) {
-      // Gérer l'erreur 429 (Too Many Requests)
-      if (response.status === 429) {
-        const retryAfter = response.headers.get('Retry-After');
-        const retrySeconds = retryAfter ? parseInt(retryAfter, 10) : 900; // 15 minutes par défaut
-        const errorMessage = `Limite de taux Strava dépassée. Veuillez réessayer dans ${Math.ceil(retrySeconds / 60)} minutes.`;
-        console.error('⚠️', errorMessage);
-        throw new Error(errorMessage);
-      }
-      throw new Error(`Erreur Strava API: ${response.status} ${response.statusText}`);
+      await handleApiError(response);
     }
 
     const data = await response.json();
@@ -583,25 +606,8 @@ export async function getStravaAthlete(): Promise<StravaAthlete> {
       ok: response.ok
     });
 
-    // Gérer l'erreur 429 (Too Many Requests)
-    if (response.status === 429) {
-      const retryAfter = response.headers.get('Retry-After');
-      const retrySeconds = retryAfter ? parseInt(retryAfter, 10) : 900; // 15 minutes par défaut
-      const errorMessage = `Limite de taux Strava dépassée. Veuillez réessayer dans ${Math.ceil(retrySeconds / 60)} minutes.`;
-      console.error('⚠️', errorMessage);
-      throw new Error(errorMessage);
-    }
-
     if (!response.ok) {
-      const errorText = await response.text();
-      let errorMessage = `Erreur Strava API: ${response.status} ${response.statusText}`;
-      try {
-        const errorData = JSON.parse(errorText);
-        errorMessage = errorData.error?.message || errorMessage;
-      } catch (e) {
-        // Ignorer si ce n'est pas du JSON
-      }
-      throw new Error(errorMessage);
+      await handleApiError(response);
     }
 
     const data = await response.json();

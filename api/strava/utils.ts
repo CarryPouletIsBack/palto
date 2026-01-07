@@ -56,21 +56,25 @@ interface TokenResponse {
 export async function getValidToken(): Promise<string> {
   // Vérifier que les variables d'environnement sont configurées
   if (!STRAVA_CLIENT_ID || !STRAVA_CLIENT_SECRET) {
-    throw new Error('STRAVA_CLIENT_ID ou STRAVA_CLIENT_SECRET non configuré. Vérifiez vos variables d\'environnement Vercel.');
+    const missing = [];
+    if (!STRAVA_CLIENT_ID) missing.push('STRAVA_CLIENT_ID');
+    if (!STRAVA_CLIENT_SECRET) missing.push('STRAVA_CLIENT_SECRET');
+    throw new Error(`Variables manquantes sur Vercel: ${missing.join(', ')}. Configurez-les dans Vercel → Settings → Environment Variables`);
   }
   
   const now = Math.floor(Date.now() / 1000);
   
   // Vérifier si le token est encore valide (avec une marge de 60 secondes)
   if (STRAVA_TOKEN_EXPIRES_AT && now < STRAVA_TOKEN_EXPIRES_AT - 60 && STRAVA_ACCESS_TOKEN) {
+    console.log('[Strava API] ✅ Token actuel encore valide, utilisation du token en cache');
     return STRAVA_ACCESS_TOKEN;
   }
 
   // Token expiré → refresh
-  console.log('[Strava API] Token expiré, rafraîchissement en cours...');
+  console.log('[Strava API] ⏰ Token expiré ou manquant, rafraîchissement en cours...');
   
   if (!STRAVA_REFRESH_TOKEN) {
-    throw new Error('STRAVA_REFRESH_TOKEN non configuré. Vérifiez vos variables d\'environnement Vercel.');
+    throw new Error('STRAVA_REFRESH_TOKEN non configuré. Vérifiez vos variables d\'environnement Vercel → Settings → Environment Variables');
   }
 
   try {
@@ -90,7 +94,15 @@ export async function getValidToken(): Promise<string> {
     if (!response.ok) {
       const errorData = await response.json();
       const errorMessage = errorData.message || 'Erreur inconnue';
-      throw new Error(`Erreur lors du rafraîchissement: ${errorMessage}`);
+      
+      // Gestion spéciale du Rate Limit lors du refresh
+      if (response.status === 429) {
+        const retryAfter = response.headers.get('Retry-After');
+        throw new Error(`Rate Limit Exceeded lors du rafraîchissement du token. Attendez ${retryAfter ? parseInt(retryAfter) : 15} minutes.`);
+      }
+      
+      console.error('[Strava API] ❌ Erreur lors du refresh:', errorData);
+      throw new Error(`Erreur lors du rafraîchissement du token: ${errorMessage}`);
     }
 
     const data: TokenResponse = await response.json();
