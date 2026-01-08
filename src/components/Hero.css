@@ -10,11 +10,11 @@
 @media (min-width: 769px) {
   .page {
     overflow-y: hidden !important;
-    overflow: hidden !important;
+    overflow-x: hidden !important;
   }
   
-  .accueil-page {
-    overflow: hidden !important;
+  body.accueil-page .page:not(.single-project-page) {
+    overflow: visible !important; /* Permettre overflow visible pour la page d'accueil */
   }
   
   /* Permettre le scroll dans la colonne droite */
@@ -29,15 +29,15 @@
   flex-direction: column;
 }
 
-/* Accueil */
-.accueil-page {
+/* Styles spécifiques à la page d'accueil uniquement - ne pas appliquer aux projets */
+body.accueil-page .page.active:not(.single-project-page) {
   position: relative;
   width: 100%;
   max-width: 100%;
   box-sizing: border-box;
   padding-left: 0;
   padding-right: 0;
-  overflow: hidden;
+  overflow: visible; /* Permettre overflow visible pour que les enfants puissent dépasser */
 }
 
 .main-accueil {
@@ -175,6 +175,12 @@
 }
 
 .info-card {
+  padding: 12px 16px;
+  gap: 16px;
+  animation-delay: 140ms;
+}
+
+.footer-card {
   padding: 12px 16px;
   gap: 16px;
   animation-delay: 140ms;
@@ -519,11 +525,11 @@
     height: 320px;
   }
 
-  .accueil-page .hero-card.project-card .project-image-container {
+  body.accueil-page .hero-card.project-card .project-image-container {
     height: 320px !important;
   }
 
-  .accueil-page .hero-card.project-card .project-image {
+  body.accueil-page .hero-card.project-card .project-image {
     height: 100% !important;
     object-fit: cover !important;
   }

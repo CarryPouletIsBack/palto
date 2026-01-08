@@ -10,8 +10,7 @@ const Background = () => {
       const body = document.body
       const hasMenuActive = body.classList.contains('menu-active')
       
-      const accueilPage = document.querySelector('.accueil-page.active')
-      const isOnAccueil = accueilPage !== null
+      const isOnAccueil = body.classList.contains('accueil-page')
       
       const projectPage = document.querySelector('.single-project-page.active')
       const isOnProject = projectPage !== null

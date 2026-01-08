@@ -32,7 +32,7 @@ const GridPattern = ({
       
       // Vérifier si on est sur la page d'accueil
       const currentPage = window.location.pathname === '/' || 
-        document.querySelector('.accueil-page.active') !== null
+        body.classList.contains('accueil-page')
       
       // Vérifier si on est sur AboutNew
       const aproposNewPage = document.querySelector('.apropos-new-page')

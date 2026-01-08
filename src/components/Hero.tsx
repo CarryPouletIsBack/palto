@@ -26,7 +26,7 @@ const Hero = ({ onPageChange }: HeroProps) => {
   ]
 
   return (
-    <div className="page active accueil-page">
+    <div className="page active">
       <div className="main-accueil">
         <div className="hero-main">
           {/* Colonne de gauche */}
@@ -45,33 +45,12 @@ const Hero = ({ onPageChange }: HeroProps) => {
               <div className="hero-card info-card">
               <div className="card-header">
                 <h2 className="card-title">Infos</h2>
-                <button className="card-arrow" onClick={() => onPageChange('apropos')} aria-label="Aller à la page À propos">
+                <button className="card-arrow" onClick={() => onPageChange('aproposnew')} aria-label="Aller à la page À propos (nouvelle version)">
                   <svg width="24" height="24" viewBox="0 0 24 24" fill="none" className="arrow-icon">
                     <path d="M5 12H19M19 12L12 5M19 12L12 19" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
                   </svg>
                 </button>
               </div>
-            </div>
-
-            {/* Bouton pour AboutNew - Test */}
-            <div style={{ marginTop: '16px', display: 'flex', justifyContent: 'center' }}>
-              <button 
-                onClick={() => onPageChange('aproposnew')} 
-                style={{
-                  padding: '12px 24px',
-                  backgroundColor: '#f1582a',
-                  color: 'white',
-                  border: 'none',
-                  borderRadius: '8px',
-                  cursor: 'pointer',
-                  fontFamily: 'Space Grotesk, sans-serif',
-                  fontSize: '16px',
-                  fontWeight: '500'
-                }}
-                aria-label="Aller à la page À propos (nouvelle version)"
-              >
-                About New (Test)
-              </button>
             </div>
 
             {/* Carte Projet Carousel */}

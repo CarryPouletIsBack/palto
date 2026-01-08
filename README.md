@@ -461,13 +461,23 @@ Quand un token expire :
   - `margin-bottom` : `0px` → `12px`
   - `padding-top` et `padding-bottom` : `11px` → `12px`
 
-### Modifications Page d'accueil (Hero)
-- ✅ Simplification de l'architecture : retrait de la classe `page active` pour utiliser uniquement `accueil-page`
+### Modifications Page d'accueil (Hero) - Janvier 2025
+- ✅ **Refactorisation de l'architecture CSS** : 
+  - Gestion de la classe `accueil-page` directement sur le `body` (comme `menu-active`)
+  - Simplification de la classe `page active accueil-page` en `page active`
+  - Détection de la page d'accueil via `body.classList.contains('accueil-page')` dans GridPattern et Background
+- ✅ **Correction de l'overflow visible** :
+  - Correction des règles CSS pour permettre `overflow: visible` sur `.hero-main` et `.main-accueil`
+  - Modification de tous les parents (`.page.active`, `.container`, `body.accueil-page`) pour permettre l'overflow visible uniquement sur la page d'accueil
+  - Protection des autres pages (AboutNew, SingleProject) avec `:not(.single-project-page)`
+- ✅ **Améliorations UI** :
+  - Mise à jour du favicon pour utiliser le logo du header (`/images/logo.svg`)
+  - Style de la carte Footer identique à la carte Infos (même padding, gap, animation-delay)
+  - Intégration du bouton "About New" dans la flèche de la carte Infos (suppression du bouton séparé)
 - ✅ Ajustements des styles de scroll pour `.hero-right-column-scroll` :
   - Configuration du scroll vertical avec `overflow-y: auto`
   - Ajustement des propriétés flexbox pour permettre le scroll correctement
   - Padding-bottom pour assurer la visibilité complète du contenu
-- ✅ Configuration des styles de scroll dans `.hero-right-column` pour permettre l'affichage complet du contenu
 
 - ✅ Correction de toutes les erreurs TypeScript du build
 - ✅ Suppression des imports non utilisés (`Menu`, `swiper/css/navigation`)

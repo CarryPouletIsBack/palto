@@ -155,18 +155,24 @@ main {
   .container {
     height: 100vh !important;
     max-height: 100vh !important;
-    overflow: hidden !important;
+    overflow-x: hidden !important;
+    overflow-y: hidden !important;
   }
   
-  .accueil-page {
+  /* Permettre overflow visible sur la page d'accueil */
+  body.accueil-page .container {
+    overflow: visible !important;
+  }
+  
+  body.accueil-page:not(:has(.single-project-page)) {
     height: 100vh !important;
     max-height: 100vh !important;
-    overflow: hidden !important;
+    overflow: visible !important; /* Permettre overflow visible pour la page d'accueil */
   }
   
   .main-accueil {
     height: calc(100vh - 104px) !important;
     max-height: calc(100vh - 104px) !important;
-    overflow: hidden !important;
+    overflow: visible !important;
   }
 }
