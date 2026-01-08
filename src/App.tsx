@@ -28,7 +28,8 @@ function App() {
   }, [])
 
   useEffect(() => {
-    // Si on est sur le menu, activer le fond menu
+    // Gestion des classes sur le body pour les styles globaux
+    // Menu
     if (currentPage === 'menu') {
       document.body.classList.add('menu-active')
     } 
@@ -39,6 +40,13 @@ function App() {
     // Sinon, utiliser le fond normal (accueil)
     else {
       document.body.classList.remove('menu-active')
+    }
+    
+    // Page d'accueil
+    if (currentPage === 'accueil') {
+      document.body.classList.add('accueil-page')
+    } else {
+      document.body.classList.remove('accueil-page')
     }
   }, [currentPage, previousPage])
 

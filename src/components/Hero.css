@@ -10,17 +10,20 @@
 @media (min-width: 769px) {
   .page {
     overflow-y: hidden !important;
-    overflow: hidden !important;
-  }
-  
-  .accueil-page {
-    overflow: hidden !important;
-  }
-  
-  /* Permettre le scroll dans la colonne droite */
-  .hero-right-column {
-    overflow-y: auto !important;
     overflow-x: hidden !important;
+  }
+  
+  /* Permettre le scroll sur toute la page d'accueil */
+  body.accueil-page .page:not(.single-project-page) {
+    overflow-y: auto !important; /* Permettre le scroll vertical sur toute la page */
+    overflow-x: hidden !important;
+    height: auto;
+    min-height: 100vh;
+  }
+  
+  /* Supprimer le scroll de la colonne droite - le scroll est géré par la page */
+  .hero-right-column {
+    overflow: visible !important;
   }
 }
 
@@ -29,15 +32,15 @@
   flex-direction: column;
 }
 
-/* Accueil */
-.accueil-page {
+/* Styles spécifiques à la page d'accueil uniquement - ne pas appliquer aux projets */
+body.accueil-page .page.active:not(.single-project-page) {
   position: relative;
   width: 100%;
   max-width: 100%;
   box-sizing: border-box;
   padding-left: 0;
   padding-right: 0;
-  overflow: hidden;
+  overflow: visible; /* Permettre overflow visible pour que les enfants puissent dépasser */
 }
 
 .main-accueil {
@@ -45,11 +48,11 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
+  justify-content: flex-start; /* Commencer en haut pour permettre le scroll */
   padding: 60px 24px;
   position: relative;
   width: 100%;
-  min-height: calc(100vh - 120px);
+  min-height: calc(100vh - 104px); /* Hauteur minimale pour remplir l'écran */
   margin-top: 100px;
   overflow: visible !important;
 }
@@ -57,7 +60,7 @@
 .hero-main {
   display: flex;
   gap: 19px;
-  align-items: flex-end;
+  align-items: flex-start; /* Aligner en haut pour permettre le scroll */
   width: 100%;
   animation: heroMainBounce 900ms cubic-bezier(0.22, 1, 0.36, 1) 120ms both;
   transform-origin: top center;
@@ -86,8 +89,9 @@
   flex: 1;
   display: flex;
   gap: 40px;
-  align-items: flex-end;
+  align-items: flex-start; /* Aligner en haut pour permettre le scroll */
   min-width: 0;
+  height: 100vh; /* Hauteur de la viewport pour que sticky fonctionne */
 }
 
 .hero-title-container {
@@ -119,9 +123,9 @@
   flex-direction: column;
   align-items: flex-end;
   min-width: 0;
-  height: calc(100vh - 200px);
-  max-height: calc(100vh - 200px);
+  height: auto; /* Laisser la hauteur s'adapter au contenu */
   position: relative;
+  overflow: visible; /* Permettre la visibilité en haut et en bas */
 }
 
 .hero-right-column-scroll {
@@ -130,13 +134,12 @@
   gap: 8px;
   align-items: flex-end;
   width: 100%;
+  padding-top: 0;
   padding-bottom: 127px;
   padding-right: 8px;
-  margin-top: auto;
-  overflow-y: auto;
-  overflow-x: hidden;
-  -webkit-overflow-scrolling: touch;
-  height: 100%;
+  margin-top: 0;
+  /* Le scroll est géré par la page entière, pas besoin d'overflow ici */
+  height: auto;
   min-height: 0;
 }
 
@@ -175,6 +178,12 @@
 }
 
 .info-card {
+  padding: 12px 16px;
+  gap: 16px;
+  animation-delay: 140ms;
+}
+
+.footer-card {
   padding: 12px 16px;
   gap: 16px;
   animation-delay: 140ms;
@@ -519,11 +528,11 @@
     height: 320px;
   }
 
-  .accueil-page .hero-card.project-card .project-image-container {
+  body.accueil-page .hero-card.project-card .project-image-container {
     height: 320px !important;
   }
 
-  .accueil-page .hero-card.project-card .project-image {
+  body.accueil-page .hero-card.project-card .project-image {
     height: 100% !important;
     object-fit: cover !important;
   }
@@ -571,32 +580,37 @@
   }
 }
 
-/* Positionner le titre en bas de l'écran sur les écrans non mobiles */
+/* Fixer le titre à gauche de la colonne sur les écrans non mobiles */
 @media (min-width: 769px) {
   .hero-left-column {
     position: relative;
+    height: 100vh; /* Hauteur de la viewport pour que sticky fonctionne */
+    display: flex;
+    align-items: flex-end; /* Aligner le contenu en bas */
   }
   
   .hero-title-container {
-    position: absolute;
-    bottom: 0;
-    left: 0;
+    position: sticky; /* Fixer le titre dans sa position lors du scroll */
+    bottom: 16px; /* Rester à 16px du bas lors du scroll */
+    top: auto;
+    left: auto;
     padding: 0;
-    padding-bottom: 16px;
     margin: 0;
+    z-index: 10; /* S'assurer que le titre est au-dessus du contenu */
+    align-self: flex-end; /* Aligner le titre en bas de la colonne gauche */
   }
   
-  /* Ajouter un scroll vertical à la colonne de droite */
+  /* La colonne de droite suit le scroll de la page */
   .hero-right-column {
-    overflow-y: auto;
-    overflow-x: hidden;
-    max-height: calc(100vh - 104px - 100px);
-    padding-right: 8px;
-    padding-bottom: 0 !important;
-    justify-content: flex-end;
-    align-items: flex-end;
-    height: auto !important;
-    margin-top: auto;
+    overflow: visible !important;
+    height: auto;
+    padding-top: 0;
+  }
+  
+  /* Le scroll est géré par la page entière */
+  .hero-right-column-scroll {
+    overflow: visible !important;
+    height: auto;
   }
   
   /* Style de la scrollbar pour la colonne de droite */

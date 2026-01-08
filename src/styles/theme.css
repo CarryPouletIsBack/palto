@@ -129,7 +129,7 @@
   }
 
   /* Forcer le background bleu sur la page d'accueil */
-  body:has(.accueil-page.active) {
+  body.accueil-page {
     background: #509ED8 !important;
   }
 

@@ -113,6 +113,49 @@ main {
   animation: fadeIn 0.6s ease-out;
 }
 
+/* Animation BlurText pour tous les titres */
+@keyframes blurTextReveal {
+  0% {
+    filter: blur(8px);
+    opacity: 0;
+  }
+  50% {
+    filter: blur(4px);
+    opacity: 0.5;
+  }
+  100% {
+    filter: blur(0px);
+    opacity: 1;
+  }
+}
+
+/* Appliquer l'effet blur à tous les titres H1, H2, H3, H4, H5, H6 */
+h1, h2, h3, h4, h5, h6 {
+  animation: blurTextReveal 0.8s ease-out;
+  will-change: filter, opacity;
+}
+
+/* Délai progressif pour les titres imbriqués */
+h2 {
+  animation-delay: 0.1s;
+}
+
+h3 {
+  animation-delay: 0.2s;
+}
+
+h4 {
+  animation-delay: 0.3s;
+}
+
+h5 {
+  animation-delay: 0.4s;
+}
+
+h6 {
+  animation-delay: 0.5s;
+}
+
 /* Responsive design */
 @media (max-width: 768px) {
   body {
@@ -140,6 +183,13 @@ main {
     max-height: 100vh !important;
   }
   
+  /* Permettre le scroll sur html pour la page d'accueil */
+  html:has(body.accueil-page) {
+    overflow-y: auto !important;
+    height: auto !important;
+    max-height: none !important;
+  }
+  
   #root {
     height: 100vh !important;
     max-height: 100vh !important;
@@ -155,18 +205,28 @@ main {
   .container {
     height: 100vh !important;
     max-height: 100vh !important;
-    overflow: hidden !important;
+    overflow-x: hidden !important;
+    overflow-y: hidden !important;
   }
   
-  .accueil-page {
-    height: 100vh !important;
-    max-height: 100vh !important;
-    overflow: hidden !important;
+  /* Permettre le scroll sur toute la page d'accueil */
+  body.accueil-page {
+    overflow-y: auto !important; /* Permettre le scroll vertical sur toute la page */
+    height: auto !important;
+    max-height: none !important;
   }
   
-  .main-accueil {
-    height: calc(100vh - 104px) !important;
-    max-height: calc(100vh - 104px) !important;
-    overflow: hidden !important;
+  body.accueil-page .container {
+    overflow-y: auto !important; /* Permettre le scroll vertical */
+    height: auto !important;
+    max-height: none !important;
+    min-height: 100vh;
+  }
+  
+  body.accueil-page .main-accueil {
+    height: auto !important;
+    max-height: none !important;
+    min-height: calc(100vh - 104px);
+    overflow: visible !important;
   }
 }
