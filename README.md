@@ -170,10 +170,12 @@ Toutes les données sont centralisées dans `/src/data/` :
 ### Qualité du Code
 - **CSS** : Classes organisées, commentaires utiles uniquement
 - **TypeScript** : Types stricts, aucune erreur de compilation
-- **JavaScript** : Aucun console.log, imports optimisés
+- **JavaScript** : Aucun console.log de debug, imports optimisés (pas d'imports React inutiles)
+- **React** : Utilisation des types React modernes (`FC`, `MouseEvent`, etc.) sans imports React inutiles (React 17+)
 - **Accessibilité** : Attributs alt, éléments interactifs accessibles
 - **Performance** : Build optimisé, pas d'erreurs de linting
-- **Build** : Toutes les erreurs TypeScript corrigées (variables non utilisées, imports manquants)
+- **Build** : Toutes les erreurs TypeScript corrigées, build Vercel fonctionnel
+- **Code propre** : Nettoyage complet effectué (janvier 2025) - imports inutiles supprimés, variables non utilisées nettoyées, console.log de debug supprimés
 
 ### Structure Sémantique
 - Balises HTML appropriées (`<header>`, `<section>`, `<footer>`)
