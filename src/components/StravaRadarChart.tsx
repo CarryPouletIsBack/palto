@@ -82,8 +82,11 @@ const StravaRadarChart: React.FC<StravaRadarChartProps> = ({ activities, classNa
             fillArea: true,
           }
         ]}
+        shape="circular"
+        divisions={2}
+        stripeColor={null}
         radar={{
-          max: 100,
+          startAngle: 0,
           metrics: radarData.metrics,
         }}
         slotProps={{

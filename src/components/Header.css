@@ -5,7 +5,7 @@
   top: 0;
   left: 0;
   right: 0;
-  z-index: 10;
+  z-index: 100;
   pointer-events: none;
 }
 
@@ -17,6 +17,7 @@
   pointer-events: auto;
   animation: headerBounce 700ms cubic-bezier(0.22, 1, 0.36, 1) 120ms both;
   transform-origin: top center;
+  z-index: inherit;
 }
 
 /* Sur mobile, mettre le header en colonne avec la search bar en dessous */
@@ -40,9 +41,9 @@
 /* Wrapper pour MobileSearchBar dans le header */
 .header-search-wrapper {
   display: flex;
-  align-items: flex-start;
+  align-items: center;
+  justify-content: flex-end;
   flex: 1;
-  /* justify-content: center; */
   padding: 0 16px;
   min-width: 0;
   flex-direction: row;
@@ -55,6 +56,24 @@
     padding: 0;
     margin-top: 0;
     order: 2;
+    box-sizing: border-box;
+    align-items: center;
+    justify-content: flex-end;
+  }
+  
+  .header-search-wrapper .mobile-search-bar {
+    position: relative !important;
+    top: auto !important;
+    left: auto !important;
+    right: auto !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    min-width: 100% !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    box-sizing: border-box !important;
+    align-items: center !important;
+    justify-content: flex-end !important;
   }
   
   .logo-section {
@@ -64,23 +83,33 @@
 }
 
 .header-search-wrapper .mobile-search-bar {
-  /*position: static !important;*/
+  position: relative !important;
   top: auto !important;
   left: auto !important;
-  /*right: auto !important;*/
+  right: auto !important;
   padding: 0 !important;
-  width: 100% !important;
-  max-width: 100% !important;
-  min-width: 100% !important;
+  width: auto !important;
+  max-width: none !important;
+  min-width: auto !important;
   z-index: auto;
   background: none !important;
   background-color: unset !important;
   background-image: none !important;
   isolation: auto;
   display: flex;
-  flex: 1 1 100% !important;
+  align-items: center !important;
+  justify-content: flex-end !important;
+  flex: 0 0 auto !important;
   flex-shrink: 0 !important;
-  min-width: 100% !important;
+  margin-left: auto !important;
+  box-sizing: border-box !important;
+}
+
+/* Quand la search bar est active, elle doit avoir un z-index très élevé */
+.header-search-wrapper .mobile-search-bar.search-active,
+.header-search-wrapper .mobile-search-bar:has(.search-bar:focus-within) {
+  z-index: 10000 !important;
+  position: relative !important;
 }
 
 /* Quand search-active, s'assurer que le conteneur ne limite pas */
@@ -96,8 +125,8 @@
 /* Quand la search bar est active, mettre le header au-dessus */
 .header:has(.mobile-search-bar.search-active),
 .header:has(.mobile-search-bar:has(.search-bar:focus-within)) {
-  z-index: 9998 !important;
-  position: relative !important;
+  z-index: 10000 !important;
+  position: fixed !important;
 }
 
 /* Styles pour la search bar dans le header - état initial */
@@ -109,12 +138,29 @@
   transform: scale(1) !important;
   transform-origin: center center !important;
   transition: all 0.3s ease !important;
-  margin-left: auto !important;
-  margin-right: auto !important;
+  margin-left: 0 !important;
+  margin-right: 0 !important;
   padding-left: 8px !important;
   padding-right: 8px !important;
   padding-top: 8px !important;
   padding-bottom: 8px !important;
+  box-sizing: border-box !important;
+  backdrop-filter: blur(10px) !important;
+  -webkit-backdrop-filter: blur(10px) !important;
+  background: rgba(255, 255, 255, 0.1) !important;
+  isolation: auto !important;
+}
+
+/* Sur mobile, adapter la search bar à la largeur disponible */
+@media (max-width: 768px) {
+  .header-search-wrapper .mobile-search-bar .search-bar {
+    width: 100% !important;
+    max-width: 100% !important;
+    min-width: 0 !important;
+    flex: 1 1 100% !important;
+    margin-left: 0 !important;
+    margin-right: 0 !important;
+  }
 }
 
 /* Réduire la taille du placeholder dans le header */
@@ -137,7 +183,7 @@
 .header-search-wrapper .mobile-search-bar:has(.search-bar:focus-within) {
   padding: 0 !important;
   gap: 0 !important;
-  z-index: 9999 !important;
+  z-index: 10000 !important;
   position: relative !important;
 }
 
@@ -158,7 +204,7 @@
   margin-right: 0 !important;
   margin-top: 0 !important;
   margin-bottom: 0 !important;
-  z-index: 9999 !important;
+  z-index: 10001 !important;
   position: relative !important;
   isolation: auto !important;
   backdrop-filter: blur(40px) saturate(2) brightness(1.2) !important;
@@ -211,24 +257,74 @@
 
 .logo img {
   position: absolute;
-  top: 4%;
-  left: 9%;
-  width: 50%;
-  height: 50%;
-  -o-object-fit: contain;
-  object-fit: contain;
-  -o-object-position: center;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
   object-position: center;
   display: block;
 }
 
+/* Style spécifique pour le logo SVG (fallback) */
+.logo img[src*="logo.svg"] {
+  top: 4%;
+  left: 9%;
+  width: 50%;
+  height: 50%;
+  object-fit: contain;
+}
+
 /* removed conditional invert */
+
+.logo-text .logo-name {
+  font-size: 18px;
+  font-weight: 400;
+  margin: 0;
+  color: white;
+  line-height: 1.2;
+  font-family: inherit;
+}
 
 .logo-text h1 {
   font-size: 18px;
   font-weight: 400;
   margin: 0;
   color: white;
+  line-height: 1.2;
+}
+
+/* Skeleton pour le nom dans le header */
+.logo-text .header-name-skeleton {
+  display: inline-block;
+  margin: 0;
+  vertical-align: baseline;
+  background: linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0.1) 0%,
+    rgba(255, 255, 255, 0.2) 50%,
+    rgba(255, 255, 255, 0.1) 100%
+  ) !important;
+  background-size: 200% 100% !important;
+  animation: header-skeleton-loading 1.5s ease-in-out infinite !important;
+}
+
+/* Skeleton pour le logo (photo de profil) */
+.logo .logo-skeleton {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+}
+
+@keyframes header-skeleton-loading {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
 }
 
 .logo-text p {

@@ -10,13 +10,15 @@ import HoverCard from './HoverCard'
 import { aboutData } from '../data/aboutData'
 import HumanBody3D from './HumanBody3D'
 import StravaMap from './StravaMap'
-import StravaRadarChart from './StravaRadarChart'
-import TrainingJournalChart from './TrainingJournalChart'
+import StravaRadialBarChart from './StravaRadialBarChart'
+import StravaSplineChart from './StravaSplineChart'
+import StravaSonifiedChart from './StravaSonifiedChart'
+import Skeleton from './Skeleton'
 import { Swiper, SwiperSlide } from 'swiper/react'
 import { Pagination } from 'swiper/modules'
 import 'swiper/css'
 import 'swiper/css/pagination'
-import { getStravaActivities, getStravaActivitiesByYear, getStravaAthlete, getStravaActivityDetails, formatDistance, formatTime, formatDate, type StravaActivity, type StravaAthlete } from '../services/stravaService'
+import { getStravaActivities, getStravaActivitiesByYear, getAllRuns, getStravaAthlete, getStravaActivityDetails, formatDistance, formatTime, formatDate, type StravaActivity, type StravaAthlete } from '../services/stravaService'
 
 const AboutNew = () => {
   const [selectedNodes, setSelectedNodes] = useState<Set<string>>(new Set())
@@ -26,6 +28,7 @@ const AboutNew = () => {
   const [stravaActivities, setStravaActivities] = useState<StravaActivity[]>([])
   const [stravaActivities2025, setStravaActivities2025] = useState<StravaActivity[]>([])
   const [stravaActivitiesDetails, setStravaActivitiesDetails] = useState<StravaActivity[]>([])
+  const [stravaAllRuns, setStravaAllRuns] = useState<StravaActivity[]>([])
   const [stravaLoading, setStravaLoading] = useState<boolean>(true)
   const [stravaError, setStravaError] = useState<string | null>(null)
   const [stravaAthlete, setStravaAthlete] = useState<StravaAthlete | null>(null)
@@ -152,15 +155,17 @@ const AboutNew = () => {
         console.log('🔄 Début du chargement des données Strava...')
         
         // Récupérer les activités et les infos de l'athlète en parallèle
-        const [activitiesResult, activities2025Result, athleteResult] = await Promise.allSettled([
+        const [activitiesResult, activities2025Result, allRunsResult, athleteResult] = await Promise.allSettled([
           getStravaActivities(5),
           getStravaActivitiesByYear(2025),
+          getAllRuns(),
           getStravaAthlete()
         ])
         
         // Traiter les résultats
         let activities: StravaActivity[] = []
         let activities2025: StravaActivity[] = []
+        let allRuns: StravaActivity[] = []
         let athlete: StravaAthlete | null = null
         let hasError = false
         const errors: string[] = []
@@ -183,6 +188,15 @@ const AboutNew = () => {
           hasError = true
         }
         
+        if (allRunsResult.status === 'fulfilled') {
+          allRuns = allRunsResult.value
+          console.log(`✅ Toutes les runs chargées: ${allRuns.length}`)
+        } else {
+          console.error('❌ Erreur getAllRuns:', allRunsResult.reason)
+          errors.push(`Runs: ${allRunsResult.reason?.message || 'Erreur inconnue'}`)
+          hasError = true
+        }
+        
         if (athleteResult.status === 'fulfilled') {
           athlete = athleteResult.value
           console.log('✅ Athlète chargé:', athlete?.firstname)
@@ -194,6 +208,7 @@ const AboutNew = () => {
         
         setStravaActivities(activities)
         setStravaActivities2025(activities2025)
+        setStravaAllRuns(allRuns)
         setStravaAthlete(athlete)
         
         // Si on a des erreurs mais pas de données, afficher l'erreur
@@ -313,8 +328,14 @@ const AboutNew = () => {
                   <div className="services-content">
                     {stravaLoading ? (
                       <div className="service-item">
-                        <div className="service-text">
-                          <p style={{ color: '#71717a', fontSize: '14px' }}>Chargement...</p>
+                        <div className="service-text" style={{ width: '100%' }}>
+                          <div style={{ marginBottom: '12px' }}>
+                            <Skeleton height="24px" width="60%" borderRadius="4px" />
+                          </div>
+                          <div style={{ marginBottom: '8px' }}>
+                            <Skeleton height="16px" width="40%" borderRadius="4px" />
+                          </div>
+                          <Skeleton height="16px" width="50%" borderRadius="4px" />
                         </div>
                       </div>
                     ) : stravaError ? (
@@ -327,7 +348,7 @@ const AboutNew = () => {
                       <>
                         <div className="service-item">
                           <div className="service-text">
-                            <p className="service-description" style={{ marginBottom: '12px', fontWeight: '600', color: '#000000', fontSize: '16px' }}>
+                            <p className="service-description" style={{ marginBottom: '12px', fontWeight: '600', color: 'rgba(255, 255, 255, 1)', fontSize: '16px' }}>
                               {stravaAthlete.firstname} {stravaAthlete.lastname}
                             </p>
                             <div className="service-tags">
@@ -365,8 +386,8 @@ const AboutNew = () => {
                   </div>
                   <div className="services-content strava-radar-content">
                     {stravaLoading ? (
-                      <div className="strava-radar-placeholder">
-                        <p>Chargement des données...</p>
+                      <div style={{ width: '100%', height: '250px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                        <Skeleton height="250px" width="100%" borderRadius="8px" />
                       </div>
                     ) : stravaError ? (
                       <div className="strava-radar-placeholder">
@@ -378,13 +399,37 @@ const AboutNew = () => {
                         <p>Aucune activité disponible</p>
                       </div>
                     ) : (
-                      <>
-                        <div className="strava-total-km">
-                          <p className="strava-total-km-label">Total 2025</p>
-                          <p className="strava-total-km-value">{totalKm2025} km</p>
-                        </div>
-                        <StravaRadarChart activities={stravaActivities2025} />
-                      </>
+                      <StravaRadialBarChart activities={stravaActivities2025} />
+                    )}
+                  </div>
+                </div>
+
+                {/* Troisième carte - Graphique Sonifié Strava */}
+                <div className="hero-card services-card strava-sonified-card">
+                  <div className="card-header">
+                    <h2 className="card-title">Sonification</h2>
+                    <div className="card-arrow">
+                      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" className="arrow-icon">
+                        <path d="M5 12H19M19 12L12 5M19 12L12 19" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                      </svg>
+                    </div>
+                  </div>
+                  <div className="services-content strava-sonified-content">
+                    {stravaLoading ? (
+                      <div style={{ width: '100%', height: '250px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                        <Skeleton height="250px" width="100%" borderRadius="8px" />
+                      </div>
+                    ) : stravaError ? (
+                      <div className="strava-radar-placeholder">
+                        <p style={{ color: '#f1582a', marginBottom: '8px' }}>Erreur</p>
+                        <p style={{ fontSize: '12px', color: '#71717a' }}>{stravaError}</p>
+                      </div>
+                    ) : stravaActivities2025.length === 0 ? (
+                      <div className="strava-radar-placeholder">
+                        <p>Aucune activité disponible</p>
+                      </div>
+                    ) : (
+                      <StravaSonifiedChart activities={stravaActivities2025} />
                     )}
                   </div>
                 </div>
@@ -422,8 +467,14 @@ const AboutNew = () => {
                   </div>
                   <div className="services-content strava-stats-content">
                     {stravaLoading ? (
-                      <div style={{ width: '100%', height: 200, display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'rgba(0,0,0,0.4)', fontSize: '14px' }}>
-                        Chargement des données...
+                      <div style={{ width: '100%' }}>
+                        <div style={{ marginBottom: '16px' }}>
+                          <div style={{ marginBottom: '8px' }}>
+                            <Skeleton height="16px" width="80px" borderRadius="4px" />
+                          </div>
+                          <Skeleton height="24px" width="120px" borderRadius="4px" />
+                        </div>
+                        <Skeleton height="200px" width="100%" borderRadius="8px" />
                       </div>
                     ) : stravaError ? (
                       <div style={{ width: '100%', height: 200, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', color: '#f1582a', fontSize: '14px', padding: '16px', textAlign: 'center' }}>
@@ -435,7 +486,13 @@ const AboutNew = () => {
                         Aucune activité disponible
                       </div>
                     ) : (
-                      <TrainingJournalChart activities={stravaActivities2025} />
+                      <>
+                        <div className="strava-total-km">
+                          <p className="strava-total-km-label">Total 2025</p>
+                          <p className="strava-total-km-value">{totalKm2025} km</p>
+                        </div>
+                        <StravaSplineChart activities={stravaAllRuns} />
+                      </>
                     )}
                   </div>
                 </div>
@@ -452,10 +509,8 @@ const AboutNew = () => {
                   </div>
                   <div className="services-content">
                     {stravaLoading ? (
-                      <div className="service-item">
-                        <div className="service-text">
-                          <p style={{ color: '#71717a', fontSize: '14px' }}>Chargement des activités...</p>
-                        </div>
+                      <div style={{ width: '100%', height: '300px', position: 'relative' }}>
+                        <Skeleton height="300px" width="100%" borderRadius="8px" />
                       </div>
                     ) : stravaError ? (
                       <div className="service-item">
@@ -483,18 +538,24 @@ const AboutNew = () => {
                         {stravaActivitiesDetails.map((activity, index) => {
                           const photoUrl = getActivityPhotoUrl(activity)
                           const polyline = activity.map?.summary_polyline || ''
-                          const hasBackground = !!photoUrl
+                          const hasPhoto = !!photoUrl
+                          const hasPolyline = !!polyline
+                          // Afficher la photo si elle existe, sinon le tracé
+                          const hasBackground = hasPhoto || hasPolyline
+                          const usePhoto = hasPhoto
+                          const usePolyline = !hasPhoto && hasPolyline
                           
                           return (
                             <SwiperSlide key={activity.id || index}>
-                              <div className="service-item" style={{ 
-                                background: hasBackground ? `url(${photoUrl}) center/cover` : 'transparent',
+                              <div className="service-item strava-activity-item" style={{ 
+                                background: usePhoto ? `url(${photoUrl}) center/cover` : 'transparent',
                                 borderRadius: '8px',
                                 overflow: 'hidden',
                                 position: 'relative',
                                 minHeight: '200px'
                               }}>
-                                {hasBackground && (
+                                {/* Overlay pour la photo */}
+                                {usePhoto && (
                                   <div style={{
                                     position: 'absolute',
                                     inset: 0,
@@ -502,6 +563,29 @@ const AboutNew = () => {
                                     zIndex: 1
                                   }} />
                                 )}
+                                
+                                {/* Tracé de la course en background si pas de photo */}
+                                {usePolyline && (
+                                  <div style={{ 
+                                    position: 'absolute', 
+                                    inset: 0,
+                                    zIndex: 0,
+                                    opacity: 0.4
+                                  }}>
+                                    <StravaMap polyline={polyline} className="strava-map-background" />
+                                  </div>
+                                )}
+                                
+                                {/* Overlay pour le tracé pour améliorer la lisibilité */}
+                                {usePolyline && (
+                                  <div style={{
+                                    position: 'absolute',
+                                    inset: 0,
+                                    background: 'linear-gradient(to bottom, rgba(255,255,255,0.1), rgba(0,0,0,0.3))',
+                                    zIndex: 1
+                                  }} />
+                                )}
+                                
                                 <div className="service-text" style={{ 
                                   position: 'relative', 
                                   zIndex: 2,
@@ -532,19 +616,6 @@ const AboutNew = () => {
                                     <path d="M7 17L17 7M17 7H7M17 7V17" stroke={hasBackground ? '#ffffff' : 'currentColor'} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
                                   </svg>
                                 </div>
-                                {polyline && (
-                                  <div style={{ 
-                                    position: 'absolute', 
-                                    bottom: 0, 
-                                    left: 0, 
-                                    right: 0, 
-                                    height: '60px',
-                                    opacity: 0.3,
-                                    zIndex: 1
-                                  }}>
-                                    <StravaMap polyline={polyline} />
-                                  </div>
-                                )}
                               </div>
                             </SwiperSlide>
                           )

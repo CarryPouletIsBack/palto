@@ -412,7 +412,7 @@ body.accueil-page .page.active:not(.single-project-page) {
   padding: 16px;
   background: rgba(255, 255, 255, 0.01);
   border: 1px solid #b2aaaa;
-  border-radius: 16px;
+  border-radius: 8px;
   backdrop-filter: blur(10px);
   width: 100%;
 }

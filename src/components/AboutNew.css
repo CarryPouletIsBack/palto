@@ -18,7 +18,7 @@
   top: 80px; /* Position sous la search bar (104px top + 57px hauteur) */
   left: 0;
   right: 0;
-  z-index: 100;
+  z-index: 99; /* En dessous du header (z-index: 100) pour rester visible mais derrière la search bar active */
   display: flex;
   justify-content: center;
   align-items: center;
@@ -153,13 +153,12 @@
    ============================================ */
 .intro-columns-container {
   display: grid;
-  grid-template-columns: 300px auto 300px; /* [Gauche] [Centre auto] [Droite] */
+  grid-template-columns: 350px auto 350px; /* [Gauche] [Centre auto] [Droite] */
   gap: 0px; /* Espacement entre les colonnes */
-  align-items: center; /* Alignement vertical centré */
+  align-items: start; /* Alignement vertical en haut */
   justify-items: center; /* Alignement horizontal centré */
   width: 100%;
   min-height: 600px; /* Hauteur minimale pour éviter le collapse */
-  place-items: center; /* Centre les items dans leur cellule */
   margin-top: 64px; /* Ajustement pour positionner sous le header */
 }
 
@@ -178,7 +177,7 @@
 .intro-column {
   display: flex;
   flex-direction: column; /* Empilement vertical des cartes */
-  gap: 12px; /* Espacement entre les cartes dans la colonne */
+  gap: 8px; /* Espacement entre les cartes dans la colonne */
   justify-content: flex-start;
   align-items: center;
 }
@@ -192,6 +191,7 @@
   min-width: 0; /* Permet aux colonnes de rétrécir si nécessaire */
   box-sizing: border-box; /* Inclut padding et border dans la largeur */
   margin-bottom: 0px;
+  align-self: start; /* Aligner en haut */
 }
 
 /* Surcharge de la largeur des cartes Strava dans AboutNew */
@@ -201,10 +201,110 @@
   box-sizing: border-box; /* Inclut padding et border dans la largeur */
 }
 
+/* Variante des cartes pour AboutNew UNIQUEMENT : fond transparent et titres en blanc */
+.apropos-new-page .intro-column .hero-card.services-card {
+  background: transparent !important;
+  color: #ffffff;
+}
+
+.apropos-new-page .intro-column .hero-card.services-card .card-header {
+  background: transparent !important;
+  padding: 0 0 12px 0;
+}
+
+.apropos-new-page .intro-column .hero-card.services-card .card-title {
+  color: #ffffff !important;
+  font-size: 18px;
+  margin: 0;
+}
+
+.apropos-new-page .intro-column .hero-card.services-card .card-arrow svg,
+.apropos-new-page .intro-column .hero-card.services-card .card-arrow .arrow-icon {
+  color: #ffffff !important;
+  stroke: #ffffff !important;
+}
+
+.apropos-new-page .intro-column .hero-card.services-card .card-arrow svg path {
+  stroke: #ffffff !important;
+}
+
 /* S'assurer que le Swiper des activités Strava prend toute la largeur */
 .apropos-new-page .strava-activities-swiper {
   width: 100%;
   max-width: 100%;
+}
+
+/* Styles spécifiques pour les activités Strava dans AboutNew uniquement */
+.apropos-new-page .strava-activity-item {
+  position: relative;
+  min-height: 200px;
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  align-items: flex-start;
+  padding: 16px;
+}
+
+/* S'assurer que le StravaMap prend toute la hauteur quand utilisé comme background */
+.apropos-new-page .strava-activity-item .strava-map-background {
+  width: 100%;
+  height: 100%;
+  position: absolute;
+  inset: 0;
+}
+
+.apropos-new-page .strava-activity-item .strava-map-background .strava-map-container {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+/* Masquer le header du StravaMap quand utilisé comme background */
+.apropos-new-page .strava-activity-item .strava-map-background .strava-map-header {
+  display: none;
+}
+
+.apropos-new-page .strava-activity-item .strava-map-background .strava-map-wrapper {
+  width: 100%;
+  height: 100%;
+  min-height: 100%;
+  flex: none;
+}
+
+.apropos-new-page .strava-activity-item .strava-map-background .strava-map-svg {
+  width: 100%;
+  height: 100%;
+}
+
+/* Styles spécifiques pour .service-item dans AboutNew */
+.apropos-new-page .service-item {
+  border-radius: 8px;
+  border-top-left-radius: 8px;
+  border-top-right-radius: 8px;
+  border-bottom-right-radius: 8px;
+  border-bottom-left-radius: 8px;
+}
+
+/* Styles spécifiques pour .service-text dans AboutNew */
+.apropos-new-page .service-text {
+  gap: 4px;
+}
+
+.apropos-new-page .strava-activity-item .service-text {
+  position: relative;
+  z-index: 2;
+  width: 100%;
+  margin-top: auto; /* Pousse le contenu vers le bas */
+}
+
+.apropos-new-page .strava-activity-item .service-arrow {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  z-index: 2;
 }
 
 /* S'assurer que le contenu des cartes Strava prend toute la largeur */

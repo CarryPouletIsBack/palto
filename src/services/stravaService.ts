@@ -10,6 +10,12 @@
 // - /api/strava/activities/[id] : Détails d'une activité
 // - /api/strava/athlete/stats : Statistiques de l'athlète
 //
+// 🎭 MODE MOCK (Développement uniquement):
+// Pour utiliser les données mockées en développement local, ajoutez dans .env.local:
+// VITE_USE_STRAVA_MOCK=true
+// Cela permet de travailler sur les styles CSS sans avoir besoin de vercel dev ou des tokens Strava.
+// ⚠️ Les mocks ne sont JAMAIS utilisés en production.
+//
 // Les variables d'environnement suivantes doivent être configurées dans Vercel:
 // - STRAVA_ACCESS_TOKEN (ou VITE_STRAVA_ACCESS_TOKEN)
 // - STRAVA_REFRESH_TOKEN (ou VITE_STRAVA_REFRESH_TOKEN)
@@ -18,6 +24,16 @@
 //
 // Note: Les fonctions getValidAccessToken() et refreshAccessToken() ci-dessous
 // sont conservées pour compatibilité mais ne sont plus utilisées par ce service.
+
+// Vérifier si on doit utiliser les mocks (uniquement en développement)
+const USE_MOCK = import.meta.env.DEV && import.meta.env.VITE_USE_STRAVA_MOCK === 'true'
+
+// Importer les mocks (l'import est tree-shaken si USE_MOCK est false)
+import * as mockData from './stravaMockData'
+
+if (USE_MOCK) {
+  console.log('🎭 Mode MOCK activé - Utilisation des données mockées Strava')
+}
 
 const STRAVA_CLIENT_ID = import.meta.env.VITE_STRAVA_CLIENT_ID || '193706';
 const STRAVA_CLIENT_SECRET = import.meta.env.VITE_STRAVA_CLIENT_SECRET || '294ac27e5949d20abedb6f3c54a50b4c848a2240';
@@ -411,6 +427,11 @@ function setCache<T>(cacheKey: string, data: T): void {
  */
 export async function getStravaActivities(perPage: number = 10, page: number = 1): Promise<StravaActivity[]> {
   try {
+    // 🎭 Utiliser les mocks si activés (développement uniquement)
+    if (USE_MOCK) {
+      return await mockData.mockGetStravaActivities(perPage, page)
+    }
+    
     // Vérifier le cache d'abord (pour la première page seulement)
     if (page === 1 && perPage === 5) {
       const cached = getFromCache<StravaActivity[]>(CACHE_ACTIVITIES_KEY);
@@ -499,8 +520,104 @@ export async function getStravaActivities(perPage: number = 10, page: number = 1
  * @param year Année (par défaut: 2025)
  * @returns Promise avec la liste de toutes les activités de l'année
  */
+/**
+ * Récupère toutes les activités de type "Run" depuis le début
+ * @returns Promise avec toutes les runs
+ */
+export async function getAllRuns(): Promise<StravaActivity[]> {
+  if (USE_MOCK) {
+    // En mode mock, générer plusieurs pages de runs
+    const allRuns: StravaActivity[] = [];
+    for (let page = 1; page <= 5; page++) {
+      const activities = await mockData.mockGetStravaActivities(200, page);
+      const runs = activities.filter(activity => activity.type === 'Run');
+      allRuns.push(...runs);
+    }
+    // Trier par date (plus ancienne en premier)
+    allRuns.sort((a, b) => 
+      new Date(a.start_date_local).getTime() - new Date(b.start_date_local).getTime()
+    );
+    return allRuns;
+  }
+
+  try {
+    const allRuns: StravaActivity[] = [];
+    let page = 1;
+    let hasMore = true;
+    const perPage = 200; // Maximum par page selon l'API Strava
+    let consecutiveEmptyPages = 0;
+
+    console.log('🔄 Début de la récupération de toutes les runs...');
+
+    while (hasMore) {
+      const response = await fetch(`/api/strava/activities?per_page=${perPage}&page=${page}`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (!response.ok) {
+        await handleApiError(response);
+      }
+
+      const activities: StravaActivity[] = await response.json();
+      
+      // Si aucune activité retournée, on a probablement atteint la fin
+      if (activities.length === 0) {
+        consecutiveEmptyPages++;
+        if (consecutiveEmptyPages >= 2) {
+          console.log(`✅ Fin de la récupération (page ${page} vide)`);
+          hasMore = false;
+          break;
+        }
+        page++;
+        continue;
+      }
+
+      consecutiveEmptyPages = 0; // Réinitialiser le compteur si on a des activités
+      
+      // Filtrer uniquement les runs
+      const runs = activities.filter(activity => activity.type === 'Run');
+      allRuns.push(...runs);
+      
+      console.log(`📄 Page ${page}: ${activities.length} activités (${runs.length} runs) - Total: ${allRuns.length} runs`);
+
+      // Si on a moins de perPage activités, on a probablement récupéré toutes les activités
+      if (activities.length < perPage) {
+        console.log(`✅ Dernière page atteinte (${activities.length} < ${perPage})`);
+        hasMore = false;
+      } else {
+        page++;
+      }
+
+      // Limite de sécurité augmentée : jusqu'à 50 pages (10000 activités max)
+      if (page > 50) {
+        console.warn(`⚠️ Limite de 50 pages atteinte pour la récupération des runs (${allRuns.length} runs récupérées)`);
+        hasMore = false;
+      }
+    }
+
+    // Trier par date (plus ancienne en premier)
+    allRuns.sort((a, b) => 
+      new Date(a.start_date_local).getTime() - new Date(b.start_date_local).getTime()
+    );
+
+    console.log(`✅ Récupération terminée: ${allRuns.length} runs au total`);
+    return allRuns;
+  } catch (error) {
+    console.error('❌ Erreur lors de la récupération de toutes les runs:', error);
+    throw error;
+  }
+}
+
 export async function getStravaActivitiesByYear(year: number = 2025): Promise<StravaActivity[]> {
   try {
+    // 🎭 Utiliser les mocks si activés (développement uniquement)
+    if (USE_MOCK) {
+      return await mockData.mockGetStravaActivitiesByYear(year)
+    }
+    
     // Vérifier le cache d'abord
     if (year === 2025) {
       const cached = getFromCache<StravaActivity[]>(CACHE_ACTIVITIES_2025_KEY);
@@ -569,6 +686,11 @@ export async function getStravaActivitiesByYear(year: number = 2025): Promise<St
  */
 export async function getStravaActivityDetails(activityId: number): Promise<StravaActivity> {
   try {
+    // 🎭 Utiliser les mocks si activés (développement uniquement)
+    if (USE_MOCK) {
+      return await mockData.mockGetStravaActivityDetails(activityId)
+    }
+    
     // Utiliser l'endpoint API Vercel (le token est géré côté serveur)
     const url = `/api/strava/activities/${activityId}`;
     const response = await fetch(url, {
@@ -596,6 +718,11 @@ export async function getStravaActivityDetails(activityId: number): Promise<Stra
  */
 export async function getStravaAthlete(): Promise<StravaAthlete> {
   try {
+    // 🎭 Utiliser les mocks si activés (développement uniquement)
+    if (USE_MOCK) {
+      return await mockData.mockGetStravaAthlete()
+    }
+    
     // Vérifier le cache d'abord
     const cached = getFromCache<StravaAthlete>(CACHE_ATHLETE_KEY);
     if (cached) {

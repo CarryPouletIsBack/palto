@@ -16,7 +16,9 @@ Portfolio personnel créé avec React, TypeScript et Vite, présentant une colle
 - **Données Strava en temps réel** : Profil athlète, activités, statistiques
 - **Architecture sécurisée** : Appels API via endpoints Vercel (tokens gérés côté serveur)
 - **Cache intelligent** : Système de cache localStorage (5 minutes) pour limiter les appels API
-- **Graphiques de performance** : Graphique radar et journal d'entraînement
+- **Graphiques de performance** : Graphique radar et journal d'entraînement (arrêt à la dernière activité)
+- **Header dynamique** : Nom et prénom récupérés depuis Strava API avec skeleton de chargement
+- **Photo de profil** : Photo de profil Strava affichée dans le header au lieu du logo (fallback logo SVG)
 - **Limitation des appels API** : Réduction automatique des requêtes grâce au cache
 - **Gestion des tokens** : Refresh automatique des tokens côté serveur via Vercel Functions
 
@@ -66,9 +68,9 @@ Portfolio personnel créé avec React, TypeScript et Vite, présentant une colle
 ## 🎯 Composants Principaux
 
 ### Composants de Layout
-- `Header` - Navigation avec logo, menu et search bar desktop
+- `Header` - Navigation avec photo de profil Strava dynamique, nom/prénom depuis Strava API, menu et search bar desktop
 - `Background` - Gestion du background image dynamique
-- `MobileSearchBar` - Barre de recherche mobile avec dégradé et résultats
+- `MobileSearchBar` - Barre de recherche mobile avec dégradé, résultats en grille carrée et overlay
 
 ### Composants de Pages
 - `Hero` - Page d'accueil avec projets récents et cartes d'information
@@ -144,8 +146,12 @@ Toutes les données sont centralisées dans `/src/data/` :
 - **Affichage sur tous les devices** : Visible sur mobile et desktop
 - **Largeur réduite** : 50% de la largeur par défaut sur desktop
 - **Largeur complète** : 100% quand active sur desktop
-- **Miniatures arrondies** : Thumbnails fully rounded sur desktop
+- **Positionnement optimisé** : Centrée verticalement et alignée à droite dans le header
+- **Effet blur** : Backdrop-filter blur(40px) quand active avec overlay noir à 5%
+- **Z-index élevé** : Search bar active passe devant tous les éléments (z-index: 10000)
+- **Miniatures carrées** : Thumbnails avec bords arrondis (border-radius: 12px) au lieu de cercle
 - **Miniatures agrandies** : Résultats plus grands sur desktop
+- **Responsive** : Adaptation mobile avec largeur 100% et positionnement relatif dans le header
 
 ### Single Project
 - **Effet BlurText** : Animation de blur progressif sur le titre principal
@@ -417,6 +423,27 @@ React Component → /api/strava/athlete → Vercel Function (ajoute token) → S
 - **Respect des limites** : Prévention des erreurs 429 (Too Many Requests)
 
 ## 🔧 Corrections Récentes (Janvier 2025)
+
+### Header avec Intégration Strava Dynamique
+- ✅ **Photo de profil Strava** : Photo de profil affichée dans le header au lieu du logo SVG (object-fit: cover)
+- ✅ **Nom et prénom dynamiques** : Récupération depuis Strava API avec `getStravaAthlete()`
+- ✅ **Skeleton de chargement** : Skeleton animé pendant le chargement des données Strava (nom et photo)
+- ✅ **Fallback** : Logo SVG et nom "Anthony Merault" affichés si pas de données Strava disponibles
+- ✅ **Balise sémantique** : Nom/prénom dans une balise `<p>` au lieu de `<h1>` pour meilleure structure HTML
+
+### Corrections Search Bar Mobile
+- ✅ **Positionnement corrigé** : Search bar correctement intégrée dans le header (position: relative au lieu de fixed)
+- ✅ **Centrage vertical** : Alignement vertical centré dans le header (align-items: center)
+- ✅ **Alignement à droite** : Search bar alignée à droite avec justify-content: flex-end
+- ✅ **Effet blur restauré** : Backdrop-filter blur fonctionnel avec isolation: auto
+- ✅ **Overlay noir** : Overlay noir à 5% d'opacité sur la search bar active (rgba(0, 0, 0, 0.05))
+- ✅ **Z-index optimisé** : Search bar active (z-index: 10000) passe devant tous les éléments (boutons menu z-index: 99)
+- ✅ **Header fixe** : Header reste en position: fixed même quand search bar active pour maintenir le contexte de stacking
+- ✅ **Projets en carré** : Miniatures des projets dans la search bar avec forme carrée et bords arrondis (border-radius: 12px)
+
+### Corrections Graphiques Strava
+- ✅ **Graphique d'entraînement** : Le graphique Spline s'arrête maintenant à la dernière activité (suppression de l'intervalle qui ajoutait des points continuellement)
+- ✅ **Données réelles uniquement** : Affichage uniquement des activités réelles sans simulation de données futures
 
 ### Architecture Strava Corrigée et Opérationnelle (Janvier 2025)
 - ✅ **Migration vers endpoints API Vercel** : Tous les appels Strava passent maintenant par des endpoints serveur sécurisés

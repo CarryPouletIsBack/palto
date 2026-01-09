@@ -1,6 +1,9 @@
+import { useState, useEffect } from 'react'
 import Button from './Button'
 import MobileSearchBar from './MobileSearchBar'
+import Skeleton from './Skeleton'
 import './Header.css'
+import { getStravaAthlete, type StravaAthlete } from '../services/stravaService'
 
 interface HeaderProps {
   onMenuClick: () => void
@@ -14,20 +17,59 @@ interface HeaderProps {
 }
 
 const Header = ({ onMenuClick, onContactClick, onLogoClick, currentPage, onSearchChange, onPageChange, onProjectClose, projectSwipeY }: HeaderProps) => {
+  const [stravaAthlete, setStravaAthlete] = useState<StravaAthlete | null>(null)
+  const [stravaLoading, setStravaLoading] = useState<boolean>(true)
+
+  // Récupérer les informations de l'athlète Strava
+  useEffect(() => {
+    const fetchStravaAthlete = async () => {
+      try {
+        setStravaLoading(true)
+        const athlete = await getStravaAthlete()
+        setStravaAthlete(athlete)
+      } catch (error) {
+        console.error('❌ Erreur lors du chargement des données Strava:', error)
+        // En cas d'erreur, on garde null pour afficher le nom par défaut
+      } finally {
+        setStravaLoading(false)
+      }
+    }
+
+    fetchStravaAthlete()
+  }, [])
+
   return (
     <>
       <header className="header">
         <div className="header-content">
           <button className="logo-section" onClick={onLogoClick} aria-label="Retour à l'accueil">
             <div className="logo">
-              <img
-                src="/images/logo.svg"
-                alt="Logo"
-                style={{ width: '85%', height: '85%', objectFit: 'contain', objectPosition: 'center center' }}
-              />
+              {stravaLoading ? (
+                <Skeleton height="56px" width="56px" borderRadius="50%" className="logo-skeleton" />
+              ) : stravaAthlete && (stravaAthlete.profile || stravaAthlete.profile_medium) ? (
+                <img
+                  src={stravaAthlete.profile || stravaAthlete.profile_medium}
+                  alt={`${stravaAthlete.firstname} ${stravaAthlete.lastname}`}
+                  style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center center' }}
+                />
+              ) : (
+                <img
+                  src="/images/logo.svg"
+                  alt="Logo"
+                  style={{ width: '85%', height: '85%', objectFit: 'contain', objectPosition: 'center center' }}
+                />
+              )}
             </div>
             <div className="logo-text">
-              <h1>Anthony Merault</h1>
+              {stravaLoading ? (
+                <div style={{ display: 'inline-block', margin: 0 }}>
+                  <Skeleton height="18px" width="180px" borderRadius="4px" className="header-name-skeleton" />
+                </div>
+              ) : stravaAthlete ? (
+                <p className="logo-name">{stravaAthlete.firstname} {stravaAthlete.lastname}</p>
+              ) : (
+                <p className="logo-name">Anthony Merault</p>
+              )}
               <p>Product designer & director artistic</p>
             </div>
           </button>
