@@ -445,6 +445,22 @@ React Component → /api/strava/athlete → Vercel Function (ajoute token) → S
 - ✅ **Graphique d'entraînement** : Le graphique Spline s'arrête maintenant à la dernière activité (suppression de l'intervalle qui ajoutait des points continuellement)
 - ✅ **Données réelles uniquement** : Affichage uniquement des activités réelles sans simulation de données futures
 
+### Nettoyage du Code (Janvier 2025)
+- ✅ **Suppression des imports React inutiles** : Nettoyage complet de tous les imports `React` inutiles (React 17+ n'en a plus besoin pour JSX)
+- ✅ **Correction des types React** : Remplacement de `React.FC`, `React.MouseEvent`, `React.TouchEvent`, `React.CSSProperties` par les types importés directement (`FC`, `MouseEvent`, `TouchEvent`, `CSSProperties`)
+- ✅ **Remplacement de React.ReactNode** : Utilisation de `ReactNode` importé de 'react' au lieu de `React.ReactNode`
+- ✅ **Suppression des console.log/warn/error** : Nettoyage de tous les `console.log` de debug dans les composants (conservés uniquement dans les services si nécessaire)
+- ✅ **Suppression des variables inutilisées** : Nettoyage de toutes les variables non utilisées (`stravaActivities`, `_searchTerm`, `_prev`, `_animateOpacity`, etc.)
+- ✅ **Suppression des lignes vides inutiles** : Nettoyage des espaces et lignes vides superflues
+- ✅ **Tous les fichiers passent le linting** : Aucune erreur de linting dans tout le projet
+
+### Corrections de Build Vercel (Janvier 2025)
+- ✅ **Fichiers manquants ajoutés** : Ajout de `StravaRadialBarChart.tsx` et `StravaSonifiedChart.tsx` qui étaient manquants
+- ✅ **Correction des imports React dans les graphiques** : Remplacement de `React.FC` par `FC` dans tous les composants Strava
+- ✅ **Import dynamique conditionnel pour stravaMockData** : Remplacement de l'import statique par un import dynamique conditionnel pour éviter les erreurs de build en production
+- ✅ **Ajout de stravaMockData.ts au commit** : Fichier mock ajouté au dépôt pour permettre à Rollup de le résoudre lors du build (jamais utilisé en production)
+- ✅ **Build Vercel fonctionnel** : Tous les problèmes de build résolus, le projet se build correctement sur Vercel
+
 ### Architecture Strava Corrigée et Opérationnelle (Janvier 2025)
 - ✅ **Migration vers endpoints API Vercel** : Tous les appels Strava passent maintenant par des endpoints serveur sécurisés
 - ✅ **Sécurité renforcée** : Tokens gérés côté serveur, jamais exposés dans le code client
