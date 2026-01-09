@@ -1,4 +1,3 @@
-import React from 'react';
 import './ProjectCharts.css';
 
 interface ChartData {

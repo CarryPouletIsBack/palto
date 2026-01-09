@@ -1,4 +1,4 @@
-import React from "react";
+import { type MouseEvent } from "react";
 import { motion } from "framer-motion";
 import type { FlowNodeData } from "../../data/flowData";
 import { cn } from "../../lib/utils";
@@ -7,7 +7,7 @@ interface TreeNodeProps {
   data: FlowNodeData;
   depth?: number;
   selectedNodes?: Set<string>;
-  onNodeClick?: (nodeId: string, event?: React.MouseEvent) => void;
+  onNodeClick?: (nodeId: string, event?: MouseEvent) => void;
 }
 
 const LINE_COLOR = "bg-zinc-700";
@@ -50,7 +50,7 @@ const getInitials = (label: string): string => {
     .join(" ");
 };
 
-export const TreeNode: React.FC<TreeNodeProps> = ({
+export const TreeNode = ({
   data,
   depth = 0,
   selectedNodes = new Set(),
@@ -61,7 +61,7 @@ export const TreeNode: React.FC<TreeNodeProps> = ({
   const isSelected = selectedNodes.has(data.id);
   const isDisabled = data.disabled === true;
   
-  const handleClick = (e: React.MouseEvent) => {
+  const handleClick = (e: MouseEvent) => {
     if (isDisabled) return; // Ne pas permettre le clic si désactivé
     if (onNodeClick) {
       onNodeClick(data.id, e);

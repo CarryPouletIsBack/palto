@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import { useMemo } from 'react';
 import './TrainingFrequencyChart.css';
 import type { StravaActivity } from '../services/stravaService';
 

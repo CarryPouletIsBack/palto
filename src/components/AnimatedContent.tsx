@@ -1,8 +1,8 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useRef, useState, type ReactNode } from 'react'
 import './AnimatedContent.css'
 
 interface AnimatedContentProps {
-  children: React.ReactNode
+  children: ReactNode
   distance?: number
   direction?: 'horizontal' | 'vertical'
   reverse?: boolean
@@ -24,7 +24,7 @@ const AnimatedContent = ({
   duration = 1.2,
   ease = 'bounce.out',
   initialOpacity = 0.2,
-  animateOpacity: _animateOpacity = true,
+  animateOpacity = true,
   scale = 1.1,
   threshold = 0.2,
   delay = 0.3,

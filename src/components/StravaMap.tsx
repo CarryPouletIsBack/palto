@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import './StravaMap.css';
 
 interface StravaMapProps {
@@ -122,8 +122,8 @@ const StravaMap: React.FC<StravaMapProps> = ({ polyline, activityName, photoUrl,
         .join(' ');
 
       setPath(svgPath);
-    } catch (error) {
-      console.error('Erreur lors du décodage de la polyline:', error);
+    } catch {
+      // Erreur silencieuse lors du décodage de la polyline
     }
   }, [polyline]);
 

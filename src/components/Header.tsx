@@ -27,8 +27,7 @@ const Header = ({ onMenuClick, onContactClick, onLogoClick, currentPage, onSearc
         setStravaLoading(true)
         const athlete = await getStravaAthlete()
         setStravaAthlete(athlete)
-      } catch (error) {
-        console.error('❌ Erreur lors du chargement des données Strava:', error)
+      } catch {
         // En cas d'erreur, on garde null pour afficher le nom par défaut
       } finally {
         setStravaLoading(false)

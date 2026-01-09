@@ -1,4 +1,3 @@
-import React from 'react';
 import './TarotCard.css';
 
 interface TarotCardProps {

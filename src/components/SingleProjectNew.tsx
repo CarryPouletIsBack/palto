@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect, useMemo, useCallback } from 'react';
+import { useState, useRef, useEffect, useMemo, useCallback, type FC, type MouseEvent, type TouchEvent, type CSSProperties } from 'react';
 import { motion, useMotionValue } from 'framer-motion';
 import { Swiper, SwiperSlide } from 'swiper/react';
 import { Pagination } from 'swiper/modules';
@@ -56,7 +56,7 @@ interface SingleProjectProps {
   onSwipeYChange?: (y: number) => void;
 }
 
-const SingleProjectNew: React.FC<SingleProjectProps> = ({ projectData, onBackClick, coverImage = null, projectCategory = null, onSwipeYChange }) => {
+const SingleProjectNew: FC<SingleProjectProps> = ({ projectData, onBackClick, coverImage = null, projectCategory = null, onSwipeYChange }) => {
   const [isClosing, setIsClosing] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
   const pageRef = useRef<HTMLDivElement>(null);
@@ -94,7 +94,7 @@ const SingleProjectNew: React.FC<SingleProjectProps> = ({ projectData, onBackCli
   const [startYValue, setStartYValue] = useState<number>(0); // ctx.startY
   const [initialScrollTop, setInitialScrollTop] = useState<number>(0); // Sauvegarder le scroll initial
 
-  const handleBarMouseDown = (e: React.MouseEvent) => {
+  const handleBarMouseDown = (e: MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
     if (canSwipe()) {
@@ -106,7 +106,7 @@ const SingleProjectNew: React.FC<SingleProjectProps> = ({ projectData, onBackCli
     }
   };
 
-  const handleBarTouchStart = (e: React.TouchEvent) => {
+  const handleBarTouchStart = (e: TouchEvent) => {
     e.preventDefault();
     e.stopPropagation();
     if (canSwipe()) {
@@ -1137,7 +1137,7 @@ const SingleProjectNew: React.FC<SingleProjectProps> = ({ projectData, onBackCli
                 <div className="flex flex-col gap-2">
                   {/* Filter (filtre) blanc */}
                   <div className="bg-white box-border content-stretch flex gap-[10px] items-center justify-end p-[12px] relative rounded-[100px] shrink-0 w-[44px] h-[44px]">
-                    <div className="flex h-[calc(1px*((var(--transform-inner-width)*1)+(var(--transform-inner-height)*0)))] items-center justify-center relative shrink-0 w-[calc(1px*((var(--transform-inner-height)*1)+(var(--transform-inner-width)*0)))]" style={{ "--transform-inner-width": "0", "--transform-inner-height": "0" } as React.CSSProperties}>
+                    <div className="flex h-[calc(1px*((var(--transform-inner-width)*1)+(var(--transform-inner-height)*0)))] items-center justify-center relative shrink-0 w-[calc(1px*((var(--transform-inner-height)*1)+(var(--transform-inner-width)*0)))]" style={{ "--transform-inner-width": "0", "--transform-inner-height": "0" } as CSSProperties}>
                       <div className="flex-none rotate-[270deg]">
                         <div className="relative size-[24px]">
                           <div className="absolute contents inset-[8.333%]">
@@ -1152,7 +1152,7 @@ const SingleProjectNew: React.FC<SingleProjectProps> = ({ projectData, onBackCli
 
                   {/* Filter (filtre) orange */}
                   <div className="bg-[#f07f00] box-border content-stretch flex gap-[10px] items-center justify-center p-[12px] relative rounded-[100px] shrink-0 w-[44px] h-[44px]">
-                    <div className="flex h-[calc(1px*((var(--transform-inner-width)*1)+(var(--transform-inner-height)*0)))] items-center justify-center relative shrink-0 w-[calc(1px*((var(--transform-inner-height)*1)+(var(--transform-inner-width)*0)))]" style={{ "--transform-inner-width": "0", "--transform-inner-height": "0" } as React.CSSProperties}>
+                    <div className="flex h-[calc(1px*((var(--transform-inner-width)*1)+(var(--transform-inner-height)*0)))] items-center justify-center relative shrink-0 w-[calc(1px*((var(--transform-inner-height)*1)+(var(--transform-inner-width)*0)))]" style={{ "--transform-inner-width": "0", "--transform-inner-height": "0" } as CSSProperties}>
                       <div className="flex-none rotate-[270deg]">
                         <div className="relative size-[24px]">
                           <div className="absolute contents inset-[8.333%]">
@@ -1170,7 +1170,7 @@ const SingleProjectNew: React.FC<SingleProjectProps> = ({ projectData, onBackCli
                 <div className="flex flex-col gap-2">
                   {/* Expand (flèche) blanc */}
                   <div className="bg-white box-border content-stretch flex gap-[10px] items-center justify-end p-[12px] relative rounded-[100px] shrink-0 w-[44px] h-[44px]">
-                    <div className="flex h-[calc(1px*((var(--transform-inner-width)*0.7071067690849304)+(var(--transform-inner-height)*0.7071067690849304)))] items-center justify-center relative shrink-0 w-[calc(1px*((var(--transform-inner-height)*0.7071067690849304)+(var(--transform-inner-width)*0.7071067690849304)))]" style={{ "--transform-inner-width": "0", "--transform-inner-height": "0" } as React.CSSProperties}>
+                    <div className="flex h-[calc(1px*((var(--transform-inner-width)*0.7071067690849304)+(var(--transform-inner-height)*0.7071067690849304)))] items-center justify-center relative shrink-0 w-[calc(1px*((var(--transform-inner-height)*0.7071067690849304)+(var(--transform-inner-width)*0.7071067690849304)))]" style={{ "--transform-inner-width": "0", "--transform-inner-height": "0" } as CSSProperties}>
                       <div className="flex-none rotate-[315deg]">
                         <div className="h-[16px] relative w-[14px]">
                           <img alt="Icône expansion" className="block max-w-none size-full" src={expandIconWhite} />
@@ -1181,7 +1181,7 @@ const SingleProjectNew: React.FC<SingleProjectProps> = ({ projectData, onBackCli
 
                   {/* Expand (flèche) orange */}
                   <div className="bg-[#f07f00] box-border content-stretch flex gap-[10px] items-center justify-center p-[12px] relative rounded-[100px] shrink-0 w-[44px] h-[44px]">
-                    <div className="flex h-[calc(1px*((var(--transform-inner-width)*0.7071067690849304)+(var(--transform-inner-height)*0.7071067690849304)))] items-center justify-center relative shrink-0 w-[calc(1px*((var(--transform-inner-height)*0.7071067690849304)+(var(--transform-inner-width)*0.7071067690849304)))]" style={{ "--transform-inner-width": "0", "--transform-inner-height": "0" } as React.CSSProperties}>
+                    <div className="flex h-[calc(1px*((var(--transform-inner-width)*0.7071067690849304)+(var(--transform-inner-height)*0.7071067690849304)))] items-center justify-center relative shrink-0 w-[calc(1px*((var(--transform-inner-height)*0.7071067690849304)+(var(--transform-inner-width)*0.7071067690849304)))]" style={{ "--transform-inner-width": "0", "--transform-inner-height": "0" } as CSSProperties}>
                       <div className="flex-none rotate-[315deg]">
                         <div className="h-[16px] relative w-[14px]">
                           <img alt="Icône expansion" className="block max-w-none size-full" src={expandIconBlue} />

@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import { useMemo } from 'react';
 import { RadarChart } from '@mui/x-charts/RadarChart';
 import type { StravaActivity } from '../services/stravaService';
 

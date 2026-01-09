@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import { useMemo } from 'react';
 import { LineChart } from '@mui/x-charts/LineChart';
 import { Box, useTheme } from '@mui/material';
 import { type StravaActivity, formatDistance } from '../services/stravaService';

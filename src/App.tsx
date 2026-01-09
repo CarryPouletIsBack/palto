@@ -9,7 +9,6 @@ import './App.css'
 
 function App() {
   const [currentPage, setCurrentPage] = useState('accueil')
-  const [_searchTerm, setSearchTerm] = useState('')
   const [previousPage, setPreviousPage] = useState('accueil')
   const [currentProjectImage, setCurrentProjectImage] = useState<string | null>(null)
   const [currentProjectCategory, setCurrentProjectCategory] = useState<string | null>(null)
@@ -19,7 +18,6 @@ function App() {
   // Gestion d'erreur globale
   useEffect(() => {
     const handleError = (event: ErrorEvent) => {
-      console.error('Global error:', event.error)
       setError(event.error)
     }
     
@@ -81,8 +79,8 @@ function App() {
     setCurrentPage('apropos')
   }
 
-  const handleSearchChange = (searchTerm: string) => {
-    setSearchTerm(searchTerm)
+  const handleSearchChange = () => {
+    // Search term géré par MobileSearchBar
   }
 
   const handleLogoClick = () => {

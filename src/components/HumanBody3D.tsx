@@ -67,13 +67,11 @@ const HumanBodyModelOBJ = ({ modelPath }: { modelPath: string }) => {
         
         setObj(pointsGroup)
         setLoading(false)
-        console.log('Model converted to point cloud:', points.length, 'points')
       },
-      (progress) => {
-        console.log('Loading progress:', progress)
+      () => {
+        // Progress callback (non utilisé)
       },
       (error) => {
-        console.error('Error loading OBJ:', error)
         const errorMessage = error instanceof Error ? error.message : 'Failed to load model'
         setError(errorMessage)
         setLoading(false)
@@ -113,7 +111,6 @@ const HumanBodyModelOBJ = ({ modelPath }: { modelPath: string }) => {
   }
 
   if (error) {
-    console.error('Model loading error:', error)
     // Afficher un modèle de base même en cas d'erreur
     return (
       <group position={[0, 1.5, 0]}>

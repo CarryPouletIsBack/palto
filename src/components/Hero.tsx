@@ -5,7 +5,6 @@ import { Pagination } from 'swiper/modules'
 import 'swiper/css'
 import 'swiper/css/pagination'
 
-
 interface HeroProps {
   onPageChange: (page: string, projectImage?: string, projectCategory?: string) => void
 }

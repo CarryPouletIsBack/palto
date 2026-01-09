@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import './SingleProject.css';
 import HoverCard from './HoverCard';
 import Button from './Button';

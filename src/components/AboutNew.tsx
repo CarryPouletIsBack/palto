@@ -25,7 +25,6 @@ const AboutNew = () => {
   const [selectedNodeData, setSelectedNodeData] = useState<FlowNodeData | null>(null)
   const [popupPosition, setPopupPosition] = useState<{ x: number; y: number } | null>(null)
   const [activeSection, setActiveSection] = useState<string>('about-intro')
-  const [stravaActivities, setStravaActivities] = useState<StravaActivity[]>([])
   const [stravaActivities2025, setStravaActivities2025] = useState<StravaActivity[]>([])
   const [stravaActivitiesDetails, setStravaActivitiesDetails] = useState<StravaActivity[]>([])
   const [stravaAllRuns, setStravaAllRuns] = useState<StravaActivity[]>([])
@@ -152,61 +151,49 @@ const AboutNew = () => {
         setStravaLoading(true)
         setStravaError(null)
         
-        console.log('🔄 Début du chargement des données Strava...')
-        
         // Récupérer les activités et les infos de l'athlète en parallèle
-        const [activitiesResult, activities2025Result, allRunsResult, athleteResult] = await Promise.allSettled([
-          getStravaActivities(5),
+        const [activities2025Result, allRunsResult, athleteResult] = await Promise.allSettled([
           getStravaActivitiesByYear(2025),
           getAllRuns(),
           getStravaAthlete()
         ])
         
-        // Traiter les résultats
+        // Récupérer les 5 dernières activités pour les détails
         let activities: StravaActivity[] = []
+        try {
+          activities = await getStravaActivities(5)
+        } catch (error) {
+          // Erreur silencieuse, on continue avec les autres données
+        }
+        
+        // Traiter les résultats
         let activities2025: StravaActivity[] = []
         let allRuns: StravaActivity[] = []
         let athlete: StravaAthlete | null = null
         let hasError = false
         const errors: string[] = []
         
-        if (activitiesResult.status === 'fulfilled') {
-          activities = activitiesResult.value
-          console.log(`✅ Activités chargées: ${activities.length}`)
-        } else {
-          console.error('❌ Erreur getStravaActivities:', activitiesResult.reason)
-          errors.push(`Activités: ${activitiesResult.reason?.message || 'Erreur inconnue'}`)
-          hasError = true
-        }
-        
         if (activities2025Result.status === 'fulfilled') {
           activities2025 = activities2025Result.value
-          console.log(`✅ Activités 2025 chargées: ${activities2025.length}`)
         } else {
-          console.error('❌ Erreur getStravaActivitiesByYear:', activities2025Result.reason)
           errors.push(`Activités 2025: ${activities2025Result.reason?.message || 'Erreur inconnue'}`)
           hasError = true
         }
         
         if (allRunsResult.status === 'fulfilled') {
           allRuns = allRunsResult.value
-          console.log(`✅ Toutes les runs chargées: ${allRuns.length}`)
         } else {
-          console.error('❌ Erreur getAllRuns:', allRunsResult.reason)
           errors.push(`Runs: ${allRunsResult.reason?.message || 'Erreur inconnue'}`)
           hasError = true
         }
         
         if (athleteResult.status === 'fulfilled') {
           athlete = athleteResult.value
-          console.log('✅ Athlète chargé:', athlete?.firstname)
         } else {
-          console.error('❌ Erreur getStravaAthlete:', athleteResult.reason)
           errors.push(`Athlète: ${athleteResult.reason?.message || 'Erreur inconnue'}`)
           hasError = true
         }
         
-        setStravaActivities(activities)
         setStravaActivities2025(activities2025)
         setStravaAllRuns(allRuns)
         setStravaAthlete(athlete)
@@ -219,29 +206,20 @@ const AboutNew = () => {
         // Récupérer les détails des activités (avec photos et polylines)
         if (activities.length > 0) {
           try {
-            console.log('🔄 Chargement des détails des activités...')
             const activitiesDetails = await Promise.all(
               activities.map(activity => 
-                getStravaActivityDetails(activity.id).catch((err) => {
-                  console.warn(`⚠️ Erreur détails activité ${activity.id}:`, err)
-                  return activity
-                })
+                getStravaActivityDetails(activity.id).catch(() => activity)
               )
             )
             setStravaActivitiesDetails(activitiesDetails)
-            console.log(`✅ Détails chargés pour ${activitiesDetails.length} activités`)
-          } catch (error) {
-            console.warn('⚠️ Erreur lors de la récupération des détails des activités:', error)
+          } catch {
             // En cas d'erreur, utiliser les activités de base
             setStravaActivitiesDetails(activities)
           }
         } else {
           setStravaActivitiesDetails([])
         }
-        
-        console.log('✅ Chargement Strava terminé')
       } catch (error) {
-        console.error('❌ Erreur globale lors du chargement des données Strava:', error)
         setStravaError(error instanceof Error ? error.message : 'Erreur lors du chargement des données')
       } finally {
         setStravaLoading(false)
