@@ -28,11 +28,17 @@
 // Vérifier si on doit utiliser les mocks (uniquement en développement)
 const USE_MOCK = import.meta.env.DEV && import.meta.env.VITE_USE_STRAVA_MOCK === 'true'
 
-// Importer les mocks (l'import est tree-shaken si USE_MOCK est false)
-import * as mockData from './stravaMockData'
-
-if (USE_MOCK) {
-  console.log('🎭 Mode MOCK activé - Utilisation des données mockées Strava')
+// Fonction pour charger les mocks de manière dynamique (uniquement en développement)
+async function getMockData() {
+  if (!USE_MOCK) {
+    return null
+  }
+  try {
+    const mockData = await import('./stravaMockData')
+    return mockData
+  } catch {
+    return null
+  }
 }
 
 const STRAVA_CLIENT_ID = import.meta.env.VITE_STRAVA_CLIENT_ID || '193706';
@@ -429,7 +435,10 @@ export async function getStravaActivities(perPage: number = 10, page: number = 1
   try {
     // 🎭 Utiliser les mocks si activés (développement uniquement)
     if (USE_MOCK) {
-      return await mockData.mockGetStravaActivities(perPage, page)
+      const mockData = await getMockData()
+      if (mockData) {
+        return await mockData.mockGetStravaActivities(perPage, page)
+      }
     }
     
     // Vérifier le cache d'abord (pour la première page seulement)
@@ -527,17 +536,20 @@ export async function getStravaActivities(perPage: number = 10, page: number = 1
 export async function getAllRuns(): Promise<StravaActivity[]> {
   if (USE_MOCK) {
     // En mode mock, générer plusieurs pages de runs
-    const allRuns: StravaActivity[] = [];
-    for (let page = 1; page <= 5; page++) {
-      const activities = await mockData.mockGetStravaActivities(200, page);
-      const runs = activities.filter(activity => activity.type === 'Run');
-      allRuns.push(...runs);
+    const mockData = await getMockData()
+    if (mockData) {
+      const allRuns: StravaActivity[] = [];
+      for (let page = 1; page <= 5; page++) {
+        const activities = await mockData.mockGetStravaActivities(200, page);
+        const runs = activities.filter(activity => activity.type === 'Run');
+        allRuns.push(...runs);
+      }
+      // Trier par date (plus ancienne en premier)
+      allRuns.sort((a, b) => 
+        new Date(a.start_date_local).getTime() - new Date(b.start_date_local).getTime()
+      );
+      return allRuns;
     }
-    // Trier par date (plus ancienne en premier)
-    allRuns.sort((a, b) => 
-      new Date(a.start_date_local).getTime() - new Date(b.start_date_local).getTime()
-    );
-    return allRuns;
   }
 
   try {
@@ -615,7 +627,10 @@ export async function getStravaActivitiesByYear(year: number = 2025): Promise<St
   try {
     // 🎭 Utiliser les mocks si activés (développement uniquement)
     if (USE_MOCK) {
-      return await mockData.mockGetStravaActivitiesByYear(year)
+      const mockData = await getMockData()
+      if (mockData) {
+        return await mockData.mockGetStravaActivitiesByYear(year)
+      }
     }
     
     // Vérifier le cache d'abord
@@ -688,7 +703,10 @@ export async function getStravaActivityDetails(activityId: number): Promise<Stra
   try {
     // 🎭 Utiliser les mocks si activés (développement uniquement)
     if (USE_MOCK) {
-      return await mockData.mockGetStravaActivityDetails(activityId)
+      const mockData = await getMockData()
+      if (mockData) {
+        return await mockData.mockGetStravaActivityDetails(activityId)
+      }
     }
     
     // Utiliser l'endpoint API Vercel (le token est géré côté serveur)
@@ -720,7 +738,10 @@ export async function getStravaAthlete(): Promise<StravaAthlete> {
   try {
     // 🎭 Utiliser les mocks si activés (développement uniquement)
     if (USE_MOCK) {
-      return await mockData.mockGetStravaAthlete()
+      const mockData = await getMockData()
+      if (mockData) {
+        return await mockData.mockGetStravaAthlete()
+      }
     }
     
     // Vérifier le cache d'abord
