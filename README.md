@@ -108,10 +108,11 @@ Toutes les données sont centralisées dans `/src/data/` :
 3. **Résumé / Introduction** - Synopsis du projet
 4. **L'équipe projet** - Présentation des membres de l'équipe (carousel)
 5. **Contexte & Démarche** - Besoin client, enjeux, recherche UX, veille, tests
-6. **Wireframes & Maquettes** - Prototypes et architecture (avec file-tree)
-7. **Design System** - Palette colorimétrique et typographie
-8. **Implémentation & Technologies** - Stack technique
-9. **Impacts & Résultats** - Métriques et retours
+6. **Processus détaillé** - Case study avec processus de design détaillé (recherche, veille, idéation, tests)
+7. **Idéation & Solutions testées** - Prototypes et architecture (avec file-tree)
+8. **Design System** - Palette colorimétrique et typographie (tableau typographie masqué)
+9. **Implémentation & Technologies** - Stack technique
+10. **Résultats & Impact** - Métriques avec Donut Chart Race animés et retours
 
 ## ✨ Fonctionnalités Récentes
 
@@ -164,6 +165,11 @@ Toutes les données sont centralisées dans `/src/data/` :
 - **Responsive mobile** : Paragraphes en pleine largeur avec text-align: left sur mobile
 - **Sections organisées** : Sections professionnelles avec espacement optimisé
 - **Carousel équipe** : Présentation des membres de l'équipe avec Swiper.js
+- **Section "Processus détaillé"** : Nouvelle section avec contenu structuré pour les projets (Case Study)
+- **Section "Idéation & Solutions testées"** : Remplacement de "Wireframes & Maquettes" par ce nouveau titre
+- **Donut Chart Race** : Graphiques en donut animés dans la section "Résultats & Impact" avec effet "race" séquentiel
+- **Padding-bottom** : Ajout d'un padding-bottom de 160px sur desktop (64px sur mobile) pour améliorer l'espacement
+- **Masquage tableau typographie** : Tableau des typographies masqué, seul l'alphabet reste visible
 
 ## 🧹 Code Propre et Optimisé
 
@@ -577,6 +583,15 @@ Le projet inclut :
 - [VERCEL_API_SETUP.md](./VERCEL_API_SETUP.md) - Configuration des routes API Vercel
 - [VERCEL_ENV_VARS.md](./VERCEL_ENV_VARS.md) - Variables d'environnement Vercel
 - [DEPLOY.md](./DEPLOY.md) - Guide de déploiement
+
+---
+
+### Améliorations Single Project (Janvier 2025)
+- ✅ **Section "Processus détaillé – PlayDaGo"** : Nouvelle section Case Study avec contenu structuré détaillant le processus de design (recherche utilisateur, veille concurrentielle, idéation, tests & itérations)
+- ✅ **Titre section mis à jour** : "Wireframes & Maquettes" renommé en "Idéation & Solutions testées" pour une meilleure cohérence
+- ✅ **Donut Chart Race** : Intégration de graphiques en donut animés dans la section "Résultats & Impact" avec effet "race" séquentiel (délai progressif entre chaque graphique)
+- ✅ **Padding-bottom amélioré** : Ajout d'un padding-bottom de 160px sur desktop (64px sur mobile) pour un meilleur espacement en bas de page
+- ✅ **Tableau typographie masqué** : Le tableau des typographies est maintenant masqué, seul l'affichage de l'alphabet reste visible
 
 ---
 

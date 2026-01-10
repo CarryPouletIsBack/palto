@@ -2,14 +2,31 @@
 .apropos-new-page {
   position: relative;
   min-height: 100vh;
+  min-height: calc(100vh - env(safe-area-inset-top) - env(safe-area-inset-bottom)); /* Safe area iOS */
   height: 100%;
   width: 100%;
   max-width: 100vw; /* Empêcher le dépassement */
   background: #111;
   color: #ffffff;
-  overflow-x: hidden !important; /* Empêcher le scroll horizontal */
+  overflow-x: hidden !important; /* Empêcher le scroll horizontal sauf pour l'arbre de compétences */
   overflow-y: auto !important;
   box-sizing: border-box;
+  padding-top: env(safe-area-inset-top); /* Safe area iOS en haut */
+  padding-bottom: env(safe-area-inset-bottom); /* Safe area iOS en bas */
+}
+
+/* Permettre le scroll horizontal uniquement pour la section arbre de compétences */
+.apropos-new-page.tree-section-active {
+  overflow-x: auto !important;
+  -webkit-overflow-scrolling: touch; /* Smooth scroll sur iOS */
+  max-width: none !important; /* Permettre le dépassement pour le scroll */
+}
+
+/* Alternative avec :has() si supporté */
+.apropos-new-page:has(.skill-tree-wrapper) {
+  overflow-x: auto !important;
+  -webkit-overflow-scrolling: touch;
+  max-width: none !important;
 }
 
 /* Menu de navigation sous la search bar */
@@ -87,12 +104,6 @@
   opacity: 0.15;
 }
 
-/* Surcharger la règle .page.active qui bloque le scroll horizontal */
-.apropos-new-page.page.active {
-  overflow-x: auto !important;
-  overflow-y: auto !important;
-  max-width: none !important;
-}
 
 .apropos-new-page .main-apropos-new {
   box-sizing: border-box;
@@ -108,8 +119,36 @@
   min-height: calc(100vh - 240px);
   margin: 0;
   z-index: 1;
-  overflow-x: hidden; /* Empêcher le scroll horizontal */
+  overflow-x: hidden; /* Empêcher le scroll horizontal sauf pour l'arbre de compétences */
   overflow-y: visible;
+}
+
+/* Permettre le scroll horizontal uniquement pour la section arbre de compétences */
+.apropos-new-page.tree-section-active {
+  overflow-x: auto !important;
+  -webkit-overflow-scrolling: touch; /* Smooth scroll sur iOS */
+  max-width: none !important; /* Permettre le dépassement pour le scroll */
+}
+
+.apropos-new-page .main-apropos-new.tree-section-active {
+  overflow-x: auto !important;
+  -webkit-overflow-scrolling: touch;
+  min-width: fit-content !important; /* Permettre au contenu de dépasser */
+  max-width: none !important; /* Permettre le dépassement */
+}
+
+.apropos-new-page .skill-tree-wrapper {
+  width: 100%;
+  min-width: fit-content;
+  overflow-x: auto; /* Permettre le scroll horizontal */
+  overflow-y: visible;
+  -webkit-overflow-scrolling: touch; /* Smooth scroll sur iOS */
+  scroll-behavior: smooth;
+  /* Compenser le padding du parent pour permettre le scroll complet depuis le début */
+  margin-left: calc(-48px);
+  margin-right: calc(-48px);
+  padding-left: 0; /* Pas de padding pour voir "Racines" au début */
+  padding-right: 48px;
 }
 
 /* Wrapper pour le contenu de l'introduction */
@@ -201,31 +240,32 @@
   box-sizing: border-box; /* Inclut padding et border dans la largeur */
 }
 
-/* Variante des cartes pour AboutNew UNIQUEMENT : fond transparent et titres en blanc */
+/* Remettre le background des cartes dans la section Introduction */
 .apropos-new-page .intro-column .hero-card.services-card {
-  background: transparent !important;
-  color: #ffffff;
+  background: #fff8f5 !important;
+  border: 1px solid #b2aaaa !important;
+  color: #222;
 }
 
 .apropos-new-page .intro-column .hero-card.services-card .card-header {
-  background: transparent !important;
-  padding: 0 0 12px 0;
+  background: #f9f9f9 !important;
+  padding: 12px 16px;
 }
 
 .apropos-new-page .intro-column .hero-card.services-card .card-title {
-  color: #ffffff !important;
-  font-size: 18px;
+  color: #1f2937 !important;
+  font-size: 20px;
   margin: 0;
 }
 
 .apropos-new-page .intro-column .hero-card.services-card .card-arrow svg,
 .apropos-new-page .intro-column .hero-card.services-card .card-arrow .arrow-icon {
-  color: #ffffff !important;
-  stroke: #ffffff !important;
+  color: #1f2937 !important;
+  stroke: #1f2937 !important;
 }
 
 .apropos-new-page .intro-column .hero-card.services-card .card-arrow svg path {
-  stroke: #ffffff !important;
+  stroke: #1f2937 !important;
 }
 
 /* S'assurer que le Swiper des activités Strava prend toute la largeur */
@@ -641,12 +681,6 @@
   }
 }
 
-.apropos-new-page .skill-tree-wrapper {
-  width: 100%;
-  min-width: fit-content;
-  overflow-x: visible;
-  overflow-y: visible;
-}
 
 
 .apropos-new-page .skill-tree-content {
@@ -678,9 +712,18 @@
 .apropos-new-page .skill-tree-container {
   position: relative;
   padding: 40px;
+  padding-left: 48px; /* Padding à gauche pour aligner avec le contenu parent et voir "Racines" */
+  padding-right: 40px;
+  padding-top: 100px; /* Augmenter le padding-top pour voir "direction créative" */
+  padding-bottom: 100px; /* Ajouter du padding en bas aussi */
   min-width: fit-content;
-  overflow-x: visible;
+  top: 0; /* Réduire le top pour compenser avec padding-top */
+  margin-top: 80px; /* Augmenter la marge verticale en haut pour que "direction créative" soit visible */
+  overflow-x: visible; /* Le scroll est géré par le wrapper parent */
   overflow-y: visible;
+  display: flex;
+  align-items: flex-start;
+  justify-content: flex-start; /* Aligner le contenu à gauche */
 }
 
 /* Responsive */
@@ -704,7 +747,7 @@
 
   .apropos-new-page .main-apropos-new {
     padding: 80px 24px 60px 24px;
-    padding-top: 160px; /* Ajouter de l'espace pour le menu de navigation */
+    padding-top: calc(160px + env(safe-area-inset-top)); /* Ajouter de l'espace pour le menu de navigation + safe area */
   }
 
 
@@ -720,6 +763,30 @@
 
   .apropos-new-page .skill-tree-container {
     padding: 20px;
+    padding-left: 24px; /* Padding à gauche pour aligner avec le contenu parent sur mobile */
+    padding-right: 20px;
+    padding-top: 80px; /* Augmenter le padding-top sur mobile pour voir "direction créative" */
+    padding-bottom: 80px; /* Ajouter du padding en bas aussi sur mobile */
+    margin-top: 60px; /* Augmenter la marge verticale en haut sur mobile */
+    top: 0; /* Réduire le top pour compenser avec padding-top */
+  }
+
+  /* Permettre le scroll horizontal sur mobile pour l'arbre de compétences */
+  .apropos-new-page.tree-section-active .skill-tree-wrapper {
+    margin-left: calc(-24px); /* Compenser le padding mobile (24px) */
+    margin-right: calc(-24px);
+    padding-left: 0; /* Pas de padding pour voir "Racines" au début sur mobile */
+    padding-right: 24px;
+  }
+
+  .apropos-new-page.tree-section-active {
+    overflow-x: auto !important;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .apropos-new-page .main-apropos-new.tree-section-active {
+    overflow-x: auto !important;
+    -webkit-overflow-scrolling: touch;
   }
 }
 
@@ -833,3 +900,71 @@
   font-weight: bold;
 }
 
+/* Styles pour les bulles/nœuds de l'arbre de compétences - Ajout de padding */
+/* Exclure les petites bulles circulaires (w-10 h-10) qui sont des cercles parfaits avec initiales */
+.apropos-new-page .skill-tree-container [data-node-id]:not(.w-10) {
+  padding: 16px 28px !important;
+  box-sizing: border-box !important;
+  min-height: 48px !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+}
+
+/* Exclure explicitement les petites bulles circulaires du conteneur avec gap-2 */
+/* Cibler uniquement les cercles parfaits (rounded-full) dans le conteneur flex-row avec gap-2 qui contient les initiales */
+.apropos-new-page .skill-tree-container .flex.flex-row.items-center.gap-2 > div.rounded-full,
+.apropos-new-page .skill-tree-container .flex.flex-row.items-center.gap-2 > .rounded-full {
+  padding: 0 !important; /* Pas de padding pour les cercles parfaits (40x40px avec initiales) dans le conteneur gap-2 */
+}
+
+/* Padding spécifique pour les bulles circulaires (nœuds principaux: Racines, Product Design, Direction Artistique) */
+/* Exclure les petites bulles à l'intérieur */
+.apropos-new-page .skill-tree-container [data-node-id].rounded-full:not(.w-10),
+.apropos-new-page .skill-tree-container .flex.flex-col.rounded-full:not(.w-10),
+.apropos-new-page .skill-tree-container .flex.rounded-full:not(.w-10) {
+  padding: 16px 32px !important;
+}
+
+/* Padding spécifique pour les bulles rectangulaires (avec sous-branches: UX Design, UI Design, etc.) */
+.apropos-new-page .skill-tree-container [data-node-id].rounded-\[24px\]:not(.w-10),
+.apropos-new-page .skill-tree-container .flex.flex-row.rounded-\[24px\]:not(.w-10),
+.apropos-new-page .skill-tree-container .flex.rounded-\[24px\]:not(.w-10) {
+  padding: 16px 24px !important;
+  min-width: 320px;
+}
+
+/* Assurer le padding pour tous les nœuds avec classe relative.z-10.border, sauf les cercles parfaits */
+.apropos-new-page .skill-tree-container .relative.z-10.border:not(.w-10) {
+  padding: 16px 28px !important;
+  min-height: 48px !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  box-sizing: border-box !important;
+}
+
+/* Assurer le padding pour le contenu texte dans les bulles */
+.apropos-new-page .skill-tree-container .font-semibold.whitespace-nowrap {
+  padding: 0 4px !important;
+}
+
+/* Ajouter de l'espace entre les domaines verticaux (ex: entre UX Design et UI Design) */
+/* L'espace est ajouté uniquement via margin-bottom sur le conteneur du nœud (mb-6 = 24px) */
+.apropos-new-page .skill-tree-container .flex.flex-col > div.relative.flex.flex-row:not(:last-child) > div.py-3.flex.items-center.mb-6 {
+  margin-bottom: 24px !important; /* Espace entre les domaines (24px) */
+}
+
+/* Ajuster les lignes verticales (spine) pour qu'elles s'étendent et restent continues malgré l'espace */
+/* Les lignes sont dans div.relative.w-0.shrink-0 et ont position absolute avec h-[50%] */
+/* Cibler par structure : les divs absolus dans le conteneur spine */
+.apropos-new-page .skill-tree-container .flex.flex-col > div.relative.flex.flex-row:not(:first-child) > div.relative.w-0.shrink-0 > div.absolute {
+  /* La première div absolue (Top Half) - celle qui commence en haut */
+  height: calc(50% + 12px) !important; /* Étendre de 12px (moitié de 24px) */
+}
+
+/* Pour les domaines intermédiaires (pas le dernier), ajuster la ligne du bas */
+.apropos-new-page .skill-tree-container .flex.flex-col > div.relative.flex.flex-row:not(:last-child):not(:first-child) > div.relative.w-0.shrink-0 > div.absolute:nth-child(2) {
+  top: calc(50% - 12px) !important; /* Décaler de 12px vers le haut */
+  height: calc(50% + 12px) !important; /* Étendre de 12px vers le bas */
+}

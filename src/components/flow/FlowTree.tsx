@@ -76,6 +76,7 @@ export const TreeNode = ({
         animate={{ opacity: 1, x: 0 }}
         transition={{ duration: 0.4, delay: depth * 0.1 }}
         onClick={handleClick}
+        data-node-id={data.id}
         className={cn(
           "relative z-10 border text-sm font-medium transition-colors",
           data.branches && data.branches.length > 0 && data.id !== "racines" && data.id !== "domaine_product" && data.id !== "domaine_da"
@@ -223,7 +224,7 @@ export const TreeNode = ({
                   </div>
 
                   {/* Child Content Wrapper */}
-                  <div className="py-3 flex items-center">
+                  <div className="py-3 flex items-center mb-6">
                     <TreeNode
                       data={branch}
                       depth={depth + 1}

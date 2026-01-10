@@ -12,7 +12,6 @@ import HumanBody3D from './HumanBody3D'
 import StravaMap from './StravaMap'
 import StravaRadialBarChart from './StravaRadialBarChart'
 import StravaSplineChart from './StravaSplineChart'
-import StravaSonifiedChart from './StravaSonifiedChart'
 import Skeleton from './Skeleton'
 import { Swiper, SwiperSlide } from 'swiper/react'
 import { Pagination } from 'swiper/modules'
@@ -229,8 +228,41 @@ const AboutNew = () => {
     fetchStravaData()
   }, [])
 
+  // Scroll automatiquement pour voir "direction créative" quand la section devient active
+  useEffect(() => {
+    if (activeSection === 'about-tree') {
+      // Attendre que le DOM soit mis à jour et que l'arbre soit rendu
+      const timer = setTimeout(() => {
+        const wrapper = document.querySelector('.skill-tree-wrapper') as HTMLElement
+        if (!wrapper) return
+        
+        // Chercher le nœud "direction créative" par son data-node-id
+        const directionCreativeNode = document.querySelector('[data-node-id="da_direction_creative"]') as HTMLElement
+        
+        if (directionCreativeNode) {
+          // Calculer la position de "direction créative" pour la rendre visible
+          const wrapperRect = wrapper.getBoundingClientRect()
+          const nodeRect = directionCreativeNode.getBoundingClientRect()
+          const currentScrollLeft = wrapper.scrollLeft
+          const nodeLeftRelativeToWrapper = nodeRect.left - wrapperRect.left + currentScrollLeft
+          const nodeCenter = nodeLeftRelativeToWrapper + (nodeRect.width / 2)
+          const wrapperCenter = wrapper.clientWidth / 2
+          const targetScrollLeft = nodeCenter - wrapperCenter
+          
+          // Scroller pour centrer "direction créative" dans la vue
+          wrapper.scrollLeft = Math.max(0, targetScrollLeft)
+        } else {
+          // Fallback: si on ne trouve pas le nœud, scroller vers le début pour voir "Racines"
+          wrapper.scrollLeft = 0
+        }
+      }, 400) // Augmenter le délai pour s'assurer que le DOM et les animations sont complètement rendus
+
+      return () => clearTimeout(timer)
+    }
+  }, [activeSection])
+
   return (
-    <div className="page active apropos-new-page">
+    <div className={`apropos-new-page ${activeSection === 'about-tree' ? 'tree-section-active' : ''}`}>
       <div className="apropos-new-page-bg">
         <DotGrid
           dotSize={3}
@@ -269,7 +301,7 @@ const AboutNew = () => {
         </button>
       </div>
 
-      <div className="main-apropos-new">
+      <div className={`main-apropos-new ${activeSection === 'about-tree' ? 'tree-section-active' : ''}`}>
         {/* ============================================
             SECTION INTRODUCTION - 3 COLONNES AVEC SILHOUETTE 3D
             ============================================ */}
@@ -326,7 +358,7 @@ const AboutNew = () => {
                       <>
                         <div className="service-item">
                           <div className="service-text">
-                            <p className="service-description" style={{ marginBottom: '12px', fontWeight: '600', color: 'rgba(255, 255, 255, 1)', fontSize: '16px' }}>
+                            <p className="service-description" style={{ marginBottom: '12px', fontWeight: '600', color: '#222', fontSize: '16px' }}>
                               {stravaAthlete.firstname} {stravaAthlete.lastname}
                             </p>
                             <div className="service-tags">
@@ -382,35 +414,6 @@ const AboutNew = () => {
                   </div>
                 </div>
 
-                {/* Troisième carte - Graphique Sonifié Strava */}
-                <div className="hero-card services-card strava-sonified-card">
-                  <div className="card-header">
-                    <h2 className="card-title">Sonification</h2>
-                    <div className="card-arrow">
-                      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" className="arrow-icon">
-                        <path d="M5 12H19M19 12L12 5M19 12L12 19" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                      </svg>
-                    </div>
-                  </div>
-                  <div className="services-content strava-sonified-content">
-                    {stravaLoading ? (
-                      <div style={{ width: '100%', height: '250px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                        <Skeleton height="250px" width="100%" borderRadius="8px" />
-                      </div>
-                    ) : stravaError ? (
-                      <div className="strava-radar-placeholder">
-                        <p style={{ color: '#f1582a', marginBottom: '8px' }}>Erreur</p>
-                        <p style={{ fontSize: '12px', color: '#71717a' }}>{stravaError}</p>
-                      </div>
-                    ) : stravaActivities2025.length === 0 ? (
-                      <div className="strava-radar-placeholder">
-                        <p>Aucune activité disponible</p>
-                      </div>
-                    ) : (
-                      <StravaSonifiedChart activities={stravaActivities2025} />
-                    )}
-                  </div>
-                </div>
               </div>
               
               {/* ============================================

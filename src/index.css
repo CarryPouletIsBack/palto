@@ -12,6 +12,15 @@
   box-sizing: border-box;
 }
 
+html {
+  background: #509ED8; /* Fond par défaut bleu ciel pour l'accueil */
+}
+
+/* Fond noir pour html sur AboutNew (mobile safe area iOS) */
+html:has(body:has(.apropos-new-page)) {
+  background: #111 !important;
+}
+
 body {
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   background: #509ED8; /* Bleu ciel pour l'accueil */
@@ -25,9 +34,9 @@ body {
   position: relative;
 }
 
-/* Supprimer le background du body sur AboutNew */
-body:has(.apropos-new-page.active) {
-  background: transparent;
+/* Fond noir pour body sur AboutNew (mobile safe area iOS) */
+body:has(.apropos-new-page) {
+  background: #111 !important;
 }
 
 /* Fond noir avec 5% de luminosité et teinte bleue pour le menu */
@@ -40,6 +49,12 @@ body.menu-active {
   display: flex;
   flex-direction: column;
   color: rgba(255, 255, 255, 1);
+}
+
+/* Fond noir pour AboutNew (mobile safe area) */
+body:has(.apropos-new-page) #root,
+body:has(.apropos-new-page) .container {
+  background: #111 !important;
 }
 
 .app {

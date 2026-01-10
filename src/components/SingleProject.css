@@ -87,7 +87,7 @@
 }
 
 
-.main-single-project {
+.single-project-page .main-single-project {
   box-sizing: border-box;
   display: flex;
   flex-direction: column;
@@ -100,15 +100,24 @@
   z-index: 1;
   flex: 1;
   padding-top: calc(56.25vw);
-  padding-left: 0px;
-  padding-right: 0px;
-  padding-bottom: 48px;
+  padding-left: 24px;
+  padding-right: 24px;
+  padding-bottom: 160px;
   min-height: calc(100vh - 112px);
 }
 
+/* Ajouter un padding-bottom supplémentaire sur la dernière section */
+.single-project-page .project-section:last-of-type {
+  margin-bottom: 0;
+  padding-bottom: 80px;
+}
+
 @media (max-width: 768px) {
-  .main-single-project {
+  .single-project-page .main-single-project {
     padding-top: 0;
+    padding-left: 16px;
+    padding-right: 16px;
+    padding-bottom: 64px;
   }
 }
 
@@ -375,20 +384,24 @@
 }
 
 /* Color Palette */
-.color-palette-section {
+.single-project-page .color-palette-section {
   display: flex;
   flex-direction: column;
   gap: 24px;
   width: 100%;
   max-width: 100%;
   background: #fff8f5;
-  padding: 24px 0px;
-  padding-left: 0px;
-  padding-right: 0px;
+  padding: 24px 24px;
   border-radius: 8px;
   border: none;
   overflow-x: hidden;
   box-sizing: border-box;
+}
+
+@media (max-width: 768px) {
+  .single-project-page .color-palette-section {
+    padding: 24px 16px;
+  }
 }
 
 
@@ -670,6 +683,7 @@
   min-width: 0;
   overflow: hidden;
   box-sizing: border-box;
+  display: none !important;
 }
 
 .typography-alphabet-container {
@@ -877,11 +891,18 @@
 }
 
 /* Section générique */
-.project-section {
+.single-project-page .project-section {
   width: 100%;
   margin: 32px 0;
-  padding-left: 0px;
-  padding-right: 0px;
+  padding-left: 24px;
+  padding-right: 24px;
+}
+
+@media (max-width: 768px) {
+  .single-project-page .project-section {
+    padding-left: 16px;
+    padding-right: 16px;
+  }
 }
 
 /* Section équipe */
@@ -1238,31 +1259,47 @@
   padding: 32px;
 }
 
-.intro-metadata-container {
-  padding-left: 0px;
-  padding-right: 0px;
+.single-project-page .intro-metadata-container {
+  padding-left: 24px;
+  padding-right: 24px;
+}
+
+@media (max-width: 768px) {
+  .single-project-page .intro-metadata-container {
+    padding-left: 16px;
+    padding-right: 16px;
+  }
 }
 
 /* Composants Section */
-.components-section {
+.single-project-page .components-section {
   display: none !important;
   width: 100%;
   margin: 32px 0;
-  padding-left: 0px;
-  padding-right: 0px;
+  padding-left: 24px;
+  padding-right: 24px;
 }
 
-.project-section.components-section {
-  padding-left: 0px;
-  padding-right: 0px;
+.single-project-page .project-section.components-section {
+  padding-left: 24px;
+  padding-right: 24px;
 }
 
-.components-section .section-card {
+.single-project-page .components-section .section-card {
   background: #fff8f5;
   width: 100%;
   box-sizing: border-box;
-  padding-left: 0px;
-  padding-right: 0px;
+  padding-left: 24px;
+  padding-right: 24px;
+}
+
+@media (max-width: 768px) {
+  .single-project-page .components-section,
+  .single-project-page .project-section.components-section,
+  .single-project-page .components-section .section-card {
+    padding-left: 16px;
+    padding-right: 16px;
+  }
 }
 
 .components-header {
@@ -1636,6 +1673,150 @@
   width: 100%;
 }
 
+/* Case Studie Section */
+.single-project-page .case-studie-section {
+  width: 100%;
+  margin: 32px 0;
+  padding-left: 24px;
+  padding-right: 24px;
+}
+
+.single-project-page .case-studie-section .section-card {
+  background: #fff8f5;
+  border: 1px solid #b2aaaa;
+  border-radius: 12px;
+  padding: 32px;
+  box-sizing: border-box;
+}
+
+.single-project-page .case-studie-content {
+  margin-top: 32px;
+  display: flex;
+  flex-direction: column;
+  gap: 32px;
+}
+
+.single-project-page .case-studie-main-subtitle {
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 28px;
+  font-weight: 600;
+  color: #070912;
+  margin: 0 0 8px 0;
+  line-height: 1.3;
+}
+
+.single-project-page .case-studie-subsection {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.single-project-page .case-studie-subtitle {
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 20px;
+  font-weight: 600;
+  color: #070912;
+  margin: 0;
+  line-height: 1.4;
+}
+
+.single-project-page .case-studie-text {
+  font-family: 'SF Pro', sans-serif;
+  font-size: 16px;
+  line-height: 1.8;
+  color: #222;
+  margin: 0;
+}
+
+.single-project-page .case-studie-list {
+  font-family: 'SF Pro', sans-serif;
+  font-size: 16px;
+  line-height: 1.8;
+  color: #222;
+  margin: 12px 0 0 0;
+  padding-left: 24px;
+  list-style: none;
+}
+
+.single-project-page .case-studie-list li {
+  position: relative;
+  margin-bottom: 12px;
+  padding-left: 0;
+}
+
+.single-project-page .case-studie-list li:before {
+  content: "•";
+  position: absolute;
+  left: -20px;
+  color: #f1582a;
+  font-weight: 600;
+  font-size: 18px;
+}
+
+.single-project-page .case-studie-list li:last-child {
+  margin-bottom: 0;
+}
+
+.single-project-page .case-studie-list strong {
+  font-weight: 600;
+  color: #070912;
+}
+
+/* Résumé narratif avec style spécial */
+.single-project-page .case-studie-summary {
+  margin-top: 8px;
+  padding: 24px;
+  background: rgba(241, 88, 42, 0.05);
+  border-left: 3px solid #f1582a;
+  border-radius: 8px;
+}
+
+.single-project-page .case-studie-summary-title {
+  color: #f1582a;
+  font-size: 20px;
+}
+
+@media (max-width: 768px) {
+  .single-project-page .case-studie-section {
+    padding-left: 16px;
+    padding-right: 16px;
+  }
+  
+  .single-project-page .case-studie-section .section-card {
+    padding: 24px;
+  }
+  
+  .single-project-page .case-studie-content {
+    margin-top: 24px;
+    gap: 28px;
+  }
+  
+  .single-project-page .case-studie-main-subtitle {
+    font-size: 24px;
+  }
+  
+  .single-project-page .case-studie-subtitle {
+    font-size: 18px;
+  }
+  
+  .single-project-page .case-studie-text {
+    font-size: 15px;
+  }
+  
+  .single-project-page .case-studie-list {
+    font-size: 15px;
+    padding-left: 20px;
+  }
+  
+  .single-project-page .case-studie-list li:before {
+    left: -16px;
+  }
+  
+  .single-project-page .case-studie-summary {
+    padding: 20px;
+  }
+}
+
 /* Wireframes Section */
 .wireframes-section {
   display: flex;
@@ -1837,7 +2018,7 @@
 }
 
 /* Section deux colonnes en bas des résultats */
-.results-bottom-section {
+.single-project-page .results-bottom-section {
   display: flex;
   flex-direction: column;
   gap: 32px;
@@ -1858,7 +2039,7 @@
   line-height: normal;
 }
 
-.results-bottom-content {
+.single-project-page .results-bottom-content {
   display: flex;
   flex-direction: row;
   gap: 22px;
@@ -1868,46 +2049,48 @@
   padding: 0;
 }
 
-.results-left-column {
+.single-project-page .results-left-column {
   flex: 0 0 auto;
-  width: 250px;
-  height: 250px;
+  width: 200px;
+  height: 200px;
   display: flex;
   justify-content: center;
   align-items: center;
   flex-shrink: 0;
   overflow: visible;
-  padding: 10px;
+  padding: 0;
+  position: relative;
 }
 
-.results-right-column {
+.single-project-page .results-right-column {
   flex: 1;
   min-width: 0;
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 12px;
   align-items: flex-start;
   justify-content: center;
-  height: 250px;
+  min-height: 200px;
   overflow: visible;
+  padding-left: 24px;
 }
 
-.results-bottom-subtitle {
+.single-project-page .results-bottom-subtitle {
   font-family: 'Space Grotesk', sans-serif;
   font-size: 24px;
-  font-weight: 400;
-  color: #222;
+  font-weight: 500;
+  color: #070912;
   margin: 0;
-  line-height: normal;
+  line-height: 1.4;
 }
 
-.results-bottom-percentage {
-  font-family: 'IBM Plex Mono', monospace;
-  font-size: 32px;
-  font-weight: 600;
-  color: #222;
+.single-project-page .results-bottom-percentage {
+  font-family: 'SF Pro', sans-serif;
+  font-size: 18px;
+  font-weight: 400;
+  color: #666;
   margin: 0;
-  line-height: normal;
+  line-height: 1.6;
 }
 
 .results-bottom-label {
@@ -1918,8 +2101,151 @@
   line-height: 1.6;
 }
 
-/* Cercle animé */
-.animated-circle-container {
+/* Donut Chart Race - Styles spécifiques pour SingleProject */
+.single-project-page .donut-chart-race-container {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto;
+}
+
+.single-project-page .results-left-column .donut-chart-race-container {
+  width: 200px;
+  height: 200px;
+  min-width: 200px;
+  min-height: 200px;
+  max-width: 200px;
+  max-height: 200px;
+}
+
+/* Styles pour Highcharts dans le donut chart */
+.single-project-page .donut-chart-race-container .highcharts-container {
+  width: 200px !important;
+  height: 200px !important;
+  margin: 0 auto !important;
+  padding: 0 !important;
+}
+
+.single-project-page .donut-chart-race-container .highcharts-root {
+  width: 200px !important;
+  height: 200px !important;
+}
+
+.single-project-page .donut-chart-race-container svg.highcharts-root {
+  width: 200px !important;
+  height: 200px !important;
+}
+
+/* Texte au centre du donut chart */
+.single-project-page .donut-chart-center-label {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  text-align: center;
+  pointer-events: none;
+  z-index: 10;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0;
+  padding: 0;
+}
+
+.single-project-page .donut-chart-percentage {
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 50px;
+  font-weight: 600;
+  color: #f1582a;
+  line-height: 1;
+  margin: 0;
+  padding: 0;
+  text-align: center;
+  display: block;
+  white-space: nowrap;
+  letter-spacing: -0.02em;
+}
+
+
+
+/* Styles pour les sections feedback et improvements */
+.single-project-page .results-feedback,
+.single-project-page .results-improvements {
+  margin-top: 32px;
+  padding-top: 32px;
+  border-top: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+.single-project-page .results-feedback h3,
+.single-project-page .results-improvements h3 {
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 20px;
+  font-weight: 500;
+  color: #070912;
+  margin: 0 0 16px 0;
+}
+
+.single-project-page .results-feedback p,
+.single-project-page .results-improvements p {
+  font-family: 'SF Pro', sans-serif;
+  font-size: 16px;
+  line-height: 1.8;
+  color: #222;
+  margin: 0;
+}
+
+@media (max-width: 768px) {
+  .single-project-page .results-bottom-content {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 24px;
+  }
+  
+  .single-project-page .donut-chart-race-container {
+    width: 180px !important;
+    height: 180px !important;
+  }
+  
+  .single-project-page .donut-chart-race-container .highcharts-container,
+  .single-project-page .donut-chart-race-container .highcharts-root,
+  .single-project-page .donut-chart-race-container svg.highcharts-root {
+    width: 180px !important;
+    height: 180px !important;
+  }
+  
+  .single-project-page .donut-chart-percentage {
+    font-size: 42px;
+  }
+  
+  .single-project-page .results-left-column {
+    width: 180px;
+    height: 180px;
+    min-width: 180px;
+    min-height: 180px;
+    max-width: 180px;
+  }
+  
+  .single-project-page .results-right-column {
+    min-height: 180px;
+    padding-left: 16px;
+  }
+  
+  .single-project-page .results-bottom-subtitle {
+    font-size: 20px;
+  }
+  
+  .single-project-page .results-bottom-percentage {
+    font-size: 16px;
+  }
+}
+
+/* Anciens styles SVG (maintenus pour compatibilité) */
+.single-project-page .animated-circle-container {
   position: relative;
   width: 100%;
   height: 100%;
@@ -1929,7 +2255,7 @@
   overflow: visible;
 }
 
-.animated-circle-svg {
+.single-project-page .animated-circle-svg {
   width: 100%;
   height: 100%;
 }
@@ -2130,15 +2456,23 @@
   border-radius: 16px;
 }
 
-.project-section.design-system-section {
+.single-project-page .project-section.design-system-section {
   width: 100%;
-  padding-left: 0px;
-  padding-right: 0px;
+  padding-left: 24px;
+  padding-right: 24px;
 }
 
-.project-section {
-  padding-left: 0px;
-  padding-right: 0px;
+.single-project-page .project-section {
+  padding-left: 24px;
+  padding-right: 24px;
+}
+
+@media (max-width: 768px) {
+  .single-project-page .project-section.design-system-section,
+  .single-project-page .project-section {
+    padding-left: 16px;
+    padding-right: 16px;
+  }
 }
 
 .design-system-section .color-palette-section {
@@ -2546,14 +2880,14 @@
     gap: 32px;
   }
   
-  .project-section.components-section {
-    padding-left: 0px;
-    padding-right: 0px;
+  .single-project-page .project-section.components-section {
+    padding-left: 16px;
+    padding-right: 16px;
   }
   
-  .project-section {
-    padding-left: 0px;
-    padding-right: 0px;
+  .single-project-page .project-section {
+    padding-left: 16px;
+    padding-right: 16px;
   }
   
   .components-grid {
@@ -2606,8 +2940,8 @@
     padding-bottom: 56.25%;
   }
   
-  .main-single-project {
-    padding: 0px 0px 48px 0px;
+  .single-project-page .main-single-project {
+    padding: 0px 16px 48px 16px;
     padding-top: 0 !important;
     gap: 0 !important;
     margin-top: 0 !important;

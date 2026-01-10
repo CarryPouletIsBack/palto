@@ -9,6 +9,7 @@ import { type ProjectData } from '../data/projectsNew';
 import BlurText from './BlurText';
 import { Tree, Folder, File } from './ui/file-tree';
 import { Safari } from './ui/safari';
+import DonutChartRace from './DonutChartRace';
 
 // Constantes en dehors du composant pour éviter les re-créations
 const CLOSE_THRESHOLD = 100;
@@ -345,8 +346,9 @@ const SingleProjectNew: FC<SingleProjectProps> = ({ projectData, onBackClick, co
                 {projectData.approach && (
                   <li><a href="#approach" className="toc-link">{projectData.approach.title}</a></li>
                 )}
+                <li><a href="#case-studie" className="toc-link">Case Studie</a></li>
                 {projectData.wireframes && (
-                  <li><a href="#wireframes" className="toc-link">{projectData.wireframes.title}</a></li>
+                  <li><a href="#wireframes" className="toc-link">Idéation & Solutions testées</a></li>
                 )}
                 {projectData.designSystem && (
                   <li><a href="#design-system" className="toc-link">{projectData.designSystem.colorPalette.title}</a></li>
@@ -488,11 +490,107 @@ const SingleProjectNew: FC<SingleProjectProps> = ({ projectData, onBackClick, co
           </div>
         </section>
 
+        {/* 6. Case Studie */}
+        <section id="case-studie" className="project-section case-studie-section">
+          <div className="section-card">
+            <h2 className="section-title">Processus détaillé – PlayDaGo</h2>
+            <div className="case-studie-content">
+
+              {/* Recherche utilisateur / Interviews */}
+              <div className="case-studie-subsection">
+                <h4 className="case-studie-subtitle">Recherche utilisateur / Interviews</h4>
+                <p className="case-studie-text">
+                  Le projet a débuté par une série de réunions avec la cliente pour comprendre ses besoins et ses contraintes :
+                </p>
+                <ul className="case-studie-list">
+                  <li>
+                    <strong>Première réunion :</strong> découverte des outils existants, des plateformes utilisées et des difficultés rencontrées au quotidien. La cliente expliquait comment ses informations étaient dispersées et comment cela compliquait le suivi des clients et la gestion des formations.
+                  </li>
+                  <li>
+                    <strong>Deuxième réunion :</strong> co-construction du cahier des charges, en priorisant les fonctionnalités essentielles comme le tableau de bord centralisé, le suivi des formations et les notifications automatiques.
+                  </li>
+                  <li>
+                    <strong>Troisième réunion :</strong> discussion sur les contraintes pédagogiques et organisationnelles, définition des parcours utilisateurs principaux et validation des workflows critiques.
+                  </li>
+                  <li>
+                    <strong>Quatrième réunion :</strong> validation des premières maquettes conceptuelles et recueil des retours détaillés sur l'expérience et la hiérarchie de l'information.
+                  </li>
+                </ul>
+                <p className="case-studie-text" style={{ marginTop: '16px' }}>
+                  Cette phase a permis de cerner précisément les besoins fonctionnels et UX, et de construire un cahier des charges évolutif et clair.
+                </p>
+              </div>
+
+              {/* Veille concurrentielle */}
+              <div className="case-studie-subsection">
+                <h4 className="case-studie-subtitle">Veille concurrentielle</h4>
+                <p className="case-studie-text">
+                  Avant toute conception, une analyse des applications et outils similaires a été menée pour identifier les bonnes pratiques UX/UI :
+                </p>
+                <ul className="case-studie-list">
+                  <li>Étude des parcours pédagogiques pour rendre la navigation fluide et intuitive.</li>
+                  <li>Observation des systèmes de suivi de formation et des alertes pour déterminer les méthodes les plus efficaces d'information automatique.</li>
+                  <li>Sélection des éléments pertinents et identification des points à améliorer par rapport aux concurrents.</li>
+                </ul>
+                <p className="case-studie-text" style={{ marginTop: '16px' }}>
+                  Cette veille a servi de référence pour les décisions de design et a permis de créer un prototype adapté aux usages réels.
+                </p>
+              </div>
+
+              {/* Idéation & Solutions testées */}
+              <div className="case-studie-subsection">
+                <h4 className="case-studie-subtitle">Idéation & Solutions testées</h4>
+                <ul className="case-studie-list">
+                  <li>
+                    <strong>Wireframes :</strong> plusieurs esquisses pour organiser les informations et tester différents layouts pour le tableau de bord et les fiches clients.
+                  </li>
+                  <li>
+                    <strong>Prototypes interactifs sur Figma :</strong> simulation de l'expérience utilisateur pour tester la navigation et la hiérarchie des informations.
+                  </li>
+                  <li>
+                    <strong>Réunions de feedback :</strong> points hebdomadaires avec la cliente pour valider les choix et affiner les parcours. Les ajustements principaux concernaient la hiérarchie des tâches, la visibilité des notifications et l'ergonomie du menu latéral.
+                  </li>
+                  <li>
+                    <strong>Itérations successives :</strong> chaque feedback a été intégré pour améliorer la lisibilité, l'efficacité et la fluidité des parcours utilisateur.
+                  </li>
+                </ul>
+              </div>
+
+              {/* Tests & itérations */}
+              <div className="case-studie-subsection">
+                <h4 className="case-studie-subtitle">Tests & itérations</h4>
+                <ul className="case-studie-list">
+                  <li>
+                    <strong>Validation technique :</strong> réunions avec l'équipe front-end et back-end pour vérifier la faisabilité et planifier le développement.
+                  </li>
+                  <li>
+                    <strong>Tests utilisateurs :</strong> tests sur un panel restreint de clients pilotes pour identifier les points de friction.
+                  </li>
+                  <li>
+                    <strong>Corrections et ajustements :</strong> amélioration des boutons d'action, réorganisation des cartes et modules de suivi, clarification des icônes et des notifications.
+                  </li>
+                  <li>
+                    <strong>Itération continue :</strong> ce cycle de tests et corrections a été répété jusqu'à ce que l'interface soit intuitive, cohérente et répondant parfaitement aux besoins de la cliente.
+                  </li>
+                </ul>
+              </div>
+
+              {/* Résumé narratif */}
+              <div className="case-studie-subsection case-studie-summary">
+                <h4 className="case-studie-subtitle case-studie-summary-title">💡 Résumé narratif</h4>
+                <p className="case-studie-text">
+                  Le processus a suivi un cycle constant de recherche → idéation → prototypage → tests → ajustements, avec un dialogue régulier entre la cliente, l'équipe de développement et moi-même. Cette approche a permis de créer une interface efficace, intuitive et parfaitement adaptée aux besoins réels des utilisateurs.
+                </p>
+              </div>
+
+            </div>
+          </div>
+        </section>
 
         {/* 7. Wireframes & Maquettes */}
         {projectData.wireframes && (
           <section id="wireframes" className="project-section wireframes-section">
-            <h2 className="section-title">{projectData.wireframes.title}</h2>
+            <h2 className="section-title">Idéation & Solutions testées</h2>
             
             {/* Safari Browser Mockup */}
             {projectData.wireframes && projectData.wireframes.items && projectData.wireframes.items.length > 0 && projectData.wireframes.items[0].image && (
@@ -1359,86 +1457,60 @@ const SingleProjectNew: FC<SingleProjectProps> = ({ projectData, onBackClick, co
             <div className="section-card">
               <h2 className="section-title">Résultats & Impact</h2>
               
-              {/* Section deux colonnes en bas */}
-              <div className="results-bottom-section">
-                {/* Contenu deux colonnes - Premier cercle */}
-                <div className="results-bottom-content">
-                  {/* Colonne gauche - Cercle animé */}
-                  <div className="results-left-column">
-                    <div className="animated-circle-container">
-                      <svg className="animated-circle-svg" viewBox="0 0 280 280" preserveAspectRatio="xMidYMid meet">
-                        <circle
-                          className="circle-bg"
-                          cx="140"
-                          cy="140"
-                          r="110"
-                          fill="none"
-                          stroke="#d4d4d4"
-                          strokeWidth="40"
-                        />
-                        <circle
-                          className="circle-progress"
-                          cx="140"
-                          cy="140"
-                          r="110"
-                          fill="none"
-                          stroke="#f1582a"
-                          strokeWidth="40"
-                          strokeLinecap="round"
-                          strokeDasharray={`${2 * Math.PI * 110}`}
-                          strokeDashoffset={`${2 * Math.PI * 110 * 0.65}`}
-                          transform="rotate(-90 140 140)"
-                        />
-                      </svg>
-                    </div>
-                  </div>
-                  
-                  {/* Colonne droite - Titre et pourcentage */}
-                  <div className="results-right-column">
-                    <p className="results-bottom-subtitle">Gestion des tâches quotidiennes</p>
-                    <p className="results-bottom-percentage">35%</p>
-                  </div>
+              {/* Section des donut charts */}
+              {projectData.results.metrics && projectData.results.metrics.length > 0 && (
+                <div className="results-bottom-section">
+                  {projectData.results.metrics.map((metric, index) => {
+                    // Extraire la valeur numérique du texte (ex: "40% sur la gestion quotidienne" -> 40)
+                    const valueMatch = metric.value.match(/(\d+)%/);
+                    const numericValue = valueMatch ? parseInt(valueMatch[1], 10) : 0;
+                    
+                    return (
+                      <div key={index} className="results-bottom-content">
+                        {/* Colonne gauche - Donut chart animé */}
+                        <div className="results-left-column">
+                          <DonutChartRace
+                            value={numericValue}
+                            color="#f1582a"
+                            size={200}
+                            animated={true}
+                            delay={index * 200} // Délai progressif pour l'effet "race"
+                          />
+                        </div>
+                        
+                        {/* Colonne droite - Titre et description */}
+                        <div className="results-right-column">
+                          <p className="results-bottom-subtitle">{metric.label}</p>
+                          <p className="results-bottom-percentage">{metric.value}</p>
+                        </div>
+                      </div>
+                    );
+                  })}
                 </div>
-                
-                {/* Contenu deux colonnes - Deuxième cercle */}
-                <div className="results-bottom-content">
-                  {/* Colonne gauche - Cercle animé */}
-                  <div className="results-left-column">
-                    <div className="animated-circle-container">
-                      <svg className="animated-circle-svg" viewBox="0 0 280 280" preserveAspectRatio="xMidYMid meet">
-                        <circle
-                          className="circle-bg"
-                          cx="140"
-                          cy="140"
-                          r="110"
-                          fill="none"
-                          stroke="#d4d4d4"
-                          strokeWidth="40"
-                        />
-                        <circle
-                          className="circle-progress"
-                          cx="140"
-                          cy="140"
-                          r="110"
-                          fill="none"
-                          stroke="#f1582a"
-                          strokeWidth="40"
-                          strokeLinecap="round"
-                          strokeDasharray={`${2 * Math.PI * 110}`}
-                          strokeDashoffset={`${2 * Math.PI * 110 * 0.6}`}
-                          transform="rotate(-90 140 140)"
-                        />
-                      </svg>
-                    </div>
-                  </div>
-                  
-                  {/* Colonne droite - Titre et pourcentage */}
-                  <div className="results-right-column">
-                    <p className="results-bottom-subtitle">Gestion quotidienne</p>
-                    <p className="results-bottom-percentage">40%</p>
-                  </div>
+              )}
+              
+              {/* Feedback et améliorations si disponibles */}
+              {projectData.results.feedback && (
+                <div className="results-feedback" style={{ marginTop: '32px' }}>
+                  <h3 style={{ fontSize: '20px', fontWeight: 500, color: '#070912', marginBottom: '16px' }}>
+                    Retour client
+                  </h3>
+                  <p style={{ fontSize: '16px', lineHeight: 1.8, color: '#222' }}>
+                    {projectData.results.feedback}
+                  </p>
                 </div>
-              </div>
+              )}
+              
+              {projectData.results.improvements && (
+                <div className="results-improvements" style={{ marginTop: '24px' }}>
+                  <h3 style={{ fontSize: '20px', fontWeight: 500, color: '#070912', marginBottom: '16px' }}>
+                    Pistes d'amélioration
+                  </h3>
+                  <p style={{ fontSize: '16px', lineHeight: 1.8, color: '#222' }}>
+                    {projectData.results.improvements}
+                  </p>
+                </div>
+              )}
             </div>
           </section>
         )}
