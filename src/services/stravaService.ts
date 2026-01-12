@@ -710,7 +710,13 @@ export async function getStravaActivityDetails(activityId: number): Promise<Stra
     }
     
     // Utiliser l'endpoint API Vercel (le token est géré côté serveur)
-    const url = `/api/strava/activities/${activityId}`;
+    // S'assurer que l'ID est un nombre
+    const id = typeof activityId === 'string' ? parseInt(activityId, 10) : activityId;
+    if (isNaN(id)) {
+      throw new Error(`ID d'activité invalide: ${activityId}`);
+    }
+    
+    const url = `/api/strava/activities/${id}`;
     const response = await fetch(url, {
       method: 'GET',
       headers: {
@@ -719,7 +725,20 @@ export async function getStravaActivityDetails(activityId: number): Promise<Stra
     });
 
     if (!response.ok) {
+      // Si l'erreur est 404 ou autre, ne pas throw mais retourner undefined
+      if (response.status === 404) {
+        console.warn(`Activité ${id} non trouvée`);
+        throw new Error('Activity not found');
+      }
       await handleApiError(response);
+    }
+
+    // Vérifier que la réponse est bien du JSON
+    const contentType = response.headers.get('content-type');
+    if (!contentType || !contentType.includes('application/json')) {
+      const text = await response.text();
+      console.error('Réponse non-JSON reçue:', text.substring(0, 200));
+      throw new Error('Réponse non-JSON de l\'API Strava');
     }
 
     const data = await response.json();

@@ -225,12 +225,25 @@ const AboutNew = () => {
         if (activities.length > 0) {
           try {
             const activitiesDetails = await Promise.all(
-              activities.map(activity => 
-                getStravaActivityDetails(activity.id).catch(() => activity)
-              )
+              activities.map(async (activity) => {
+                try {
+                  // S'assurer que l'ID est un nombre
+                  const activityId = typeof activity.id === 'string' ? parseInt(activity.id, 10) : activity.id;
+                  if (isNaN(activityId)) {
+                    console.warn(`ID d'activité invalide: ${activity.id}`, activity);
+                    return activity; // Retourner l'activité de base si l'ID est invalide
+                  }
+                  return await getStravaActivityDetails(activityId);
+                } catch (error) {
+                  // En cas d'erreur, utiliser l'activité de base (qui peut déjà avoir des photos)
+                  console.warn(`Erreur lors de la récupération des détails pour l'activité ${activity.id}:`, error);
+                  return activity;
+                }
+              })
             )
             setStravaActivitiesDetails(activitiesDetails)
-          } catch {
+          } catch (error) {
+            console.error('Erreur lors de la récupération des détails des activités:', error);
             // En cas d'erreur, utiliser les activités de base
             setStravaActivitiesDetails(activities)
           }
