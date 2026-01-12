@@ -48,7 +48,13 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     // Rediriger vers le dashboard avec les tokens dans l'URL (à sécuriser en production)
     // ⚠️ En production, utilisez plutôt une session ou un cookie sécurisé
-    const redirectUrl = new URL('/dashboard', process.env.VERCEL_URL || 'http://localhost:3000');
+    
+    // Construire l'URL de redirection correctement
+    const host = req.headers.host || process.env.VERCEL_URL || 'localhost:3000';
+    const protocol = req.headers['x-forwarded-proto'] || (host.includes('localhost') ? 'http' : 'https');
+    const baseUrl = `${protocol}://${host}`;
+    
+    const redirectUrl = new URL('/dashboard', baseUrl);
     redirectUrl.searchParams.set('access_token', tokens.access_token);
     redirectUrl.searchParams.set('expires_in', tokens.expires_in.toString());
     if (tokens.refresh_token) {
