@@ -52,6 +52,8 @@ export const loadProjects = (): { [key: string]: ProjectWithMeta } => {
 export const saveProjects = (projects: { [key: string]: ProjectWithMeta }) => {
   try {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(projects));
+    // Déclencher un événement personnalisé pour notifier les composants
+    window.dispatchEvent(new Event('projectsUpdated'));
   } catch (error) {
     console.error('Erreur lors de la sauvegarde des projets:', error);
   }
@@ -115,8 +117,8 @@ export const deleteProject = (id: string): boolean => {
   return true;
 };
 
-// Obtenir les projets par catégorie
-export const getProjectsByCategory = (category: string): ProjectWithMeta[] => {
+// Obtenir les projets par catégorie (filtre)
+export const getProjectsByCategoryFilter = (category: string): ProjectWithMeta[] => {
   return getAllProjects().filter(project => project.category === category);
 };
 
@@ -128,4 +130,84 @@ export const searchProjects = (query: string): ProjectWithMeta[] => {
     project.subtitle?.toLowerCase().includes(lowerQuery) ||
     project.summary.toLowerCase().includes(lowerQuery)
   );
+};
+
+// Interface pour les projets du menu (compatibilité avec menuCategories)
+export interface MenuItem {
+  imageSrc: string;
+  imageAlt: string;
+  title: string;
+  className?: string;
+  id?: string;
+  category?: string;
+}
+
+// Interface pour les catégories (compatibilité avec menuCategories)
+export interface MenuCategory {
+  key: string;
+  title: string;
+  projects: MenuItem[];
+}
+
+// Convertir les projets en format MenuItem
+export const getProjectsAsMenuItems = (): MenuItem[] => {
+  return getAllProjects()
+    .filter(project => project.status === 'published') // Seulement les projets publiés
+    .map(project => ({
+      imageSrc: project.coverImage || project.image || '',
+      imageAlt: project.title,
+      title: project.title,
+      id: project.id,
+      category: project.category,
+    }));
+};
+
+// Obtenir les projets groupés par catégorie (format MenuCategory)
+export const getProjectsGroupedByCategory = (): MenuCategory[] => {
+  const projects = getAllProjects().filter(project => project.status === 'published');
+  
+  // Mapping des catégories
+  const categoryMap: { [key: string]: { key: string; title: string } } = {
+    'application': { key: 'application', title: 'Application' },
+    'siteWeb': { key: 'siteWeb', title: 'Site web' },
+    'logo': { key: 'logo', title: 'Logo' },
+    'motion': { key: 'motion', title: 'Motion' },
+    'plv': { key: 'plv', title: 'Plv' },
+  };
+
+  // Grouper par catégorie
+  const grouped: { [key: string]: MenuItem[] } = {};
+  
+  projects.forEach(project => {
+    const categoryKey = project.category || 'application';
+    const category = categoryMap[categoryKey] || categoryMap['application'];
+    
+    if (!grouped[category.key]) {
+      grouped[category.key] = [];
+    }
+    
+    grouped[category.key].push({
+      imageSrc: project.coverImage || project.image || '',
+      imageAlt: project.title,
+      title: project.title,
+      id: project.id,
+      category: category.title,
+    });
+  });
+
+  // Convertir en tableau MenuCategory
+  return Object.entries(grouped).map(([key, projects]) => {
+    const category = categoryMap[key] || categoryMap['application'];
+    return {
+      key,
+      title: category.title,
+      projects,
+    };
+  });
+};
+
+// Obtenir un projet par son titre (pour compatibilité avec l'ancien système)
+export const getProjectByTitle = (title: string): ProjectWithMeta | null => {
+  const projects = getAllProjects();
+  return projects.find(p => p.title === title) || null;
 };

@@ -3,8 +3,8 @@ import { motion } from 'framer-motion'
 import Button from './Button'
 import MagicBento from './MagicBento'
 import './MobileSearchBar.css'
-import { getAllProjects, menuCategories, type MenuItem, type MenuCategory } from '../data/menuCategories'
-import { projectsDataNew } from '../data/projectsNew'
+import { getProjectsGroupedByCategory, getProjectsAsMenuItems, getProjectByTitle, type MenuItem, type MenuCategory } from '../services/projectService'
+import { getAllProjects as getAllProjectsFromService } from '../services/projectService'
 
 interface MobileSearchBarProps {
   onSearchChange?: (searchTerm: string) => void
@@ -21,8 +21,34 @@ const MobileSearchBar = ({ onSearchChange, onMenuClick, onSearchClick, onPageCha
   const [searchTerm, setSearchTerm] = useState('')
   const [placeholderIndex, setPlaceholderIndex] = useState(0)
   const [isPlaceholderVisible, setIsPlaceholderVisible] = useState(true)
-  // Récupérer tous les projets depuis les données centralisées
-  const allProjects = getAllProjects()
+  const [menuCategories, setMenuCategories] = useState<MenuCategory[]>([])
+  const [allProjects, setAllProjects] = useState<MenuItem[]>([])
+
+  // Charger les projets depuis localStorage
+  useEffect(() => {
+    const categories = getProjectsGroupedByCategory()
+    const projects = getProjectsAsMenuItems()
+    setMenuCategories(categories)
+    setAllProjects(projects)
+  }, [])
+
+  // Écouter les changements de localStorage
+  useEffect(() => {
+    const handleStorageChange = () => {
+      const categories = getProjectsGroupedByCategory()
+      const projects = getProjectsAsMenuItems()
+      setMenuCategories(categories)
+      setAllProjects(projects)
+    }
+
+    window.addEventListener('storage', handleStorageChange)
+    window.addEventListener('projectsUpdated', handleStorageChange)
+
+    return () => {
+      window.removeEventListener('storage', handleStorageChange)
+      window.removeEventListener('projectsUpdated', handleStorageChange)
+    }
+  }, [])
   
   // Calculer l'opacité en fonction de projectSwipeY (uniquement sur la page projet)
   const screenHeight = typeof window !== 'undefined' ? window.innerHeight : 800
@@ -121,11 +147,11 @@ const MobileSearchBar = ({ onSearchChange, onMenuClick, onSearchClick, onPageCha
       const projectName = currentPage.replace('project-', '')
       
       // Obtenir tous les projets triés par date
-      const projectsWithYear = allProjects
+      const allProjectsFromService = getAllProjectsFromService()
+      const projectsWithYear = allProjectsFromService
         .map(project => {
-          const projectData = projectsDataNew[project.title]
-          const year = projectData?.year || '1900'
-          return { title: project.title, year }
+          const year = project.year || '1900'
+          return { title: project.title, id: project.id, year }
         })
         .sort((a, b) => parseInt(a.year) - parseInt(b.year))
       
@@ -299,11 +325,11 @@ const MobileSearchBar = ({ onSearchChange, onMenuClick, onSearchClick, onPageCha
 
   // Fonction pour obtenir tous les projets triés par date (du plus ancien au plus récent)
   const getProjectsSortedByDate = (): Array<{ title: string; year: string }> => {
-    const projectsWithYear = allProjects
+    const allProjectsFromService = getAllProjectsFromService()
+    const projectsWithYear = allProjectsFromService
       .map(project => {
-        const projectData = projectsDataNew[project.title]
-        // Si le projet n'a pas de données dans projectsDataNew, on utilise une année par défaut très ancienne
-        const year = projectData?.year || '1900'
+        // Si le projet n'a pas de données, on utilise une année par défaut très ancienne
+        const year = project.year || '1900'
         return { title: project.title, year }
       })
       .sort((a, b) => {

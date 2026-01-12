@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import './Menu.css'
 import ProjectItem from './ProjectItem'
-import { menuCategories, type MenuItem } from '../data/menuCategories'
+import { getProjectsGroupedByCategory, type MenuItem, type MenuCategory } from '../services/projectService'
 
 interface MenuProps {
   onPageChange: (page: string, projectImage?: string, projectCategory?: string) => void
@@ -10,6 +10,29 @@ interface MenuProps {
 
 const Menu = ({ onPageChange, searchTerm = '' }: MenuProps) => {
   const [isAnimating, setIsAnimating] = useState(false)
+  const [menuCategories, setMenuCategories] = useState<MenuCategory[]>([])
+
+  useEffect(() => {
+    // Charger les projets depuis localStorage
+    const categories = getProjectsGroupedByCategory()
+    setMenuCategories(categories)
+  }, [])
+
+  // Écouter les changements de localStorage
+  useEffect(() => {
+    const handleStorageChange = () => {
+      const categories = getProjectsGroupedByCategory()
+      setMenuCategories(categories)
+    }
+
+    window.addEventListener('storage', handleStorageChange)
+    window.addEventListener('projectsUpdated', handleStorageChange)
+
+    return () => {
+      window.removeEventListener('storage', handleStorageChange)
+      window.removeEventListener('projectsUpdated', handleStorageChange)
+    }
+  }, [])
 
   const handleProjectClick = (projectName: string, imageSrc?: string, category?: string) => {
     // Navigation vers les pages spéciales ou projets

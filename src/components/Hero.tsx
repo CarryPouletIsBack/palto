@@ -1,5 +1,6 @@
+import { useState, useEffect } from 'react'
 import './Hero.css'
-import { menuCategories } from '../data/menuCategories'
+import { getProjectsGroupedByCategory, type MenuItem } from '../services/projectService'
 import { Swiper, SwiperSlide } from 'swiper/react'
 import { Pagination } from 'swiper/modules'
 import 'swiper/css'
@@ -10,11 +11,36 @@ interface HeroProps {
 }
 
 const Hero = ({ onPageChange }: HeroProps) => {
+  const [allProjects, setAllProjects] = useState<MenuItem[]>([])
 
-  // Obtenir seulement les 4 premiers projets de toutes les catégories, avec leur catégorie
-  const allProjects = menuCategories
-    .flatMap(category => category.projects.map(project => ({ ...project, category: category.title })))
-    .slice(0, 4)
+  useEffect(() => {
+    // Charger les projets depuis localStorage
+    const categories = getProjectsGroupedByCategory()
+    const projects = categories
+      .flatMap(category => category.projects.map(project => ({ ...project, category: category.title })))
+      .slice(0, 4)
+    setAllProjects(projects)
+  }, [])
+
+  // Écouter les changements de localStorage pour mettre à jour les projets
+  useEffect(() => {
+    const handleStorageChange = () => {
+      const categories = getProjectsGroupedByCategory()
+      const projects = categories
+        .flatMap(category => category.projects.map(project => ({ ...project, category: category.title })))
+        .slice(0, 4)
+      setAllProjects(projects)
+    }
+
+    window.addEventListener('storage', handleStorageChange)
+    // Écouter aussi les événements personnalisés pour les changements dans le même onglet
+    window.addEventListener('projectsUpdated', handleStorageChange)
+
+    return () => {
+      window.removeEventListener('storage', handleStorageChange)
+      window.removeEventListener('projectsUpdated', handleStorageChange)
+    }
+  }, [])
 
   // Dates inventées pour les 4 projets
   const projectDates = [
