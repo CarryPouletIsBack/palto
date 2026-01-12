@@ -26,7 +26,18 @@
 // sont conservées pour compatibilité mais ne sont plus utilisées par ce service.
 
 // Vérifier si on doit utiliser les mocks (uniquement en développement)
+// En local (DEV), utiliser les mocks si VITE_USE_STRAVA_MOCK=true
+// En production, ne jamais utiliser les mocks
 const USE_MOCK = import.meta.env.DEV && import.meta.env.VITE_USE_STRAVA_MOCK === 'true'
+
+// Log pour debug (uniquement en développement)
+if (import.meta.env.DEV) {
+  debugLog('🔍 Mode Mock Strava:', {
+    DEV: import.meta.env.DEV,
+    VITE_USE_STRAVA_MOCK: import.meta.env.VITE_USE_STRAVA_MOCK,
+    USE_MOCK: USE_MOCK
+  })
+}
 
 // Fonction utilitaire pour les logs de debug (uniquement en développement)
 const debugLog = (...args: any[]) => {
