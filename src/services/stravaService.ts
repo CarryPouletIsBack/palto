@@ -28,6 +28,13 @@
 // Vérifier si on doit utiliser les mocks (uniquement en développement)
 const USE_MOCK = import.meta.env.DEV && import.meta.env.VITE_USE_STRAVA_MOCK === 'true'
 
+// Fonction utilitaire pour les logs de debug (uniquement en développement)
+const debugLog = (...args: any[]) => {
+  if (import.meta.env.DEV) {
+    console.log(...args)
+  }
+}
+
 // Fonction pour charger les mocks de manière dynamique (uniquement en développement)
 async function getMockData() {
   if (!USE_MOCK) {
@@ -77,7 +84,7 @@ function clearStravaTokens(): void {
     localStorage.removeItem(TOKEN_STORAGE_KEY);
     localStorage.removeItem(TOKEN_EXPIRY_KEY);
     localStorage.removeItem(REFRESH_TOKEN_STORAGE_KEY);
-    console.log('✅ Tokens Strava supprimés du localStorage');
+    debugLog('✅ Tokens Strava supprimés du localStorage');
   }
 }
 
@@ -119,14 +126,14 @@ function initializeToken(): void {
     
     localStorage.setItem(TOKEN_EXPIRY_KEY, expiryTimestamp.toString());
     
-    console.log('✅ Token Strava mis à jour:', {
+    debugLog('✅ Token Strava mis à jour:', {
       token: STRAVA_ACCESS_TOKEN.substring(0, 10) + '...',
       expiry: new Date(expiryTimestamp).toLocaleString('fr-FR'),
       expiresAt: STRAVA_TOKEN_EXPIRES_AT,
       note: 'Token valide jusqu\'à ' + new Date(expiryTimestamp).toLocaleString('fr-FR')
     });
   } else if (STRAVA_ACCESS_TOKEN && !shouldUpdateToken) {
-    console.log('Utilisation du token en cache (encore valide)');
+    debugLog('Utilisation du token en cache (encore valide)');
   }
 }
 
@@ -253,7 +260,7 @@ async function getValidAccessToken(): Promise<string> {
   // Si on a un token dans l'environnement, écraser celui du localStorage pour éviter les conflits
   if (STRAVA_ACCESS_TOKEN && localStorage.getItem(TOKEN_STORAGE_KEY) !== STRAVA_ACCESS_TOKEN) {
     localStorage.setItem(TOKEN_STORAGE_KEY, STRAVA_ACCESS_TOKEN);
-    console.log('🔄 Token du localStorage mis à jour avec celui de .env.local');
+    debugLog('🔄 Token du localStorage mis à jour avec celui de .env.local');
   }
   
   if (!token) {
@@ -419,7 +426,7 @@ function setCache<T>(cacheKey: string, data: T): void {
   try {
     localStorage.setItem(cacheKey, JSON.stringify(data));
     localStorage.setItem(`${CACHE_TIMESTAMP_PREFIX}${cacheKey}`, Date.now().toString());
-    console.log(`💾 Données mises en cache: ${cacheKey}`);
+    debugLog(`💾 Données mises en cache: ${cacheKey}`);
   } catch (e) {
     console.warn('Erreur lors de l\'écriture du cache:', e);
   }
@@ -445,14 +452,14 @@ export async function getStravaActivities(perPage: number = 10, page: number = 1
     if (page === 1 && perPage === 5) {
       const cached = getFromCache<StravaActivity[]>(CACHE_ACTIVITIES_KEY);
       if (cached) {
-        console.log('✅ Activités récupérées depuis le cache (pas d\'appel API)');
+        debugLog('✅ Activités récupérées depuis le cache (pas d\'appel API)');
         return cached;
       }
     }
     
     // Utiliser l'endpoint API Vercel (le token est géré côté serveur)
     const url = `/api/strava/activities?per_page=${perPage}&page=${page}`;
-    console.log('📡 Appel API via endpoint Vercel:', url);
+    debugLog('📡 Appel API via endpoint Vercel:', url);
     
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 10000); // Timeout de 10 secondes
@@ -468,7 +475,7 @@ export async function getStravaActivities(perPage: number = 10, page: number = 1
 
       clearTimeout(timeoutId);
 
-      console.log('📡 Réponse Strava API:', {
+      debugLog('📡 Réponse Strava API:', {
         status: response.status,
         statusText: response.statusText,
         ok: response.ok,
@@ -559,7 +566,7 @@ export async function getAllRuns(): Promise<StravaActivity[]> {
     const perPage = 200; // Maximum par page selon l'API Strava
     let consecutiveEmptyPages = 0;
 
-    console.log('🔄 Début de la récupération de toutes les runs...');
+    debugLog('🔄 Début de la récupération de toutes les runs...');
 
     while (hasMore) {
       const response = await fetch(`/api/strava/activities?per_page=${perPage}&page=${page}`, {
@@ -579,7 +586,7 @@ export async function getAllRuns(): Promise<StravaActivity[]> {
       if (activities.length === 0) {
         consecutiveEmptyPages++;
         if (consecutiveEmptyPages >= 2) {
-          console.log(`✅ Fin de la récupération (page ${page} vide)`);
+          debugLog(`✅ Fin de la récupération (page ${page} vide)`);
           hasMore = false;
           break;
         }
@@ -593,11 +600,11 @@ export async function getAllRuns(): Promise<StravaActivity[]> {
       const runs = activities.filter(activity => activity.type === 'Run');
       allRuns.push(...runs);
       
-      console.log(`📄 Page ${page}: ${activities.length} activités (${runs.length} runs) - Total: ${allRuns.length} runs`);
+      debugLog(`📄 Page ${page}: ${activities.length} activités (${runs.length} runs) - Total: ${allRuns.length} runs`);
 
       // Si on a moins de perPage activités, on a probablement récupéré toutes les activités
       if (activities.length < perPage) {
-        console.log(`✅ Dernière page atteinte (${activities.length} < ${perPage})`);
+        debugLog(`✅ Dernière page atteinte (${activities.length} < ${perPage})`);
         hasMore = false;
       } else {
         page++;
@@ -615,7 +622,7 @@ export async function getAllRuns(): Promise<StravaActivity[]> {
       new Date(a.start_date_local).getTime() - new Date(b.start_date_local).getTime()
     );
 
-    console.log(`✅ Récupération terminée: ${allRuns.length} runs au total`);
+    debugLog(`✅ Récupération terminée: ${allRuns.length} runs au total`);
     return allRuns;
   } catch (error) {
     console.error('❌ Erreur lors de la récupération de toutes les runs:', error);
@@ -637,7 +644,7 @@ export async function getStravaActivitiesByYear(year: number = 2025): Promise<St
     if (year === 2025) {
       const cached = getFromCache<StravaActivity[]>(CACHE_ACTIVITIES_2025_KEY);
       if (cached) {
-        console.log('✅ Activités 2025 récupérées depuis le cache (pas d\'appel API)');
+        debugLog('✅ Activités 2025 récupérées depuis le cache (pas d\'appel API)');
         return cached;
       }
     }
@@ -768,12 +775,12 @@ export async function getStravaAthlete(): Promise<StravaAthlete> {
     // Vérifier le cache d'abord
     const cached = getFromCache<StravaAthlete>(CACHE_ATHLETE_KEY);
     if (cached) {
-      console.log('✅ Données athlète récupérées depuis le cache (pas d\'appel API)');
+      debugLog('✅ Données athlète récupérées depuis le cache (pas d\'appel API)');
       return cached;
     }
     
     // Utiliser l'endpoint API Vercel (le token est géré côté serveur)
-    console.log('📡 Appel API Athlète via endpoint Vercel:', '/api/strava/athlete');
+    debugLog('📡 Appel API Athlète via endpoint Vercel:', '/api/strava/athlete');
     const response = await fetch('/api/strava/athlete', {
       method: 'GET',
       headers: {
@@ -781,7 +788,7 @@ export async function getStravaAthlete(): Promise<StravaAthlete> {
       },
     });
     
-    console.log('📡 Réponse API Athlète:', {
+    debugLog('📡 Réponse API Athlète:', {
       status: response.status,
       statusText: response.statusText,
       ok: response.ok

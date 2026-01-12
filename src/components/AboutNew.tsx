@@ -19,6 +19,13 @@ import 'swiper/css'
 import 'swiper/css/pagination'
 import { getStravaActivities, getStravaActivitiesByYear, getAllRuns, getStravaAthlete, getStravaActivityDetails, formatDistance, formatTime, formatDate, type StravaActivity, type StravaAthlete } from '../services/stravaService'
 
+// Fonction utilitaire pour les logs de debug (uniquement en développement)
+const debugLog = (...args: any[]) => {
+  if (import.meta.env.DEV) {
+    console.log(...args)
+  }
+}
+
 const AboutNew = () => {
   const [selectedNodes, setSelectedNodes] = useState<Set<string>>(new Set())
   const [selectedNodeData, setSelectedNodeData] = useState<FlowNodeData | null>(null)
@@ -558,7 +565,7 @@ const AboutNew = () => {
                           
                           // Debug: afficher dans la console pour vérifier
                           if (activity.total_photo_count > 0 && !photoUrl) {
-                            console.log('Activité avec photos mais URL non trouvée:', {
+                            debugLog('Activité avec photos mais URL non trouvée:', {
                               id: activity.id,
                               name: activity.name,
                               total_photo_count: activity.total_photo_count,
