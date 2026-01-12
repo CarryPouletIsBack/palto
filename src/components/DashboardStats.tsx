@@ -500,35 +500,51 @@ VITE_GOOGLE_REDIRECT_URI=${window.location.origin}/api/google-auth/callback`}
         </div>
       )}
 
-      <div className="stats-chart-container">
-        <div className="stats-chart-placeholder">
-          <BarChart3 size={48} />
-          <p>Graphique des statistiques</p>
-          <p className="stats-note">
-            Pour afficher les données réelles, configurez l'authentification Google Analytics API.
-          </p>
+      {/* Graphique des statistiques - Afficher seulement si pas de données ou erreur */}
+      {(!isLoading && statsData.visitors.value === '0' && authStatus === 'authenticated') ? (
+        <div className="stats-chart-container">
+          <div className="stats-chart-placeholder">
+            <BarChart3 size={48} />
+            <p>Graphique des statistiques</p>
+            <p className="stats-note">
+              Aucune donnée disponible pour les 30 derniers jours. Les statistiques apparaîtront ici une fois que vous aurez du trafic.
+            </p>
+          </div>
         </div>
-      </div>
+      ) : authStatus !== 'authenticated' ? (
+        <div className="stats-chart-container">
+          <div className="stats-chart-placeholder">
+            <BarChart3 size={48} />
+            <p>Graphique des statistiques</p>
+            <p className="stats-note">
+              Pour afficher les données réelles, configurez l'authentification Google Analytics API.
+            </p>
+          </div>
+        </div>
+      ) : null}
 
-      <div className="stats-iframe-container">
-        <div className="stats-iframe-placeholder">
-          <BarChart3 size={48} />
-          <p>Intégration Google Analytics</p>
-          <p className="stats-note">
-            <strong>Authentification requise :</strong> Pour afficher les données réelles, vous devez configurer l'authentification OAuth2 avec Google Analytics.
-            <br />
-            <br />
-            <strong>IDs configurés :</strong>
-            <br />
-            • Google Analytics Property ID: {localStorage.getItem('google_analytics_property_id') || '383170814'}
-            <br />
-            • Google Tag: {localStorage.getItem('google_tag_id') || 'GT-KDDTXMS'}
-            <br />
-            <br />
-            <strong>Documentation API :</strong> <a href="https://developers.google.com/analytics/devguides/reporting/data/v1" target="_blank" rel="noopener noreferrer">Google Analytics Data API</a>
-          </p>
+      {/* Informations de configuration - Afficher seulement si pas authentifié */}
+      {authStatus !== 'authenticated' && (
+        <div className="stats-iframe-container">
+          <div className="stats-iframe-placeholder">
+            <BarChart3 size={48} />
+            <p>Intégration Google Analytics</p>
+            <p className="stats-note">
+              <strong>Authentification requise :</strong> Pour afficher les données réelles, vous devez configurer l'authentification OAuth2 avec Google Analytics.
+              <br />
+              <br />
+              <strong>IDs configurés :</strong>
+              <br />
+              • Google Analytics Property ID: {localStorage.getItem('google_analytics_property_id') || '383170814'}
+              <br />
+              • Google Tag: {localStorage.getItem('google_tag_id') || 'GT-KDDTXMS'}
+              <br />
+              <br />
+              <strong>Documentation API :</strong> <a href="https://developers.google.com/analytics/devguides/reporting/data/v1" target="_blank" rel="noopener noreferrer">Google Analytics Data API</a>
+            </p>
+          </div>
         </div>
-      </div>
+      )}
     </div>
   );
 };
