@@ -36,16 +36,41 @@ function App() {
   useEffect(() => {
     const urlParams = new URLSearchParams(window.location.search)
     const pageParam = urlParams.get('page')
+    const pathname = window.location.pathname
     
-    if (pageParam === 'dashboard') {
+    // Détecter la route depuis le pathname ou le paramètre page
+    let targetPage = pageParam
+    
+    // Si pas de paramètre page, vérifier le pathname
+    if (!targetPage) {
+      if (pathname === '/dashboard' || pathname.startsWith('/dashboard')) {
+        targetPage = 'dashboard'
+      } else if (pathname === '/menu' || pathname.startsWith('/menu')) {
+        targetPage = 'menu'
+      } else if (pathname === '/about' || pathname === '/apropos' || pathname.startsWith('/about')) {
+        targetPage = 'apropos'
+      } else if (pathname.startsWith('/project/')) {
+        const projectId = pathname.replace('/project/', '')
+        targetPage = `project-${projectId}`
+      }
+    }
+    
+    if (targetPage === 'dashboard') {
       // Si on essaie d'accéder au dashboard, vérifier l'authentification
       const authenticated = isAuthenticated()
       setIsLoggedIn(authenticated)
       setCurrentPage('dashboard') // Toujours définir la page pour afficher le login si nécessaire
+      
+      // Mettre à jour l'URL pour inclure ?page=dashboard si nécessaire
+      if (!pageParam && pathname === '/dashboard') {
+        const newUrl = new URL(window.location.href)
+        newUrl.searchParams.set('page', 'dashboard')
+        window.history.replaceState({}, document.title, newUrl.toString())
+      }
     } else {
       setIsLoggedIn(true) // Pas besoin d'auth pour les autres pages
-      if (pageParam) {
-        setCurrentPage(pageParam)
+      if (targetPage) {
+        setCurrentPage(targetPage)
       }
     }
     
