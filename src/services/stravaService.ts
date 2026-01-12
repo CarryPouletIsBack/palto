@@ -473,9 +473,13 @@ export async function getStravaActivities(perPage: number = 10, page: number = 1
   try {
     // 🎭 Utiliser les mocks si activés (développement uniquement)
     if (USE_MOCK) {
+      debugLog('🎭 Mode Mock activé - utilisation des données mockées pour getStravaActivities');
       const mockData = await getMockData()
       if (mockData) {
+        debugLog('✅ Données mockées chargées avec succès pour getStravaActivities');
         return await mockData.mockGetStravaActivities(perPage, page)
+      } else {
+        debugLog('⚠️ Mode Mock activé mais impossible de charger les données mockées pour getStravaActivities');
       }
     }
     
