@@ -347,6 +347,24 @@
   z-index: 2;
 }
 
+/* Styles spécifiques pour les tags dans les activités Strava */
+.apropos-new-page .strava-activity-item .service-tags .tag {
+  font-family: Space Grotesk, sans-serif;
+  font-weight: 400;
+  font-size: 14px;
+  line-height: normal;
+  color: #ffffff;
+  text-align: center;
+  white-space: nowrap;
+  padding: 6px;
+  background: #ffffff03;
+  border: 1px solid #818181;
+  border-radius: 16px;
+  -webkit-backdrop-filter: blur(10px);
+  backdrop-filter: blur(10px);
+  flex-shrink: 0;
+}
+
 /* S'assurer que le contenu des cartes Strava prend toute la largeur */
 .apropos-new-page .services-content.strava-stats-content,
 .apropos-new-page .services-content.strava-radar-content {
