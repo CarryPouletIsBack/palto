@@ -3,6 +3,10 @@
  * 
  * Ce fichier doit être déployé sur Vercel pour fonctionner.
  * Il échange le code d'autorisation contre un token d'accès.
+ * 
+ * ⚠️ Note : Si vous voyez un warning "url.parse() deprecation", il vient probablement
+ * d'une dépendance interne de @vercel/node et n'affecte pas le fonctionnement.
+ * Le code utilise l'API WHATWG URL (new URL()) qui est la méthode recommandée.
  */
 
 import type { VercelRequest, VercelResponse } from '@vercel/node';
@@ -55,8 +59,18 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     
     if (REDIRECT_URI) {
       // Extraire l'origine depuis REDIRECT_URI (ex: https://domain.com/api/...)
-      const redirectUriObj = new URL(REDIRECT_URI);
-      baseUrl = `${redirectUriObj.protocol}//${redirectUriObj.host}`;
+      // Utiliser l'API WHATWG URL (pas url.parse() qui est déprécié)
+      try {
+        const redirectUriObj = new URL(REDIRECT_URI);
+        baseUrl = `${redirectUriObj.protocol}//${redirectUriObj.host}`;
+      } catch (error) {
+        // Si REDIRECT_URI n'est pas une URL valide, utiliser les headers
+        const protocol = req.headers['x-forwarded-proto'] || 'https';
+        const host = req.headers.host || process.env.VERCEL_URL || 'localhost:3000';
+        baseUrl = host.startsWith('http://') || host.startsWith('https://') 
+          ? host 
+          : `${protocol}://${host}`;
+      }
     } else {
       // Fallback : construire depuis les headers
       const protocol = req.headers['x-forwarded-proto'] || 'https';
@@ -66,6 +80,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         : `${protocol}://${host}`;
     }
     
+    // Utiliser l'API WHATWG URL (pas url.parse() qui est déprécié)
     const redirectUrl = new URL('/dashboard', baseUrl);
     redirectUrl.searchParams.set('access_token', tokens.access_token);
     redirectUrl.searchParams.set('expires_in', tokens.expires_in.toString());
