@@ -44,8 +44,8 @@ const DashboardStats = ({ googleAnalyticsId }: DashboardStatsProps) => {
     // ⚠️ IMPORTANT : L'API nécessite un Property ID NUMÉRIQUE (ex: "123456789")
     // Pas un Measurement ID (ex: "G-MS120551E9")
     const savedGAId = localStorage.getItem('google_analytics_property_id') || localStorage.getItem('google_analytics_id');
-    // TODO: Remplacez par votre Property ID numérique (trouvez-le dans Google Analytics → Administration → Propriété)
-    const defaultGAId = ''; // Property ID numérique requis (ex: "123456789")
+    // Property ID numérique configuré
+    const defaultGAId = '383170814'; // Property ID numérique
     const defaultGTId = 'GT-KDDTXMS'; // ID Google Tag/Measurement (pour le tracking, pas pour l'API)
     
     // Utiliser l'ID sauvegardé, celui passé en prop, ou l'ID par défaut
