@@ -224,6 +224,7 @@ VITE_GOOGLE_CLIENT_ID=votre_google_client_id
 VITE_GOOGLE_REDIRECT_URI=http://localhost:5173/api/google-auth/callback
 
 # Google Analytics Tracking (react-ga4)
+# ⚠️ IMPORTANT : Pour react-ga4 (côté client), on DOIT utiliser VITE_ même dans Vercel
 VITE_GA_MEASUREMENT_ID=G-MS120551E9
 
 # Dashboard (pour l'authentification)

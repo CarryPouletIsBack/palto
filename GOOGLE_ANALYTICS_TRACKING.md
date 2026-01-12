@@ -23,11 +23,20 @@ VITE_GA_MEASUREMENT_ID=G-MS120551E9
 
 ### 2. Variable d'environnement Vercel (Production)
 
+⚠️ **IMPORTANT** : Pour `react-ga4` (côté client), vous **DEVEZ** utiliser le préfixe `VITE_` même dans Vercel !
+
+**Pourquoi ?**
+- `react-ga4` s'exécute côté **client** (navigateur)
+- Vite ne remplace que les variables avec le préfixe `VITE_` dans le code client
+- C'est différent des API routes (serveur) qui utilisent des variables **sans** `VITE_`
+
+**Configuration dans Vercel :**
+
 1. Allez sur votre tableau de bord Vercel
 2. Sélectionnez votre projet
 3. Allez dans **Settings** → **Environment Variables**
 4. Ajoutez une nouvelle variable :
-   - **Nom** : `VITE_GA_MEASUREMENT_ID`
+   - **Nom** : `VITE_GA_MEASUREMENT_ID` ⚠️ **Avec le préfixe VITE_**
    - **Valeur** : `G-MS120551E9`
    - Cochez **Production**, **Preview** et **Development**
 5. Sauvegardez
