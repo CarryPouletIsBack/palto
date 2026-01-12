@@ -1,0 +1,99 @@
+.project-cover-image-above {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: calc(50vh + 150px);
+  z-index: 1999;
+  overflow: hidden;
+}
+
+.project-cover-image-above::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(to bottom, rgba(255, 248, 245, 0) 0%, rgba(255, 248, 245, 0.66) 100%);
+  z-index: 1;
+  pointer-events: none;
+}
+
+.project-cover-swiper {
+  width: 100%;
+  height: 100%;
+  position: relative;
+}
+
+.project-cover-slide {
+  width: 100%;
+  height: 100%;
+}
+
+.project-cover-media {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center;
+  display: block;
+  position: relative;
+  z-index: 0;
+}
+
+/* Dots de pagination ronds */
+.project-cover-swiper .swiper-pagination {
+  bottom: 100px !important;
+  left: 50% !important;
+  transform: translateX(-50%) !important;
+  width: auto !important;
+  display: flex !important;
+  gap: 8px !important;
+  justify-content: center !important;
+  align-items: center !important;
+  z-index: 100 !important;
+  position: absolute !important;
+}
+
+.project-cover-swiper .swiper-pagination-bullet-round {
+  width: 10px !important;
+  height: 10px !important;
+  background: rgba(255, 255, 255, 0.5) !important;
+  border-radius: 50% !important;
+  opacity: 1 !important;
+  cursor: pointer !important;
+  transition: all 0.3s ease !important;
+  border: none !important;
+  margin: 0 !important;
+  outline: none !important;
+  box-shadow: none !important;
+}
+
+.project-cover-swiper .swiper-pagination-bullet-active-round {
+  background: rgba(255, 255, 255, 1) !important;
+  width: 12px !important;
+  height: 12px !important;
+  border: none !important;
+  outline: none !important;
+  box-shadow: none !important;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .project-cover-swiper .swiper-pagination {
+    bottom: 120px !important;
+    gap: 6px !important;
+    z-index: 100 !important;
+    position: absolute !important;
+  }
+
+  .project-cover-swiper .swiper-pagination-bullet-round {
+    width: 8px !important;
+    height: 8px !important;
+  }
+
+  .project-cover-swiper .swiper-pagination-bullet-active-round {
+    width: 10px !important;
+    height: 10px !important;
+  }
+}

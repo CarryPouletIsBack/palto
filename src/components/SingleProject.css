@@ -1,7 +1,7 @@
 /* Page Single Project */
 .single-project-page {
   position: fixed;
-  top: 112px;
+  top: calc(48vh + 100px); /* Valeur par défaut, sera surchargée par le style inline */
   left: 0;
   right: 0;
   bottom: 0;
@@ -19,6 +19,7 @@
   touch-action: pan-y;
   transform: translateZ(0);
   -webkit-transform: translateZ(0);
+  transition: top 0.1s ease-out;
 }
 
 .single-project-page.dragging {
@@ -38,7 +39,7 @@
   display: flex;
   justify-content: center;
   align-items: center;
-  padding: 12px 0 8px 0;
+  padding: 24px 0 16px 0;
   z-index: 1000;
   background: rgba(255, 248, 245, 0);
   cursor: grab;
@@ -54,9 +55,9 @@
 
 .swipe-indicator-handle {
   width: 40px;
-  height: 4px;
+  height: 6px;
   background: rgba(0, 0, 0, 0.3);
-  border-radius: 2px;
+  border-radius: 3px;
   transition: background 0.2s ease;
 }
 
@@ -99,7 +100,7 @@
   margin: 0 auto;
   z-index: 1;
   flex: 1;
-  padding-top: calc(56.25vw);
+  padding-top: 0;
   padding-left: 24px;
   padding-right: 24px;
   padding-bottom: 160px;
@@ -1456,6 +1457,7 @@
 
 /* Table of Contents Section */
 .table-of-contents-section {
+  display: none !important;
   margin-bottom: 32px;
   margin-top: 0;
 }
@@ -2919,7 +2921,7 @@
   }
 
   .single-project-page {
-    top: 112px;
+    top: calc(48vh + 100px);
     bottom: 0;
     border-radius: 20px 20px 0 0;
     overflow-y: auto;
@@ -2929,8 +2931,8 @@
   }
 
   .swipe-indicator-bar {
-    padding-top: 4px !important;
-    padding-bottom: 4px !important;
+    padding-top: 24px !important;
+    padding-bottom: 16px !important;
   }
 
   .project-hero-image {

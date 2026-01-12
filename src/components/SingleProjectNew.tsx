@@ -60,6 +60,7 @@ interface SingleProjectProps {
 const SingleProjectNew: FC<SingleProjectProps> = ({ projectData, onBackClick, coverImage = null, projectCategory = null, onSwipeYChange }) => {
   const [isClosing, setIsClosing] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
+  const [scrollTop, setScrollTop] = useState(0);
   const pageRef = useRef<HTMLDivElement>(null);
   const barRef = useRef<HTMLDivElement>(null);
   const tocRef = useRef<HTMLDivElement>(null);
@@ -70,6 +71,31 @@ const SingleProjectNew: FC<SingleProjectProps> = ({ projectData, onBackClick, co
   // Mémoriser la hauteur de l'écran pour éviter les recalculs
   const screenHeight = useMemo(() => {
     return typeof window !== 'undefined' ? window.innerHeight : 800;
+  }, []);
+
+  // Calculer la position top en fonction du scroll (de 48vh + 100px à 0)
+  const topPosition = useMemo(() => {
+    const maxScroll = 200; // Nombre de pixels de scroll pour atteindre le haut
+    const initialTop = screenHeight * 0.48 + 100; // 48vh + 100px en pixels
+    const scrollProgress = Math.min(scrollTop / maxScroll, 1); // 0 à 1
+    return initialTop * (1 - scrollProgress); // De 48vh + 100px à 0
+  }, [scrollTop, screenHeight]);
+
+  // Écouter le scroll pour mettre à jour la position
+  useEffect(() => {
+    const handleScroll = () => {
+      if (pageRef.current) {
+        setScrollTop(pageRef.current.scrollTop);
+      }
+    };
+
+    const pageElement = pageRef.current;
+    if (pageElement) {
+      pageElement.addEventListener('scroll', handleScroll, { passive: true });
+      return () => {
+        pageElement.removeEventListener('scroll', handleScroll);
+      };
+    }
   }, []);
 
   // Notifier le parent de la valeur initiale
@@ -247,10 +273,13 @@ const SingleProjectNew: FC<SingleProjectProps> = ({ projectData, onBackClick, co
         className={`page active single-project-page ${isClosing ? 'closing' : ''} ${isDragging ? 'dragging' : ''}`}
         style={isDragging ? {
           y: y,
+          top: `${topPosition}px`,
         } : isClosing ? {
           y: screenHeight,
+          top: `${topPosition}px`,
         } : {
           y: 0,
+          top: `${topPosition}px`,
         }}
         animate={!isDragging && isClosing ? {
           y: screenHeight,
@@ -278,45 +307,6 @@ const SingleProjectNew: FC<SingleProjectProps> = ({ projectData, onBackClick, co
         </div>
         
         <div className="main-single-project">
-
-        {/* Image/Video Hero - Tout en haut */}
-        <div className="project-hero-image">
-          {(() => {
-            const mediaSrc = coverImage || projectData.image;
-            
-            // Vérifier si mediaSrc existe et n'est pas vide
-            if (!mediaSrc) {
-              return null;
-            }
-            
-            // Vérifier si c'est une vidéo (extension vidéo ou projet "mp audio")
-            const hasVideoExtension = /\.(mp4|webm|mov|avi|mkv)$/i.test(mediaSrc);
-            const isMpAudioProject = projectData.title.toLowerCase().includes('mp audio');
-            const isVideo = hasVideoExtension || isMpAudioProject;
-            
-            if (isVideo) {
-              return (
-                <video 
-                  src={mediaSrc} 
-                  autoPlay 
-                  loop 
-                  muted 
-                  playsInline
-                  style={{ width: '100%', height: '100%', display: 'block', objectFit: 'cover', pointerEvents: 'none' }}
-                />
-              );
-            }
-            
-            // Sinon, c'est une image
-            return (
-              <img 
-                src={mediaSrc} 
-                alt={projectData.title} 
-                style={{ width: '100%', height: '100%', display: 'block', objectFit: 'cover', pointerEvents: 'none' }}
-              />
-            );
-          })()}
-        </div>
 
         {/* 1. Titre Principal avec badges */}
         <div className="project-header-section">

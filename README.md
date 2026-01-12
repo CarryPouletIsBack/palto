@@ -49,6 +49,7 @@ Portfolio personnel créé avec React, TypeScript et Vite, présentant une colle
 - **GSAP** pour les animations avancées
 - **React Router DOM** pour la navigation
 - **Swiper.js** pour les carousels
+- **Highcharts** pour les graphiques avancés (DonutChartRace, StravaSonifiedChart, StravaSplineChart, StravaRadialBarChart)
 - **Shadcn/ui** pour les composants UI (file-tree, scroll-area, button)
 - **Radix UI** pour les primitives d'accessibilité
 - **React Three Fiber** pour le rendu 3D
@@ -155,9 +156,13 @@ Toutes les données sont centralisées dans `/src/data/` :
 - **Responsive** : Adaptation mobile avec largeur 100% et positionnement relatif dans le header
 
 ### Single Project
+- **Image de couverture carousel** : Carousel d'images/vidéos au-dessus de la page avec dots de pagination ronds
+- **Position dynamique** : Page SingleProject positionnée à 50% de la hauteur de l'écran (48vh + 100px)
+- **Scroll interactif** : La page remonte progressivement jusqu'en haut lors du scroll (de 48vh + 100px à 0)
+- **Swipe synchronisé** : L'image de couverture descend en même temps que la page lors du swipe down
+- **Overlay dégradé** : Overlay transparent en haut qui devient progressivement opaque vers le bas (#FFF8F5 à 66%)
 - **Effet BlurText** : Animation de blur progressif sur le titre principal
-- **Sommaire (Table of Contents)** : Navigation horizontale scrollable avec liens vers toutes les sections
-- **Sommaire sticky** : Le sommaire reste fixe en haut de la page lors du scroll (implémenté avec JavaScript)
+- **Sommaire masqué** : Le sommaire est maintenant masqué (peut être réactivé si nécessaire)
 - **ProgressiveBlur** : Effet de blur en bas de page qui suit le scroll
 - **File Tree** : Affichage des wireframes avec composant file-tree
 - **Support vidéo** : Affichage de vidéos en couverture (ex: Mp audio)
@@ -165,6 +170,7 @@ Toutes les données sont centralisées dans `/src/data/` :
 - **Responsive mobile** : Paragraphes en pleine largeur avec text-align: left sur mobile
 - **Sections organisées** : Sections professionnelles avec espacement optimisé
 - **Carousel équipe** : Présentation des membres de l'équipe avec Swiper.js
+- **Barre de swipe améliorée** : Padding augmenté (24px top, 16px bottom) et handle plus épais (6px)
 - **Section "Processus détaillé"** : Nouvelle section avec contenu structuré pour les projets (Case Study)
 - **Section "Idéation & Solutions testées"** : Remplacement de "Wireframes & Maquettes" par ce nouveau titre
 - **Donut Chart Race** : Graphiques en donut animés dans la section "Résultats & Impact" avec effet "race" séquentiel

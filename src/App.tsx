@@ -5,6 +5,7 @@ import Hero from './components/Hero'
 import About from './components/About'
 import AboutNew from './components/AboutNew'
 import Project from './components/Project'
+import ProjectCoverCarousel from './components/ProjectCoverCarousel'
 import './App.css'
 
 function App() {
@@ -116,6 +117,15 @@ function App() {
             {previousPage === 'aproposnew' && <AboutNew />}
             {/* {previousPage === 'menu' && <Menu onPageChange={handlePageChange} searchTerm={searchTerm} />} */}
           </>
+        )}
+        
+        {/* Image de couverture carousel au-dessus de la page SingleProject */}
+        {isProjectPage && currentProjectImage && (
+          <ProjectCoverCarousel 
+            coverImage={currentProjectImage} 
+            projectName={currentPage.startsWith('project-') ? currentPage.replace('project-', '') : 'Playdago'}
+            swipeY={projectSwipeY}
+          />
         )}
         
         {/* Afficher le projet par-dessus le contenu */}

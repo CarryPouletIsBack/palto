@@ -39,6 +39,8 @@
   }
 }
 
+/* Image de couverture au-dessus de la page SingleProject - styles gérés dans ProjectCoverCarousel.css */
+
 /* Responsive utilities */
 @media (max-width: 768px) {
   .container {
