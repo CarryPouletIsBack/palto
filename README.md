@@ -240,6 +240,41 @@ npm run build
 npm run preview
 ```
 
+### Intégration Google Analytics
+
+Le projet intègre l'API Google Analytics Data pour afficher les statistiques du site dans le dashboard.
+
+**⚠️ IMPORTANT : Variables d'environnement Vercel**
+
+Dans Vercel, les variables d'environnement pour les **API routes** ne doivent **PAS** avoir le préfixe `VITE_` !
+
+**Configuration en développement local (`.env.local`) :**
+```env
+# Côté client (React) - avec préfixe VITE_
+VITE_GOOGLE_CLIENT_ID=votre_client_id
+VITE_GOOGLE_REDIRECT_URI=http://localhost:5173/api/google-auth/callback
+```
+
+**Configuration en production (Vercel Environment Variables) :**
+```env
+# Côté serveur (API routes) - SANS préfixe VITE_
+GOOGLE_CLIENT_ID=votre_client_id
+GOOGLE_CLIENT_SECRET=votre_client_secret
+GOOGLE_REDIRECT_URI=https://votre-projet.vercel.app/api/google-auth/callback
+```
+
+**Pourquoi cette différence ?**
+- Le préfixe `VITE_` est uniquement pour les variables accessibles côté **client** (navigateur)
+- Les API routes Vercel sont côté **serveur**, donc elles utilisent les variables **sans** préfixe `VITE_`
+- Dans votre code client (React), vous utilisez `import.meta.env.VITE_GOOGLE_CLIENT_ID`
+- Dans vos API routes (`api/google-auth/callback.ts`), vous utilisez `process.env.GOOGLE_CLIENT_ID` (sans VITE_)
+
+**Endpoints API disponibles :**
+- `GET /api/google-auth/callback` - Gère le callback OAuth2
+- `POST /api/google-auth/refresh` - Rafraîchit les tokens expirés
+
+Voir [GOOGLE_ANALYTICS_SETUP.md](./GOOGLE_ANALYTICS_SETUP.md) pour la configuration complète.
+
 ### Intégration Strava
 
 Le projet intègre l'API Strava pour afficher vos données sportives via des **endpoints API Vercel sécurisés**.
