@@ -5,12 +5,14 @@ Portfolio personnel créé avec React, TypeScript et Vite, présentant une colle
 ## 🚀 Fonctionnalités
 
 ### Navigation & Pages
-- **Navigation complète** entre les pages (Accueil, Menu, À propos, Projets)
+- **Navigation complète** entre les pages (Accueil, Menu, À propos, Projets, Dashboard)
 - **Design responsive** adapté mobile et desktop
 - **Page d'accueil** avec hero section, carousel de projets et cartes d'information
 - **Page menu** avec recherche et filtrage en temps réel par catégories
 - **Page à propos** avec intégration Strava en temps réel (profil, activités, performance, entraînement)
 - **Pages projets individuelles** structurées en sections professionnelles
+- **Dashboard** avec gestion de projets et statistiques Google Analytics
+- **Page de connexion** pour accéder au dashboard
 
 ### Intégration Strava
 - **Données Strava en temps réel** : Profil athlète, activités, statistiques
@@ -59,6 +61,8 @@ Portfolio personnel créé avec React, TypeScript et Vite, présentant une colle
 - **Recharts** pour les graphiques de performance Strava
 - **MUI X Charts** pour les visualisations de données
 - **Vercel API Routes** pour les endpoints serveur (optionnel)
+- **Google Analytics Data API** pour les statistiques du site
+- **Lucide React** pour les icônes
 
 ## 📱 Pages
 
@@ -66,6 +70,8 @@ Portfolio personnel créé avec React, TypeScript et Vite, présentant une colle
 2. **Menu** (`/menu`) - Liste de tous les projets avec recherche et filtrage par catégories
 3. **À propos** (`/about`) - Parcours professionnel, compétences, expériences et formations
 4. **Projet** (`/project/:id`) - Page détaillée d'un projet avec 9 sections structurées
+5. **Dashboard** (`/dashboard`) - Interface d'administration avec gestion de projets et statistiques
+6. **Login** (`/login`) - Page de connexion pour accéder au dashboard
 
 ## 🎯 Composants Principaux
 
@@ -204,12 +210,20 @@ npm install
 
 # Configuration des variables d'environnement
 # Créez un fichier .env.local à la racine :
-# Pour le développement local avec Vercel CLI (recommandé)
+
+# Strava API (pour le développement local avec Vercel CLI)
 STRAVA_CLIENT_ID=votre_client_id
 STRAVA_CLIENT_SECRET=votre_client_secret
 STRAVA_ACCESS_TOKEN=votre_access_token
 STRAVA_REFRESH_TOKEN=votre_refresh_token
 STRAVA_TOKEN_EXPIRES_AT=timestamp_unix_expiration
+
+# Google Analytics OAuth2 (pour le dashboard)
+VITE_GOOGLE_CLIENT_ID=votre_google_client_id
+VITE_GOOGLE_REDIRECT_URI=http://localhost:5173/api/google-auth/callback
+
+# Dashboard (pour l'authentification)
+DASHBOARD_PASSWORD=votre_mot_de_passe
 
 # Lancement en développement
 # Option 1: Avec Vercel CLI (pour tester les API routes)
@@ -305,6 +319,9 @@ src/
 │   ├── SingleProjectNew.tsx # Page projet (sections)
 │   ├── ProjectItem.tsx     # Carte projet réutilisable
 │   ├── Button.tsx          # Bouton réutilisable
+│   ├── Dashboard.tsx       # Page dashboard administrateur
+│   ├── DashboardStats.tsx  # Composant statistiques Google Analytics
+│   └── Login.tsx           # Page de connexion
 │   ├── ui/                 # Composants UI (shadcn/ui)
 │   │   ├── button.tsx
 │   │   ├── scroll-area.tsx
@@ -316,16 +333,24 @@ src/
 │   ├── aboutData.ts        # Données page À propos
 │   └── flowData.ts         # Données pour l'arbre de compétences
 ├── services/               # Services API
-│   └── stravaService.ts    # Service Strava avec cache
+│   ├── stravaService.ts    # Service Strava avec cache
+│   ├── authService.ts      # Service d'authentification
+│   ├── googleAnalyticsService.ts  # Service Google Analytics Data API
+│   └── googleAuthService.ts        # Service OAuth2 Google Analytics
 ├── lib/                    # Utilitaires
 │   └── utils.ts            # Fonction cn() pour Tailwind
 ├── api/                    # Routes API Vercel (Serverless Functions)
-│   └── strava/             # Endpoints Strava sécurisés
-│       ├── athlete.ts      # GET /api/strava/athlete
-│       ├── activities.ts   # GET /api/strava/activities
-│       ├── activities/[id]/index.ts  # GET /api/strava/activities/:id
-│       ├── athlete/stats.ts # GET /api/strava/athlete/stats
-│       └── utils.ts        # Utilitaires (refresh token, gestion tokens)
+│   ├── strava/             # Endpoints Strava sécurisés
+│   │   ├── athlete.ts      # GET /api/strava/athlete
+│   │   ├── activities.ts   # GET /api/strava/activities
+│   │   ├── activities/[id]/index.ts  # GET /api/strava/activities/:id
+│   │   ├── athlete/stats.ts # GET /api/strava/athlete/stats
+│   │   └── utils.ts        # Utilitaires (refresh token, gestion tokens)
+│   ├── auth/               # Endpoints d'authentification
+│   │   └── login.ts        # POST /api/auth/login
+│   └── google-auth/        # Endpoints OAuth2 Google Analytics
+│       ├── callback.ts     # GET /api/google-auth/callback
+│       └── refresh.ts       # POST /api/google-auth/refresh
 ├── App.tsx                 # Composant racine
 ├── main.tsx               # Point d'entrée
 └── index.css              # Styles globaux + Tailwind
@@ -589,6 +614,7 @@ Le projet inclut :
 - [VERCEL_STRAVA_SETUP.md](./VERCEL_STRAVA_SETUP.md) - Configuration Strava sur Vercel (Production)
 - [VERCEL_API_SETUP.md](./VERCEL_API_SETUP.md) - Configuration des routes API Vercel
 - [VERCEL_ENV_VARS.md](./VERCEL_ENV_VARS.md) - Variables d'environnement Vercel
+- [GOOGLE_ANALYTICS_SETUP.md](./GOOGLE_ANALYTICS_SETUP.md) - Configuration OAuth2 pour Google Analytics
 - [DEPLOY.md](./DEPLOY.md) - Guide de déploiement
 
 ---
@@ -599,6 +625,24 @@ Le projet inclut :
 - ✅ **Donut Chart Race** : Intégration de graphiques en donut animés dans la section "Résultats & Impact" avec effet "race" séquentiel (délai progressif entre chaque graphique)
 - ✅ **Padding-bottom amélioré** : Ajout d'un padding-bottom de 160px sur desktop (64px sur mobile) pour un meilleur espacement en bas de page
 - ✅ **Tableau typographie masqué** : Le tableau des typographies est maintenant masqué, seul l'affichage de l'alphabet reste visible
+
+---
+
+### Dashboard & Google Analytics (Janvier 2025)
+- ✅ **Dashboard administrateur** : Interface complète de gestion des projets avec authentification
+- ✅ **Authentification** : Système de connexion avec email/mot de passe (API Vercel + fallback local)
+- ✅ **Gestion de projets** : CRUD complet (création, lecture, modification, suppression)
+- ✅ **Recherche et filtrage** : Recherche par titre, filtrage par catégorie et statut
+- ✅ **Vue en grille/liste** : Basculement entre deux modes d'affichage
+- ✅ **Intégration Google Analytics** : Service complet pour l'API Google Analytics Data v1beta
+- ✅ **OAuth2 Google** : Authentification OAuth2 pour accéder aux données Analytics
+- ✅ **Statistiques en temps réel** : Affichage des utilisateurs actifs en temps réel
+- ✅ **Vue d'ensemble** : Statistiques globales (visiteurs, pages vues, taux de rebond, durée moyenne)
+- ✅ **Google Tag Manager** : Intégration GTM (GTM-MJ9VW6G4) et Google Analytics (G-MS120551E9)
+- ✅ **Design cohérent** : Style aligné avec la page d'accueil (glassmorphism, couleurs, marges)
+- ✅ **Barre de recherche** : Même style que la page d'accueil (glassmorphism, centrée)
+- ✅ **Responsive** : Adaptation mobile complète du dashboard
+- ✅ **Documentation** : Guide complet de configuration OAuth2 (GOOGLE_ANALYTICS_SETUP.md)
 
 ---
 

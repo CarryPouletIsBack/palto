@@ -136,7 +136,6 @@ body.accueil-page .page.active:not(.single-project-page) {
   width: 100%;
   padding-top: 0;
   padding-bottom: 127px;
-  padding-right: 8px;
   margin-top: 0;
   /* Le scroll est géré par la page entière, pas besoin d'overflow ici */
   height: auto;

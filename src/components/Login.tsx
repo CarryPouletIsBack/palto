@@ -32,14 +32,16 @@ const Login = ({ onLoginSuccess }: LoginProps) => {
   };
 
   return (
-    <div className="login-page">
-      {/* Background avec image */}
-      <div className="login-background">
-        <div className="login-background-overlay"></div>
-      </div>
+    <div className="page active">
+      <div className="main-accueil">
+        <div className="login-page">
+          {/* Background avec image */}
+          <div className="login-background">
+            <div className="login-background-overlay"></div>
+          </div>
 
-      {/* Contenu principal */}
-      <div className="login-main">
+          {/* Contenu principal */}
+          <div className="login-main">
         {/* Header avec logo */}
         <div className="login-header">
           <div className="login-logo">
@@ -101,6 +103,8 @@ const Login = ({ onLoginSuccess }: LoginProps) => {
               <a href="#" className="login-link">Politique de Confidentialité</a>
             </p>
           </div>
+        </div>
+        </div>
         </div>
       </div>
     </div>

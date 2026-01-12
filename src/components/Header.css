@@ -58,7 +58,7 @@
     order: 2;
     box-sizing: border-box;
     align-items: center;
-    justify-content: flex-end;
+    justify-content: center;
   }
   
   .header-search-wrapper .mobile-search-bar {
@@ -73,7 +73,7 @@
     margin: 0 !important;
     box-sizing: border-box !important;
     align-items: center !important;
-    justify-content: flex-end !important;
+    justify-content: center !important;
   }
   
   .logo-section {
@@ -103,6 +103,15 @@
   flex-shrink: 0 !important;
   margin-left: auto !important;
   box-sizing: border-box !important;
+}
+
+/* Sur mobile, centrer la search bar */
+@media (max-width: 768px) {
+  .header-search-wrapper .mobile-search-bar {
+    justify-content: center !important;
+    margin-left: 0 !important;
+    margin-right: 0 !important;
+  }
 }
 
 /* Quand la search bar est active, elle doit avoir un z-index très élevé */
@@ -158,8 +167,8 @@
     max-width: 100% !important;
     min-width: 0 !important;
     flex: 1 1 100% !important;
-    margin-left: 0 !important;
-    margin-right: 0 !important;
+    margin-left: auto !important;
+    margin-right: auto !important;
   }
 }
 

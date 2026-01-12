@@ -198,11 +198,18 @@ h6 {
     max-height: 100vh !important;
   }
   
-  /* Permettre le scroll sur html pour la page d'accueil */
-  html:has(body.accueil-page) {
+  /* Permettre le scroll sur html pour la page d'accueil (sauf dashboard) */
+  html:has(body.accueil-page:not(:has(.dashboard-container))) {
     overflow-y: auto !important;
     height: auto !important;
     max-height: none !important;
+  }
+  
+  /* Désactiver le scroll pour le dashboard */
+  html:has(body.accueil-page:has(.dashboard-container)) {
+    overflow-y: hidden !important;
+    height: 100vh !important;
+    max-height: 100vh !important;
   }
   
   #root {
@@ -211,10 +218,16 @@ h6 {
     overflow: hidden !important;
   }
   
-  html:has(body.accueil-page) #root {
+  html:has(body.accueil-page:not(:has(.dashboard-container))) #root {
     height: auto !important;
     max-height: none !important;
     overflow: visible !important;
+  }
+  
+  html:has(body.accueil-page:has(.dashboard-container)) #root {
+    height: 100vh !important;
+    max-height: 100vh !important;
+    overflow: hidden !important;
   }
   
   .app {
@@ -223,10 +236,16 @@ h6 {
     overflow: hidden !important;
   }
   
-  html:has(body.accueil-page) .app {
+  html:has(body.accueil-page:not(:has(.dashboard-container))) .app {
     height: auto !important;
     max-height: none !important;
     overflow: visible !important;
+  }
+  
+  html:has(body.accueil-page:has(.dashboard-container)) .app {
+    height: 100vh !important;
+    max-height: 100vh !important;
+    overflow: hidden !important;
   }
   
   .container {
@@ -236,24 +255,44 @@ h6 {
     overflow-y: hidden !important;
   }
   
-  /* Permettre le scroll sur toute la page d'accueil */
-  body.accueil-page {
+  /* Permettre le scroll sur toute la page d'accueil (sauf dashboard) */
+  body.accueil-page:not(:has(.dashboard-container)) {
     overflow-y: auto !important; /* Permettre le scroll vertical sur toute la page */
     height: auto !important;
     max-height: none !important;
   }
   
-  body.accueil-page .container {
+  /* Désactiver le scroll pour le dashboard */
+  body.accueil-page:has(.dashboard-container) {
+    overflow-y: hidden !important;
+    height: 100vh !important;
+    max-height: 100vh !important;
+  }
+  
+  body.accueil-page:not(:has(.dashboard-container)) .container {
     overflow-y: auto !important; /* Permettre le scroll vertical */
     height: auto !important;
     max-height: none !important;
     min-height: 100vh;
   }
   
-  body.accueil-page .main-accueil {
+  body.accueil-page:has(.dashboard-container) .container {
+    overflow-y: hidden !important;
+    height: 100vh !important;
+    max-height: 100vh !important;
+  }
+  
+  body.accueil-page:not(:has(.dashboard-container)) .main-accueil {
     height: auto !important;
     max-height: none !important;
     min-height: calc(100vh - 104px);
     overflow: visible !important;
+  }
+  
+  body.accueil-page:has(.dashboard-container) .main-accueil {
+    overflow-y: hidden !important;
+    height: 100vh !important;
+    max-height: 100vh !important;
+    min-height: 100vh !important;
   }
 }

@@ -1,0 +1,213 @@
+/**
+ * Service pour interagir avec l'API Google Analytics Data
+ * Documentation: https://developers.google.com/analytics/devguides/reporting/data/v1
+ */
+
+const GA_API_BASE_URL = 'https://analyticsdata.googleapis.com/v1beta';
+
+export interface GoogleAnalyticsConfig {
+  propertyId: string; // Format: properties/123456789 ou juste 123456789
+  accessToken?: string; // Token OAuth2 pour l'authentification
+}
+
+export interface DateRange {
+  startDate: string; // Format: YYYY-MM-DD ou "7daysAgo", "30daysAgo", "today", "yesterday"
+  endDate: string;
+  name?: string;
+}
+
+export interface Metric {
+  name: string; // Ex: "activeUsers", "screenPageViews", "eventCount"
+  expression?: string;
+  invisible?: boolean;
+}
+
+export interface Dimension {
+  name: string; // Ex: "country", "city", "deviceCategory"
+  dimensionExpression?: any;
+}
+
+export interface RunReportRequest {
+  property: string;
+  dateRanges: DateRange[];
+  dimensions?: Dimension[];
+  metrics: Metric[];
+  dimensionFilter?: any;
+  metricFilter?: any;
+  limit?: string;
+  offset?: string;
+  orderBys?: any[];
+}
+
+export interface RunReportResponse {
+  dimensionHeaders: Array<{ name: string }>;
+  metricHeaders: Array<{ name: string; type: string }>;
+  rows: Array<{
+    dimensionValues: Array<{ value: string }>;
+    metricValues: Array<{ value: string }>;
+  }>;
+  totals?: Array<{
+    metricValues: Array<{ value: string }>;
+  }>;
+  rowCount: number;
+  metadata?: {
+    currencyCode?: string;
+    timeZone?: string;
+  };
+}
+
+/**
+ * Formate l'ID de propriété pour l'API
+ * Accepte "G-MS120551E9" ou "MS120551E9" et retourne "properties/MS120551E9"
+ */
+export function formatPropertyId(propertyId: string): string {
+  // Retirer le préfixe "G-" si présent
+  const cleanId = propertyId.replace(/^G-/, '');
+  
+  // Si ça commence déjà par "properties/", on le retourne tel quel
+  if (cleanId.startsWith('properties/')) {
+    return cleanId;
+  }
+  
+  return `properties/${cleanId}`;
+}
+
+/**
+ * Extrait l'ID numérique de la propriété
+ * "G-MS120551E9" -> "MS120551E9"
+ */
+export function extractPropertyId(propertyId: string): string {
+  return propertyId.replace(/^G-/, '').replace(/^properties\//, '');
+}
+
+/**
+ * Exécute un rapport Google Analytics
+ */
+export async function runReport(
+  config: GoogleAnalyticsConfig,
+  request: Omit<RunReportRequest, 'property'>
+): Promise<RunReportResponse> {
+  const propertyId = formatPropertyId(config.propertyId);
+  
+  if (!config.accessToken) {
+    throw new Error('Token d\'accès OAuth2 requis. Veuillez configurer l\'authentification Google Analytics.');
+  }
+
+  const url = `${GA_API_BASE_URL}/${propertyId}:runReport`;
+  
+  const response = await fetch(url, {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${config.accessToken}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(request),
+  });
+
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({ error: { message: 'Erreur inconnue' } }));
+    throw new Error(error.error?.message || `Erreur API: ${response.status} ${response.statusText}`);
+  }
+
+  return response.json();
+}
+
+/**
+ * Exécute un rapport en temps réel
+ */
+export async function runRealtimeReport(
+  config: GoogleAnalyticsConfig,
+  request: {
+    dimensions?: Dimension[];
+    metrics: Metric[];
+    limit?: string;
+  }
+): Promise<RunReportResponse> {
+  const propertyId = formatPropertyId(config.propertyId);
+  
+  if (!config.accessToken) {
+    throw new Error('Token d\'accès OAuth2 requis. Veuillez configurer l\'authentification Google Analytics.');
+  }
+
+  const url = `${GA_API_BASE_URL}/${propertyId}:runRealtimeReport`;
+  
+  const response = await fetch(url, {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${config.accessToken}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(request),
+  });
+
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({ error: { message: 'Erreur inconnue' } }));
+    throw new Error(error.error?.message || `Erreur API: ${response.status} ${response.statusText}`);
+  }
+
+  return response.json();
+}
+
+/**
+ * Récupère les statistiques de base (visiteurs, pages vues, etc.)
+ */
+export async function getBasicStats(
+  config: GoogleAnalyticsConfig,
+  days: number = 30
+): Promise<{
+  activeUsers: number;
+  screenPageViews: number;
+  averageSessionDuration: number;
+  bounceRate: number;
+}> {
+  const request: Omit<RunReportRequest, 'property'> = {
+    dateRanges: [
+      {
+        startDate: `${days}daysAgo`,
+        endDate: 'today',
+      },
+    ],
+    metrics: [
+      { name: 'activeUsers' },
+      { name: 'screenPageViews' },
+      { name: 'averageSessionDuration' },
+      { name: 'bounceRate' },
+    ],
+  };
+
+  const response = await runReport(config, request);
+
+  // Extraire les valeurs des totaux
+  const totals = response.totals?.[0]?.metricValues || [];
+  
+  return {
+    activeUsers: parseInt(totals[0]?.value || '0', 10),
+    screenPageViews: parseInt(totals[1]?.value || '0', 10),
+    averageSessionDuration: parseFloat(totals[2]?.value || '0'),
+    bounceRate: parseFloat(totals[3]?.value || '0'),
+  };
+}
+
+/**
+ * Récupère les statistiques en temps réel
+ */
+export async function getRealtimeStats(
+  config: GoogleAnalyticsConfig
+): Promise<{
+  activeUsers: number;
+}> {
+  const request = {
+    metrics: [
+      { name: 'activeUsers' },
+    ],
+  };
+
+  const response = await runRealtimeReport(config, request);
+
+  // Extraire les valeurs des totaux
+  const totals = response.totals?.[0]?.metricValues || [];
+  
+  return {
+    activeUsers: parseInt(totals[0]?.value || '0', 10),
+  };
+}

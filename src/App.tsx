@@ -77,8 +77,8 @@ function App() {
       document.body.classList.remove('menu-active')
     }
     
-    // Page d'accueil
-    if (currentPage === 'accueil') {
+    // Page d'accueil, Dashboard et Login
+    if (currentPage === 'accueil' || currentPage === 'dashboard' || currentPage === 'login') {
       document.body.classList.add('accueil-page')
     } else {
       document.body.classList.remove('accueil-page')

@@ -2,6 +2,22 @@ import { useState, useEffect } from 'react';
 import { type ProjectWithMeta, getAllProjects, deleteProject, searchProjects } from '../services/projectService';
 import { logout } from '../services/authService';
 import ProjectEditor from './ProjectEditor';
+import DashboardStats from './DashboardStats';
+import { 
+  Home, 
+  Folder, 
+  BarChart3, 
+  Book, 
+  User, 
+  Search, 
+  ClipboardList, 
+  Dice6, 
+  Type, 
+  Image as ImageIcon, 
+  Edit, 
+  Trash2,
+  Grid3x3
+} from 'lucide-react';
 import './Dashboard.css';
 
 interface DashboardProps {
@@ -17,6 +33,7 @@ const Dashboard = ({ onBackClick }: DashboardProps) => {
   const [selectedSort, setSelectedSort] = useState<string>('date');
   const [editingProject, setEditingProject] = useState<ProjectWithMeta | null>(null);
   const [isCreating, setIsCreating] = useState(false);
+  const [activeView, setActiveView] = useState<'projects' | 'stats' | 'services'>('projects');
 
   // Charger les projets au montage
   useEffect(() => {
@@ -105,37 +122,40 @@ const Dashboard = ({ onBackClick }: DashboardProps) => {
 
   const getCategoryIcon = (category?: string) => {
     // Retourner une icône basée sur la catégorie
-    return '📁';
+    return <Folder size={24} />;
   };
 
   return (
-    <div className="dashboard-container">
-      {/* Sidebar */}
-      <div className="dashboard-sidebar">
+    <div className="page active">
+      <div className="main-accueil">
+        <div className="dashboard-container">
+          {/* Sidebar */}
+          <div className="dashboard-sidebar">
         <div className="dashboard-logo">
           <h2>Dashboard</h2>
         </div>
         
         <nav className="dashboard-nav">
-          <button className="dashboard-nav-item active">
-            <span className="nav-icon">🏠</span>
-            <span className="nav-label">Home</span>
-          </button>
-          <button className="dashboard-nav-item active">
-            <span className="nav-icon">📁</span>
+          <button 
+            className={`dashboard-nav-item ${activeView === 'projects' ? 'active' : ''}`}
+            onClick={() => setActiveView('projects')}
+          >
+            <span className="nav-icon"><Folder size={24} /></span>
             <span className="nav-label">Projets</span>
           </button>
-          <button className="dashboard-nav-item">
-            <span className="nav-icon">👥</span>
-            <span className="nav-label">Groupes</span>
-          </button>
-          <button className="dashboard-nav-item">
-            <span className="nav-icon">📊</span>
+          <button 
+            className={`dashboard-nav-item ${activeView === 'stats' ? 'active' : ''}`}
+            onClick={() => setActiveView('stats')}
+          >
+            <span className="nav-icon"><BarChart3 size={24} /></span>
             <span className="nav-label">Stats</span>
           </button>
-          <button className="dashboard-nav-item">
-            <span className="nav-icon">📚</span>
-            <span className="nav-label">Librairie</span>
+          <button 
+            className={`dashboard-nav-item ${activeView === 'services' ? 'active' : ''}`}
+            onClick={() => setActiveView('services')}
+          >
+            <span className="nav-icon"><Book size={24} /></span>
+            <span className="nav-label">Services</span>
           </button>
         </nav>
 
@@ -148,27 +168,31 @@ const Dashboard = ({ onBackClick }: DashboardProps) => {
             }}
             title="Se déconnecter"
           >
-            <span>👤</span>
+            <User size={20} />
           </button>
         </div>
       </div>
 
       {/* Main Content */}
       <div className="dashboard-main">
-        {/* Search Bar */}
-        <div className="dashboard-search">
-          <input
-            type="text"
-            placeholder="Recherchez un projet, une catégorie, une personne ou une ressource…"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="dashboard-search-input"
-          />
-          <span className="dashboard-search-icon">🔍</span>
-        </div>
+        {activeView === 'stats' ? (
+          <DashboardStats googleAnalyticsId="G-MS120551E9" />
+        ) : (
+          <>
+            {/* Search Bar */}
+            <div className="dashboard-search">
+              <input
+                type="text"
+                placeholder="Recherchez un projet, une catégorie, une personne ou une ressource…"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="dashboard-search-input"
+              />
+              <Search size={23} className="dashboard-search-icon" />
+            </div>
 
-        {/* Content Container */}
-        <div className="dashboard-content">
+            {/* Content Container */}
+            <div className="dashboard-content">
           {/* Header */}
           <div className="dashboard-header">
             <h1 className="dashboard-title">
@@ -181,15 +205,15 @@ const Dashboard = ({ onBackClick }: DashboardProps) => {
           {/* Categories */}
           <div className="dashboard-categories">
             <button className="category-card">
-              <div className="category-icon blue">📋</div>
+              <div className="category-icon blue"><ClipboardList size={24} /></div>
               <p className="category-name">Matching</p>
             </button>
             <button className="category-card">
-              <div className="category-icon orange">🎲</div>
+              <div className="category-icon orange"><Dice6 size={24} /></div>
               <p className="category-name">Lancé de dés</p>
             </button>
             <button className="category-card">
-              <div className="category-icon green">🔤</div>
+              <div className="category-icon green"><Type size={24} /></div>
               <p className="category-name">Jeux de lettre</p>
             </button>
           </div>
@@ -242,7 +266,7 @@ const Dashboard = ({ onBackClick }: DashboardProps) => {
                 <option value="title">Titre</option>
               </select>
 
-              <button className="view-toggle">📋</button>
+              <button className="view-toggle"><Grid3x3 size={24} /></button>
             </div>
 
             {/* Projects Grid */}
@@ -253,7 +277,7 @@ const Dashboard = ({ onBackClick }: DashboardProps) => {
                     {project.coverImage ? (
                       <img src={project.coverImage} alt={project.title} />
                     ) : (
-                      <div className="project-card-placeholder">📷</div>
+                      <div className="project-card-placeholder"><ImageIcon size={48} /></div>
                     )}
                   </div>
                   <div className="project-card-info">
@@ -267,8 +291,12 @@ const Dashboard = ({ onBackClick }: DashboardProps) => {
                       <span className="project-date">Modifié {formatDate(project.lastModified)}</span>
                     </div>
                     <div className="project-card-actions">
-                      <button onClick={() => handleEdit(project)} className="action-btn edit">✏️ Modifier</button>
-                      <button onClick={() => handleDelete(project.id)} className="action-btn delete">🗑️ Supprimer</button>
+                      <button onClick={() => handleEdit(project)} className="action-btn edit">
+                        <Edit size={16} /> Modifier
+                      </button>
+                      <button onClick={() => handleDelete(project.id)} className="action-btn delete">
+                        <Trash2 size={16} /> Supprimer
+                      </button>
                     </div>
                   </div>
                 </div>
@@ -281,6 +309,8 @@ const Dashboard = ({ onBackClick }: DashboardProps) => {
             </button>
           </div>
         </div>
+          </>
+        )}
       </div>
 
       {/* Edit/Create Modal */}
@@ -292,6 +322,8 @@ const Dashboard = ({ onBackClick }: DashboardProps) => {
           onCancel={() => { setEditingProject(null); setIsCreating(false); }}
         />
       )}
+        </div>
+      </div>
     </div>
   );
 };
