@@ -202,12 +202,17 @@ const DashboardStats = ({ googleAnalyticsId }: DashboardStatsProps) => {
 
   // Charger les données quand la vue change
   useEffect(() => {
-    // Ne plus utiliser l'ancien localStorage 'google_analytics_id' qui contient le Measurement ID
-    // Utiliser uniquement 'google_analytics_property_id' pour le Property ID numérique
-    if (isConfigured && savedGAId) {
-      loadGoogleAnalytics(savedGAId);
+    const savedPropertyId = localStorage.getItem('google_analytics_property_id');
+    const defaultGAId = '383170814'; // Property ID numérique
+    
+    // Vérifier que googleAnalyticsId est numérique si fourni
+    const validPropId = googleAnalyticsId && /^\d+$/.test(googleAnalyticsId) ? googleAnalyticsId : null;
+    const gaId = validPropId || (savedPropertyId && /^\d+$/.test(savedPropertyId) ? savedPropertyId : defaultGAId);
+    
+    if (isConfigured && gaId) {
+      loadGoogleAnalytics(gaId);
     }
-  }, [selectedView, isConfigured]);
+  }, [selectedView, isConfigured, googleAnalyticsId]);
 
   if (!isConfigured) {
     return (
