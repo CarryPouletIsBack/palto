@@ -50,14 +50,21 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     // ⚠️ En production, utilisez plutôt une session ou un cookie sécurisé
     
     // Construire l'URL de redirection correctement
-    // Vercel fournit x-forwarded-proto pour le protocole
-    const protocol = req.headers['x-forwarded-proto'] || 'https';
-    const host = req.headers.host || process.env.VERCEL_URL || 'localhost:3000';
+    // Utiliser REDIRECT_URI comme base et remplacer le chemin
+    let baseUrl: string;
     
-    // S'assurer que le protocole est bien présent
-    const baseUrl = host.startsWith('http://') || host.startsWith('https://') 
-      ? host 
-      : `${protocol}://${host}`;
+    if (REDIRECT_URI) {
+      // Extraire l'origine depuis REDIRECT_URI (ex: https://domain.com/api/...)
+      const redirectUriObj = new URL(REDIRECT_URI);
+      baseUrl = `${redirectUriObj.protocol}//${redirectUriObj.host}`;
+    } else {
+      // Fallback : construire depuis les headers
+      const protocol = req.headers['x-forwarded-proto'] || 'https';
+      const host = req.headers.host || process.env.VERCEL_URL || 'localhost:3000';
+      baseUrl = host.startsWith('http://') || host.startsWith('https://') 
+        ? host 
+        : `${protocol}://${host}`;
+    }
     
     const redirectUrl = new URL('/dashboard', baseUrl);
     redirectUrl.searchParams.set('access_token', tokens.access_token);
