@@ -211,17 +211,43 @@ export async function getBasicStats(
     ],
   };
 
+  // Log pour debug (uniquement en développement)
+  if (import.meta.env.DEV) {
+    console.log('📊 Appel API Google Analytics getBasicStats:', {
+      propertyId: config.propertyId,
+      dateRange: `${days}daysAgo to today`,
+      request
+    });
+  }
+
   const response = await runReport(config, request);
+
+  // Log de la réponse complète pour debug
+  if (import.meta.env.DEV) {
+    console.log('📊 Réponse API Google Analytics:', {
+      rowCount: response.rowCount,
+      totals: response.totals,
+      metricHeaders: response.metricHeaders,
+      fullResponse: response
+    });
+  }
 
   // Extraire les valeurs des totaux
   const totals = response.totals?.[0]?.metricValues || [];
   
-  return {
+  const stats = {
     activeUsers: parseInt(totals[0]?.value || '0', 10),
     screenPageViews: parseInt(totals[1]?.value || '0', 10),
     averageSessionDuration: parseFloat(totals[2]?.value || '0'),
     bounceRate: parseFloat(totals[3]?.value || '0'),
   };
+
+  // Log des statistiques extraites
+  if (import.meta.env.DEV) {
+    console.log('📊 Statistiques extraites:', stats);
+  }
+  
+  return stats;
 }
 
 /**
