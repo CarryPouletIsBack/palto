@@ -56,8 +56,12 @@ function App() {
     }
     
     if (targetPage === 'dashboard') {
-      // Si on essaie d'accéder au dashboard, vérifier l'authentification
-      const authenticated = isAuthenticated()
+      // Vérifier si on a des tokens OAuth2 dans l'URL (retour de Google)
+      const hasOAuthTokens = urlParams.has('access_token')
+      
+      // Si on a des tokens OAuth2, considérer comme authentifié
+      // Sinon, vérifier l'authentification email/password
+      const authenticated = hasOAuthTokens || isAuthenticated()
       setIsLoggedIn(authenticated)
       setCurrentPage('dashboard') // Toujours définir la page pour afficher le login si nécessaire
       
