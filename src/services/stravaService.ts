@@ -716,7 +716,9 @@ export async function getStravaActivityDetails(activityId: number): Promise<Stra
       throw new Error(`ID d'activité invalide: ${activityId}`);
     }
     
-    const url = `/api/strava/activities/${id}`;
+    // Utiliser l'endpoint avec query parameter au lieu de route dynamique [id]
+    // car les routes dynamiques ne fonctionnent pas correctement sur Vercel
+    const url = `/api/strava/activity-details?id=${id}`;
     const response = await fetch(url, {
       method: 'GET',
       headers: {
