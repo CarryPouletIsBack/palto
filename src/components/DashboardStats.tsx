@@ -202,7 +202,8 @@ const DashboardStats = ({ googleAnalyticsId }: DashboardStatsProps) => {
 
   // Charger les données quand la vue change
   useEffect(() => {
-    const savedGAId = localStorage.getItem('google_analytics_id') || 'G-MS120551E9';
+    // Ne plus utiliser l'ancien localStorage 'google_analytics_id' qui contient le Measurement ID
+    // Utiliser uniquement 'google_analytics_property_id' pour le Property ID numérique
     if (isConfigured && savedGAId) {
       loadGoogleAnalytics(savedGAId);
     }
@@ -218,7 +219,8 @@ const DashboardStats = ({ googleAnalyticsId }: DashboardStatsProps) => {
             <p><strong>IDs configurés :</strong></p>
             <ul className="stats-ids-list">
               <li><strong>Google Tag Manager :</strong> GTM-MJ9VW6G4</li>
-              <li><strong>Google Analytics :</strong> G-MS120551E9</li>
+              <li><strong>Google Analytics Property ID :</strong> 383170814</li>
+              <li><strong>Google Analytics Measurement ID :</strong> G-MS120551E9 (pour le tracking)</li>
               <li><strong>Google Tag/Measurement :</strong> GT-KDDTXMS</li>
             </ul>
             <p>Vos identifiants sont configurés. Les statistiques seront disponibles une fois l'intégration API complète.</p>
@@ -475,7 +477,7 @@ VITE_GOOGLE_REDIRECT_URI=${window.location.origin}/api/google-auth/callback`}
             <br />
             <strong>IDs configurés :</strong>
             <br />
-            • Google Analytics: {localStorage.getItem('google_analytics_id') || 'G-MS120551E9'}
+            • Google Analytics Property ID: {localStorage.getItem('google_analytics_property_id') || '383170814'}
             <br />
             • Google Tag: {localStorage.getItem('google_tag_id') || 'GT-KDDTXMS'}
             <br />

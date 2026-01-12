@@ -209,7 +209,7 @@ const Dashboard = ({ onBackClick }: DashboardProps) => {
       {/* Main Content */}
       <div className="dashboard-main">
         {activeView === 'stats' ? (
-          <DashboardStats googleAnalyticsId="G-MS120551E9" />
+          <DashboardStats googleAnalyticsId="383170814" />
         ) : (
           <>
             {/* Search Bar */}
