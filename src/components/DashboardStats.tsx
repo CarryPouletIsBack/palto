@@ -292,11 +292,28 @@ const DashboardStats = ({ googleAnalyticsId }: DashboardStatsProps) => {
             <div className="stats-config-warning">
               <p><strong>⚠️ Configuration manquante</strong></p>
               <p>La variable d'environnement <code>VITE_GOOGLE_CLIENT_ID</code> n'est pas définie.</p>
-              <p>Créez un fichier <code>.env.local</code> à la racine du projet avec :</p>
-              <pre className="stats-code-block">
+              
+              {window.location.hostname.includes('vercel.app') || window.location.hostname.includes('vercel') ? (
+                <>
+                  <p><strong>Configuration Vercel (Production) :</strong></p>
+                  <p>Allez dans votre projet Vercel → <strong>Settings</strong> → <strong>Environment Variables</strong> et ajoutez :</p>
+                  <pre className="stats-code-block">
 {`VITE_GOOGLE_CLIENT_ID=votre_client_id_ici
 VITE_GOOGLE_REDIRECT_URI=${window.location.origin}/api/google-auth/callback`}
-              </pre>
+                  </pre>
+                  <p>⚠️ <strong>Important</strong> : Utilisez le préfixe <code>VITE_</code> car cette variable est utilisée côté client.</p>
+                </>
+              ) : (
+                <>
+                  <p><strong>Configuration locale (Développement) :</strong></p>
+                  <p>Créez un fichier <code>.env.local</code> à la racine du projet avec :</p>
+                  <pre className="stats-code-block">
+{`VITE_GOOGLE_CLIENT_ID=votre_client_id_ici
+VITE_GOOGLE_REDIRECT_URI=${window.location.origin}/api/google-auth/callback`}
+                  </pre>
+                </>
+              )}
+              
               <p>Consultez <code>GOOGLE_ANALYTICS_SETUP.md</code> pour plus d'informations.</p>
             </div>
           )}
