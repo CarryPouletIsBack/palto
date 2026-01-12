@@ -15,6 +15,11 @@ build/
 .env.test.local
 .env.production.local
 
+# Sensitive credentials (never commit)
+GOOGLE_OAUTH_CREDENTIALS.txt
+*_CREDENTIALS.txt
+*_SECRETS.txt
+
 # Logs
 npm-debug.log*
 yarn-debug.log*
