@@ -60,8 +60,16 @@ const Dashboard = ({ onBackClick }: DashboardProps) => {
       // Activer la vue Stats
       setActiveView('stats');
       
-      // Nettoyer l'URL immédiatement
-      window.history.replaceState({}, document.title, window.location.pathname);
+      // Nettoyer l'URL immédiatement (garder seulement ?page=dashboard)
+      const cleanUrl = `${window.location.pathname}?page=dashboard`;
+      window.history.replaceState({}, document.title, cleanUrl);
+      
+      // Forcer un re-render pour s'assurer que l'URL est bien nettoyée
+      setTimeout(() => {
+        if (window.location.search.includes('access_token')) {
+          window.history.replaceState({}, document.title, cleanUrl);
+        }
+      }, 0);
     }
   }, []);
 

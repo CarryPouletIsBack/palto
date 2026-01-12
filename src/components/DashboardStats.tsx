@@ -83,8 +83,11 @@ const DashboardStats = ({ googleAnalyticsId }: DashboardStatsProps) => {
         token_type: 'Bearer',
       });
       
-      // Nettoyer l'URL immédiatement
-      window.history.replaceState({}, document.title, window.location.pathname);
+      // Nettoyer l'URL immédiatement (garder seulement ?page=dashboard si présent)
+      const currentPath = window.location.pathname;
+      const hasPageParam = window.location.search.includes('page=dashboard');
+      const cleanUrl = hasPageParam ? `${currentPath}?page=dashboard` : currentPath;
+      window.history.replaceState({}, document.title, cleanUrl);
       
       // Recharger les données
       setAuthStatus('authenticated');
