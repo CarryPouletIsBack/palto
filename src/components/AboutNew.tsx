@@ -136,12 +136,22 @@ const AboutNew = () => {
     if (activity?.photos?.primary?.urls?.['600']) {
       return activity.photos.primary.urls['600']
     }
-    // Vérifier aussi d'autres formats possibles
+    // Vérifier aussi d'autres formats possibles (fallback sur taille 100)
     if (activity?.photos?.primary?.urls?.['100']) {
       return activity.photos.primary.urls['100']
     }
     if (activity?.primary_photo?.urls?.['100']) {
       return activity.primary_photo.urls['100']
+    }
+    // Vérifier si photos est un tableau (format alternatif)
+    if (Array.isArray(activity?.photos) && activity.photos.length > 0) {
+      const firstPhoto = activity.photos[0]
+      if (firstPhoto?.urls?.['600']) {
+        return firstPhoto.urls['600']
+      }
+      if (firstPhoto?.urls?.['100']) {
+        return firstPhoto.urls['100']
+      }
     }
     return undefined
   }
