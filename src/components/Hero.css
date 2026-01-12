@@ -193,6 +193,8 @@ body.accueil-page .page.active:not(.single-project-page) {
   height: 304px;
   padding: 0;
   animation-delay: 200ms;
+  display: flex;
+  flex-direction: column;
 }
 
 .services-card {
@@ -260,17 +262,22 @@ body.accueil-page .page.active:not(.single-project-page) {
   position: relative;
   width: 100%;
   height: 100%;
+  min-height: 304px;
   overflow: hidden;
   border-radius: 8px;
+  display: flex;
+  flex-direction: column;
 }
 
 
 .project-slide .project-image {
   width: 100%;
   height: 100%;
+  min-height: 200px;
   object-fit: cover;
-  object-position: top;
+  object-position: center;
   border-radius: 4px;
+  display: block;
 }
 
 .project-overlay {
@@ -288,10 +295,21 @@ body.accueil-page .page.active:not(.single-project-page) {
   position: relative;
 }
 
+.swiper-container .swiper-wrapper {
+  height: 100%;
+}
+
+.swiper-container .swiper-slide {
+  height: 100%;
+}
+
 .project-slide {
   position: relative;
   width: 100%;
   height: 100%;
+  min-height: 304px;
+  display: flex;
+  flex-direction: column;
   transition: transform 0.3s ease, opacity 0.3s ease;
 }
 
@@ -301,12 +319,20 @@ body.accueil-page .page.active:not(.single-project-page) {
 }
 
 .project-slide .project-image-container {
-  position: relative;
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
   width: 100%;
   height: 100%;
   border-radius: 4px;
   overflow: hidden;
-  flex-shrink: 0;
+  pointer-events: none;
+}
+
+.project-slide .project-image-container * {
+  pointer-events: auto;
 }
 
 .project-slide .project-info {
@@ -314,7 +340,7 @@ body.accueil-page .page.active:not(.single-project-page) {
   bottom: 32px;
   left: 0;
   right: 0;
-  z-index: 1;
+  z-index: 2;
   padding: 0 16px;
   display: flex;
   flex-direction: column;

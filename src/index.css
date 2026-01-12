@@ -211,10 +211,22 @@ h6 {
     overflow: hidden !important;
   }
   
+  html:has(body.accueil-page) #root {
+    height: auto !important;
+    max-height: none !important;
+    overflow: visible !important;
+  }
+  
   .app {
     height: 100vh !important;
     max-height: 100vh !important;
     overflow: hidden !important;
+  }
+  
+  html:has(body.accueil-page) .app {
+    height: auto !important;
+    max-height: none !important;
+    overflow: visible !important;
   }
   
   .container {

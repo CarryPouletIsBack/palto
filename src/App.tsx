@@ -6,6 +6,9 @@ import About from './components/About'
 import AboutNew from './components/AboutNew'
 import Project from './components/Project'
 import ProjectCoverCarousel from './components/ProjectCoverCarousel'
+import Dashboard from './components/Dashboard'
+import Login from './components/Login'
+import { isAuthenticated } from './services/authService'
 import './App.css'
 
 function App() {
@@ -15,6 +18,8 @@ function App() {
   const [currentProjectCategory, setCurrentProjectCategory] = useState<string | null>(null)
   const [projectSwipeY, setProjectSwipeY] = useState(0)
   const [error, setError] = useState<Error | null>(null)
+  const [isAuthChecked, setIsAuthChecked] = useState(false)
+  const [isLoggedIn, setIsLoggedIn] = useState(false)
 
   // Gestion d'erreur globale
   useEffect(() => {
@@ -25,6 +30,37 @@ function App() {
     window.addEventListener('error', handleError)
     return () => window.removeEventListener('error', handleError)
   }, [])
+
+  // Vérifier l'authentification au chargement
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search)
+    const pageParam = urlParams.get('page')
+    
+    if (pageParam === 'dashboard') {
+      // Si on essaie d'accéder au dashboard, vérifier l'authentification
+      const authenticated = isAuthenticated()
+      setIsLoggedIn(authenticated)
+      setCurrentPage('dashboard') // Toujours définir la page pour afficher le login si nécessaire
+    } else {
+      setIsLoggedIn(true) // Pas besoin d'auth pour les autres pages
+      if (pageParam) {
+        setCurrentPage(pageParam)
+      }
+    }
+    
+    setIsAuthChecked(true)
+  }, [])
+
+  // Gestion des paramètres d'URL pour la navigation (sauf dashboard)
+  useEffect(() => {
+    if (isAuthChecked && currentPage !== 'dashboard') {
+      const urlParams = new URLSearchParams(window.location.search)
+      const pageParam = urlParams.get('page')
+      if (pageParam && pageParam !== 'dashboard') {
+        setCurrentPage(pageParam)
+      }
+    }
+  }, [isAuthChecked, currentPage])
 
   useEffect(() => {
     // Gestion des classes sur le body pour les styles globaux
@@ -89,6 +125,13 @@ function App() {
     setCurrentPage('accueil')
   }
 
+  const handleLoginSuccess = () => {
+    setIsLoggedIn(true)
+    setCurrentPage('dashboard')
+    // Mettre à jour l'URL sans recharger la page
+    window.history.pushState({}, '', '?page=dashboard')
+  }
+
   const renderCurrentPage = () => {
     const isProjectPage = currentPage.startsWith('project-') || currentPage === 'project'
     
@@ -104,6 +147,7 @@ function App() {
           <>
             {currentPage === 'apropos' && <About />}
             {currentPage === 'aproposnew' && <AboutNew />}
+            {currentPage === 'dashboard' && <Dashboard onBackClick={() => setCurrentPage('accueil')} />}
             {/* TEMPORAIRE : Menu masqué */}
             {/* {currentPage === 'menu' && <Menu onPageChange={handlePageChange} searchTerm={searchTerm} />} */}
           </>
@@ -155,18 +199,30 @@ function App() {
     )
   }
 
+  // Afficher la page de login si on essaie d'accéder au dashboard sans être authentifié
+  if (!isAuthChecked) {
+    return <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100vh', background: '#fef7ff' }}>Chargement...</div>
+  }
+
+  // Si on est sur le dashboard et non authentifié, afficher le login
+  if (currentPage === 'dashboard' && !isLoggedIn) {
+    return <Login onLoginSuccess={handleLoginSuccess} />
+  }
+
   return (
     <div className={`container ${currentPage === 'menu' ? 'menu-active' : ''}`}>
-      <Header 
-        onMenuClick={handleMenuClick} 
-        onContactClick={handleContactClick} 
-        onLogoClick={handleLogoClick}
-        currentPage={currentPage}
-        onSearchChange={handleSearchChange}
-        onPageChange={handlePageChange}
-        onProjectClose={() => setCurrentPage(previousPage)}
-        projectSwipeY={projectSwipeY}
-      />
+      {currentPage !== 'dashboard' && (
+        <Header 
+          onMenuClick={handleMenuClick} 
+          onContactClick={handleContactClick} 
+          onLogoClick={handleLogoClick}
+          currentPage={currentPage}
+          onSearchChange={handleSearchChange}
+          onPageChange={handlePageChange}
+          onProjectClose={() => setCurrentPage(previousPage)}
+          projectSwipeY={projectSwipeY}
+        />
+      )}
       {renderCurrentPage()}
       
       
