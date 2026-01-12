@@ -48,16 +48,11 @@ async function getMockData() {
   }
 }
 
-// ⚠️ SÉCURITÉ : Les tokens Strava ne doivent JAMAIS être hardcodés dans le code
-// Utilisez uniquement les variables d'environnement
-// En production, configurez-les dans Vercel → Settings → Environment Variables
-const STRAVA_CLIENT_ID = import.meta.env.VITE_STRAVA_CLIENT_ID || '';
-const STRAVA_CLIENT_SECRET = import.meta.env.VITE_STRAVA_CLIENT_SECRET || '';
-const STRAVA_ACCESS_TOKEN = import.meta.env.VITE_STRAVA_ACCESS_TOKEN || '';
-const STRAVA_REFRESH_TOKEN = import.meta.env.VITE_STRAVA_REFRESH_TOKEN || '';
-const STRAVA_TOKEN_EXPIRES_AT = import.meta.env.VITE_STRAVA_TOKEN_EXPIRES_AT 
-  ? parseInt(import.meta.env.VITE_STRAVA_TOKEN_EXPIRES_AT, 10) 
-  : undefined;
+const STRAVA_CLIENT_ID = import.meta.env.VITE_STRAVA_CLIENT_ID || '193706';
+const STRAVA_CLIENT_SECRET = import.meta.env.VITE_STRAVA_CLIENT_SECRET || '294ac27e5949d20abedb6f3c54a50b4c848a2240';
+const STRAVA_ACCESS_TOKEN = import.meta.env.VITE_STRAVA_ACCESS_TOKEN || '372e8b59c1825f8ff0d6dfa3a8635d44fe9abf96';
+const STRAVA_REFRESH_TOKEN = import.meta.env.VITE_STRAVA_REFRESH_TOKEN || '04fff756dc055d1335b1936dda03f98cc25027dd';
+const STRAVA_TOKEN_EXPIRES_AT = import.meta.env.VITE_STRAVA_TOKEN_EXPIRES_AT || 1767643565; // Timestamp Unix
 // Note: STRAVA_API_BASE_URL n'est plus utilisé car on utilise les endpoints API Vercel
 const STRAVA_API_BASE_URL = 'https://www.strava.com/api/v3'; // Conservé pour compatibilité
 const TOKEN_STORAGE_KEY = 'strava_access_token';
@@ -348,11 +343,12 @@ async function handleApiError(response: Response): Promise<never> {
     // Détecter si on reçoit du HTML au lieu de JSON (API routes non disponibles)
     if (errorText.includes('<!DOCTYPE html>') || errorText.includes('<html')) {
       throw new Error(
-        'Les API routes Vercel ne sont pas disponibles en local.\n\n' +
+        '⚠️ Les API routes Vercel ne sont pas disponibles avec "npm run dev".\n\n' +
         'Pour utiliser les données Strava en local :\n' +
         '1. Installez Vercel CLI : npm install -g vercel\n' +
-        '2. Lancez : vercel dev\n' +
-        '3. Ou configurez VITE_USE_STRAVA_MOCK=true dans .env.local pour utiliser les données mockées'
+        '2. Lancez : vercel dev (au lieu de npm run dev)\n\n' +
+        'Ou utilisez les données mockées :\n' +
+        'Créez un fichier .env.local avec : VITE_USE_STRAVA_MOCK=true'
       );
     }
     
@@ -360,6 +356,10 @@ async function handleApiError(response: Response): Promise<never> {
     try {
       errorData = JSON.parse(errorText);
     } catch (e) {
+      // Si c'est notre erreur personnalisée, la propager
+      if (e instanceof Error && e.message.includes('API routes Vercel')) {
+        throw e;
+      }
       // Ce n'est pas du JSON, on garde juste le texte
     }
   } catch (e) {
@@ -367,7 +367,7 @@ async function handleApiError(response: Response): Promise<never> {
     if (e instanceof Error && e.message.includes('API routes Vercel')) {
       throw e;
     }
-    // Sinon, utiliser un message générique
+    // Si la lecture échoue, utiliser un message générique
     errorText = `Erreur lors de la lecture de la réponse: ${e instanceof Error ? e.message : 'Erreur inconnue'}`;
   }
   
@@ -530,22 +530,25 @@ export async function getStravaActivities(perPage: number = 10, page: number = 1
       await handleApiError(response);
     }
 
-      // Vérifier si la réponse est JSON (si on reçoit du HTML, c'est que les API routes ne sont pas disponibles)
-      const contentType = response.headers.get('content-type');
-      if (contentType && !contentType.includes('application/json')) {
-        const textResponse = await response.text();
-        if (textResponse.includes('<!DOCTYPE html>') || textResponse.includes('<html')) {
-          throw new Error(
-            'Les API routes Vercel ne sont pas disponibles en local. ' +
-            'Pour utiliser les données Strava en local, lancez :\n' +
-            '1. Installez Vercel CLI : npm install -g vercel\n' +
-            '2. Lancez : vercel dev\n' +
-            '3. Ou configurez VITE_USE_STRAVA_MOCK=true dans .env.local pour utiliser les données mockées'
-          );
-        }
+    // Vérifier si on reçoit du HTML au lieu de JSON (API routes non disponibles)
+    const contentType = response.headers.get('content-type');
+    if (contentType && !contentType.includes('application/json')) {
+      // Cloner la réponse pour pouvoir lire le texte sans consommer le body
+      const clonedResponse = response.clone();
+      const textResponse = await clonedResponse.text();
+      if (textResponse.includes('<!DOCTYPE html>') || textResponse.includes('<html')) {
+        throw new Error(
+          '⚠️ Les API routes Vercel ne sont pas disponibles avec "npm run dev".\n\n' +
+          'Pour utiliser les données Strava en local :\n' +
+          '1. Installez Vercel CLI : npm install -g vercel\n' +
+          '2. Lancez : vercel dev (au lieu de npm run dev)\n\n' +
+          'Ou utilisez les données mockées :\n' +
+          'Créez un fichier .env.local avec : VITE_USE_STRAVA_MOCK=true'
+        );
       }
+    }
 
-      const data = await response.json();
+    const data = await response.json();
       
       // Mettre en cache si c'est la première page
       if (page === 1 && perPage === 5) {
@@ -557,10 +560,6 @@ export async function getStravaActivities(perPage: number = 10, page: number = 1
       clearTimeout(timeoutId);
       if (fetchError.name === 'AbortError') {
         throw new Error('Timeout: La requête vers l\'API Strava a pris trop de temps (>10s). Vérifiez que vercel dev est bien lancé.');
-      }
-      // Si c'est déjà une erreur avec message, la propager
-      if (fetchError.message && fetchError.message.includes('API routes Vercel')) {
-        throw fetchError;
       }
       throw fetchError;
     }
