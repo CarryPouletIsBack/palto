@@ -222,44 +222,12 @@ const AboutNew = () => {
         }
         
         // Récupérer les détails des activités (avec photos et polylines)
-        // Vérifier d'abord si les activités de base ont déjà des photos
+        // ⚠️ TEMPORAIRE : Les routes API dynamiques [id] ne fonctionnent pas sur Vercel
+        // Utiliser les activités de base directement (elles ont déjà les tracés GPS)
+        // Les photos nécessitent les détails complets mais l'API route ne fonctionne pas
         if (activities.length > 0) {
-          // Vérifier si les activités de base ont déjà des photos
-          const hasPhotosInBase = activities.some(a => 
-            a.primary_photo?.urls?.['600'] || 
-            a.photos?.primary?.urls?.['600'] ||
-            a.primary_photo?.urls?.['100'] ||
-            a.photos?.primary?.urls?.['100']
-          );
-          
-          // Si les activités ont déjà des photos, les utiliser directement
-          if (hasPhotosInBase) {
-            console.log('✅ Activités ont déjà des photos, utilisation directe');
-            setStravaActivitiesDetails(activities);
-          } else {
-            // Sinon, récupérer les détails (mais avec gestion d'erreur améliorée)
-            try {
-              const activitiesDetails = await Promise.all(
-                activities.map(async (activity) => {
-                  try {
-                    const activityId = typeof activity.id === 'string' ? parseInt(activity.id, 10) : activity.id;
-                    if (isNaN(activityId)) {
-                      return activity;
-                    }
-                    return await getStravaActivityDetails(activityId);
-                  } catch (error) {
-                    // En cas d'erreur, utiliser l'activité de base
-                    return activity;
-                  }
-                })
-              )
-              setStravaActivitiesDetails(activitiesDetails)
-            } catch (error) {
-              console.error('Erreur lors de la récupération des détails:', error);
-              // En cas d'erreur, utiliser les activités de base
-              setStravaActivitiesDetails(activities)
-            }
-          }
+          console.log('⚠️ Utilisation des activités de base (détails non disponibles car API route [id] ne fonctionne pas)');
+          setStravaActivitiesDetails(activities);
         } else {
           setStravaActivitiesDetails([])
         }
