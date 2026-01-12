@@ -591,9 +591,11 @@ export async function getStravaActivities(perPage: number = 10, page: number = 1
  */
 export async function getAllRuns(): Promise<StravaActivity[]> {
   if (USE_MOCK) {
+    debugLog('🎭 Mode Mock activé - utilisation des données mockées pour getAllRuns');
     // En mode mock, générer plusieurs pages de runs
     const mockData = await getMockData()
     if (mockData) {
+      debugLog('✅ Données mockées chargées avec succès pour getAllRuns');
       const allRuns: StravaActivity[] = [];
       for (let page = 1; page <= 5; page++) {
         const activities = await mockData.mockGetStravaActivities(200, page);
@@ -815,9 +817,13 @@ export async function getStravaAthlete(): Promise<StravaAthlete> {
   try {
     // 🎭 Utiliser les mocks si activés (développement uniquement)
     if (USE_MOCK) {
+      debugLog('🎭 Mode Mock activé - utilisation des données mockées pour getStravaAthlete');
       const mockData = await getMockData()
       if (mockData) {
+        debugLog('✅ Données mockées chargées avec succès pour getStravaAthlete');
         return await mockData.mockGetStravaAthlete()
+      } else {
+        debugLog('⚠️ Mode Mock activé mais impossible de charger les données mockées pour getStravaAthlete');
       }
     }
     
