@@ -166,7 +166,7 @@ const DashboardStats = ({ googleAnalyticsId }: DashboardStatsProps) => {
         console.log('✅ Statistiques chargées:', basicStats);
         
         // Formater les données pour l'affichage
-        setStatsData({
+        const formattedStats = {
           visitors: { 
             value: basicStats.activeUsers.toLocaleString('fr-FR'), 
             change: '+0%' // TODO: Calculer le changement par rapport à la période précédente
@@ -183,7 +183,17 @@ const DashboardStats = ({ googleAnalyticsId }: DashboardStatsProps) => {
             value: formatDuration(basicStats.averageSessionDuration), 
             change: '0%' 
           },
+        };
+        
+        console.log('📊 Données formatées pour affichage:', formattedStats);
+        console.log('📊 Valeurs brutes:', {
+          activeUsers: basicStats.activeUsers,
+          screenPageViews: basicStats.screenPageViews,
+          bounceRate: basicStats.bounceRate,
+          averageSessionDuration: basicStats.averageSessionDuration
         });
+        
+        setStatsData(formattedStats);
       } else {
         // Charger les statistiques en temps réel
         console.log('📊 Chargement des statistiques en temps réel...');
