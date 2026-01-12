@@ -54,7 +54,7 @@ const DashboardStats = ({ googleAnalyticsId }: DashboardStatsProps) => {
     if (gaId) {
       // Sauvegarder l'ID par défaut s'il n'y en a pas d'autre
       if (!savedGAId && !googleAnalyticsId) {
-        localStorage.setItem('google_analytics_id', defaultGAId);
+        localStorage.setItem('google_analytics_property_id', defaultGAId);
       }
       // Sauvegarder aussi l'ID GT si fourni
       if (defaultGTId) {
