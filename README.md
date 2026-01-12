@@ -908,4 +908,222 @@ Le projet inclut :
 
 ---
 
+## 🔄 Workflow Complet de Développement
+
+### 1. Design (Figma) → Code
+1. **Créer le design** dans Figma
+2. **Exporter les assets** (SVG, PNG) dans `public/figma-assets/` ou `src/assets/`
+3. **Optionnel** : Utiliser le MCP Figma dans Cursor pour générer le code React directement
+
+### 2. Développement (Cursor)
+1. **Ouvrir le projet** dans Cursor
+2. **Utiliser l'IA intégrée** pour générer/modifier le code
+3. **Utiliser les MCP** (Figma, MUI) pour accéder à la documentation et aux exemples
+4. **Tester en local** :
+   - Avec mocks : `npm run dev` (après avoir ajouté `VITE_USE_STRAVA_MOCK=true` dans `.env.local`)
+   - Avec vraies API : `vercel dev` (nécessite Vercel CLI)
+
+### 3. Version Control (Git/GitHub)
+1. **Vérifier les changements** : `git status`
+2. **Ajouter les fichiers** : `git add .`
+3. **Commit avec message descriptif** : `git commit -m "feat: description"` ou `fix: description`
+4. **Push vers GitHub** : `git push origin main`
+
+**Convention de commits :**
+- `feat:` : Nouvelle fonctionnalité
+- `fix:` : Correction de bug
+- `refactor:` : Refactoring du code
+- `style:` : Changements de style (CSS, formatage)
+- `docs:` : Documentation
+- `chore:` : Tâches de maintenance
+
+### 4. Déploiement Automatique (Vercel)
+1. **Push sur `main`** → Déploiement automatique déclenché
+2. **Vérifier les logs** dans Vercel Dashboard → Deployments → Logs
+3. **Variables d'environnement** : Configurées dans Vercel → Settings → Environment Variables
+
+### 5. Intégrations API
+
+**Strava :**
+- Architecture : `Client → /api/strava/* → Vercel Function → Strava API`
+- Tokens gérés côté serveur uniquement (jamais exposés dans le code client)
+- Refresh automatique des tokens expirés
+- En local : Utiliser les mocks (`VITE_USE_STRAVA_MOCK=true`) ou `vercel dev`
+
+**Google Analytics :**
+- OAuth2 flow : `Client → Google → /api/google-auth/callback → Dashboard`
+- Tokens stockés dans `localStorage` côté client
+- Variables d'environnement :
+  - `VITE_*` pour le client React
+  - Sans `VITE_` pour les API routes Vercel
+
+### 6. MCP (Model Context Protocol)
+
+**MCP Configurés :**
+- **MUI MCP** : Accès à la documentation MUI et exemples de code
+- **Figma MCP** : Génération de code React depuis les designs Figma (si configuré)
+
+**Configuration :**
+1. Cursor Settings → MCP → Add Server
+2. Ajouter la configuration du serveur MCP souhaité
+3. Voir `MCP_CONFIG.md` pour plus de détails
+
+**Avantages :**
+- Documentation à jour automatiquement
+- Code précis basé sur les meilleures pratiques
+- Génération rapide de code depuis les designs
+
+## 📚 Documentation des Erreurs Courantes
+
+### Erreurs de Développement Local
+
+#### ❌ "Les données Strava ne se chargent pas en local"
+**Symptômes :**
+- Erreur 500 sur `/api/strava/*`
+- Console : `VITE_USE_STRAVA_MOCK: undefined, USE_MOCK: false`
+- Message "Failed to load resource: the server responded with a status of 500"
+
+**Causes possibles :**
+1. Utilisation de `npm run dev` sans mocks activés
+2. Variable `VITE_USE_STRAVA_MOCK=true` absente de `.env.local`
+3. Serveur non redémarré après modification de `.env.local`
+
+**Solutions :**
+- **Solution A (Recommandée)** : Ajouter `VITE_USE_STRAVA_MOCK=true` dans `.env.local` et redémarrer
+- **Solution B** : Utiliser `vercel dev` au lieu de `npm run dev`
+
+**Vérification :**
+Console (F12) → Chercher `🔍 Mode Mock Strava:` avec `USE_MOCK: true`
+
+#### ❌ "API routes Vercel ne sont pas disponibles"
+**Symptômes :**
+- Message : "Les API routes Vercel ne sont pas disponibles avec 'npm run dev'"
+- Routes `/api/*` retournent du HTML au lieu de JSON
+
+**Cause :**
+Les routes `/api/*` sont des Serverless Functions Vercel qui ne fonctionnent qu'avec `vercel dev` ou en production.
+
+**Solution :**
+- Utiliser `vercel dev` au lieu de `npm run dev`
+- OU activer les mocks avec `VITE_USE_STRAVA_MOCK=true`
+
+#### ❌ "VITE_USE_STRAVA_MOCK: undefined"
+**Symptômes :**
+- Console : `VITE_USE_STRAVA_MOCK: undefined`
+- `USE_MOCK: false` même après avoir ajouté la variable
+
+**Causes possibles :**
+1. Fichier `.env.local` absent ou mal placé
+2. Variable mal formatée
+3. Serveur non redémarré
+
+**Solutions :**
+1. Vérifier que `.env.local` est à la racine (même niveau que `package.json`)
+2. Vérifier le format : `VITE_USE_STRAVA_MOCK=true` (sans espaces, sans guillemets)
+3. **Redémarrer le serveur** après modification (important !)
+
+**Note :** En local (localhost), les mocks sont activés automatiquement même sans la variable.
+
+#### ❌ "Variables d'environnement manquantes"
+**Symptômes :**
+- Erreur 500 avec message "Variables d'environnement manquantes sur Vercel"
+- Liste des variables manquantes dans l'erreur
+
+**Cause :**
+Variables non configurées dans Vercel ou dans `.env.local`.
+
+**Solution :**
+1. **En local** : Ajouter les variables dans `.env.local` (sans `VITE_` pour les API routes)
+2. **En production** : Vercel → Settings → Environment Variables
+3. Redéployer après avoir ajouté les variables
+
+#### ❌ "Token Strava rejeté (401)"
+**Symptômes :**
+- Erreur 401 Unauthorized
+- Message "Token Strava rejeté"
+
+**Causes possibles :**
+1. Token expiré (expire après 6 heures)
+2. Token sans les bonnes permissions (scope manquant)
+3. Token invalide ou révoqué
+
+**Solutions :**
+1. **Refresh automatique** : Les tokens sont automatiquement rafraîchis par les API routes Vercel
+2. **Vérifier les permissions** : Le token doit avoir le scope `activity:read` ou `activity:read_all`
+3. **Régénérer le token** : https://www.strava.com/settings/api
+
+### Erreurs de Build
+
+#### ❌ "Expected ')' but found 'if'"
+**Symptômes :**
+- Erreur de compilation TypeScript/ESBuild
+- Message "Expected ')' but found 'if'"
+
+**Cause :**
+Erreur de syntaxe dans le code (parenthèse manquante, etc.)
+
+**Solution :**
+1. Vérifier les erreurs de linting : `npm run build`
+2. Corrigez les erreurs de syntaxe
+3. Vérifier que toutes les parenthèses sont fermées
+
+#### ❌ "Cannot find module"
+**Symptômes :**
+- Erreur d'import
+- Message "Cannot find module '...'"
+
+**Cause :**
+Import incorrect ou fichier manquant.
+
+**Solution :**
+1. Vérifier les chemins d'import
+2. Vérifier les extensions de fichiers (`.ts`, `.tsx`, `.js`)
+3. Vérifier que le fichier existe
+
+### Erreurs de Production
+
+#### ❌ "Les données Strava ne se chargent pas en production"
+**Symptômes :**
+- Erreur 500 sur les routes `/api/strava/*` en production
+- Message "Variables d'environnement manquantes"
+
+**Cause :**
+Variables d'environnement non configurées dans Vercel.
+
+**Solution :**
+1. Vercel → Settings → Environment Variables
+2. Ajouter toutes les variables nécessaires (sans `VITE_` pour les API routes)
+3. Redéployer le projet
+
+#### ❌ "OAuth2 redirect vers URL Vercel au lieu du domaine personnalisé"
+**Symptômes :**
+- Après connexion Google, redirection vers `portfolio-react-anthony-xxx.vercel.app` au lieu de `anthony-merault.fr`
+
+**Cause :**
+`GOOGLE_REDIRECT_URI` et `VITE_GOOGLE_REDIRECT_URI` pointent vers l'URL Vercel.
+
+**Solution :**
+1. Mettre à jour dans Vercel → Settings → Environment Variables :
+   - `GOOGLE_REDIRECT_URI=https://anthony-merault.fr/api/google-auth/callback`
+   - `VITE_GOOGLE_REDIRECT_URI=https://anthony-merault.fr/api/google-auth/callback`
+2. Mettre à jour dans Google Cloud Console → Authorized redirect URIs
+3. Redéployer
+
+## 🛠️ Outils et Librairies
+
+### MCP (Model Context Protocol)
+- **MUI MCP** : Documentation et exemples MUI (voir `MCP_CONFIG.md`)
+- **Figma MCP** : Génération de code depuis Figma (si configuré)
+- Configuration dans Cursor Settings → MCP → Add Server
+
+### Librairies Principales
+- **UI** : @radix-ui/*, @mui/material, shadcn/ui, lucide-react
+- **Animations** : framer-motion, gsap, @react-spring/web
+- **Graphiques** : highcharts, recharts, @mui/x-charts
+- **3D** : @react-three/fiber, @react-three/drei, three
+- **Utilitaires** : date-fns, clsx, class-variance-authority
+- **API** : react-ga4, @vercel/node
+
+Voir [WORKFLOW.md](./WORKFLOW.md) pour la documentation complète du workflow (Figma, Cursor, Git, GitHub, Vercel, MCP).
+
 *Dernière mise à jour : Janvier 2025*
