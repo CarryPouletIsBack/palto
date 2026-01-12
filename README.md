@@ -219,6 +219,7 @@ STRAVA_REFRESH_TOKEN=votre_refresh_token
 STRAVA_TOKEN_EXPIRES_AT=timestamp_unix_expiration
 
 # Google Analytics OAuth2 (pour le dashboard)
+# ⚠️ IMPORTANT : Le préfixe VITE_ est uniquement pour le développement local (côté client)
 VITE_GOOGLE_CLIENT_ID=votre_google_client_id
 VITE_GOOGLE_REDIRECT_URI=http://localhost:5173/api/google-auth/callback
 
