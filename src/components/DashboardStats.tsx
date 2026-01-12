@@ -233,13 +233,18 @@ const DashboardStats = ({ googleAnalyticsId }: DashboardStatsProps) => {
           <div className="stats-config-form">
             <input
               type="text"
-              placeholder="G-XXXXXXXXXX (ID Google Analytics 4)"
+              placeholder="123456789 (Property ID numérique uniquement)"
               className="stats-ga-input"
               onKeyPress={(e) => {
                 if (e.key === 'Enter') {
                   const input = e.target as HTMLInputElement;
                   if (input.value) {
-                    localStorage.setItem('google_analytics_id', input.value);
+                    // Vérifier que c'est un Property ID numérique
+                    if (!/^\d+$/.test(input.value)) {
+                      setError('Le Property ID doit être uniquement des chiffres (ex: 123456789). Voir le guide ci-dessous.');
+                      return;
+                    }
+                    localStorage.setItem('google_analytics_property_id', input.value);
                     setIsConfigured(true);
                     loadGoogleAnalytics(input.value);
                   }
@@ -250,7 +255,12 @@ const DashboardStats = ({ googleAnalyticsId }: DashboardStatsProps) => {
               onClick={(e) => {
                 const input = (e.target as HTMLElement).parentElement?.querySelector('input') as HTMLInputElement;
                 if (input?.value) {
-                  localStorage.setItem('google_analytics_id', input.value);
+                  // Vérifier que c'est un Property ID numérique
+                  if (!/^\d+$/.test(input.value)) {
+                    setError('Le Property ID doit être uniquement des chiffres (ex: 123456789). Voir le guide ci-dessous.');
+                    return;
+                  }
+                  localStorage.setItem('google_analytics_property_id', input.value);
                   setIsConfigured(true);
                   loadGoogleAnalytics(input.value);
                 }
@@ -261,15 +271,21 @@ const DashboardStats = ({ googleAnalyticsId }: DashboardStatsProps) => {
             </button>
           </div>
           <div className="stats-help-section">
-            <p className="stats-help-title">Comment trouver votre ID Google Analytics :</p>
+            <p className="stats-help-title">⚠️ IMPORTANT : Property ID numérique requis</p>
+            <p className="stats-help-text" style={{ marginBottom: '16px' }}>
+              L'API Google Analytics Data nécessite un <strong>Property ID NUMÉRIQUE</strong> (ex: <code>123456789</code>), 
+              <strong>PAS</strong> un Measurement ID (ex: <code>G-MS120551E9</code>).
+            </p>
+            <p className="stats-help-title">Comment trouver votre Property ID numérique :</p>
             <ol className="stats-help-list">
               <li>Connectez-vous à <a href="https://analytics.google.com" target="_blank" rel="noopener noreferrer">Google Analytics</a></li>
-              <li>Allez dans <strong>Administration</strong> → <strong>Propriété</strong></li>
-              <li>Dans la section <strong>Informations sur la propriété</strong>, vous trouverez votre <strong>ID de mesure</strong></li>
-              <li>Le format est <strong>G-XXXXXXXXXX</strong> (pour GA4) ou <strong>UA-XXXXXXXXX-X</strong> (pour Universal Analytics)</li>
+              <li>Allez dans <strong>Administration</strong> (icône d'engrenage) → <strong>Propriété</strong></li>
+              <li>Dans <strong>Informations sur la propriété</strong>, cherchez <strong>ID de propriété</strong></li>
+              <li>C'est un nombre uniquement (ex: <code>123456789</code>)</li>
+              <li>⚠️ <strong>Ne confondez pas</strong> avec l'<strong>ID de mesure</strong> (G-XXXXX) qui est pour le tracking</li>
             </ol>
-            <p className="stats-help-text">
-              <strong>Google Tag Manager</strong> (GTM) gère les tags, tandis que <strong>Google Analytics</strong> (GA) fournit les statistiques.
+            <p className="stats-help-text" style={{ marginTop: '16px' }}>
+              Voir <a href="https://github.com/CarryPouletIsBack/portfolio-react-anthony/blob/main/GOOGLE_ANALYTICS_PROPERTY_ID.md" target="_blank" rel="noopener noreferrer">le guide complet</a> pour plus d'aide.
             </p>
           </div>
         </div>
