@@ -43,17 +43,27 @@ const DashboardStats = ({ googleAnalyticsId }: DashboardStatsProps) => {
     // Vérifier si Google Analytics est configuré
     // ⚠️ IMPORTANT : L'API nécessite un Property ID NUMÉRIQUE (ex: "123456789")
     // Pas un Measurement ID (ex: "G-MS120551E9")
-    const savedGAId = localStorage.getItem('google_analytics_property_id') || localStorage.getItem('google_analytics_id');
+    const savedPropertyId = localStorage.getItem('google_analytics_property_id');
+    const oldGAId = localStorage.getItem('google_analytics_id');
+    
+    // Nettoyer l'ancien Measurement ID si présent
+    if (oldGAId && (oldGAId.startsWith('G-') || !/^\d+$/.test(oldGAId))) {
+      console.log('🧹 Nettoyage de l\'ancien Measurement ID:', oldGAId);
+      localStorage.removeItem('google_analytics_id');
+    }
+    
     // Property ID numérique configuré
     const defaultGAId = '383170814'; // Property ID numérique
     const defaultGTId = 'GT-KDDTXMS'; // ID Google Tag/Measurement (pour le tracking, pas pour l'API)
     
-    // Utiliser l'ID sauvegardé, celui passé en prop, ou l'ID par défaut
-    const gaId = savedGAId || googleAnalyticsId || defaultGAId;
+    // Utiliser l'ID sauvegardé (uniquement Property ID numérique), celui passé en prop, ou l'ID par défaut
+    // Vérifier que savedPropertyId est bien numérique
+    const validSavedId = savedPropertyId && /^\d+$/.test(savedPropertyId) ? savedPropertyId : null;
+    const gaId = validSavedId || (googleAnalyticsId && /^\d+$/.test(googleAnalyticsId) ? googleAnalyticsId : null) || defaultGAId;
     
     if (gaId) {
       // Sauvegarder l'ID par défaut s'il n'y en a pas d'autre
-      if (!savedGAId && !googleAnalyticsId) {
+      if (!validSavedId && !googleAnalyticsId) {
         localStorage.setItem('google_analytics_property_id', defaultGAId);
       }
       // Sauvegarder aussi l'ID GT si fourni
