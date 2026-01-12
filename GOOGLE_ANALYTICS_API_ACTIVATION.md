@@ -24,15 +24,21 @@ Cela signifie que l'API Google Analytics Data API n'est pas activée dans votre 
 
 ### Étape 3 : Activer l'API Google Analytics Data API
 
+⚠️ **IMPORTANT** : Il y a deux APIs différentes avec des noms similaires :
+- ❌ **Analytics Hub API** (`analyticshub.googleapis.com`) - Ce n'est PAS celle-ci
+- ✅ **Google Analytics Data API** (`analyticsdata.googleapis.com`) - C'est celle-ci qu'il faut activer
+
 **Option A : Via le lien direct**
 1. Cliquez sur ce lien : https://console.developers.google.com/apis/api/analyticsdata.googleapis.com/overview?project=416597900962
-2. Cliquez sur le bouton **"ACTIVER"** (ou **"ENABLE"** en anglais)
+2. Vérifiez que le titre de la page est bien **"Google Analytics Data API"** (et non "Analytics Hub API")
+3. Cliquez sur le bouton **"ACTIVER"** (ou **"ENABLE"** en anglais)
 
 **Option B : Via le menu**
 1. Dans le menu de gauche, cliquez sur **"APIs & Services"** → **"Library"** (Bibliothèque)
-2. Dans la barre de recherche, tapez : `Google Analytics Data API`
-3. Cliquez sur **"Google Analytics Data API"**
-4. Cliquez sur le bouton **"ACTIVER"** (ou **"ENABLE"**)
+2. Dans la barre de recherche, tapez exactement : `Google Analytics Data API`
+3. ⚠️ Assurez-vous de sélectionner **"Google Analytics Data API"** (pas "Analytics Hub API")
+4. Vérifiez que l'URL contient `analyticsdata.googleapis.com` (pas `analyticshub.googleapis.com`)
+5. Cliquez sur le bouton **"ACTIVER"** (ou **"ENABLE"**)
 
 ### Étape 4 : Vérifier l'activation
 

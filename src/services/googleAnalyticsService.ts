@@ -57,11 +57,18 @@ export interface RunReportResponse {
 }
 
 /**
- * Formate l'ID de propriété pour l'API
- * Accepte "G-MS120551E9" ou "MS120551E9" et retourne "properties/MS120551E9"
+ * Formate l'ID de propriété pour l'API Google Analytics Data API
+ * 
+ * ⚠️ IMPORTANT : L'API nécessite un Property ID NUMÉRIQUE (ex: "123456789")
+ * Pas un Measurement ID (ex: "G-MS120551E9" ou "MS120551E9")
+ * 
+ * Accepte :
+ * - Property ID numérique : "123456789" → "properties/123456789"
+ * - Property ID avec préfixe : "properties/123456789" → "properties/123456789"
+ * - Measurement ID (erreur) : "G-MS120551E9" → throw Error
  */
 export function formatPropertyId(propertyId: string): string {
-  // Retirer le préfixe "G-" si présent
+  // Retirer le préfixe "G-" si présent (Measurement ID)
   const cleanId = propertyId.replace(/^G-/, '');
   
   // Si ça commence déjà par "properties/", on le retourne tel quel
@@ -69,7 +76,18 @@ export function formatPropertyId(propertyId: string): string {
     return cleanId;
   }
   
-  return `properties/${cleanId}`;
+  // Vérifier si c'est un Property ID numérique (uniquement des chiffres)
+  const numericId = cleanId.replace(/^properties\//, '');
+  if (!/^\d+$/.test(numericId)) {
+    throw new Error(
+      `Property ID invalide: "${propertyId}". ` +
+      `L'API Google Analytics Data nécessite un Property ID NUMÉRIQUE (ex: "123456789"), ` +
+      `pas un Measurement ID (ex: "G-MS120551E9"). ` +
+      `Voir https://developers.google.com/analytics/devguides/reporting/data/v1/property-id pour plus d'informations.`
+    );
+  }
+  
+  return `properties/${numericId}`;
 }
 
 /**
