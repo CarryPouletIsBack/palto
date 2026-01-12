@@ -222,30 +222,43 @@ const AboutNew = () => {
         }
         
         // Récupérer les détails des activités (avec photos et polylines)
+        // Vérifier d'abord si les activités de base ont déjà des photos
         if (activities.length > 0) {
-          try {
-            const activitiesDetails = await Promise.all(
-              activities.map(async (activity) => {
-                try {
-                  // S'assurer que l'ID est un nombre
-                  const activityId = typeof activity.id === 'string' ? parseInt(activity.id, 10) : activity.id;
-                  if (isNaN(activityId)) {
-                    console.warn(`ID d'activité invalide: ${activity.id}`, activity);
-                    return activity; // Retourner l'activité de base si l'ID est invalide
+          // Vérifier si les activités de base ont déjà des photos
+          const hasPhotosInBase = activities.some(a => 
+            a.primary_photo?.urls?.['600'] || 
+            a.photos?.primary?.urls?.['600'] ||
+            a.primary_photo?.urls?.['100'] ||
+            a.photos?.primary?.urls?.['100']
+          );
+          
+          // Si les activités ont déjà des photos, les utiliser directement
+          if (hasPhotosInBase) {
+            console.log('✅ Activités ont déjà des photos, utilisation directe');
+            setStravaActivitiesDetails(activities);
+          } else {
+            // Sinon, récupérer les détails (mais avec gestion d'erreur améliorée)
+            try {
+              const activitiesDetails = await Promise.all(
+                activities.map(async (activity) => {
+                  try {
+                    const activityId = typeof activity.id === 'string' ? parseInt(activity.id, 10) : activity.id;
+                    if (isNaN(activityId)) {
+                      return activity;
+                    }
+                    return await getStravaActivityDetails(activityId);
+                  } catch (error) {
+                    // En cas d'erreur, utiliser l'activité de base
+                    return activity;
                   }
-                  return await getStravaActivityDetails(activityId);
-                } catch (error) {
-                  // En cas d'erreur, utiliser l'activité de base (qui peut déjà avoir des photos)
-                  console.warn(`Erreur lors de la récupération des détails pour l'activité ${activity.id}:`, error);
-                  return activity;
-                }
-              })
-            )
-            setStravaActivitiesDetails(activitiesDetails)
-          } catch (error) {
-            console.error('Erreur lors de la récupération des détails des activités:', error);
-            // En cas d'erreur, utiliser les activités de base
-            setStravaActivitiesDetails(activities)
+                })
+              )
+              setStravaActivitiesDetails(activitiesDetails)
+            } catch (error) {
+              console.error('Erreur lors de la récupération des détails:', error);
+              // En cas d'erreur, utiliser les activités de base
+              setStravaActivitiesDetails(activities)
+            }
           }
         } else {
           setStravaActivitiesDetails([])
