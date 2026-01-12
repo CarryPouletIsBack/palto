@@ -1,11 +1,11 @@
-// Service d'authentification simple
-// En production, utilisez un système d'authentification plus robuste
+// Service d'authentification
+// Utilise une API route Vercel pour la vérification du mot de passe
 
 const AUTH_STORAGE_KEY = 'dashboard_auth';
 const AUTH_TOKEN_KEY = 'dashboard_token';
 
-// Mot de passe stocké en variable d'environnement (à configurer dans Vercel)
-const DASHBOARD_PASSWORD = import.meta.env.VITE_DASHBOARD_PASSWORD || 'admin123';
+// URL de l'API d'authentification
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '/api';
 
 export interface LoginCredentials {
   email: string;
@@ -42,27 +42,31 @@ export const isAuthenticated = (): boolean => {
 };
 
 // Se connecter
-export const login = (credentials: LoginCredentials): Promise<{ success: boolean; user?: User; error?: string }> => {
-  return new Promise((resolve) => {
-    // Vérification simple du mot de passe
-    // En production, cela devrait être fait côté serveur
-    if (credentials.password === DASHBOARD_PASSWORD) {
-      const user: User = {
-        email: credentials.email,
-        displayName: credentials.email.split('@')[0],
-      };
+export const login = async (credentials: LoginCredentials): Promise<{ success: boolean; user?: User; error?: string }> => {
+  try {
+    const response = await fetch(`${API_BASE_URL}/auth/login`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(credentials),
+    });
+
+    const data = await response.json();
+
+    if (data.success && data.user && data.token) {
+      // Stocker le token et les données utilisateur
+      localStorage.setItem(AUTH_TOKEN_KEY, data.token);
+      localStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(data.user));
       
-      // Générer un token simple (en production, utilisez JWT)
-      const token = btoa(`${credentials.email}:${Date.now()}`);
-      
-      localStorage.setItem(AUTH_TOKEN_KEY, token);
-      localStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(user));
-      
-      resolve({ success: true, user });
+      return { success: true, user: data.user };
     } else {
-      resolve({ success: false, error: 'Mot de passe incorrect' });
+      return { success: false, error: data.error || 'Erreur de connexion' };
     }
-  });
+  } catch (error) {
+    console.error('Erreur lors de la connexion:', error);
+    return { success: false, error: 'Erreur de connexion au serveur' };
+  }
 };
 
 // Se déconnecter
