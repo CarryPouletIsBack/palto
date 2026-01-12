@@ -128,11 +128,18 @@ const AboutNew = () => {
 
   // Fonction pour récupérer l'URL de la photo de l'activité
   const getActivityPhotoUrl = (activity: StravaActivity): string | undefined => {
+    // Vérifier d'abord primary_photo (format le plus courant)
     if (activity?.primary_photo?.urls?.['600']) {
       return activity.primary_photo.urls['600']
     }
+    // Vérifier ensuite photos.primary (format alternatif)
     if (activity?.photos?.primary?.urls?.['600']) {
       return activity.photos.primary.urls['600']
+    }
+    // Vérifier aussi si total_photo_count > 0, on peut essayer de récupérer les détails
+    if (activity?.total_photo_count > 0 && activity?.id) {
+      // Les photos peuvent être dans les détails de l'activité
+      // On retourne undefined ici, mais on pourrait charger les détails si nécessaire
     }
     return undefined
   }
@@ -521,50 +528,65 @@ const AboutNew = () => {
                           const polyline = activity.map?.summary_polyline || ''
                           const hasPhoto = !!photoUrl
                           const hasPolyline = !!polyline
-                          // Afficher la photo si elle existe, sinon le tracé
-                          const hasBackground = hasPhoto || hasPolyline
+                          
+                          // PRIORITÉ : Afficher la photo si elle existe, sinon le tracé
+                          // Si on a une photo, on ne montre PAS le tracé
                           const usePhoto = hasPhoto
                           const usePolyline = !hasPhoto && hasPolyline
+                          const hasBackground = usePhoto || usePolyline
                           
                           return (
                             <SwiperSlide key={activity.id || index}>
                               <div className="service-item strava-activity-item" style={{ 
-                                background: usePhoto ? `url(${photoUrl}) center/cover` : 'transparent',
+                                background: usePhoto ? `url(${photoUrl}) center/cover no-repeat` : (usePolyline ? 'transparent' : 'transparent'),
+                                backgroundSize: usePhoto ? 'cover' : 'auto',
                                 borderRadius: '8px',
                                 overflow: 'hidden',
                                 position: 'relative',
                                 minHeight: '200px'
                               }}>
-                                {/* Overlay pour la photo */}
-                                {usePhoto && (
-                                  <div style={{
-                                    position: 'absolute',
-                                    inset: 0,
-                                    background: 'linear-gradient(to bottom, rgba(0,0,0,0.3), rgba(0,0,0,0.7))',
-                                    zIndex: 1
-                                  }} />
+                                {/* PHOTO EN PRIORITÉ - Afficher uniquement si photoUrl existe */}
+                                {usePhoto && photoUrl && (
+                                  <>
+                                    <img 
+                                      src={photoUrl} 
+                                      alt={`Activité ${activity.name || 'Strava'}`}
+                                      style={{
+                                        position: 'absolute',
+                                        inset: 0,
+                                        width: '100%',
+                                        height: '100%',
+                                        objectFit: 'cover',
+                                        zIndex: 0
+                                      }}
+                                    />
+                                    <div style={{
+                                      position: 'absolute',
+                                      inset: 0,
+                                      background: 'linear-gradient(to bottom, rgba(0,0,0,0.3), rgba(0,0,0,0.7))',
+                                      zIndex: 1
+                                    }} />
+                                  </>
                                 )}
                                 
-                                {/* Tracé de la course en background si pas de photo */}
+                                {/* TRACÉ GPS - Uniquement si PAS de photo */}
                                 {usePolyline && !usePhoto && (
-                                  <div style={{ 
-                                    position: 'absolute', 
-                                    inset: 0,
-                                    zIndex: 0,
-                                    opacity: 0.4
-                                  }}>
-                                    <StravaMap polyline={polyline} className="strava-map-background" />
-                                  </div>
-                                )}
-                                
-                                {/* Overlay pour le tracé pour améliorer la lisibilité - uniquement si pas de photo */}
-                                {usePolyline && !usePhoto && (
-                                  <div style={{
-                                    position: 'absolute',
-                                    inset: 0,
-                                    background: 'linear-gradient(to bottom, rgba(255,255,255,0.1), rgba(0,0,0,0.3))',
-                                    zIndex: 1
-                                  }} />
+                                  <>
+                                    <div style={{ 
+                                      position: 'absolute', 
+                                      inset: 0,
+                                      zIndex: 0,
+                                      opacity: 0.4
+                                    }}>
+                                      <StravaMap polyline={polyline} className="strava-map-background" />
+                                    </div>
+                                    <div style={{
+                                      position: 'absolute',
+                                      inset: 0,
+                                      background: 'linear-gradient(to bottom, rgba(255,255,255,0.1), rgba(0,0,0,0.3))',
+                                      zIndex: 1
+                                    }} />
+                                  </>
                                 )}
                                 
                                 <div className="service-text" style={{ 
