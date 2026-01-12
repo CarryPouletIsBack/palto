@@ -258,7 +258,10 @@ function App() {
   }
 
   // Si on est sur le dashboard et non authentifié, afficher le login
-  if (currentPage === 'dashboard' && !isLoggedIn) {
+  // SAUF si on a des tokens OAuth2 dans l'URL (ils seront traités par DashboardStats)
+  const urlParams = new URLSearchParams(window.location.search)
+  const hasOAuthTokens = urlParams.has('access_token')
+  if (currentPage === 'dashboard' && !isLoggedIn && !hasOAuthTokens) {
     return <Login onLoginSuccess={handleLoginSuccess} />
   }
 
