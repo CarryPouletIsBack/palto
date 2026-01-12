@@ -264,12 +264,37 @@ export async function getRealtimeStats(
     ],
   };
 
+  // Log pour debug (uniquement en développement)
+  if (import.meta.env.DEV) {
+    console.log('📊 Appel API Google Analytics getRealtimeStats:', {
+      propertyId: config.propertyId,
+      request
+    });
+  }
+
   const response = await runRealtimeReport(config, request);
+
+  // Log de la réponse complète pour debug
+  if (import.meta.env.DEV) {
+    console.log('📊 Réponse API Google Analytics (temps réel):', {
+      rowCount: response.rowCount,
+      totals: response.totals,
+      metricHeaders: response.metricHeaders,
+      fullResponse: response
+    });
+  }
 
   // Extraire les valeurs des totaux
   const totals = response.totals?.[0]?.metricValues || [];
   
-  return {
+  const stats = {
     activeUsers: parseInt(totals[0]?.value || '0', 10),
   };
+
+  // Log des statistiques extraites
+  if (import.meta.env.DEV) {
+    console.log('📊 Statistiques temps réel extraites:', stats);
+  }
+  
+  return stats;
 }
