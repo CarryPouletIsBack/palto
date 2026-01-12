@@ -136,10 +136,12 @@ const AboutNew = () => {
     if (activity?.photos?.primary?.urls?.['600']) {
       return activity.photos.primary.urls['600']
     }
-    // Vérifier aussi si total_photo_count > 0, on peut essayer de récupérer les détails
-    if (activity?.total_photo_count > 0 && activity?.id) {
-      // Les photos peuvent être dans les détails de l'activité
-      // On retourne undefined ici, mais on pourrait charger les détails si nécessaire
+    // Vérifier aussi d'autres formats possibles
+    if (activity?.photos?.primary?.urls?.['100']) {
+      return activity.photos.primary.urls['100']
+    }
+    if (activity?.primary_photo?.urls?.['100']) {
+      return activity.primary_photo.urls['100']
     }
     return undefined
   }
@@ -528,6 +530,19 @@ const AboutNew = () => {
                           const polyline = activity.map?.summary_polyline || ''
                           const hasPhoto = !!photoUrl
                           const hasPolyline = !!polyline
+                          
+                          // Debug: afficher dans la console pour vérifier
+                          if (activity.total_photo_count > 0 && !photoUrl) {
+                            console.log('Activité avec photos mais URL non trouvée:', {
+                              id: activity.id,
+                              name: activity.name,
+                              total_photo_count: activity.total_photo_count,
+                              photo_count: activity.photo_count,
+                              primary_photo: activity.primary_photo,
+                              photos: activity.photos,
+                              activity: activity
+                            })
+                          }
                           
                           // PRIORITÉ : Afficher la photo si elle existe, sinon le tracé
                           // Si on a une photo, on ne montre PAS le tracé

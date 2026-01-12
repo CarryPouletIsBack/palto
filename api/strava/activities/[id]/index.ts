@@ -32,6 +32,8 @@ export default async function handler(
       return;
     }
 
+    // Récupérer les détails de l'activité avec les photos
+    // L'API Strava retourne les photos dans les détails complets
     const response = await stravaRequest(`/activities/${id}`);
 
     if (!response.ok) {
@@ -42,6 +44,18 @@ export default async function handler(
     }
 
     const data = await response.json();
+    
+    // Debug: logger la structure des photos pour comprendre
+    if (data.total_photo_count > 0) {
+      console.log('[Strava API] Activité avec photos:', {
+        id: data.id,
+        total_photo_count: data.total_photo_count,
+        photo_count: data.photo_count,
+        primary_photo: data.primary_photo,
+        photos: data.photos
+      });
+    }
+    
     res.status(200).json(data);
   } catch (error) {
     console.error('[Strava API] Erreur lors de la récupération de l\'activité:', error);
