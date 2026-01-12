@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { type ProjectWithMeta, getAllProjects, deleteProject, searchProjects } from '../services/projectService';
 import { logout } from '../services/authService';
+import { saveToken } from '../services/googleAuthService';
 import ProjectEditor from './ProjectEditor';
 import DashboardStats from './DashboardStats';
 import { 
@@ -42,14 +43,25 @@ const Dashboard = ({ onBackClick }: DashboardProps) => {
     // Vérifier si on revient de l'authentification OAuth (tokens dans l'URL)
     const urlParams = new URLSearchParams(window.location.search);
     const accessToken = urlParams.get('access_token');
+    const expiresIn = urlParams.get('expires_in');
+    const refreshToken = urlParams.get('refresh_token');
     
-    if (accessToken) {
-      // Si on a des tokens dans l'URL, activer la vue Stats
+    if (accessToken && expiresIn) {
+      // Sauvegarder les tokens immédiatement
+      const decodedRefreshToken = refreshToken ? decodeURIComponent(refreshToken) : undefined;
+      saveToken({
+        access_token: accessToken,
+        expires_in: parseInt(expiresIn, 10),
+        refresh_token: decodedRefreshToken,
+        scope: '',
+        token_type: 'Bearer',
+      });
+      
+      // Activer la vue Stats
       setActiveView('stats');
-      // Nettoyer l'URL après un court délai pour laisser DashboardStats traiter les tokens
-      setTimeout(() => {
-        window.history.replaceState({}, document.title, window.location.pathname);
-      }, 100);
+      
+      // Nettoyer l'URL immédiatement
+      window.history.replaceState({}, document.title, window.location.pathname);
     }
   }, []);
 
