@@ -256,12 +256,21 @@ VITE_GOOGLE_REDIRECT_URI=http://localhost:5173/api/google-auth/callback
 ```
 
 **Configuration en production (Vercel Environment Variables) :**
+
+⚠️ **Vous devez configurer les DEUX types de variables dans Vercel :**
+
 ```env
-# Côté serveur (API routes) - SANS préfixe VITE_
+# Pour le client React (avec préfixe VITE_)
+VITE_GOOGLE_CLIENT_ID=votre_client_id
+VITE_GOOGLE_REDIRECT_URI=https://votre-projet.vercel.app/api/google-auth/callback
+
+# Pour les API routes (SANS préfixe VITE_)
 GOOGLE_CLIENT_ID=votre_client_id
 GOOGLE_CLIENT_SECRET=votre_client_secret
 GOOGLE_REDIRECT_URI=https://votre-projet.vercel.app/api/google-auth/callback
 ```
+
+**Note :** Vous pouvez utiliser le même `CLIENT_ID` pour les deux, mais vous devez le configurer deux fois (une fois avec `VITE_`, une fois sans) car Vercel les traite différemment.
 
 **Pourquoi cette différence ?**
 - Le préfixe `VITE_` est uniquement pour les variables accessibles côté **client** (navigateur)

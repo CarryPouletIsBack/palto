@@ -64,23 +64,43 @@ VITE_GOOGLE_REDIRECT_URI=http://localhost:5173/dashboard
 
 #### Pour Vercel (Production)
 
-⚠️ **IMPORTANT** : Dans Vercel, les variables d'environnement pour les **API routes** ne doivent **PAS** avoir le préfixe `VITE_` !
+⚠️ **IMPORTANT** : Dans Vercel, vous devez configurer **DEUX TYPES** de variables d'environnement :
+
+1. **Variables pour le client React** (avec préfixe `VITE_`) :
+   - Ces variables sont injectées dans le code JavaScript au moment du build
+   - Accessibles via `import.meta.env.VITE_*` dans votre code React
+
+2. **Variables pour les API routes** (sans préfixe `VITE_`) :
+   - Ces variables sont utilisées côté serveur dans les endpoints Vercel
+   - Accessibles via `process.env.*` dans vos API routes
+
+**Configuration dans Vercel :**
 
 1. Allez dans votre projet Vercel
 2. Allez dans **Settings** > **Environment Variables**
-3. Ajoutez les variables suivantes **SANS le préfixe `VITE_`** :
+3. Ajoutez **TOUTES** les variables suivantes :
 
+**Pour le client React (avec VITE_) :**
+```
+VITE_GOOGLE_CLIENT_ID=votre_client_id_ici
+VITE_GOOGLE_REDIRECT_URI=https://votre-projet.vercel.app/api/google-auth/callback
+```
+
+**Pour les API routes (sans VITE_) :**
 ```
 GOOGLE_CLIENT_ID=votre_client_id_ici
 GOOGLE_CLIENT_SECRET=votre_client_secret_ici
 GOOGLE_REDIRECT_URI=https://votre-projet.vercel.app/api/google-auth/callback
 ```
 
-**Pourquoi ?**
-- Le préfixe `VITE_` est uniquement pour les variables accessibles côté **client** (navigateur)
-- Les API routes Vercel sont côté **serveur**, donc elles utilisent les variables **sans** préfixe `VITE_`
-- Dans votre code client (React), vous continuez d'utiliser `VITE_GOOGLE_CLIENT_ID` (qui sera remplacé par Vite au build)
-- Dans vos API routes (`api/google-auth/callback.ts`), vous utilisez `process.env.GOOGLE_CLIENT_ID` (sans VITE_)
+**Résumé :**
+- ✅ `VITE_GOOGLE_CLIENT_ID` → utilisé dans `googleAuthService.ts` (côté client)
+- ✅ `VITE_GOOGLE_REDIRECT_URI` → utilisé dans `googleAuthService.ts` (côté client, optionnel car il y a un fallback)
+- ✅ `GOOGLE_CLIENT_ID` → utilisé dans `api/google-auth/callback.ts` (côté serveur)
+- ✅ `GOOGLE_CLIENT_SECRET` → utilisé dans `api/google-auth/callback.ts` (côté serveur)
+- ✅ `GOOGLE_REDIRECT_URI` → utilisé dans `api/google-auth/callback.ts` (côté serveur)
+
+**Note :** Vous pouvez utiliser le même `CLIENT_ID` pour les deux (avec et sans `VITE_`), mais vous devez le configurer deux fois car Vercel les traite différemment.
 
 ### 5. Déployer les endpoints API sur Vercel
 
