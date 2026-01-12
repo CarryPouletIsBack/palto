@@ -142,6 +142,24 @@ export async function runRealtimeReport(
 
   if (!response.ok) {
     const error = await response.json().catch(() => ({ error: { message: 'Erreur inconnue' } }));
+    
+    // Gérer les erreurs spécifiques de l'API Google Analytics
+    if (error.error?.message?.includes('has not been used') || error.error?.message?.includes('disabled')) {
+      throw new Error(
+        'L\'API Google Analytics Data API n\'est pas activée. ' +
+        'Veuillez l\'activer dans Google Cloud Console : ' +
+        'https://console.developers.google.com/apis/api/analyticsdata.googleapis.com/overview?project=416597900962'
+      );
+    }
+    
+    if (error.error?.message?.includes('OAuth2')) {
+      throw new Error(
+        'Pour utiliser l\'API Google Analytics, vous devez configurer l\'authentification OAuth2. ' +
+        'Le token d\'accès doit être stocké dans localStorage avec la clé google_analytics_access_token. ' +
+        'Veuillez vous connecter via le bouton "Se connecter à Google Analytics" dans le dashboard.'
+      );
+    }
+    
     throw new Error(error.error?.message || `Erreur API: ${response.status} ${response.statusText}`);
   }
 

@@ -496,6 +496,39 @@
   color: #1d1b20;
 }
 
+.stats-error-actions {
+  margin-top: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.stats-error-link {
+  display: inline-block;
+  padding: 10px 20px;
+  background: #509ED8;
+  color: white;
+  text-decoration: none;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  transition: background 0.2s ease;
+  text-align: center;
+}
+
+.stats-error-link:hover {
+  background: #3d7ba8;
+}
+
+.stats-error-help a {
+  color: #509ED8;
+  text-decoration: none;
+}
+
+.stats-error-help a:hover {
+  text-decoration: underline;
+}
+
 .stats-realtime {
   display: flex;
   gap: 24px;

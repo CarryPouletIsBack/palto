@@ -340,10 +340,34 @@ VITE_GOOGLE_REDIRECT_URI=${window.location.origin}/api/google-auth/callback`}
       {error && (
         <div className="stats-error">
           <p>⚠️ {error}</p>
-          <p className="stats-error-help">
-            Pour utiliser l'API Google Analytics, vous devez configurer l'authentification OAuth2.
-            Le token d'accès doit être stocké dans <code>localStorage</code> avec la clé <code>google_analytics_access_token</code>.
-          </p>
+          {error.includes('API Google Analytics Data API n\'est pas activée') && (
+            <div className="stats-error-actions">
+              <a 
+                href="https://console.developers.google.com/apis/api/analyticsdata.googleapis.com/overview?project=416597900962" 
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="stats-error-link"
+              >
+                Activer l'API dans Google Cloud Console →
+              </a>
+              <p className="stats-error-help">
+                Voir <a href="https://github.com/CarryPouletIsBack/portfolio-react-anthony/blob/main/GOOGLE_ANALYTICS_API_ACTIVATION.md" target="_blank" rel="noopener noreferrer">le guide d'activation</a> pour plus d'aide.
+              </p>
+            </div>
+          )}
+          {error.includes('authentification OAuth2') && (
+            <div className="stats-error-actions">
+              <button onClick={handleLogin} className="stats-auth-button login">
+                <LogIn size={16} /> Se connecter à Google Analytics
+              </button>
+            </div>
+          )}
+          {!error.includes('API Google Analytics Data API n\'est pas activée') && !error.includes('authentification OAuth2') && (
+            <p className="stats-error-help">
+              Pour utiliser l'API Google Analytics, vous devez configurer l'authentification OAuth2.
+              Le token d'accès doit être stocké dans <code>localStorage</code> avec la clé <code>google_analytics_access_token</code>.
+            </p>
+          )}
         </div>
       )}
 

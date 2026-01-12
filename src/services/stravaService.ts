@@ -25,25 +25,38 @@
 // Note: Les fonctions getValidAccessToken() et refreshAccessToken() ci-dessous
 // sont conservées pour compatibilité mais ne sont plus utilisées par ce service.
 
-// Vérifier si on doit utiliser les mocks (uniquement en développement)
-// En local (DEV), utiliser les mocks si VITE_USE_STRAVA_MOCK=true
-// En production, ne jamais utiliser les mocks
-const USE_MOCK = import.meta.env.DEV && import.meta.env.VITE_USE_STRAVA_MOCK === 'true'
-
-// Log pour debug (uniquement en développement)
-if (import.meta.env.DEV) {
-  debugLog('🔍 Mode Mock Strava:', {
-    DEV: import.meta.env.DEV,
-    VITE_USE_STRAVA_MOCK: import.meta.env.VITE_USE_STRAVA_MOCK,
-    USE_MOCK: USE_MOCK
-  })
-}
-
 // Fonction utilitaire pour les logs de debug (uniquement en développement)
 const debugLog = (...args: any[]) => {
   if (import.meta.env.DEV) {
     console.log(...args)
   }
+}
+
+// Vérifier si on doit utiliser les mocks (uniquement en développement)
+// En local (DEV), utiliser les mocks si VITE_USE_STRAVA_MOCK=true
+// En production, ne jamais utiliser les mocks
+// ⚠️ En local sans API routes Vercel (localhost), forcer les mocks automatiquement
+// Fonction pour vérifier si on est en localhost (sécurisée pour SSR)
+function isLocalhost(): boolean {
+  if (typeof window === 'undefined') return false
+  return window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+}
+
+const USE_MOCK = import.meta.env.DEV && (
+  import.meta.env.VITE_USE_STRAVA_MOCK === 'true' || 
+  import.meta.env.VITE_USE_STRAVA_MOCK === true ||
+  // Fallback : si on est en local (localhost), utiliser les mocks automatiquement
+  isLocalhost()
+)
+
+// Log pour debug (uniquement en développement)
+if (import.meta.env.DEV) {
+  console.log('🔍 Mode Mock Strava:', {
+    DEV: import.meta.env.DEV,
+    VITE_USE_STRAVA_MOCK: import.meta.env.VITE_USE_STRAVA_MOCK,
+    USE_MOCK: USE_MOCK,
+    type: typeof import.meta.env.VITE_USE_STRAVA_MOCK
+  })
 }
 
 // Fonction pour charger les mocks de manière dynamique (uniquement en développement)
@@ -473,13 +486,14 @@ export async function getStravaActivities(perPage: number = 10, page: number = 1
   try {
     // 🎭 Utiliser les mocks si activés (développement uniquement)
     if (USE_MOCK) {
-      debugLog('🎭 Mode Mock activé - utilisation des données mockées pour getStravaActivities');
+      console.log('🎭 Mode Mock activé - utilisation des données mockées pour getStravaActivities');
       const mockData = await getMockData()
       if (mockData) {
-        debugLog('✅ Données mockées chargées avec succès pour getStravaActivities');
+        console.log('✅ Données mockées chargées avec succès pour getStravaActivities');
         return await mockData.mockGetStravaActivities(perPage, page)
       } else {
-        debugLog('⚠️ Mode Mock activé mais impossible de charger les données mockées pour getStravaActivities');
+        console.error('⚠️ Mode Mock activé mais impossible de charger les données mockées pour getStravaActivities');
+        throw new Error('Mode Mock activé mais données mockées non disponibles');
       }
     }
     
@@ -821,13 +835,14 @@ export async function getStravaAthlete(): Promise<StravaAthlete> {
   try {
     // 🎭 Utiliser les mocks si activés (développement uniquement)
     if (USE_MOCK) {
-      debugLog('🎭 Mode Mock activé - utilisation des données mockées pour getStravaAthlete');
+      console.log('🎭 Mode Mock activé - utilisation des données mockées pour getStravaAthlete');
       const mockData = await getMockData()
       if (mockData) {
-        debugLog('✅ Données mockées chargées avec succès pour getStravaAthlete');
+        console.log('✅ Données mockées chargées avec succès pour getStravaAthlete');
         return await mockData.mockGetStravaAthlete()
       } else {
-        debugLog('⚠️ Mode Mock activé mais impossible de charger les données mockées pour getStravaAthlete');
+        console.error('⚠️ Mode Mock activé mais impossible de charger les données mockées pour getStravaAthlete');
+        throw new Error('Mode Mock activé mais données mockées non disponibles');
       }
     }
     
