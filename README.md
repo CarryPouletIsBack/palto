@@ -230,11 +230,14 @@ VITE_GA_MEASUREMENT_ID=G-MS120551E9
 # Dashboard (pour l'authentification)
 DASHBOARD_PASSWORD=votre_mot_de_passe
 
+# Mode Mock Strava (pour développement local sans API routes)
+VITE_USE_STRAVA_MOCK=true
+
 # Lancement en développement
-# Option 1: Avec Vercel CLI (pour tester les API routes)
+# Option 1: Avec Vercel CLI (pour tester les API routes) - RECOMMANDÉ
 vercel dev
 
-# Option 2: Avec Vite uniquement (frontend seulement)
+# Option 2: Avec Vite uniquement (frontend seulement) - Utilise les mocks automatiquement
 npm run dev
 
 # Build de production
@@ -243,6 +246,216 @@ npm run build
 # Prévisualisation du build
 npm run preview
 ```
+
+## 🔧 Développement Local - Guide Complet
+
+### ⚠️ IMPORTANT : Différence entre `npm run dev` et `vercel dev`
+
+**`npm run dev`** (Vite uniquement) :
+- ✅ Lance uniquement le frontend React
+- ❌ Les routes `/api/*` ne fonctionnent PAS (erreur 500)
+- ✅ Utilise automatiquement les **données mockées** si `VITE_USE_STRAVA_MOCK=true` ou si vous êtes sur `localhost`
+- ✅ Parfait pour travailler sur le design CSS sans avoir besoin des vraies données
+
+**`vercel dev`** (Vercel CLI) :
+- ✅ Lance le frontend ET les API routes Vercel
+- ✅ Les routes `/api/strava/*` fonctionnent correctement
+- ✅ Télécharge automatiquement les variables d'environnement depuis Vercel
+- ✅ Comportement identique à la production
+- ⚠️ Nécessite Vercel CLI installé : `npm install -g vercel`
+
+### Configuration pour le Développement Local
+
+#### Option 1 : Utiliser les Mocks (Recommandé pour le design)
+
+Créez un fichier `.env.local` à la racine avec :
+
+```env
+VITE_USE_STRAVA_MOCK=true
+```
+
+Puis lancez :
+```bash
+npm run dev
+```
+
+Les données mockées seront utilisées automatiquement. **Aucune API route nécessaire !**
+
+#### Option 2 : Utiliser les Vraies API Routes
+
+1. Installez Vercel CLI :
+```bash
+npm install -g vercel
+```
+
+2. Connectez-vous :
+```bash
+vercel login
+```
+
+3. Configurez les variables dans `.env.local` (sans `VITE_` pour les API routes) :
+```env
+STRAVA_CLIENT_ID=votre_client_id
+STRAVA_CLIENT_SECRET=votre_client_secret
+STRAVA_ACCESS_TOKEN=votre_access_token
+STRAVA_REFRESH_TOKEN=votre_refresh_token
+STRAVA_TOKEN_EXPIRES_AT=timestamp_unix
+```
+
+4. Lancez avec Vercel :
+```bash
+vercel dev
+```
+
+Les variables seront téléchargées automatiquement depuis Vercel si configurées.
+
+### 🐛 Erreurs Courantes et Solutions
+
+#### Erreur 1 : "Les données Strava ne se chargent pas en local"
+
+**Symptômes :**
+- Erreur 500 sur `/api/strava/*`
+- Message "Failed to load resource: the server responded with a status of 500"
+- Console : `VITE_USE_STRAVA_MOCK: undefined, USE_MOCK: false`
+
+**Causes possibles :**
+1. Vous utilisez `npm run dev` au lieu de `vercel dev`
+2. La variable `VITE_USE_STRAVA_MOCK=true` n'est pas dans `.env.local`
+3. Le serveur n'a pas été redémarré après avoir modifié `.env.local`
+
+**Solutions :**
+
+**Solution A : Activer les mocks (le plus simple)**
+1. Créez/modifiez `.env.local` :
+```env
+VITE_USE_STRAVA_MOCK=true
+```
+2. Redémarrez le serveur (`Ctrl+C` puis `npm run dev`)
+3. Vérifiez dans la console : `USE_MOCK: true`
+
+**Solution B : Utiliser Vercel CLI**
+1. Installez Vercel CLI : `npm install -g vercel`
+2. Lancez : `vercel dev` (au lieu de `npm run dev`)
+3. Les API routes fonctionneront correctement
+
+**Vérification :**
+Ouvrez la console (F12) et cherchez :
+- `🔍 Mode Mock Strava:` avec `USE_MOCK: true` → Les mocks sont activés ✅
+- `🎭 Mode Mock activé` → Les données mockées sont utilisées ✅
+- `📡 Appel API via endpoint Vercel` → Les API routes sont utilisées (nécessite `vercel dev`)
+
+#### Erreur 2 : "API routes Vercel ne sont pas disponibles"
+
+**Symptômes :**
+- Message d'erreur : "Les API routes Vercel ne sont pas disponibles avec 'npm run dev'"
+- Les routes `/api/*` retournent du HTML au lieu de JSON
+
+**Cause :**
+Les routes `/api/*` sont des Serverless Functions Vercel qui ne fonctionnent qu'avec `vercel dev` ou en production.
+
+**Solution :**
+- Utilisez `vercel dev` au lieu de `npm run dev`
+- OU activez les mocks avec `VITE_USE_STRAVA_MOCK=true` dans `.env.local`
+
+#### Erreur 3 : "Variables d'environnement manquantes"
+
+**Symptômes :**
+- Erreur 500 avec message "Variables d'environnement manquantes sur Vercel"
+- Liste des variables manquantes dans l'erreur
+
+**Cause :**
+Les variables d'environnement ne sont pas configurées dans Vercel ou dans `.env.local`.
+
+**Solution :**
+1. **En local** : Ajoutez les variables dans `.env.local` (sans `VITE_` pour les API routes)
+2. **En production** : Allez dans Vercel → Settings → Environment Variables et ajoutez les variables
+3. Redéployez après avoir ajouté les variables
+
+#### Erreur 4 : "Token Strava rejeté (401)"
+
+**Symptômes :**
+- Erreur 401 Unauthorized
+- Message "Token Strava rejeté"
+
+**Causes possibles :**
+1. Token expiré (expire après 6 heures)
+2. Token sans les bonnes permissions (scope manquant)
+3. Token invalide ou révoqué
+
+**Solutions :**
+1. **Refresh automatique** : Les tokens sont automatiquement rafraîchis par les API routes Vercel
+2. **Vérifier les permissions** : Le token doit avoir le scope `activity:read` ou `activity:read_all`
+3. **Régénérer le token** : Allez sur https://www.strava.com/settings/api et créez un nouveau token
+
+#### Erreur 5 : "VITE_USE_STRAVA_MOCK: undefined"
+
+**Symptômes :**
+- Dans la console : `VITE_USE_STRAVA_MOCK: undefined`
+- `USE_MOCK: false` même si vous avez ajouté la variable
+
+**Causes possibles :**
+1. Le fichier `.env.local` n'existe pas ou n'est pas à la racine
+2. La variable n'est pas correctement formatée
+3. Le serveur n'a pas été redémarré
+
+**Solutions :**
+1. Vérifiez que `.env.local` est à la racine (même niveau que `package.json`)
+2. Vérifiez le contenu : `cat .env.local` (doit contenir `VITE_USE_STRAVA_MOCK=true`)
+3. Format correct : `VITE_USE_STRAVA_MOCK=true` (sans espaces, sans guillemets)
+4. **Redémarrez le serveur** après modification (important !)
+
+**Note :** En local (localhost), les mocks sont activés automatiquement même sans la variable, pour éviter les erreurs.
+
+#### Erreur 6 : "Expected ')' but found 'if'" (Erreur de build)
+
+**Symptômes :**
+- Erreur de compilation TypeScript/ESBuild
+- Message "Expected ')' but found 'if'"
+
+**Cause :**
+Erreur de syntaxe dans le code (parenthèse manquante, etc.)
+
+**Solution :**
+1. Vérifiez les erreurs de linting : `npm run build`
+2. Corrigez les erreurs de syntaxe
+3. Vérifiez que toutes les parenthèses sont fermées
+
+### 📋 Checklist Développement Local
+
+Avant de commencer à développer :
+
+- [ ] Les dépendances sont installées (`npm install`)
+- [ ] Le fichier `.env.local` existe à la racine
+- [ ] `VITE_USE_STRAVA_MOCK=true` est dans `.env.local` (pour utiliser les mocks)
+- [ ] OU les variables Strava sont configurées (pour utiliser les vraies API)
+- [ ] Le serveur a été redémarré après modification de `.env.local`
+- [ ] La console affiche `USE_MOCK: true` ou les API routes fonctionnent
+
+### 🔍 Debug en Local
+
+**Vérifier la configuration des mocks :**
+Ouvrez la console (F12) et cherchez :
+```
+🔍 Mode Mock Strava: {
+  DEV: true,
+  VITE_USE_STRAVA_MOCK: "true" ou undefined,
+  USE_MOCK: true ou false
+}
+```
+
+**Si `USE_MOCK: false` :**
+1. Vérifiez que `.env.local` contient `VITE_USE_STRAVA_MOCK=true`
+2. Redémarrez le serveur
+3. Si toujours `false`, les mocks seront activés automatiquement sur `localhost`
+
+**Si vous voyez `🎭 Mode Mock activé` :**
+- Les données mockées sont utilisées ✅
+- Aucun appel API n'est fait
+- Parfait pour travailler sur le design
+
+**Si vous voyez `📡 Appel API via endpoint Vercel` :**
+- Les vraies API routes sont utilisées
+- Nécessite `vercel dev` ou être en production
 
 ### Intégration Google Analytics
 
