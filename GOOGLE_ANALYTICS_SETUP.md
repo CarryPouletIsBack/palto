@@ -47,6 +47,9 @@ Ce guide vous explique comment configurer l'authentification OAuth2 pour utilise
      - Pour Vercel : `https://votre-projet.vercel.app/api/google-auth/callback`
    - Cliquez sur **"Create"**
 5. **Copiez le Client ID et le Client Secret** (vous en aurez besoin)
+   - ⚠️ **IMPORTANT** : Le Client Secret ne s'affiche qu'**une seule fois** lors de la création
+   - Si vous l'avez perdu, vous devrez créer un nouveau Client ID
+   - Notez-le immédiatement dans un endroit sûr
 
 ### 4. Configurer les variables d'environnement
 
@@ -151,7 +154,17 @@ Ces endpoints sont nécessaires car ils utilisent le `CLIENT_SECRET` qui ne doit
 ### Erreur : "invalid_client"
 
 - Vérifiez que le `CLIENT_ID` est correct
+- Vérifiez que le `CLIENT_SECRET` est correct (si vous l'avez perdu, créez un nouveau Client ID)
 - Vérifiez que l'API Google Analytics Data API est activée
+
+### Où trouver le Client Secret si je l'ai perdu ?
+
+Si vous avez perdu le `CLIENT_SECRET`, vous ne pouvez pas le récupérer. Vous devez :
+1. Aller dans Google Cloud Console > APIs & Services > Credentials
+2. Trouver votre OAuth 2.0 Client ID
+3. Cliquer sur l'icône de crayon (modifier) ou supprimer l'ancien
+4. Créer un nouveau Client ID (le secret s'affichera une seule fois)
+5. Mettre à jour les variables d'environnement dans Vercel avec le nouveau secret
 
 ### Erreur : "access_denied"
 

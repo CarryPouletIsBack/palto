@@ -9,6 +9,7 @@ import ProjectCoverCarousel from './components/ProjectCoverCarousel'
 import Dashboard from './components/Dashboard'
 import Login from './components/Login'
 import { isAuthenticated } from './services/authService'
+import { trackPageView } from './services/googleAnalyticsTracking'
 import './App.css'
 
 function App() {
@@ -51,6 +52,25 @@ function App() {
     setIsAuthChecked(true)
   }, [])
 
+  // Fonction helper pour obtenir le titre de la page
+  const getPageTitle = (page: string): string => {
+    const titles: Record<string, string> = {
+      'accueil': 'Accueil - Anthony Merault',
+      'menu': 'Menu - Anthony Merault',
+      'apropos': 'À propos - Anthony Merault',
+      'aproposnew': 'À propos - Anthony Merault',
+      'dashboard': 'Dashboard - Anthony Merault',
+      'login': 'Connexion - Anthony Merault',
+    }
+    
+    if (page.startsWith('project-')) {
+      const projectName = page.replace('project-', '')
+      return `${projectName} - Projet - Anthony Merault`
+    }
+    
+    return titles[page] || 'Anthony Merault'
+  }
+
   // Gestion des paramètres d'URL pour la navigation (sauf dashboard)
   useEffect(() => {
     if (isAuthChecked && currentPage !== 'dashboard') {
@@ -83,6 +103,10 @@ function App() {
     } else {
       document.body.classList.remove('accueil-page')
     }
+
+    // Track page view avec Google Analytics
+    const pageTitle = getPageTitle(currentPage)
+    trackPageView(`/${currentPage}`, pageTitle)
   }, [currentPage, previousPage])
 
   const handlePageChange = (page: string, projectImage?: string, projectCategory?: string) => {

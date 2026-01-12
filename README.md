@@ -223,6 +223,9 @@ STRAVA_TOKEN_EXPIRES_AT=timestamp_unix_expiration
 VITE_GOOGLE_CLIENT_ID=votre_google_client_id
 VITE_GOOGLE_REDIRECT_URI=http://localhost:5173/api/google-auth/callback
 
+# Google Analytics Tracking (react-ga4)
+VITE_GA_MEASUREMENT_ID=G-MS120551E9
+
 # Dashboard (pour l'authentification)
 DASHBOARD_PASSWORD=votre_mot_de_passe
 

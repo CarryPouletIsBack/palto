@@ -1,8 +1,12 @@
 import React from 'react'
 import ReactDOM from 'react-dom/client'
 import App from './App'
+import { initGA } from './services/googleAnalyticsTracking'
 import './styles/globals.css'
 import './index.css'
+
+// Initialiser Google Analytics au démarrage
+initGA()
 
 try {
   const rootElement = document.getElementById('root')
