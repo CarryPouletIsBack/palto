@@ -72,15 +72,18 @@ const DashboardStats = ({ googleAnalyticsId }: DashboardStatsProps) => {
     const refreshToken = urlParams.get('refresh_token');
     
     if (accessToken && expiresIn) {
+      // Décoder le refresh_token si présent (URLSearchParams le décode automatiquement)
+      const decodedRefreshToken = refreshToken ? decodeURIComponent(refreshToken) : undefined;
+      
       saveToken({
         access_token: accessToken,
         expires_in: parseInt(expiresIn, 10),
-        refresh_token: refreshToken || undefined,
+        refresh_token: decodedRefreshToken,
         scope: '',
         token_type: 'Bearer',
       });
       
-      // Nettoyer l'URL
+      // Nettoyer l'URL immédiatement
       window.history.replaceState({}, document.title, window.location.pathname);
       
       // Recharger les données

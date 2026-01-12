@@ -38,6 +38,19 @@ const Dashboard = ({ onBackClick }: DashboardProps) => {
   // Charger les projets au montage
   useEffect(() => {
     loadProjects();
+    
+    // Vérifier si on revient de l'authentification OAuth (tokens dans l'URL)
+    const urlParams = new URLSearchParams(window.location.search);
+    const accessToken = urlParams.get('access_token');
+    
+    if (accessToken) {
+      // Si on a des tokens dans l'URL, activer la vue Stats
+      setActiveView('stats');
+      // Nettoyer l'URL après un court délai pour laisser DashboardStats traiter les tokens
+      setTimeout(() => {
+        window.history.replaceState({}, document.title, window.location.pathname);
+      }, 100);
+    }
   }, []);
 
   // Recharger les projets après modification
