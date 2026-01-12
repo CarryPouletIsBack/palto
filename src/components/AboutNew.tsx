@@ -222,12 +222,33 @@ const AboutNew = () => {
         }
         
         // Récupérer les détails des activités (avec photos et polylines)
-        // ⚠️ TEMPORAIRE : Les routes API dynamiques [id] ne fonctionnent pas sur Vercel
-        // Utiliser les activités de base directement (elles ont déjà les tracés GPS)
-        // Les photos nécessitent les détails complets mais l'API route ne fonctionne pas
+        // Les photos ne sont PAS dans les données de base, elles sont uniquement dans les détails complets
         if (activities.length > 0) {
-          console.log('⚠️ Utilisation des activités de base (détails non disponibles car API route [id] ne fonctionne pas)');
-          setStravaActivitiesDetails(activities);
+          try {
+            // Récupérer les détails pour obtenir les photos
+            const activitiesDetails = await Promise.all(
+              activities.map(async (activity) => {
+                try {
+                  const activityId = typeof activity.id === 'string' ? parseInt(activity.id, 10) : activity.id;
+                  if (isNaN(activityId)) {
+                    return activity;
+                  }
+                  // Récupérer les détails complets (avec photos)
+                  const details = await getStravaActivityDetails(activityId);
+                  return details;
+                } catch (error) {
+                  // En cas d'erreur, utiliser l'activité de base (sans photos mais avec tracé GPS)
+                  console.warn(`⚠️ Impossible de récupérer les détails pour l'activité ${activity.id}, utilisation de la base`);
+                  return activity;
+                }
+              })
+            )
+            setStravaActivitiesDetails(activitiesDetails)
+          } catch (error) {
+            console.error('Erreur lors de la récupération des détails:', error);
+            // En cas d'erreur globale, utiliser les activités de base
+            setStravaActivitiesDetails(activities)
+          }
         } else {
           setStravaActivitiesDetails([])
         }
