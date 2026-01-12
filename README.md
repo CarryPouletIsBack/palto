@@ -21,6 +21,7 @@ Portfolio personnel créé avec React, TypeScript et Vite, présentant une colle
 - **Photo de profil** : Photo de profil Strava affichée dans le header au lieu du logo (fallback logo SVG)
 - **Limitation des appels API** : Réduction automatique des requêtes grâce au cache
 - **Gestion des tokens** : Refresh automatique des tokens côté serveur via Vercel Functions
+- **Affichage prioritaire des photos** : Les photos d'activités sont affichées en priorité, les tracés GPS ne s'affichent que s'il n'y a pas de photo disponible
 
 ### Composants & Animations
 - **Composants réutilisables** (Button, ProjectItem, HoverCard, etc.)

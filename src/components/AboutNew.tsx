@@ -546,7 +546,7 @@ const AboutNew = () => {
                                 )}
                                 
                                 {/* Tracé de la course en background si pas de photo */}
-                                {usePolyline && (
+                                {usePolyline && !usePhoto && (
                                   <div style={{ 
                                     position: 'absolute', 
                                     inset: 0,
@@ -557,8 +557,8 @@ const AboutNew = () => {
                                   </div>
                                 )}
                                 
-                                {/* Overlay pour le tracé pour améliorer la lisibilité */}
-                                {usePolyline && (
+                                {/* Overlay pour le tracé pour améliorer la lisibilité - uniquement si pas de photo */}
+                                {usePolyline && !usePhoto && (
                                   <div style={{
                                     position: 'absolute',
                                     inset: 0,
