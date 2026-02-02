@@ -1,3 +1,41 @@
+/* ===== Design tokens Figma (Single Project) ===== */
+.single-project-page {
+  /* Couleurs */
+  --sp-bg: #fff8f5;
+  --sp-text: #1f2937;
+  --sp-text-subtle: #374963;
+  --sp-border: #b2aaaa;
+  --sp-surface-alt: #eaeae6;
+  --sp-badge-bg: #fce9cf;
+  --sp-badge-border: #f6be6f;
+  --sp-badge-text: #f1582a;
+  /* Typographie */
+  --sp-font-title: 'Space Grotesk', sans-serif;
+  --sp-font-body: 'Inter', sans-serif;
+  --sp-font-mono: 'JetBrains Mono', 'DM Mono', monospace;
+  /* Spacing (Figma) */
+  --sp-space-xs: 4px;
+  --sp-space-sm: 8px;
+  --sp-space-md: 16px;
+  --sp-space-lg: 24px;
+  --sp-space-xl: 32px;
+  --sp-space-2xl: 40px;
+  --sp-space-3xl: 48px;
+  --sp-space-4xl: 80px;
+  /* Conteneur */
+  --sp-content-max: 1280px;
+  --sp-padding-x: 80px;
+  --sp-padding-x-mobile: 24px;
+  /* Padding fluide : s’adapte progressivement au redimensionnement */
+  --sp-padding-x-fluid: clamp(24px, 4vw + 24px, 80px);
+  --sp-gap-fluid: clamp(32px, 5vw + 32px, 80px);
+  --sp-padding-y-fluid: clamp(24px, 3vw + 24px, 48px);
+  /* Figma main (1440px) */
+  --spacing-xxxl: 48px;
+  /* Conception (Frame 1126) */
+  --spacing-m-2: 16px;
+}
+
 /* Page Single Project */
 .single-project-page {
   position: fixed;
@@ -5,7 +43,7 @@
   left: 0;
   right: 0;
   bottom: 0;
-  background: #fff8f5;
+  background: var(--sp-bg);
   overflow-y: auto !important;
   overflow-x: hidden;
   -webkit-overflow-scrolling: touch;
@@ -41,7 +79,7 @@
   align-items: center;
   padding: 24px 0 16px 0;
   z-index: 1000;
-  background: rgba(255, 248, 245, 0);
+  background: transparent;
   cursor: grab;
   user-select: none;
   -webkit-user-select: none;
@@ -88,37 +126,45 @@
 }
 
 
+/* Main : réactif au redimensionnement (valeurs fluides) */
 .single-project-page .main-single-project {
   box-sizing: border-box;
   display: flex;
   flex-direction: column;
-  gap: 0px;
   align-items: flex-start;
+  gap: var(--sp-gap-fluid);
+  flex-shrink: 0;
+  align-self: stretch;
   position: static;
   width: 100%;
-  max-width: 1416px;
+  max-width: var(--sp-content-max);
   margin: 0 auto;
   z-index: 1;
   flex: 1;
-  padding-top: 0;
-  padding-left: 24px;
-  padding-right: 24px;
-  padding-bottom: 160px;
+  padding-top: var(--sp-padding-y-fluid);
+  padding-bottom: var(--sp-padding-y-fluid);
+  padding-left: var(--sp-padding-x-fluid);
+  padding-right: var(--sp-padding-x-fluid);
   min-height: calc(100vh - 112px);
+  transition: padding 0.2s ease, gap 0.2s ease;
 }
 
-/* Ajouter un padding-bottom supplémentaire sur la dernière section */
+/* Les sections sont des enfants directs : l’espacement vient du gap du main, pas de margin */
+.single-project-page .main-single-project .project-section {
+  margin: 0;
+}
+
+/* Dernière section : pas de padding-bottom supplémentaire (le main a déjà padding-bottom 48px) */
 .single-project-page .project-section:last-of-type {
   margin-bottom: 0;
-  padding-bottom: 80px;
+  padding-bottom: 0;
 }
 
-@media (max-width: 768px) {
+/* En très petit viewport, garder un minimum lisible */
+@media (max-width: 480px) {
   .single-project-page .main-single-project {
-    padding-top: 0;
-    padding-left: 16px;
-    padding-right: 16px;
-    padding-bottom: 64px;
+    padding-left: clamp(16px, 4vw, 24px);
+    padding-right: clamp(16px, 4vw, 24px);
   }
 }
 
@@ -792,49 +838,63 @@
    NOUVELLE STRUCTURE MODERNE
    ======================================== */
 
-/* Header Section avec badges */
+/* Header Section (Figma: date → titre → badges) */
 .project-header-section {
   display: flex;
   flex-direction: column;
-  align-items: center;
-  gap: 16px;
+  align-items: flex-start;
+  gap: var(--sp-space-md);
   width: 100%;
-  padding: 24px 0;
+  padding: 0 0 var(--sp-space-2xl);
+}
+
+/* Date au-dessus du titre (Figma: JetBrains Mono 12px) */
+.project-date {
+  font-family: var(--sp-font-mono);
+  font-size: 12px;
+  line-height: 20px;
+  font-weight: 500;
+  color: var(--sp-text);
+  margin: 0;
 }
 
 .project-badges {
   display: flex;
-  gap: 8px;
+  gap: var(--sp-space-md);
   flex-wrap: wrap;
-  justify-content: center;
+  justify-content: flex-start;
 }
 
 .project-badge {
-  background: rgba(241, 88, 42, 0.1);
-  border: 1px solid #f1582a;
-  color: #f1582a;
-  padding: 6px 16px;
-  border-radius: 100px;
-  font-size: 13px;
-  font-weight: 500;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
+  background: var(--sp-badge-bg);
+  border: 1px solid var(--sp-badge-border);
+  color: var(--sp-badge-text);
+  padding: 6px 12px;
+  border-radius: 24px;
+  font-family: var(--sp-font-mono);
+  font-size: 12px;
+  line-height: 16px;
+  font-weight: 400;
+  letter-spacing: 1.56px;
 }
 
 .project-main-title {
-  font-family: 'Space Grotesk', sans-serif;
-  font-size: 48px;
-  font-weight: 600;
-  color: #070912;
+  font-family: var(--sp-font-title);
+  font-size: 64px;
+  line-height: 64px;
+  font-weight: 700;
+  color: var(--sp-text);
   margin: 0;
-  text-align: center;
+  text-align: left;
 }
 
 .project-subtitle {
+  font-family: var(--sp-font-body);
   font-size: 20px;
-  color: #4D4D4D;
+  line-height: 1.5;
+  color: var(--sp-text-subtle);
   margin: 0;
-  text-align: center;
+  text-align: left;
 }
 
 /* Hero Image */
@@ -891,18 +951,842 @@
   transform: none;
 }
 
-/* Section générique */
+/* Section générique (margin géré par le main via gap, pas ici) */
 .single-project-page .project-section {
   width: 100%;
-  margin: 32px 0;
-  padding-left: 24px;
-  padding-right: 24px;
+  padding-left: 0;
+  padding-right: 0;
 }
 
 @media (max-width: 768px) {
   .single-project-page .project-section {
     padding-left: 16px;
     padding-right: 16px;
+  }
+}
+
+/* ===== Contexte du projet (Figma) ===== */
+.context-project-section {
+  width: 100%;
+}
+
+.context-project-wrapper {
+  width: 100%;
+  max-width: var(--sp-content-max);
+}
+
+.context-project-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: clamp(20px, 3vw + 16px, 24px);
+  transition: gap 0.2s ease;
+  margin-top: var(--sp-space-md);
+}
+
+.context-project-left .context-intro,
+.context-project-left .context-objectifs-list {
+  font-family: var(--sp-font-body);
+  font-size: 16px;
+  line-height: 24px;
+  color: var(--sp-text);
+}
+
+.context-project-left .context-intro p {
+  margin: 0 0 1em;
+}
+
+.context-subtitle,
+.context-equipe-title {
+  font-family: var(--sp-font-title);
+  font-size: 32px;
+  line-height: 32px;
+  font-weight: 400;
+  color: var(--sp-text);
+  margin: 0 0 var(--sp-space-md);
+}
+
+.context-equipe-title {
+  font-size: 24px;
+  line-height: 24px;
+}
+
+.context-objectifs {
+  margin-top: var(--sp-space-lg);
+}
+
+.context-objectifs-list p {
+  margin: 0 0 0.5em;
+}
+
+/* Tableau équipe projet (Figma 96-98) */
+.figma-equipe-table {
+  width: 100%;
+  border-collapse: collapse;
+  background: #fff8f5;
+  font-family: var(--sp-font-mono);
+  font-size: 16px;
+  line-height: 24px;
+  color: var(--sp-text);
+}
+
+.figma-equipe-table thead th {
+  text-align: left;
+  padding: 12px 16px;
+  font-weight: 500;
+  font-size: 12px;
+  line-height: 24px;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  color: var(--sp-text);
+  border-bottom: 1px solid var(--sp-border);
+  opacity: 0.8;
+  background: var(--color-surface-surface-raised, #EAEAE6);
+}
+
+.figma-equipe-table tbody td {
+  padding: 12px 16px;
+  border-bottom: 1px solid rgba(178, 170, 170, 0.4);
+  color: var(--color-texte-corp, #1F2937);
+  font-family: var(--font-typography-Components, "JetBrains Mono");
+  font-size: var(--font-size-base, 16px);
+  font-style: normal;
+  font-weight: 400;
+  line-height: var(--font-line-height-tight, 20px);
+  text-transform: capitalize;
+}
+
+.figma-equipe-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.context-team-note {
+  font-family: var(--sp-font-body);
+  font-size: 16px;
+  line-height: 24px;
+  color: var(--sp-text);
+  margin: var(--sp-space-md) 0 0;
+  letter-spacing: -0.32px;
+}
+
+@media (max-width: 1024px) {
+  .context-project-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ===== Problématique / Solution (Figma) ===== */
+.problematique-solution-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--sp-space-md);
+  align-items: start;
+}
+
+.problematique-block .section-title,
+.solution-block .section-title {
+  margin-bottom: 12px;
+}
+
+.problematique-text,
+.solution-text {
+  font-family: var(--sp-font-body);
+  font-size: 16px;
+  line-height: 1.5;
+  color: var(--sp-text);
+  margin: 0;
+  letter-spacing: -0.32px;
+}
+
+@media (max-width: 768px) {
+  .problematique-solution-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ===== Processus détaillé – 4 cartes (Figma) ===== */
+.processus-cards-section .section-title {
+  margin-bottom: var(--sp-space-md);
+}
+
+.processus-intro {
+  font-family: var(--sp-font-title);
+  font-size: 20px;
+  line-height: 24px;
+  font-weight: 500;
+  color: var(--sp-text);
+  margin: 0 0 var(--sp-space-md);
+}
+
+/* Même principe que le carrousel : cartes non coincées dans le parent */
+.processus-cards-section {
+  overflow: visible;
+}
+
+.processus-cards-wrapper {
+  width: 100%;
+  margin: var(--sp-space-md) 0;
+  overflow: visible;
+}
+
+.processus-cards-swiper,
+.processus-cards-swiper.swiper {
+  width: 100%;
+  overflow: visible !important;
+}
+
+.processus-cards-swiper .swiper-wrapper {
+  align-items: flex-start;
+}
+
+.processus-cards-swiper .swiper-slide {
+  width: 406px;
+  max-width: calc(100vw - 2 * var(--sp-padding-x-mobile, 16px));
+  height: auto;
+  box-sizing: border-box;
+  flex-shrink: 0;
+}
+
+.processus-cards-swiper .swiper-pagination {
+  position: relative;
+  bottom: auto;
+  margin-top: 32px;
+}
+
+/* Carte Processus (Figma 46-138 : 406×380, gradient plein) */
+.processus-card {
+  width: 100%;
+  height: 380px;
+  box-sizing: border-box;
+  background: linear-gradient(180deg, rgba(0, 0, 0, 0) 0%, rgba(17, 18, 19, 0.95) 58.94%);
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  padding: 16px 24px;
+  cursor: pointer;
+}
+
+.processus-card-content {
+  width: 100%;
+  max-width: 358px;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  align-items: flex-start;
+  transition: transform 0.45s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.processus-card:hover .processus-card-content {
+  transform: translateY(-8px);
+}
+
+.processus-card-label {
+  font-family: var(--sp-font-mono);
+  font-size: 12px;
+  line-height: 20px;
+  font-weight: 500;
+  color: rgba(255, 248, 245, 1);
+  display: block;
+  margin-bottom: 4px;
+}
+
+.processus-card-title {
+  font-family: var(--sp-font-title);
+  font-size: 32px;
+  line-height: 32px;
+  font-weight: 500;
+  color: rgba(255, 248, 245, 1);
+  margin: 0 0 4px;
+}
+
+/* État par défaut : texte en dégradé, hauteur limitée (effet de fondu) */
+.processus-card-desc {
+  max-height: 48px;
+  overflow: hidden;
+  align-self: stretch;
+  font-family: var(--sp-font-body);
+  font-size: 14px;
+  font-style: normal;
+  font-weight: 300;
+  line-height: 20px;
+  margin: 0;
+  background: linear-gradient(0deg, #141416 0%, #fff8f5 100%);
+  background-clip: text;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  transition: background 0.45s cubic-bezier(0.4, 0, 0.2, 1), max-height 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* État hover : texte entier visible, couleur pleine claire */
+.processus-card:hover .processus-card-desc {
+  max-height: 400px;
+  overflow: visible;
+  background: linear-gradient(0deg, #fff8f5 0%, #fff8f5 100%);
+  background-clip: text;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.processus-summary {
+  font-family: var(--sp-font-title);
+  font-size: 20px;
+  line-height: 32px;
+  font-weight: 500;
+  color: #222;
+  text-align: center;
+  margin: var(--sp-space-4xl) 0 0;
+  max-width: 1280px;
+}
+
+/* ===== Sections Figma 10-84 (après processus) ===== */
+.figma-two-cols {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: clamp(20px, 3vw + 16px, 24px);
+  margin-top: var(--sp-space-md);
+  margin-bottom: var(--sp-space-md);
+  transition: gap 0.2s ease;
+}
+
+.figma-lead {
+  font-family: var(--sp-font-title);
+  font-size: 20px;
+  line-height: 24px;
+  font-weight: 500;
+  color: var(--sp-text);
+  margin: 0;
+}
+
+.figma-body {
+  font-family: var(--sp-font-body);
+  font-size: 16px;
+  line-height: 24px;
+  color: var(--sp-text);
+  margin: 0;
+}
+
+.figma-images-row {
+  display: flex;
+  gap: var(--sp-space-lg);
+  margin-top: var(--sp-space-md);
+  flex-wrap: wrap;
+}
+
+.figma-images-row img {
+  max-width: 100%;
+  height: auto;
+  object-fit: cover;
+  border-radius: 4px;
+  border: 1px solid var(--sp-border);
+}
+
+/* Carrousel Audit (Figma node 98-59) : slide centrale + aperçus gauche/droite visibles */
+.figma-audit-section {
+  overflow: visible;
+}
+
+/* Full-bleed : le carrousel s’étend sur toute la largeur du viewport pour montrer les slides adjacentes */
+.figma-audit-carousel-wrapper {
+  margin-top: var(--sp-space-lg);
+  padding-bottom: 2.5rem;
+  width: 100%;
+  display: block;
+}
+
+.figma-audit-carousel,
+.figma-audit-carousel.swiper {
+  width: 100%;
+  overflow: visible !important;
+}
+
+.figma-audit-carousel .swiper-wrapper {
+  align-items: flex-start;
+}
+
+/* Chaque slide = taille de l’image (506.667 × 380, ratio 4/3) */
+.figma-audit-carousel .swiper-slide {
+  width: 506.667px;
+  height: 380px;
+  aspect-ratio: 4 / 3;
+  max-width: calc(100vw - 2 * var(--sp-padding-x-mobile, 16px));
+  box-sizing: border-box;
+  flex-shrink: 0;
+}
+
+.figma-audit-slide {
+  width: 506.667px;
+  height: 380px;
+  aspect-ratio: 4 / 3;
+  max-width: 100%;
+  position: relative;
+  border-radius: 8px;
+  overflow: hidden;
+  border: 1px solid var(--sp-border);
+  background: var(--sp-surface-alt);
+}
+
+.figma-audit-slide img {
+  width: 506.667px;
+  height: 380px;
+  aspect-ratio: 4 / 3;
+  max-width: 100%;
+  max-height: 100%;
+  display: block;
+  object-fit: cover;
+  vertical-align: middle;
+}
+
+
+.figma-audit-carousel {
+  padding-bottom: 48px;
+}
+
+.figma-audit-carousel .swiper-pagination {
+  bottom: 12px;
+}
+
+.figma-audit-carousel .swiper-pagination-bullet {
+  background: var(--sp-text-subtle);
+  opacity: 0.5;
+}
+
+.figma-audit-carousel .swiper-pagination-bullet-active {
+  background: var(--sp-text);
+  opacity: 1;
+}
+
+.figma-subsection-title {
+  font-family: var(--sp-font-title);
+  font-size: 32px;
+  line-height: 32px;
+  font-weight: 400;
+  color: var(--sp-text);
+  text-align: center;
+  margin: var(--sp-space-lg) 0 var(--sp-space-md);
+}
+
+.figma-userflow {
+  margin-top: var(--sp-space-lg);
+}
+
+.figma-userflow-img {
+  max-width: 100%;
+  height: auto;
+}
+
+.figma-palette-title,
+.figma-typescale-title {
+  font-family: var(--sp-font-title);
+  font-size: 24px;
+  line-height: 32px;
+  font-weight: 400;
+  color: var(--sp-text);
+  margin: var(--sp-space-md) 0 var(--sp-space-sm);
+}
+
+.figma-caption {
+  font-family: var(--sp-font-mono);
+  font-size: 12px;
+  color: var(--sp-text-subtle);
+  margin: 0 0 var(--sp-space-md);
+}
+
+/* Typescale table (Figma 100-339) */
+.figma-typescale-table {
+  border: 1px solid var(--sp-border);
+  border-radius: 4px;
+  overflow: hidden;
+  margin-top: var(--sp-space-md);
+}
+
+.figma-typescale-header {
+  display: grid;
+  grid-template-columns: 72px 120px 140px 120px 1fr;
+  gap: var(--sp-space-md);
+  padding: var(--sp-space-sm) var(--sp-space-md);
+  background: var(--sp-surface-alt);
+  font-family: var(--sp-font-mono);
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+  color: var(--sp-text);
+  font-weight: 600;
+}
+
+.figma-typescale-row {
+  display: grid;
+  grid-template-columns: 72px 120px 140px 120px 1fr;
+  gap: var(--sp-space-md);
+  padding: var(--sp-space-sm) 12px;
+  border-top: 1px solid var(--sp-border);
+  font-family: var(--sp-font-body);
+  font-size: 16px;
+  align-items: center;
+}
+
+.figma-typescale-row:nth-child(even) {
+  background: rgba(234, 234, 230, 0.5);
+}
+
+.figma-typescale-role,
+.figma-typescale-typo,
+.figma-typescale-size,
+.figma-typescale-line {
+  color: var(--sp-text-subtle);
+  font-size: 14px;
+}
+
+.figma-typescale-line {
+  font-family: var(--sp-font-mono);
+  font-size: 13px;
+}
+
+.figma-typescale-example {
+  color: var(--sp-text);
+  font-family: var(--sp-font-body);
+}
+
+@media (max-width: 768px) {
+  .figma-typescale-table {
+    overflow-x: auto;
+  }
+  .figma-typescale-header,
+  .figma-typescale-row {
+    min-width: 520px;
+    grid-template-columns: 64px 100px 110px 100px 1fr;
+  }
+}
+
+.figma-palette-table {
+  border: 1px solid var(--sp-border);
+  border-radius: 4px;
+  overflow: hidden;
+  margin-top: var(--sp-space-md);
+}
+
+.figma-palette-header {
+  display: grid;
+  grid-template-columns: 180px 1fr 300px;
+  gap: var(--sp-space-md);
+  padding: var(--sp-space-sm) var(--sp-space-md);
+  background: var(--sp-surface-alt);
+  opacity: 0.9;
+  font-family: var(--sp-font-mono);
+  font-size: 16px;
+  text-transform: uppercase;
+  color: var(--sp-text);
+}
+
+.figma-palette-header-hex {
+  text-align: center;
+}
+
+.figma-palette-row {
+  display: grid;
+  grid-template-columns: 180px 1fr 300px;
+  gap: var(--sp-space-md);
+  padding: var(--sp-space-sm) 12px;
+  border-top: 1px solid var(--sp-border);
+  font-family: var(--sp-font-body);
+  font-size: 16px;
+  color: var(--sp-text);
+}
+
+.figma-swatch {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 4px;
+  border: 1px solid var(--sp-border);
+  min-height: 48px;
+  font-size: 14px;
+}
+
+/* Conception & Itération (Figma 100-424 — Frame 1126) */
+.figma-conception-mockups {
+  display: flex;
+  flex-direction: row;
+  align-items: flex-start;
+  gap: 24px;
+  padding: var(--spacing-m-2, 16px);
+  margin-top: var(--sp-space-lg);
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.figma-conception-card {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  background: var(--sp-bg);
+  border-radius: 8px;
+  overflow: hidden;
+  border: 1px solid var(--sp-border);
+}
+
+.figma-conception-card-media {
+  width: 100%;
+  overflow: hidden;
+  background: var(--sp-surface-alt);
+}
+
+.figma-conception-card-media img {
+  width: 100%;
+  height: auto;
+  display: block;
+  vertical-align: top;
+}
+
+.figma-conception-captions {
+  padding: var(--spacing-m-2, 16px);
+  border-top: 1px solid var(--sp-border);
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-space-md);
+}
+
+.figma-conception-caption {
+  font-family: var(--sp-font-body);
+  font-size: 14px;
+  line-height: 20px;
+  color: var(--sp-text);
+  margin: 0;
+}
+
+/* Rétrocompatibilité */
+.figma-conception-images {
+  display: flex;
+  align-items: flex-start;
+  gap: 24px;
+  padding: var(--spacing-m-2, 16px);
+  margin-top: var(--sp-space-lg);
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.figma-conception-images .figma-conception-card p {
+  font-family: var(--sp-font-body);
+  font-size: 14px;
+  line-height: 20px;
+  color: var(--sp-text);
+  padding: var(--spacing-m-2, 16px);
+  margin: 0;
+  border-top: 1px solid var(--sp-border);
+}
+
+.figma-big-title {
+  font-family: var(--sp-font-title);
+  font-size: 48px;
+  line-height: 64px;
+  font-weight: 700;
+  color: var(--sp-text);
+  margin: 0 0 var(--sp-space-md);
+  letter-spacing: -0.96px;
+}
+
+.figma-full-width-img {
+  width: 100%;
+  max-width: 100%;
+  height: auto;
+  border-radius: 4px;
+  margin-top: var(--sp-space-md);
+}
+
+/* Mes autres projets (Figma node 117-135 : laptop mockups + carousel) */
+.figma-autres-projets-section {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  align-self: stretch;
+  gap: clamp(16px, 2vw + 12px, 24px);
+  padding-left: var(--sp-padding-x-fluid);
+  padding-right: var(--sp-padding-x-fluid);
+  box-sizing: border-box;
+  transition: padding 0.2s ease, gap 0.2s ease;
+}
+
+.figma-autres-projets-carousel-wrapper {
+  position: relative;
+  width: 100%;
+  overflow: visible;
+}
+
+.figma-autres-projets-carousel {
+  overflow: visible;
+  width: 100%;
+}
+
+.figma-autres-projets-carousel .swiper-wrapper {
+  align-items: flex-start;
+}
+
+.figma-autres-projets-carousel .swiper-pagination {
+  position: relative;
+  margin-top: 32px;
+}
+
+.figma-projet-mockup-card {
+  display: block;
+  text-decoration: none;
+  color: inherit;
+  transition: transform 0.25s ease;
+}
+
+.figma-projet-mockup-card:hover {
+  transform: translateY(-4px);
+}
+
+/* Carte Mes autres projets (Figma 103-1248 : 1118×858px pour 1440×1024, contenu à l’intérieur) */
+.figma-projet-mockup {
+  position: relative;
+  width: 1118px;
+  height: 858px;
+  flex-shrink: 0;
+  border-radius: 8px;
+  overflow: hidden;
+  border: 1px solid var(--sp-border);
+  background: var(--sp-surface-alt);
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.12);
+  display: flex;
+  flex-direction: column;
+}
+
+.figma-projet-mockup-bar {
+  height: 28px;
+  flex-shrink: 0;
+  background: #2d2d2d;
+  border-bottom: 1px solid var(--sp-border);
+}
+
+.figma-projet-mockup-screen {
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+  background: #1b1c17;
+}
+
+.figma-projet-mockup-screen img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+/* Overlay titre / date / badges à l’intérieur de la carte */
+.figma-projet-mockup-overlay {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  padding: var(--sp-space-lg);
+  background: linear-gradient(0deg, rgba(0, 0, 0, 0.85) 0%, rgba(0, 0, 0, 0.4) 50%, transparent 100%);
+  color: #fff8f5;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--sp-space-sm);
+}
+
+.figma-projet-mockup-overlay .figma-projet-date {
+  font-family: var(--sp-font-mono);
+  font-size: 12px;
+  font-weight: 500;
+  color: rgba(255, 248, 245, 0.9);
+}
+
+.figma-projet-mockup-overlay .figma-projet-name {
+  font-family: var(--sp-font-title);
+  font-size: 24px;
+  line-height: 32px;
+  font-weight: 500;
+  color: #fff8f5;
+  margin: 0;
+}
+
+.figma-projet-mockup-overlay .figma-projet-badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-space-sm);
+}
+
+.figma-projet-mockup-overlay .project-badge {
+  font-size: 12px;
+  padding: 4px 10px;
+  border-radius: 4px;
+  background: rgba(255, 248, 245, 0.15);
+  border: 1px solid rgba(255, 248, 245, 0.3);
+  color: #fff8f5;
+}
+
+/* Cartes Mes autres projets : responsive sous 1200px (réduction proportionnelle) */
+@media (max-width: 1199px) {
+  .figma-projet-mockup {
+    width: 100%;
+    max-width: 1118px;
+    height: auto;
+    aspect-ratio: 1118 / 858;
+  }
+  .figma-projet-mockup-screen {
+    flex: 1;
+    min-height: 200px;
+  }
+}
+
+@media (max-width: 768px) {
+  .figma-autres-projets-carousel .swiper-slide {
+    width: min(100%, 1118px) !important;
+    min-width: min(100%, 1118px) !important;
+  }
+  .figma-projet-mockup {
+    width: 100%;
+    max-width: 100%;
+  }
+}
+
+.figma-cta-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-space-lg);
+  justify-content: center;
+  margin-top: var(--sp-space-md);
+}
+
+.figma-cta-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--sp-space-md);
+  font-family: var(--sp-font-mono);
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--sp-text);
+  text-decoration: none;
+}
+
+.figma-cta-item:hover {
+  color: var(--sp-badge-text);
+}
+
+@media (max-width: 768px) {
+  .figma-two-cols {
+    grid-template-columns: 1fr;
+  }
+  .figma-conception-mockups,
+  .figma-conception-images {
+    flex-direction: column;
+    padding: var(--sp-space-md);
+  }
+  .figma-palette-header,
+  .figma-palette-row {
+    grid-template-columns: 1fr 1fr;
+  }
+  .figma-palette-header span:last-child,
+  .figma-palette-row span:last-child {
+    grid-column: 1 / -1;
+  }
+  .figma-big-title {
+    font-size: 28px;
+    line-height: 1.3;
   }
 }
 
@@ -1001,9 +1885,9 @@
 
 /* Pagination Swiper pour le carousel équipe */
 .team-carousel .swiper-pagination {
-  bottom: -30px;
+  bottom: auto;
   position: relative;
-  margin-top: 20px;
+  margin-top: 32px;
 }
 
 .team-carousel .team-bullet {
@@ -1254,10 +2138,10 @@
 }
 
 .section-card {
-  background: #fff8f5;
-  border: 1px solid #b2aaaa;
+  background: var(--sp-bg);
+  border: 1px solid var(--sp-border);
   border-radius: 12px;
-  padding: 32px;
+  padding: var(--sp-space-xl);
 }
 
 .single-project-page .intro-metadata-container {
@@ -1442,11 +2326,12 @@
 }
 
 .section-title {
-  font-family: 'Space Grotesk', sans-serif;
+  font-family: var(--sp-font-title);
   font-size: 32px;
-  font-weight: 600;
-  color: #f1582a;
-  margin: 0 0 24px 0;
+  line-height: 32px;
+  font-weight: 400;
+  color: var(--sp-text);
+  margin: 0 0 var(--sp-space-lg) 0;
 }
 
 .section-content {
@@ -2958,9 +3843,10 @@
   
   .project-main-title {
     font-size: 32px;
+    line-height: 1.2;
     position: relative;
     z-index: 2;
-    color: #070912 !important;
+    color: var(--sp-text) !important;
   }
   
   .project-subtitle {
@@ -2970,6 +3856,7 @@
   .project-badge {
     font-size: 11px;
     padding: 4px 12px;
+    letter-spacing: 1px;
   }
   
   .section-card {

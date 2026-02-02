@@ -183,6 +183,9 @@ Toutes les données sont centralisées dans `/src/data/` :
 - **Donut Chart Race** : Graphiques en donut animés dans la section "Résultats & Impact" avec effet "race" séquentiel
 - **Padding-bottom** : Ajout d'un padding-bottom de 160px sur desktop (64px sur mobile) pour améliorer l'espacement
 - **Masquage tableau typographie** : Tableau des typographies masqué, seul l'alphabet reste visible
+- **Alignement Figma (fév. 2025)** : Main container avec padding 48px/80px et gap 80px ; section « Mes autres projets » en carousel (cartes 1118×858px, overlay titre/date/badges) ; tableaux sémantiques Palette Pedaboard (7 lignes), Typescale (5 colonnes, 7 rôles), Équipe projet (Rôle / Nom Prénom) ; section Conception & Itération en deux panneaux (wireframe + maquette) ; pagination des carousels sous les images
+- **Espacement fluide** : Variables CSS `--sp-padding-x-fluid`, `--sp-gap-fluid`, `--sp-padding-y-fluid` (clamp) pour adaptation au redimensionnement
+- **Polices locales** : JetBrains Mono et Space Grotesk chargées depuis `public/fonts/` (voir `src/index.css`)
 
 ## 🧹 Code Propre et Optimisé
 
@@ -627,9 +630,9 @@ src/
 - Fond accueil : `#509ED8` (bleu ciel)
 
 ### Typographie
-- Titres : `Space Grotesk`
+- Titres : `Space Grotesk` (variable locale depuis `public/fonts/`)
 - Corps : `Inter`
-- Monospace : `DM Mono`
+- Monospace : `JetBrains Mono`, `DM Mono`
 - Projets : `Sora`
 
 ### Animations
@@ -888,6 +891,12 @@ Le projet inclut :
 - ✅ **Padding-bottom amélioré** : Ajout d'un padding-bottom de 160px sur desktop (64px sur mobile) pour un meilleur espacement en bas de page
 - ✅ **Tableau typographie masqué** : Le tableau des typographies est maintenant masqué, seul l'affichage de l'alphabet reste visible
 
+### Alignement Figma & Nettoyage (Février 2025)
+- ✅ **Page Single Project** : Conteneur principal (padding 48px/80px, gap 80px), section « Mes autres projets » en carousel (cartes laptop mockup 1118×858px, overlay titre/date/badges), tableaux sémantiques (Palette Pedaboard, Typescale, Équipe projet), section Conception & Itération en deux panneaux, pagination des carousels repositionnée sous les images
+- ✅ **Espacement fluide** : Variables CSS `clamp()` pour padding et gap afin d’adapter l’interface au redimensionnement
+- ✅ **Polices locales** : JetBrains Mono et Space Grotesk chargées depuis `public/fonts/`
+- ✅ **Nettoyage code** : Suppression de l’import et de la fonction inutilisés dans `SingleProjectNew.tsx`, suppression des `console.log` de debug dans `DashboardStats.tsx`
+
 ---
 
 ### Dashboard & Google Analytics (Janvier 2025)
@@ -1126,4 +1135,4 @@ Variables d'environnement non configurées dans Vercel.
 
 Voir [WORKFLOW.md](./WORKFLOW.md) pour la documentation complète du workflow (Figma, Cursor, Git, GitHub, Vercel, MCP).
 
-*Dernière mise à jour : Janvier 2025*
+*Dernière mise à jour : Février 2025*

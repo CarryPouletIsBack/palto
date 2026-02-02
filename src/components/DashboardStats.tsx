@@ -48,7 +48,6 @@ const DashboardStats = ({ googleAnalyticsId }: DashboardStatsProps) => {
     
     // Nettoyer l'ancien Measurement ID si présent
     if (oldGAId && (oldGAId.startsWith('G-') || !/^\d+$/.test(oldGAId))) {
-      console.log('🧹 Nettoyage de l\'ancien Measurement ID:', oldGAId);
       localStorage.removeItem('google_analytics_id');
     }
     
@@ -151,21 +150,8 @@ const DashboardStats = ({ googleAnalyticsId }: DashboardStatsProps) => {
         accessToken: accessToken,
       };
 
-      // Log pour debug
-      console.log('🔄 Chargement des données Google Analytics:', {
-        propertyId: gaId,
-        view: selectedView,
-        hasAccessToken: !!accessToken,
-        tokenPreview: accessToken ? `${accessToken.substring(0, 20)}...` : 'none'
-      });
-
       if (selectedView === 'overview') {
-        // Charger les statistiques de base (30 derniers jours)
-        console.log('📊 Chargement des statistiques de base (30 derniers jours)...');
         const basicStats = await getBasicStats(config, 30);
-        console.log('✅ Statistiques chargées:', basicStats);
-        
-        // Formater les données pour l'affichage
         const formattedStats = {
           visitors: { 
             value: basicStats.activeUsers.toLocaleString('fr-FR'), 
@@ -184,21 +170,9 @@ const DashboardStats = ({ googleAnalyticsId }: DashboardStatsProps) => {
             change: '0%' 
           },
         };
-        
-        console.log('📊 Données formatées pour affichage:', formattedStats);
-        console.log('📊 Valeurs brutes:', {
-          activeUsers: basicStats.activeUsers,
-          screenPageViews: basicStats.screenPageViews,
-          bounceRate: basicStats.bounceRate,
-          averageSessionDuration: basicStats.averageSessionDuration
-        });
-        
         setStatsData(formattedStats);
       } else {
-        // Charger les statistiques en temps réel
-        console.log('📊 Chargement des statistiques en temps réel...');
         const realtimeStats = await getRealtimeStats(config);
-        console.log('✅ Statistiques temps réel chargées:', realtimeStats);
         setRealtimeData({
           activeUsers: realtimeStats.activeUsers,
         });

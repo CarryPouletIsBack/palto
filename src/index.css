@@ -1,6 +1,23 @@
 /* Styles globaux du portfolio */
 
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Space+Grotesk:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&family=Sora:wght@300;400;500;600;700&family=Roboto:wght@100;300;400;500;600;700&display=swap');
+/* Polices locales (JetBrains_Mono, Space_Grotesk — dossier Téléchargements) */
+@font-face {
+  font-family: 'JetBrains Mono';
+  src: url('/fonts/JetBrainsMono-VariableFont_wght.ttf') format('truetype');
+  font-weight: 100 800;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Space Grotesk';
+  src: url('/fonts/SpaceGrotesk-VariableFont_wght.ttf') format('truetype');
+  font-weight: 300 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&family=Sora:wght@300;400;500;600;700&family=Roboto:wght@100;300;400;500;600;700&display=swap');
 
 @tailwind base;
 @tailwind components;

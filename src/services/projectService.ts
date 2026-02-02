@@ -21,8 +21,15 @@ export const loadProjects = (): { [key: string]: ProjectWithMeta } => {
     const stored = localStorage.getItem(STORAGE_KEY);
     if (stored) {
       const parsed = JSON.parse(stored);
-      // Fusionner avec les données par défaut pour les nouveaux projets
-      return { ...projectsDataNew, ...parsed };
+      const merged = { ...projectsDataNew, ...parsed };
+      // Covers dédiées : toujours utiliser les images dédiées
+      if (merged['Pedaboard']) {
+        merged['Pedaboard'] = { ...merged['Pedaboard'], coverImage: '/images/cover-project-pedaboard.png' };
+      }
+      if (merged['Playdago']) {
+        merged['Playdago'] = { ...merged['Playdago'], coverImage: '/images/cover-project-playdago.png' };
+      }
+      return merged;
     }
   } catch (error) {
     console.error('Erreur lors du chargement des projets:', error);
@@ -31,10 +38,15 @@ export const loadProjects = (): { [key: string]: ProjectWithMeta } => {
   // Convertir les données par défaut en format avec métadonnées
   const projectsWithMeta: { [key: string]: ProjectWithMeta } = {};
   Object.keys(projectsDataNew).forEach(key => {
+    const coverImage = key === 'Pedaboard'
+      ? '/images/cover-project-pedaboard.png'
+      : key === 'Playdago'
+        ? '/images/cover-project-playdago.png'
+        : `/images/${key.toLowerCase()}-cover.png`;
     projectsWithMeta[key] = {
       ...projectsDataNew[key],
       id: key,
-      coverImage: `/images/${key.toLowerCase()}-cover.png`,
+      coverImage,
       category: 'application',
       status: 'published',
       lastModified: new Date().toISOString(),

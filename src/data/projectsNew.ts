@@ -7,6 +7,17 @@ export interface ProjectData {
   // 2. Résumé / Introduction
   summary: string;
   
+  /** Objectifs (liste, pour section Contexte du projet Figma) */
+  objectifs?: string[];
+  /** Note sous le tableau équipe (Figma) */
+  teamNote?: string;
+  /** Problématique (Figma) */
+  problematique?: string;
+  /** Solution (Figma) */
+  solution?: string;
+  /** 1er/2e/3e/4e réunion pour Processus détaillé (Figma) */
+  processReunions?: Array<{ label: string; title: string; description: string }>;
+  
   // 3. Contexte & Problématique
   context: {
     title: string;
@@ -288,7 +299,7 @@ export const projectsDataNew: { [key: string]: ProjectData } = {
     
     // Métadonnées
     year: '2024',
-    image: '/images/playdago-cover.png',
+    image: '/images/cover-project-playdago.png',
     skills: ['UX Research', 'Design system', 'UI', 'Branding', 'Figma', 'React js'],
     duration: '9 mois',
     type: 'Application web',
@@ -302,10 +313,26 @@ export const projectsDataNew: { [key: string]: ProjectData } = {
     // 1. Titre principal
     title: 'Pedaboard',
     subtitle: 'CRM pour la pédagogie active',
-    badges: ['UX/UI', '2025', 'CRM'],
+    badges: ['Application', 'UX/UI', '2025', 'CRM'],
     
     // 2. Résumé / Introduction
     summary: 'Ce projet a été réalisé pour une cliente experte en pédagogie active qui utilisait plusieurs plateformes distinctes pour gérer ses bases de données, ses newsletters et ses commandes. La gestion était devenue complexe et fragmentée. L\'objectif principal était de centraliser toutes ses données dans une interface unique afin d\'avoir une vue d\'ensemble claire, optimiser le suivi des clients, recevoir des rappels automatiques et mieux suivre ses formations.',
+    
+    // Contexte du projet (Figma)
+    objectifs: [
+      'Améliorer l\'interaction en temps réel : Offrir une expérience fluide en direct pour les formateurs et les apprenants.',
+      'Maintenir l\'engagement : Reproduire les mécanismes de jeu en présentiel sans la complexité des outils cognitivement lourds.',
+      'Un suivi : Offrir aux formateurs la possibilité d\'effectuer un suivi approfondi des données.'
+    ],
+    teamNote: 'En tant que seul designer, j\'ai dû assimiler les principes de la gamification (analyse de Kahoot, jeux de cartes physiques) pour les transposer en interfaces numériques. J\'ai également étendu l\'identité visuelle de la cliente en créant un logo et en ajustant la palette de couleurs.',
+    problematique: 'Trop de plateformes pour gérer l\'activité, résultat perte de temps et d\'attention.',
+    solution: 'Le produit devra pouvoir afficher toutes les informations utiles de chaque plateforme différente pour optimiser le temps et éliminer la perte d\'attention du client.',
+    processReunions: [
+      { label: '1er réunion', title: 'Audit', description: 'Découverte des outils existants, des plateformes utilisées et des difficultés rencontrées au quotidien. La cliente expliquait comment ses informations étaient dispersées et comment cela compliquait le suivi des clients et la gestion des formations.' },
+      { label: '2e réunion', title: 'Cadrage Stratégique', description: 'Co-construction du cahier des charges, en priorisant les fonctionnalités essentielles comme le tableau de bord centralisé, le suivi des formations et les notifications automatiques.' },
+      { label: '3e réunion', title: 'Architecture & Flux', description: 'Discussion sur les contraintes pédagogiques et organisationnelles, définition des parcours utilisateurs principaux et validation des workflows critiques.' },
+      { label: '4e réunion', title: 'Validation', description: 'Validation des premières maquettes conceptuelles et recueil des retours détaillés sur l\'expérience et la hiérarchie de l\'information. Cette phase a permis de cerner précisément les besoins fonctionnels et UX.' }
+    ],
     
     // 3. Contexte & Problématique
     context: {
@@ -450,15 +477,16 @@ export const projectsDataNew: { [key: string]: ProjectData } = {
     },
     
     // Métadonnées
-    year: '2025',
+    year: 'Décembre 2023',
     image: '/images/f27446bbc5c96f74d44074bc97b9be64f7cdf4cf.png',
     skills: ['UX Research', 'Design system', 'UI', 'Branding', 'Figma', 'React js'],
     duration: '9 mois',
     type: 'Application web - CRM',
     team: [
-      'Anthony Merault, Directeur Artistique / Concepteur ux/ui',
-      'Josian (dev back-end)',
-      'Bertolde (dev front-end)'
+      'Anthony Merault, Lead Product Designer',
+      'Frédéric Isambert, Chef de projet',
+      'Nicola Bègue, Intégrateur',
+      'Evan Rivière, Intégrateur'
     ]
   }
 };

@@ -20,7 +20,7 @@ export const menuCategories: MenuCategory[] = [
     title: 'Application',
     projects: [
       { 
-        imageSrc: "/images/playdago-cover.png", 
+        imageSrc: "/images/cover-project-playdago.png", 
         imageAlt: "Playdago", 
         title: "Playdago" 
       },
