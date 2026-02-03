@@ -84,20 +84,20 @@ function App() {
   // Fonction helper pour obtenir le titre de la page
   const getPageTitle = (page: string): string => {
     const titles: Record<string, string> = {
-      'accueil': 'Accueil - Anthony Merault',
-      'menu': 'Menu - Anthony Merault',
-      'apropos': 'À propos - Anthony Merault',
-      'aproposnew': 'À propos - Anthony Merault',
-      'dashboard': 'Dashboard - Anthony Merault',
-      'login': 'Connexion - Anthony Merault',
+      'accueil': 'Accueil - Anthony Merault - Product Designer UX/UI',
+      'menu': 'Menu - Anthony Merault - Product Designer UX/UI',
+      'apropos': 'À propos - Anthony Merault - Product Designer UX/UI',
+      'aproposnew': 'À propos - Anthony Merault - Product Designer UX/UI',
+      'dashboard': 'Dashboard - Anthony Merault - Product Designer UX/UI',
+      'login': 'Connexion - Anthony Merault - Product Designer UX/UI',
     }
     
     if (page.startsWith('project-')) {
       const projectName = page.replace('project-', '')
-      return `${projectName} - Projet - Anthony Merault`
+      return `${projectName} - Projet - Anthony Merault - Product Designer UX/UI`
     }
     
-    return titles[page] || 'Anthony Merault'
+    return titles[page] || 'Anthony Merault - Product Designer UX/UI'
   }
 
   // Gestion des paramètres d'URL pour la navigation (sauf dashboard)

@@ -1,0 +1,13 @@
+# https://www.robotstxt.org/robotstxt.html
+# À adapter au fur et à mesure que le site évolue.
+
+User-agent: *
+Allow: /
+
+# Ne pas indexer les zones privées et les API
+Disallow: /api/
+Disallow: /dashboard
+Disallow: /login
+
+# Sitemap
+Sitemap: https://anthony-merault.fr/sitemap.xml
