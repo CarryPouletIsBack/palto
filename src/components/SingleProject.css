@@ -30,7 +30,17 @@
   --sp-padding-x-fluid: clamp(24px, 4vw + 24px, 80px);
   --sp-gap-fluid: clamp(32px, 5vw + 32px, 80px);
   --sp-padding-y-fluid: clamp(24px, 3vw + 24px, 48px);
-  /* Figma main (1440px) */
+  /* Figma main desktop (frame 1440px) : padding 48px 80px, gap 80px */
+  --sp-main-padding-top: 48px;
+  --sp-main-padding-bottom: 48px;
+  --sp-main-padding-x: 80px;
+  --sp-main-gap: 80px;
+  /* Figma main tablette / mobile */
+  --sp-main-padding-x-tablet: 48px;
+  --sp-main-gap-tablet: 48px;
+  --sp-main-padding-x-mobile: 16px;
+  --sp-main-padding-y-mobile: 24px;
+  --sp-main-gap-mobile: 24px;
   --spacing-xxxl: 48px;
   /* Conception (Frame 1126) */
   --spacing-m-2: 16px;
@@ -126,13 +136,13 @@
 }
 
 
-/* Main : réactif au redimensionnement (valeurs fluides) */
+/* Main : valeurs Figma (maquette 1440px – padding 48px 80px, gap 80px) */
 .single-project-page .main-single-project {
   box-sizing: border-box;
   display: flex;
   flex-direction: column;
   align-items: flex-start;
-  gap: var(--sp-gap-fluid);
+  gap: var(--sp-main-gap);
   flex-shrink: 0;
   align-self: stretch;
   position: static;
@@ -141,10 +151,10 @@
   margin: 0 auto;
   z-index: 1;
   flex: 1;
-  padding-top: var(--sp-padding-y-fluid);
-  padding-bottom: var(--sp-padding-y-fluid);
-  padding-left: var(--sp-padding-x-fluid);
-  padding-right: var(--sp-padding-x-fluid);
+  padding-top: var(--sp-main-padding-top);
+  padding-bottom: var(--sp-main-padding-bottom);
+  padding-left: var(--sp-main-padding-x);
+  padding-right: var(--sp-main-padding-x);
   min-height: calc(100vh - 112px);
   transition: padding 0.2s ease, gap 0.2s ease;
 }
@@ -160,11 +170,31 @@
   padding-bottom: 0;
 }
 
-/* En très petit viewport, garder un minimum lisible */
+/* Tablette : Figma spacing xxxl (48px) pour padding horizontal et gap */
+@media (max-width: 1024px) {
+  .single-project-page .main-single-project {
+    padding-left: var(--sp-main-padding-x-tablet);
+    padding-right: var(--sp-main-padding-x-tablet);
+    gap: var(--sp-main-gap-tablet);
+  }
+}
+
+/* Mobile : Figma spacing m (24px) / m-2 (16px) pour padding, gap 24px */
+@media (max-width: 768px) {
+  .single-project-page .main-single-project {
+    padding-top: var(--sp-main-padding-y-mobile);
+    padding-bottom: var(--sp-main-padding-bottom);
+    padding-left: var(--sp-main-padding-x-mobile);
+    padding-right: var(--sp-main-padding-x-mobile);
+    gap: var(--sp-main-gap-mobile);
+  }
+}
+
+/* Très petit viewport : même padding horizontal que mobile */
 @media (max-width: 480px) {
   .single-project-page .main-single-project {
-    padding-left: clamp(16px, 4vw, 24px);
-    padding-right: clamp(16px, 4vw, 24px);
+    padding-left: var(--sp-main-padding-x-mobile);
+    padding-right: var(--sp-main-padding-x-mobile);
   }
 }
 
@@ -965,6 +995,14 @@
   }
 }
 
+/* ===== Bloc unique Figma : header + Contexte du projet, gap 40px ===== */
+.project-top-block {
+  display: flex;
+  flex-direction: column;
+  gap: 40px;
+  width: 100%;
+}
+
 /* ===== Contexte du projet (Figma) ===== */
 .context-project-section {
   width: 100%;
@@ -975,12 +1013,17 @@
   max-width: var(--sp-content-max);
 }
 
+/* Grille Contexte du projet (Figma node 10-135) */
 .context-project-grid {
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
   gap: clamp(20px, 3vw + 16px, 24px);
   transition: gap 0.2s ease;
-  margin-top: var(--sp-space-md);
+  margin-top: 16px;
+}
+
+.context-project-wrapper > .section-title {
+  margin-bottom: 0;
 }
 
 .context-project-left .context-intro,
@@ -1011,7 +1054,7 @@
 }
 
 .context-objectifs {
-  margin-top: var(--sp-space-lg);
+  margin-top: 40px;
 }
 
 .context-objectifs-list p {
@@ -1064,7 +1107,7 @@
   font-size: 16px;
   line-height: 24px;
   color: var(--sp-text);
-  margin: var(--sp-space-md) 0 0;
+  margin: 40px 0 0;
   letter-spacing: -0.32px;
 }
 
@@ -1074,12 +1117,20 @@
   }
 }
 
-/* ===== Problématique / Solution (Figma) ===== */
+/* ===== Problématique / Solution (gauche) + Matrice (droite) ===== */
 .problematique-solution-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: var(--sp-space-md);
-  align-items: start;
+  gap: var(--sp-space-lg, 40px);
+  align-items: stretch;
+}
+
+.problematique-solution-texts {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 0;
+  min-height: 100%;
 }
 
 .problematique-block .section-title,
@@ -1101,6 +1152,35 @@
   .problematique-solution-grid {
     grid-template-columns: 1fr;
   }
+}
+
+/* Matrice de positionnement – style Highcharts "Sonified function" (axes croisés à 0, grille) */
+.positionnement-matrix-wrapper {
+  width: 100%;
+  min-width: 0;
+  margin-top: 0;
+}
+
+.positionnement-matrix {
+  width: 100%;
+  min-height: 380px;
+}
+
+.positionnement-matrix .highcharts-container,
+.positionnement-matrix .highcharts-root {
+  width: 100% !important;
+  background: transparent !important;
+}
+
+/* Légende axes sous le graphique (alignée à gauche) */
+.positionnement-matrix-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px 24px;
+  justify-content: flex-start;
+  margin-top: 12px;
+  font-size: 12px;
+  color: var(--sp-text-muted, #6b7280);
 }
 
 /* ===== Processus détaillé – 4 cartes (Figma) ===== */
@@ -1373,6 +1453,16 @@
   height: auto;
 }
 
+.figma-userflow-chart.userflow-chart {
+  width: 100%;
+  min-height: 400px;
+}
+
+.figma-userflow-chart .highcharts-container,
+.figma-userflow-chart .highcharts-root {
+  width: 100% !important;
+}
+
 .figma-palette-title,
 .figma-typescale-title {
   font-family: var(--sp-font-title);
@@ -1390,41 +1480,53 @@
   margin: 0 0 var(--sp-space-md);
 }
 
-/* Typescale table (Figma 100-339) */
+/* Typescale table – largeur fixe, scroll horizontal si besoin */
 .figma-typescale-table {
-  border: 1px solid var(--sp-border);
-  border-radius: 4px;
-  overflow: hidden;
+  width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
   margin-top: var(--sp-space-md);
+  background: #fff8f5;
+  font-family: var(--sp-font-mono);
+  font-size: 16px;
+  line-height: 24px;
+  color: var(--sp-text);
 }
 
 .figma-typescale-header {
   display: grid;
-  grid-template-columns: 72px 120px 140px 120px 1fr;
+  grid-template-columns: 80px 160px 180px 140px 300px;
   gap: var(--sp-space-md);
-  padding: var(--sp-space-sm) var(--sp-space-md);
-  background: var(--sp-surface-alt);
+  padding: 12px 16px;
+  background: var(--color-surface-surface-raised, #EAEAE6);
   font-family: var(--sp-font-mono);
   font-size: 12px;
-  text-transform: uppercase;
+  line-height: 24px;
+  font-weight: 500;
   letter-spacing: 0.02em;
+  text-transform: uppercase;
   color: var(--sp-text);
-  font-weight: 600;
+  border-bottom: 1px solid var(--sp-border);
+  opacity: 0.8;
+  min-width: 860px;
 }
 
 .figma-typescale-row {
   display: grid;
-  grid-template-columns: 72px 120px 140px 120px 1fr;
+  grid-template-columns: 80px 160px 180px 140px 300px;
   gap: var(--sp-space-md);
-  padding: var(--sp-space-sm) 12px;
-  border-top: 1px solid var(--sp-border);
-  font-family: var(--sp-font-body);
+  padding: 12px 16px;
+  border-bottom: 1px solid rgba(178, 170, 170, 0.4);
+  font-family: var(--sp-font-mono);
   font-size: 16px;
+  line-height: 20px;
+  color: var(--sp-text);
   align-items: center;
+  min-width: 860px;
 }
 
-.figma-typescale-row:nth-child(even) {
-  background: rgba(234, 234, 230, 0.5);
+.figma-typescale-row:last-child {
+  border-bottom: none;
 }
 
 .figma-typescale-role,
@@ -1433,6 +1535,10 @@
 .figma-typescale-line {
   color: var(--sp-text-subtle);
   font-size: 14px;
+}
+
+.figma-typescale-typo {
+  white-space: nowrap;
 }
 
 .figma-typescale-line {
@@ -1445,35 +1551,33 @@
   font-family: var(--sp-font-body);
 }
 
-@media (max-width: 768px) {
-  .figma-typescale-table {
-    overflow-x: auto;
-  }
-  .figma-typescale-header,
-  .figma-typescale-row {
-    min-width: 520px;
-    grid-template-columns: 64px 100px 110px 100px 1fr;
-  }
-}
-
+/* Palette table – même style que tableau équipe projet */
 .figma-palette-table {
-  border: 1px solid var(--sp-border);
-  border-radius: 4px;
+  width: 100%;
   overflow: hidden;
   margin-top: var(--sp-space-md);
+  background: #fff8f5;
+  font-family: var(--sp-font-mono);
+  font-size: 16px;
+  line-height: 24px;
+  color: var(--sp-text);
 }
 
 .figma-palette-header {
   display: grid;
   grid-template-columns: 180px 1fr 300px;
   gap: var(--sp-space-md);
-  padding: var(--sp-space-sm) var(--sp-space-md);
-  background: var(--sp-surface-alt);
-  opacity: 0.9;
+  padding: 12px 16px;
+  background: var(--color-surface-surface-raised, #EAEAE6);
   font-family: var(--sp-font-mono);
-  font-size: 16px;
+  font-size: 12px;
+  line-height: 24px;
+  font-weight: 500;
+  letter-spacing: 0.02em;
   text-transform: uppercase;
   color: var(--sp-text);
+  border-bottom: 1px solid var(--sp-border);
+  opacity: 0.8;
 }
 
 .figma-palette-header-hex {
@@ -1484,11 +1588,16 @@
   display: grid;
   grid-template-columns: 180px 1fr 300px;
   gap: var(--sp-space-md);
-  padding: var(--sp-space-sm) 12px;
-  border-top: 1px solid var(--sp-border);
-  font-family: var(--sp-font-body);
+  padding: 12px 16px;
+  border-bottom: 1px solid rgba(178, 170, 170, 0.4);
+  font-family: var(--sp-font-mono);
   font-size: 16px;
+  line-height: 20px;
   color: var(--sp-text);
+}
+
+.figma-palette-row:last-child {
+  border-bottom: none;
 }
 
 .figma-swatch {
@@ -3828,10 +3937,11 @@
   }
   
   .single-project-page .main-single-project {
-    padding: 0px 16px 48px 16px;
-    padding-top: 0 !important;
-    gap: 0 !important;
-    margin-top: 0 !important;
+    padding-top: var(--sp-main-padding-y-mobile);
+    padding-bottom: var(--sp-main-padding-bottom);
+    padding-left: var(--sp-main-padding-x-mobile);
+    padding-right: var(--sp-main-padding-x-mobile);
+    gap: var(--sp-main-gap-mobile);
   }
   
   /* Responsive pour nouvelle structure */

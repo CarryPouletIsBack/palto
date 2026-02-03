@@ -7,9 +7,9 @@ import 'swiper/css/pagination';
 import './SingleProject.css';
 import { type ProjectData } from '../data/projectsNew';
 import BlurText from './BlurText';
-import { Tree, Folder, File } from './ui/file-tree';
-import { Safari } from './ui/safari';
 import DonutChartRace from './DonutChartRace';
+import PositionnementMatrixChart from './PositionnementMatrixChart';
+import UserFlowChart from './UserFlowChart';
 
 // Constantes en dehors du composant pour éviter les re-créations
 const CLOSE_THRESHOLD = 100;
@@ -315,33 +315,34 @@ const SingleProjectNew: FC<SingleProjectProps> = ({ projectData, onBackClick, co
         <div className="main-single-project">
 
         {/* 1. Header (Figma: date → titre → badges) */}
-        <div className="project-header-section">
-          {projectData.year && <p className="project-date">{projectData.year}</p>}
-          <h1 className="project-main-title">
-            <BlurText text={projectData.title} className="project-main-title" />
-          </h1>
-          <div className="project-badges">
-            {projectCategory && <span className="project-badge">{projectCategory}</span>}
-            {projectData.badges?.filter(badge => {
-              const categoryBadges = ['Application', 'Site Web', 'Navigation', 'Logo', 'Motion', 'PLV'];
-              return !categoryBadges.includes(badge);
-            }).map((badge, index) => (
-              <span key={index} className="project-badge">{badge}</span>
-            ))}
+        {/* Bloc unique Figma : date, titre, badges + Contexte du projet, gap 40px */}
+        <div className="project-top-block">
+          <div className="project-header-section">
+            {projectData.year && <p className="project-date">{projectData.year}</p>}
+            <h1 className="project-main-title">
+              <BlurText text={projectData.title} className="project-main-title" />
+            </h1>
+            <div className="project-badges">
+              {projectCategory && <span className="project-badge">{projectCategory}</span>}
+              {projectData.badges?.filter(badge => {
+                const categoryBadges = ['Application', 'Site Web', 'Navigation', 'Logo', 'Motion', 'PLV'];
+                return !categoryBadges.includes(badge);
+              }).map((badge, index) => (
+                <span key={index} className="project-badge">{badge}</span>
+              ))}
+            </div>
+            {projectData.subtitle && <p className="project-subtitle">{projectData.subtitle}</p>}
           </div>
-          {projectData.subtitle && <p className="project-subtitle">{projectData.subtitle}</p>}
-        </div>
 
-        {/* 1b. Contexte du projet (Figma: intro + Objectifs + Équipe en 2 colonnes) */}
-        {(projectData.objectifs || projectData.teamNote) && (
-          <section id="context" className="project-section context-project-section">
-            <div className="context-project-wrapper">
-              <h2 className="section-title">Contexte du projet</h2>
-              <div className="context-project-grid">
+          {/* Contexte du projet (même bloc, gap 40px) */}
+          {(projectData.objectifs || projectData.teamNote) && (
+            <section id="context" className="project-section context-project-section">
+              <div className="context-project-wrapper">
+                <h2 className="section-title">Contexte du projet</h2>
+                <div className="context-project-grid">
                 <div className="context-project-left">
                   <div className="context-intro">
                     <p>{projectData.summary}</p>
-                    <p>L&apos;objectif n&apos;était pas de remplacer les outils existants (emailing, e-commerce, etc.), mais de créer une interface centrale de lecture, de suivi et de rappel, capable de relier toutes les informations clés autour d&apos;un même client.</p>
                   </div>
                   {projectData.objectifs && projectData.objectifs.length > 0 && (
                     <div className="context-objectifs">
@@ -381,10 +382,11 @@ const SingleProjectNew: FC<SingleProjectProps> = ({ projectData, onBackClick, co
                     <p className="context-team-note">{projectData.teamNote}</p>
                   )}
                 </div>
+                </div>
               </div>
-            </div>
-          </section>
-        )}
+            </section>
+          )}
+        </div>
 
         {/* 1.5. Sommaire */}
         <section className="project-section table-of-contents-section">
@@ -418,36 +420,32 @@ const SingleProjectNew: FC<SingleProjectProps> = ({ projectData, onBackClick, co
         <section id="introduction" className="project-section intro-section">
           <div className="section-card intro-metadata-container">
             <p className="intro-text">{projectData.summary}</p>
-            <div className="metadata-bubbles">
-              <div className="metadata-bubble">
-                <span className="metadata-label">Année</span>
-                <span className="metadata-value">{projectData.year}</span>
-              </div>
-              <div className="metadata-bubble">
-                <span className="metadata-label">Durée</span>
-                <span className="metadata-value">{projectData.duration}</span>
-              </div>
-              <div className="metadata-bubble">
-                <span className="metadata-label">Type</span>
-                <span className="metadata-value">{projectData.type}</span>
-              </div>
-            </div>
           </div>
         </section>
         )}
 
-        {/* 2b. Problématique / Solution (Figma) */}
-        {(projectData.problematique || projectData.solution) && (
+        {/* 2b. Problématique / Solution (gauche) + Matrice de positionnement (droite) */}
+        {(projectData.problematique || projectData.solution || projectData.positionnementMatrix) && (
           <section id="problematique" className="project-section problematique-section">
             <div className="problematique-solution-grid">
-              <div className="problematique-block">
-                <h2 className="section-title">Problématique</h2>
-                <p className="problematique-text">{projectData.problematique}</p>
+              <div className="problematique-solution-texts">
+                <div className="problematique-block">
+                  <h2 className="section-title">Problématique</h2>
+                  <p className="problematique-text">{projectData.problematique}</p>
+                </div>
+                <div className="solution-block">
+                  <h2 className="section-title">Solution</h2>
+                  <p className="solution-text">{projectData.solution}</p>
+                </div>
               </div>
-              <div className="solution-block">
-                <h2 className="section-title">Solution</h2>
-                <p className="solution-text">{projectData.solution}</p>
-              </div>
+              {projectData.positionnementMatrix && (
+                <div className="positionnement-matrix-wrapper">
+                  <PositionnementMatrixChart
+                    data={projectData.positionnementMatrix}
+                    className="positionnement-matrix-chart"
+                  />
+                </div>
+              )}
             </div>
           </section>
         )}
@@ -575,7 +573,11 @@ const SingleProjectNew: FC<SingleProjectProps> = ({ projectData, onBackClick, co
           </div>
           <h3 className="figma-subsection-title">User flow</h3>
           <div className="figma-userflow">
-            <img src="/single-project/fe88fac0-9c5a-44ad-af6a-151d4da1bfa0.png" alt="User flow" className="figma-userflow-img" />
+            {projectData.userFlow ? (
+              <UserFlowChart data={projectData.userFlow} className="figma-userflow-chart" />
+            ) : (
+              <img src="/single-project/fe88fac0-9c5a-44ad-af6a-151d4da1bfa0.png" alt="User flow" className="figma-userflow-img" />
+            )}
           </div>
         </section>
 

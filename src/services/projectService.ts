@@ -21,14 +21,21 @@ export const loadProjects = (): { [key: string]: ProjectWithMeta } => {
     const stored = localStorage.getItem(STORAGE_KEY);
     if (stored) {
       const parsed = JSON.parse(stored);
-      const merged = { ...projectsDataNew, ...parsed };
-      // Covers dédiées : toujours utiliser les images dédiées
-      if (merged['Pedaboard']) {
-        merged['Pedaboard'] = { ...merged['Pedaboard'], coverImage: '/images/cover-project-pedaboard.png' };
-      }
-      if (merged['Playdago']) {
-        merged['Playdago'] = { ...merged['Playdago'], coverImage: '/images/cover-project-playdago.png' };
-      }
+      const merged: { [key: string]: ProjectWithMeta } = {};
+      Object.keys(projectsDataNew).forEach((key) => {
+        const defaults = projectsDataNew[key];
+        const saved = parsed[key];
+        merged[key] = {
+          ...defaults,
+          ...saved,
+          id: saved?.id ?? key,
+          coverImage: key === 'Pedaboard' ? '/images/cover-project-pedaboard.png' : key === 'Playdago' ? '/images/cover-project-playdago.png' : saved?.coverImage ?? `/images/${key.toLowerCase()}-cover.png`,
+          category: saved?.category ?? 'application',
+          status: saved?.status ?? 'published',
+          lastModified: saved?.lastModified ?? new Date().toISOString(),
+          createdAt: saved?.createdAt ?? new Date().toISOString(),
+        } as ProjectWithMeta;
+      });
       return merged;
     }
   } catch (error) {

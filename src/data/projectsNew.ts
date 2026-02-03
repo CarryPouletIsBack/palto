@@ -15,8 +15,24 @@ export interface ProjectData {
   problematique?: string;
   /** Solution (Figma) */
   solution?: string;
+  /** Matrice de positionnement (Figma 97-50) : scatter X=Effort, Y=Valeur */
+  positionnementMatrix?: {
+    xAxisLabel: string;
+    yAxisLabel: string;
+    xMinLabel: string;
+    xMaxLabel: string;
+    yMinLabel: string;
+    yMaxLabel: string;
+    points: Array<{ name: string; description: string; x: number; y: number }>;
+  };
   /** 1er/2e/3e/4e réunion pour Processus détaillé (Figma) */
   processReunions?: Array<{ label: string; title: string; description: string }>;
+  /** User flow (Figma 100-148) : Organization chart Highcharts */
+  userFlow?: {
+    title?: string;
+    nodes: Array<{ id: string; name?: string; title?: string }>;
+    links: Array<{ from: string; to: string }>;
+  };
   
   // 3. Contexte & Problématique
   context: {
@@ -154,13 +170,13 @@ export const projectsDataNew: { [key: string]: ProjectData } = {
     subtitle: 'Application de pédagogie active',
     badges: ['UX/UI', '2024', 'Application'],
     
-    // 2. Résumé / Introduction
-    summary: 'Ce projet a été réalisé pour une cliente experte en pédagogie active qui utilisait plusieurs plateformes distinctes pour gérer ses bases de données, ses newsletters et ses commandes. La gestion était devenue complexe et fragmentée. L\'objectif principal était de centraliser toutes ses données dans une interface unique afin d\'avoir une vue d\'ensemble claire, optimiser le suivi des clients, recevoir des rappels automatiques et mieux suivre ses formations.',
+    // 2. Résumé / Introduction (aligné Figma 49-229, adapté Playdago)
+    summary: 'Playdago est un outil interne de gestion et de pilotage conçu pour une professionnelle de la pédagogie active. Le projet part d\'un besoin clair : centraliser des données aujourd\'hui éparpillées sur plusieurs plateformes (base clients, formations, commandes, newsletter, rappels, événements), afin d\'obtenir une vue d\'ensemble fiable, réduire la charge mentale et améliorer le suivi des activités. L\'objectif n\'était pas de remplacer les outils existants (emailing, e-commerce, etc.), mais de créer une interface centrale de lecture, de suivi et de rappel, capable de relier toutes les informations clés autour d\'un même client.',
     
     // 3. Contexte & Problématique
     context: {
       title: 'Contexte & Problématique',
-      content: 'Ce projet a été réalisé pour une cliente experte en pédagogie active qui utilisait plusieurs plateformes distinctes pour gérer ses bases de données, ses newsletters et ses commandes. La gestion était devenue complexe et fragmentée. L\'objectif principal était de centraliser toutes ses données dans une interface unique afin d\'avoir une vue d\'ensemble claire, optimiser le suivi des clients, recevoir des rappels automatiques et mieux suivre ses formations.'
+      content: 'Playdago est un outil interne de gestion et de pilotage conçu pour une professionnelle de la pédagogie active. Le projet part d\'un besoin clair : centraliser des données aujourd\'hui éparpillées sur plusieurs plateformes (base clients, formations, commandes, newsletter, rappels, événements), afin d\'obtenir une vue d\'ensemble fiable, réduire la charge mentale et améliorer le suivi des activités. L\'objectif n\'était pas de remplacer les outils existants (emailing, e-commerce, etc.), mais de créer une interface centrale de lecture, de suivi et de rappel, capable de relier toutes les informations clés autour d\'un même client.'
     },
     
     // 4. Démarche & Approche
@@ -312,11 +328,10 @@ export const projectsDataNew: { [key: string]: ProjectData } = {
   'Pedaboard': {
     // 1. Titre principal
     title: 'Pedaboard',
-    subtitle: 'CRM pour la pédagogie active',
     badges: ['Application', 'UX/UI', '2025', 'CRM'],
     
-    // 2. Résumé / Introduction
-    summary: 'Ce projet a été réalisé pour une cliente experte en pédagogie active qui utilisait plusieurs plateformes distinctes pour gérer ses bases de données, ses newsletters et ses commandes. La gestion était devenue complexe et fragmentée. L\'objectif principal était de centraliser toutes ses données dans une interface unique afin d\'avoir une vue d\'ensemble claire, optimiser le suivi des clients, recevoir des rappels automatiques et mieux suivre ses formations.',
+    // 2. Résumé / Introduction (contenu Figma node 49-229)
+    summary: 'Pedaboard est un outil interne de gestion et de pilotage conçu pour une professionnelle de la pédagogie active. Le projet part d\'un besoin clair : centraliser des données aujourd\'hui éparpillées sur plusieurs plateformes (base clients, formations, commandes, newsletter, rappels, événements), afin d\'obtenir une vue d\'ensemble fiable, réduire la charge mentale et améliorer le suivi des activités. L\'objectif n\'était pas de remplacer les outils existants (emailing, e-commerce, etc.), mais de créer une interface centrale de lecture, de suivi et de rappel, capable de relier toutes les informations clés autour d\'un même client.',
     
     // Contexte du projet (Figma)
     objectifs: [
@@ -327,23 +342,67 @@ export const projectsDataNew: { [key: string]: ProjectData } = {
     teamNote: 'En tant que seul designer, j\'ai dû assimiler les principes de la gamification (analyse de Kahoot, jeux de cartes physiques) pour les transposer en interfaces numériques. J\'ai également étendu l\'identité visuelle de la cliente en créant un logo et en ajustant la palette de couleurs.',
     problematique: 'Trop de plateformes pour gérer l\'activité, résultat perte de temps et d\'attention.',
     solution: 'Le produit devra pouvoir afficher toutes les informations utiles de chaque plateforme différente pour optimiser le temps et éliminer la perte d\'attention du client.',
+    positionnementMatrix: {
+      xAxisLabel: 'Effort',
+      yAxisLabel: 'Valeur',
+      xMinLabel: 'Faible',
+      xMaxLabel: 'Élevé',
+      yMinLabel: 'Faible',
+      yMaxLabel: 'Élevé',
+      points: [
+        { name: 'Brevo', description: 'liste de client (société, date d\'anniversaire, contact) etc.', x: -6, y: 6 },
+        { name: 'Formation', description: 'personne ayant souscrit a un atelier', x: 6, y: 6 },
+        { name: 'Woocommerce', description: 'vente de produit et de service', x: -6, y: -6 },
+        { name: 'Notion', description: 'liste de tâches à réaliser', x: 6, y: -6 },
+      ],
+    },
     processReunions: [
       { label: '1er réunion', title: 'Audit', description: 'Découverte des outils existants, des plateformes utilisées et des difficultés rencontrées au quotidien. La cliente expliquait comment ses informations étaient dispersées et comment cela compliquait le suivi des clients et la gestion des formations.' },
       { label: '2e réunion', title: 'Cadrage Stratégique', description: 'Co-construction du cahier des charges, en priorisant les fonctionnalités essentielles comme le tableau de bord centralisé, le suivi des formations et les notifications automatiques.' },
       { label: '3e réunion', title: 'Architecture & Flux', description: 'Discussion sur les contraintes pédagogiques et organisationnelles, définition des parcours utilisateurs principaux et validation des workflows critiques.' },
       { label: '4e réunion', title: 'Validation', description: 'Validation des premières maquettes conceptuelles et recueil des retours détaillés sur l\'expérience et la hiérarchie de l\'information. Cette phase a permis de cerner précisément les besoins fonctionnels et UX.' }
     ],
+    userFlow: {
+      title: 'User flow',
+      nodes: [
+        { id: 'login', name: 'Login' },
+        { id: 'dashboard', name: 'Dashboard' },
+        { id: 'compte', name: 'Compte' },
+        { id: 'contact', name: 'Contact' },
+        { id: 'page-taches', name: 'Page Tâches' },
+        { id: 'formation', name: 'Formation' },
+        { id: 'laboratoire', name: 'Laboratoire' },
+        { id: 'mot-de-passe-oublie', name: 'Mot de passe oublié' },
+        { id: 'fiche-client', name: 'Fiche client' },
+        { id: 'vue-tache', name: 'Vue tâche' },
+        { id: 'details-formation', name: 'Détails' },
+        { id: 'details-laboratoire', name: 'Détails' },
+      ],
+      links: [
+        { from: 'login', to: 'dashboard' },
+        { from: 'dashboard', to: 'compte' },
+        { from: 'compte', to: 'contact' },
+        { from: 'contact', to: 'page-taches' },
+        { from: 'page-taches', to: 'formation' },
+        { from: 'formation', to: 'laboratoire' },
+        { from: 'login', to: 'mot-de-passe-oublie' },
+        { from: 'contact', to: 'fiche-client' },
+        { from: 'page-taches', to: 'vue-tache' },
+        { from: 'formation', to: 'details-formation' },
+        { from: 'laboratoire', to: 'details-laboratoire' },
+      ],
+    },
     
-    // 3. Contexte & Problématique
+    // 3. Contexte & Problématique (contenu Figma node 49-229)
     context: {
       title: 'Contexte & Problématique',
-      content: 'Ce projet a été réalisé pour une cliente experte en pédagogie active. Elle utilisait plusieurs plateformes distinctes pour gérer ses bases de données, ses newsletters et ses commandes, ce qui rendait la gestion complexe et fragmentée. Son objectif était de centraliser toutes ses données dans une interface unique, Pedaboard, pour avoir une vue d\'ensemble claire et optimiser le suivi des clients.'
+      content: 'Pedaboard est un outil interne de gestion et de pilotage conçu pour une professionnelle de la pédagogie active. Le projet part d\'un besoin clair : centraliser des données aujourd\'hui éparpillées sur plusieurs plateformes (base clients, formations, commandes, newsletter, rappels, événements), afin d\'obtenir une vue d\'ensemble fiable, réduire la charge mentale et améliorer le suivi des activités. L\'objectif n\'était pas de remplacer les outils existants (emailing, e-commerce, etc.), mais de créer une interface centrale de lecture, de suivi et de rappel, capable de relier toutes les informations clés autour d\'un même client.'
     },
     
     // 4. Contexte & Problématique
     contextProblem: {
       title: 'Contexte & Problématique',
-      content: 'Ce projet a été réalisé pour une cliente experte en pédagogie active. Elle utilisait plusieurs plateformes distinctes pour gérer ses bases de données, ses newsletters et ses commandes, ce qui rendait la gestion complexe et fragmentée. Son objectif était de centraliser toutes ses données dans une interface unique, Pedaboard, pour avoir une vue d\'ensemble claire et optimiser le suivi des clients.'
+      content: 'Pedaboard est un outil interne de gestion et de pilotage conçu pour une professionnelle de la pédagogie active. Le projet part d\'un besoin clair : centraliser des données aujourd\'hui éparpillées sur plusieurs plateformes (base clients, formations, commandes, newsletter, rappels, événements), afin d\'obtenir une vue d\'ensemble fiable, réduire la charge mentale et améliorer le suivi des activités. L\'objectif n\'était pas de remplacer les outils existants (emailing, e-commerce, etc.), mais de créer une interface centrale de lecture, de suivi et de rappel, capable de relier toutes les informations clés autour d\'un même client.'
     },
     
     // 5. Démarche & Approche

@@ -18,6 +18,9 @@ export default defineConfig({
   },
   server: {
     host: true, // Permet l'accès depuis le réseau local (téléphone, etc.)
+    watch: {
+      usePolling: true, // Nécessaire sur Windows pour que les modifs soient détectées sans redémarrer
+    },
     proxy: {
       // Rediriger toutes les requêtes API vers Vercel dev (port 3000 par défaut)
       '/api': {
