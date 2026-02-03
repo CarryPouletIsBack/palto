@@ -2,6 +2,9 @@ import { type ProjectData } from '../data/projectsNew';
 import { projectsDataNew } from '../data/projectsNew';
 
 const STORAGE_KEY = 'portfolio_projects';
+/** Incrémenter pour forcer la réutilisation des données du code (ex. nouveaux champs positionnementMatrix, userFlow) */
+const DATA_VERSION = 2;
+const DATA_VERSION_KEY = 'portfolio_projects_version';
 
 export interface ProjectWithMeta extends ProjectData {
   id: string;
@@ -18,8 +21,9 @@ export type { ProjectWithMeta };
 // Charger les projets depuis localStorage ou utiliser les données par défaut
 export const loadProjects = (): { [key: string]: ProjectWithMeta } => {
   try {
+    const storedVersion = parseInt(localStorage.getItem(DATA_VERSION_KEY) ?? '0', 10);
     const stored = localStorage.getItem(STORAGE_KEY);
-    if (stored) {
+    if (stored && storedVersion >= DATA_VERSION) {
       const parsed = JSON.parse(stored);
       const merged: { [key: string]: ProjectWithMeta } = {};
       Object.keys(projectsDataNew).forEach((key) => {
@@ -37,6 +41,9 @@ export const loadProjects = (): { [key: string]: ProjectWithMeta } => {
         } as ProjectWithMeta;
       });
       return merged;
+    }
+    if (stored) {
+      localStorage.setItem(DATA_VERSION_KEY, String(DATA_VERSION));
     }
   } catch (error) {
     console.error('Erreur lors du chargement des projets:', error);
@@ -61,9 +68,13 @@ export const loadProjects = (): { [key: string]: ProjectWithMeta } => {
     };
   });
   
-  // Sauvegarder les projets par défaut
+  // Sauvegarder les projets par défaut et la version pour les prochains chargements
   saveProjects(projectsWithMeta);
-  
+  try {
+    localStorage.setItem(DATA_VERSION_KEY, String(DATA_VERSION));
+  } catch {
+    // ignore
+  }
   return projectsWithMeta;
 };
 
