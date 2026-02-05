@@ -54,7 +54,7 @@
   color: white;
   font-size: 13px;
   line-height: 1;
-  font-family: 'SF Pro', sans-serif;
+  font-family: 'Inter', sans-serif;
   cursor: pointer;
   transition: all 0.3s ease;
   text-transform: none;
@@ -151,14 +151,348 @@
   padding-right: 48px;
 }
 
-/* Wrapper pour le contenu de l'introduction */
+/* Wrapper pour le contenu de l'introduction (section Description) */
 .about-intro-content-wrapper {
   width: 100%;
   max-width: 1416px;
   margin: 0 auto;
+  padding-top: 48px; /* Descendre le contenu sur tous les devices */
   display: flex;
   flex-direction: column;
   gap: 32px;
+}
+
+/* ============================================
+   SECTION DESCRIPTION - Design system Single Project
+   (couleurs, typo, espacements alignés sur SingleProject.css)
+   ============================================ */
+.about-intro-content-wrapper {
+  max-width: min(1416px, var(--sp-content-max, 1280px));
+  gap: var(--sp-main-gap, 48px);
+}
+
+/* Bloc intro (À propos de moi + photo) */
+.about-intro-content-wrapper .about-intro-section {
+  margin-bottom: 0;
+}
+
+.about-intro-content-wrapper .about-intro-content {
+  gap: var(--sp-space-3xl, 48px);
+}
+
+.about-intro-content-wrapper .about-intro-title {
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 32px;
+  font-weight: 400;
+  color: #ffffff;
+  margin: 0 0 16px 0;
+  letter-spacing: 0.2px;
+}
+
+.about-intro-content-wrapper .about-intro-description {
+  font-family: 'Inter', sans-serif;
+  font-size: 18px;
+  line-height: 1.5;
+  color: #ffffff;
+  margin: 0 0 1em 0;
+}
+
+.about-intro-content-wrapper .about-text-column {
+  color: #ffffff;
+}
+
+/* Listing stats - cartes type process-card */
+.about-intro-content-wrapper .listing-section {
+  gap: 16px;
+  padding: 0;
+  background: transparent;
+}
+
+.about-intro-content-wrapper .stat-card {
+  background: #fff8f5;
+  border: 1px solid #b2aaaa;
+  border-radius: 8px;
+  padding: 24px;
+  width: 141px;
+  height: 141px;
+  backdrop-filter: none;
+}
+
+.about-intro-content-wrapper .stat-card h3 {
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 24px;
+  font-weight: 400;
+  color: #1f2937;
+  margin: 0 0 4px 0;
+}
+
+.about-intro-content-wrapper .stat-card p {
+  font-family: 'Inter', sans-serif;
+  font-size: 16px;
+  color: #374963;
+  margin: 0;
+}
+
+/* Cartes principales - process-card / color-palette style */
+.about-intro-content-wrapper .card-lg,
+.about-intro-content-wrapper .card-small,
+.about-intro-content-wrapper .card-large {
+  background: #fff8f5;
+  border: 1px solid #b2aaaa;
+  border-radius: 8px;
+  padding: 24px 24px;
+  gap: 12px;
+}
+
+.about-intro-content-wrapper .card-border {
+  border: 1px solid #b2aaaa;
+  border-radius: 8px;
+}
+
+.about-intro-content-wrapper .card-title {
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 24px;
+  font-weight: 400;
+  color: #1f2937;
+  margin: 0;
+  line-height: 1.3;
+}
+
+.about-intro-content-wrapper .card-content,
+.about-intro-content-wrapper .card-content p {
+  font-family: 'Inter', sans-serif;
+  font-size: 18px;
+  line-height: 1.5;
+  color: #222222;
+  margin: 0 0 0.5em 0;
+}
+
+.about-intro-content-wrapper .card-content p:last-child {
+  margin-bottom: 0;
+}
+
+/* Section deux colonnes */
+.about-intro-content-wrapper .content-section {
+  gap: 24px;
+}
+
+.about-intro-content-wrapper .content-left,
+.about-intro-content-wrapper .content-right {
+  gap: 24px;
+}
+
+.about-intro-content-wrapper .card-small {
+  width: 100%;
+  max-width: 487px;
+}
+
+/* Expériences */
+.about-intro-content-wrapper .experience-item {
+  gap: 8px;
+}
+
+.about-intro-content-wrapper .company-name {
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 24px;
+  font-weight: 400;
+  color: #1f2937;
+  margin: 0;
+}
+
+.about-intro-content-wrapper .experience-badge {
+  background: #fce9cf;
+  border-radius: 24px;
+  padding: 6px 12px;
+  backdrop-filter: none;
+}
+
+.about-intro-content-wrapper .badge-border {
+  border: 1px solid #f6be6f;
+  border-radius: 24px;
+}
+
+.about-intro-content-wrapper .badge-text {
+  font-family: 'Inter', sans-serif;
+  font-size: 12px;
+  font-weight: 500;
+  color: #1f2937;
+  letter-spacing: 0.02em;
+  margin: 0;
+}
+
+.about-intro-content-wrapper .experience-period {
+  font-family: 'Inter', sans-serif;
+  font-size: 14px;
+  color: #374963;
+  margin: 0;
+}
+
+.about-intro-content-wrapper .experience-description,
+.about-intro-content-wrapper .experience-description p {
+  font-family: 'Inter', sans-serif;
+  font-size: 18px;
+  line-height: 1.5;
+  color: #222222;
+  margin: 0 0 0.5em 0;
+}
+
+.about-intro-content-wrapper .experience-description p:last-child {
+  margin-bottom: 0;
+}
+
+/* Formations - style tableau équipe projet (Single Project .figma-equipe-table) */
+.about-intro-content-wrapper .formations-title {
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 32px;
+  font-weight: 400;
+  color: #ffffff;
+  margin: 0 0 16px 0;
+}
+
+.about-intro-content-wrapper .formations-table {
+  width: 100%;
+  max-width: 100%;
+  gap: 0;
+  padding-bottom: 0;
+  background: #fff8f5;
+  border-radius: 8px;
+  overflow-x: auto;
+  overflow-y: visible;
+  -webkit-overflow-scrolling: touch;
+  border: 1px solid #b2aaaa;
+  box-sizing: border-box;
+}
+
+.about-intro-content-wrapper .formations-table .table-header {
+  display: flex;
+  flex-direction: row;
+  width: 100%;
+  min-width: 480px;
+  padding: 12px 16px;
+  background: #eaeae6;
+  border-radius: 0;
+  border-bottom: 1px solid #b2aaaa;
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 24px;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  color: #1f2937;
+  opacity: 0.8;
+  box-sizing: border-box;
+  justify-content: flex-start;
+  align-items: center;
+  gap: 12px;
+}
+
+.about-intro-content-wrapper .formations-table .table-header p {
+  margin: 0;
+  color: #1f2937;
+}
+
+.about-intro-content-wrapper .formations-table .table-col-name {
+  width: 275px;
+  min-width: 0;
+  flex-shrink: 0;
+}
+
+.about-intro-content-wrapper .formations-table .table-col-school {
+  width: 150px;
+  min-width: 0;
+  flex-shrink: 0;
+}
+
+.about-intro-content-wrapper .formations-table .table-col-year {
+  flex: 1;
+  min-width: 0;
+  text-align: left;
+}
+
+.about-intro-content-wrapper .formations-table .table-rows {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  width: 100%;
+  min-width: 480px;
+}
+
+.about-intro-content-wrapper .formations-table .table-row {
+  display: flex;
+  flex-direction: row;
+  width: 100%;
+  min-width: 480px;
+  gap: 12px;
+  padding: 12px 16px;
+  border-bottom: 1px solid rgba(178, 170, 170, 0.4);
+  background: #fff8f5;
+  font-family: 'JetBrains Mono', 'DM Mono', monospace;
+  font-size: 16px;
+  font-weight: 400;
+  line-height: 20px;
+  color: #1f2937;
+  text-transform: capitalize;
+  box-sizing: border-box;
+  justify-content: flex-start;
+  align-items: center;
+}
+
+.about-intro-content-wrapper .formations-table .table-rows > div:last-child .table-row {
+  border-bottom: none;
+}
+
+.about-intro-content-wrapper .formations-table .table-row p {
+  margin: 0;
+  line-height: 20px;
+  color: #1f2937;
+  font-family: 'JetBrains Mono', 'DM Mono', monospace;
+  font-size: 16px;
+  font-weight: 400;
+}
+
+.about-intro-content-wrapper .formations-table .table-separator {
+  display: none;
+}
+
+.about-intro-content-wrapper .formations-table .table-separator::after {
+  display: none;
+}
+
+/* Responsive Description - aligné Single Project */
+@media (max-width: 768px) {
+  .about-intro-content-wrapper .card-lg,
+  .about-intro-content-wrapper .card-small,
+  .about-intro-content-wrapper .card-large {
+    padding: 24px 16px;
+  }
+  .about-intro-content-wrapper .stat-card {
+    padding: 16px;
+    width: 120px;
+    height: 120px;
+  }
+  .about-intro-content-wrapper .stat-card h3 {
+    font-size: 20px;
+  }
+  .about-intro-content-wrapper .stat-card p {
+    font-size: 14px;
+  }
+  .about-intro-content-wrapper .card-title {
+    font-size: 20px;
+  }
+  .about-intro-content-wrapper .formations-title {
+    font-size: 24px;
+  }
+}
+
+@media (max-width: 480px) {
+  .about-intro-content-wrapper .stat-card {
+    width: 100px;
+    height: 100px;
+    padding: 12px;
+  }
+  .about-intro-content-wrapper .card-title {
+    font-size: 18px;
+  }
 }
 
 /* ============================================
@@ -215,8 +549,8 @@
 /* Style de base pour toutes les colonnes */
 .intro-column {
   display: flex;
-  flex-direction: column; /* Empilement vertical des cartes */
-  gap: 8px; /* Espacement entre les cartes dans la colonne */
+  flex-direction: column;
+  gap: 16px; /* Même espacement qu’info-card (design system) */
   justify-content: flex-start;
   align-items: center;
 }
@@ -233,29 +567,35 @@
   align-self: start; /* Aligner en haut */
 }
 
-/* Surcharge de la largeur des cartes Strava dans AboutNew */
+/* Design system des cartes Introduction = Single Project (.project-info-card / .process-card) */
 .apropos-new-page .intro-column .hero-card.services-card {
-  width: 100%; /* Prend toute la largeur de la colonne au lieu de 508px fixe */
-  max-width: 100%; /* S'assure que la carte ne dépasse pas la colonne */
-  box-sizing: border-box; /* Inclut padding et border dans la largeur */
-}
-
-/* Remettre le background des cartes dans la section Introduction */
-.apropos-new-page .intro-column .hero-card.services-card {
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+  padding: 24px 24px !important;
+  gap: var(--sp-space-md, 16px) !important;
+  margin-bottom: 0 !important;
   background: #fff8f5 !important;
   border: 1px solid #b2aaaa !important;
-  color: #222;
+  border-radius: 8px;
+  color: #222222;
 }
 
 .apropos-new-page .intro-column .hero-card.services-card .card-header {
-  background: #f9f9f9 !important;
-  padding: 12px 16px;
+  background: transparent !important;
+  padding: 0 0 8px 0;
+  border-radius: 0;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .apropos-new-page .intro-column .hero-card.services-card .card-title {
+  font-family: 'Space Grotesk', sans-serif !important;
+  font-size: 24px !important;
+  font-weight: 400 !important;
   color: #1f2937 !important;
-  font-size: 20px;
   margin: 0;
+  line-height: 1.3;
 }
 
 .apropos-new-page .intro-column .hero-card.services-card .card-arrow svg,
@@ -266,6 +606,79 @@
 
 .apropos-new-page .intro-column .hero-card.services-card .card-arrow svg path {
   stroke: #1f2937 !important;
+}
+
+/* Contenu : typescale Single Project (info-item / process-card) */
+.apropos-new-page .intro-column .hero-card.services-card .services-content {
+  padding: 0;
+  gap: 12px;
+  width: 100%;
+}
+
+.apropos-new-page .intro-column .hero-card.services-card .service-item {
+  padding: 0;
+  gap: 12px;
+  background: transparent;
+  border: none;
+  border-radius: 0;
+}
+
+.apropos-new-page .intro-column .hero-card.services-card .service-text {
+  gap: 8px;
+}
+
+.apropos-new-page .intro-column .hero-card.services-card .service-description,
+.apropos-new-page .intro-column .hero-card.services-card .service-text p {
+  font-family: 'Inter', sans-serif;
+  font-size: 18px;
+  line-height: 1.5;
+  color: #222222;
+  margin: 0;
+}
+
+.apropos-new-page .intro-column .hero-card.services-card .service-tags {
+  gap: 8px;
+}
+
+.apropos-new-page .intro-column .hero-card.services-card .tag {
+  font-size: 12px;
+  line-height: 16px;
+  padding: 6px 12px;
+  border-radius: 24px;
+  border: 1px solid #b2aaaa;
+  background: rgba(255, 255, 255, 0.5);
+  color: var(--sp-text-subtle, #374963);
+}
+
+/* Typescale secondaire (labels, métadonnées) - aligné Single Project */
+.apropos-new-page .intro-column .hero-card.services-card .service-text p[style*="fontSize: 12px"],
+.apropos-new-page .intro-column .hero-card.services-card .service-text p:not(.service-description) {
+  font-size: 12px !important;
+  line-height: 20px;
+  color: var(--sp-text-subtle, #374963);
+  margin: 0;
+}
+
+/* Cartes avec graphique (Performance, Entraînement) : même marges */
+.apropos-new-page .intro-column .hero-card.services-card .strava-radar-content,
+.apropos-new-page .intro-column .hero-card.services-card .services-content.strava-radar-content {
+  padding: 0;
+  margin: 0;
+  min-height: 200px;
+}
+
+.apropos-new-page .intro-column .hero-card.services-card .strava-radar-placeholder {
+  padding: 24px;
+  text-align: center;
+  color: #374963;
+  font-size: 18px;
+  line-height: 1.5;
+}
+
+@media (max-width: 768px) {
+  .apropos-new-page .intro-column .hero-card.services-card {
+    padding: 24px 16px !important;
+  }
 }
 
 /* S'assurer que le Swiper des activités Strava prend toute la largeur */
@@ -285,7 +698,7 @@
   flex-direction: column;
   justify-content: flex-end;
   align-items: flex-start;
-  padding: 16px;
+  padding: 24px; /* Design system Single Project = padding 24px */
 }
 
 /* S'assurer que le StravaMap prend toute la hauteur quand utilisé comme background */
@@ -386,8 +799,8 @@
 /* Silhouette humaine 3D */
 .human-silhouette-container {
   width: 100%;
-  max-width: 500px;
-  height: 700px;
+  max-width: 580px;
+  height: 800px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -397,18 +810,29 @@
 
 .human-body-3d-container {
   width: 100%;
-  height: 700px;
+  height: 800px;
   position: relative;
   margin: 0 auto;
   display: flex;
   align-items: center;
   justify-content: center;
+  overflow: hidden; /* Évite que le canvas Three.js crée un espace parasite */
+}
+
+/* Conteneur créé par React Three Fiber autour du canvas */
+.human-body-3d-container > div {
+  width: 100% !important;
+  height: 100% !important;
+  overflow: hidden;
+  display: block;
+  line-height: 0;
 }
 
 .human-body-3d-container canvas {
   width: 100% !important;
   height: 100% !important;
-  display: block;
+  display: block !important;
+  vertical-align: top; /* Supprime le gap baseline sous le canvas */
   max-width: 100%;
   max-height: 100%;
   object-fit: contain; /* Empêche le zoom lors du redimensionnement */
@@ -431,9 +855,9 @@
     display: flex !important; /* Passer en flexbox au lieu de grid */
     flex-direction: column !important; /* Empiler verticalement */
     grid-template-columns: none !important; /* Désactiver le grid */
-    gap: 0 !important; /* Supprimer le gap */
-    row-gap: 0 !important; /* Supprimer le row-gap */
-    column-gap: 0 !important; /* Supprimer le column-gap */
+    gap: 24px !important; /* Espacement entre colonnes (modèle 3D, gauche, droite) */
+    row-gap: 24px !important;
+    column-gap: 0 !important;
     justify-items: stretch; /* Les colonnes prennent toute la largeur */
     align-items: stretch !important; /* Les colonnes prennent toute la largeur */
     margin: 0 !important; /* Supprimer toutes les marges */
@@ -490,14 +914,19 @@
     box-sizing: border-box;
   }
   
-  /* Surcharger la règle de base .intro-column pour éviter les gaps */
-  .intro-columns-container > .intro-column {
-    gap: 0 !important; /* Supprimer le gap interne des colonnes */
+  /* Gap entre les cartes à l'intérieur de chaque colonne (gauche/droite) */
+  .intro-columns-container > .intro-column-left,
+  .intro-columns-container > .intro-column-right {
+    gap: 24px !important;
+  }
+  .intro-columns-container > .intro-column-left .hero-card.services-card,
+  .intro-columns-container > .intro-column-right .hero-card.services-card {
+    margin-bottom: 0;
   }
   
-  /* Surcharger spécifiquement pour la colonne center */
+  /* Colonne center sans gap (modèle 3D seul) */
   .intro-columns-container > .intro-column-center {
-    gap: 0 !important; /* Supprimer le gap */
+    gap: 0 !important;
   }
   
   /* Supprimer toutes les marges sur les conteneurs enfants */
@@ -524,7 +953,7 @@
   }
   
   .human-silhouette-container {
-    max-width: 900px; /* Agrandir encore plus la largeur */
+    max-width: 980px; /* Agrandir encore plus la largeur */
     width: 100%;
     height: 100%;
     max-height: 100vh; /* Agrandir encore plus la hauteur */
@@ -537,11 +966,12 @@
     justify-content: center; /* Centre horizontalement */
     align-items: center;
     padding: 0;
+    overflow: hidden; /* Canvas 3D ne crée pas d’espace parasite */
   }
   
   .human-body-3d-container {
     width: 100% !important;
-    max-width: 900px !important; /* Agrandir encore plus la largeur */
+    max-width: 980px !important; /* Agrandir encore plus la largeur */
     height: 100% !important;
     max-height: 100vh !important; /* Agrandir encore plus la hauteur */
     margin: 0 !important; /* Supprimer toutes les marges */
@@ -553,14 +983,21 @@
     justify-content: center !important;
     align-items: center !important;
     position: relative;
+    overflow: hidden !important;
+  }
+  
+  .human-body-3d-container > div {
+    overflow: hidden !important;
+    line-height: 0;
   }
   
   .human-body-3d-container canvas {
     width: 100% !important;
     height: 100% !important;
-    max-width: 900px !important; /* Agrandir encore plus la largeur */
+    max-width: 980px !important; /* Agrandir encore plus la largeur */
     max-height: 100vh !important; /* Agrandir encore plus la hauteur */
     display: block !important;
+    vertical-align: top !important;
     margin: 0 !important; /* Supprimer toutes les marges */
     margin-left: auto !important; /* Centre horizontalement */
     margin-right: auto !important; /* Centre horizontalement */
@@ -579,58 +1016,80 @@
   .intro-columns-container {
     justify-items: stretch;
     align-items: start;
+    gap: 4px !important; /* Réduire l’écart entre le modèle 3D et les cartes profil */
   }
   
   .intro-column-center {
-    min-height: 90vh !important; /* Agrandir beaucoup la hauteur sur mobile */
-    max-height: 90vh !important; /* Agrandir beaucoup la hauteur sur mobile */
-    height: 90vh !important; /* Forcer la hauteur */
+    height: auto !important;
+    min-height: 0 !important;
+    max-height: none !important;
     width: 100%;
     max-width: 100%;
     display: flex;
     justify-content: center;
-    align-items: center;
+    align-items: flex-start;
     margin: 0 !important;
-    margin-bottom: 16px !important;
+    margin-bottom: 4px !important; /* Réduit : moins d’écart avec les cartes profil */
     padding-top: 32px !important; /* Ajouter de la marge en haut */
     padding-left: 0 !important;
     padding-right: 0 !important;
     padding-bottom: 0 !important;
   }
   
+  .intro-column-left {
+    margin-top: 4px !important; /* Réduit : rapproche les cartes du modèle 3D */
+  }
+  
+  .intro-column-center {
+    overflow-x: hidden;
+  }
+  
   .human-silhouette-container {
-    width: 100% !important; /* Utiliser 100% au lieu de 100vw pour éviter le scroll horizontal */
-    max-width: 100% !important;
-    height: 90vh !important; /* Forcer la hauteur à 90vh */
-    min-height: 90vh !important;
-    max-height: 90vh !important; /* Agrandir beaucoup la hauteur sur mobile */
-    margin: 0 auto;
-    display: flex;
-    justify-content: center;
-    align-items: center;
+    width: 150vw !important;
+    max-width: none !important;
+    height: auto !important;
+    min-height: 0 !important;
+    max-height: none !important;
+    aspect-ratio: 716 / 612;
+    display: block !important;
+    overflow: hidden !important;
+    position: relative;
+    left: 50%;
+    transform: translateX(-50%);
   }
   
   .human-body-3d-container {
-    width: 100% !important; /* Utiliser 100% au lieu de 100vw */
+    position: absolute !important;
+    inset: 0;
+    width: 100% !important;
     max-width: 100% !important;
-    height: 90vh !important; /* Forcer la hauteur à 90vh */
-    min-height: 90vh !important;
-    max-height: 90vh !important; /* Agrandir beaucoup la hauteur sur mobile */
-    margin: 0 auto;
-    display: flex !important;
-    justify-content: center !important;
-    align-items: center !important;
+    height: 100% !important;
+    margin: 0;
+    display: block !important;
+    overflow: hidden !important;
+    pointer-events: none !important; /* Les touches passent à travers → scroll possible */
+  }
+  
+  .human-body-3d-container > div {
+    overflow: hidden !important;
+    line-height: 0;
+    width: 100% !important;
+    height: 100% !important;
+    position: absolute;
+    inset: 0;
+    pointer-events: none !important;
   }
   
   .human-body-3d-container canvas {
     width: 100% !important;
-    height: 90vh !important; /* Forcer la hauteur à 90vh */
-    min-height: 90vh !important;
-    max-height: 90vh !important; /* Agrandir beaucoup la hauteur sur mobile */
+    height: 100% !important;
     max-width: 100% !important;
+    max-height: 100% !important;
     display: block !important;
-    margin: 0 auto !important;
+    vertical-align: top !important;
+    margin: 0 !important;
     object-fit: contain !important;
+    pointer-events: none !important;
   }
 }
 
@@ -644,58 +1103,77 @@
   .intro-columns-container {
     justify-items: stretch;
     align-items: start;
+    gap: 4px !important; /* Réduire l’écart entre le modèle 3D et les cartes profil */
   }
   
   .intro-column-center {
-    min-height: 85vh !important; /* Agrandir beaucoup la hauteur sur smartphone */
-    max-height: 85vh !important; /* Agrandir beaucoup la hauteur sur smartphone */
-    height: 85vh !important; /* Forcer la hauteur */
+    height: auto !important;
+    min-height: 0 !important;
+    max-height: none !important;
     width: 100%;
     max-width: 100%;
     display: flex;
     justify-content: center;
-    align-items: center;
+    align-items: flex-start;
     margin: 0 !important;
-    margin-bottom: 16px !important;
-    padding-top: 32px !important; /* Ajouter de la marge en haut */
+    margin-bottom: 4px !important;
+    padding-top: 32px !important;
     padding-left: 0 !important;
     padding-right: 0 !important;
     padding-bottom: 0 !important;
+    overflow-x: hidden;
+  }
+  
+  .intro-column-left {
+    margin-top: 4px !important;
   }
   
   .human-silhouette-container {
-    width: 100% !important; /* Utiliser 100% au lieu de 100vw pour éviter le scroll horizontal */
-    max-width: 100% !important;
-    height: 85vh !important; /* Forcer la hauteur à 85vh */
-    min-height: 85vh !important;
-    max-height: 85vh !important; /* Agrandir beaucoup la hauteur sur smartphone */
-    margin: 0 auto;
-    display: flex;
-    justify-content: center;
-    align-items: center;
+    width: 150vw !important;
+    max-width: none !important;
+    height: auto !important;
+    min-height: 0 !important;
+    max-height: none !important;
+    aspect-ratio: 716 / 612;
+    display: block !important;
+    overflow: hidden !important;
+    position: relative;
+    left: 50%;
+    transform: translateX(-50%);
   }
   
   .human-body-3d-container {
-    width: 100% !important; /* Utiliser 100% au lieu de 100vw */
+    position: absolute !important;
+    inset: 0;
+    width: 100% !important;
     max-width: 100% !important;
-    height: 85vh !important; /* Forcer la hauteur à 85vh */
-    min-height: 85vh !important;
-    max-height: 85vh !important; /* Agrandir beaucoup la hauteur sur smartphone */
-    margin: 0 auto;
-    display: flex !important;
-    justify-content: center !important;
-    align-items: center !important;
+    height: 100% !important;
+    margin: 0;
+    display: block !important;
+    overflow: hidden !important;
+    pointer-events: none !important;
+  }
+  
+  .human-body-3d-container > div {
+    overflow: hidden !important;
+    line-height: 0;
+    width: 100% !important;
+    height: 100% !important;
+    position: absolute;
+    inset: 0;
+    pointer-events: none !important;
   }
   
   .human-body-3d-container canvas {
     width: 100% !important;
-    height: 85vh !important; /* Forcer la hauteur à 85vh */
-    min-height: 85vh !important;
-    max-height: 85vh !important; /* Agrandir beaucoup la hauteur sur smartphone */
+    height: 100% !important;
     max-width: 100% !important;
+    max-height: 100% !important;
     display: block !important;
-    margin: 0 auto !important;
+    vertical-align: top !important;
+    margin: 0 !important;
     object-fit: contain !important;
+    pointer-events: none !important;
   }
 }
 
@@ -871,7 +1349,7 @@
 }
 
 .apropos-new-page .node-popup-description {
-  font-family: 'SF Pro', sans-serif;
+  font-family: 'Inter', sans-serif;
   font-size: 13px;
   line-height: 1.5;
   color: #e0e0e0;
@@ -902,7 +1380,7 @@
 }
 
 .apropos-new-page .node-popup-competence-item {
-  font-family: 'SF Pro', sans-serif;
+  font-family: 'Inter', sans-serif;
   font-size: 13px;
   line-height: 1.4;
   color: #e0e0e0;

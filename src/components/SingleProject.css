@@ -330,7 +330,7 @@
 }
 
 .skill-card p {
-  font-family: 'SF Pro', sans-serif;
+  font-family: 'Inter', sans-serif;
   font-size: 18px;
   margin: 0;
   color: #070912;
@@ -374,14 +374,14 @@
 }
 
 .info-item p {
-  font-family: 'SF Pro', sans-serif;
+  font-family: 'Inter', sans-serif;
   font-size: 18px;
   color: #070912;
   margin: 0;
 }
 
 .info-item ul {
-  font-family: 'SF Pro', sans-serif;
+  font-family: 'Inter', sans-serif;
   font-size: 18px;
   color: #070912;
   margin: 0;
@@ -423,7 +423,7 @@
 }
 
 .process-card p {
-  font-family: 'SF Pro', sans-serif;
+  font-family: 'Inter', sans-serif;
   font-size: 18px;
   color: #222222;
   margin: 0;
@@ -494,7 +494,7 @@
 }
 
 .color-palette-section > p {
-  font-family: 'SF Pro', sans-serif;
+  font-family: 'Inter', sans-serif;
   font-size: 18px;
   color: #222222;
   margin: 0;
@@ -732,7 +732,7 @@
 }
 
 .typography-section p {
-  font-family: 'SF Pro', sans-serif;
+  font-family: 'Inter', sans-serif;
   font-size: 18px;
   color: #222222;
   margin: 0;
@@ -1387,14 +1387,15 @@
   width: 506.667px;
   height: 380px;
   aspect-ratio: 4 / 3;
-  max-width: calc(100vw - 2 * var(--sp-padding-x-mobile, 16px));
+  max-width: min(100%, calc(100vw - 2 * var(--sp-padding-x-mobile, 16px)));
   box-sizing: border-box;
   flex-shrink: 0;
 }
 
 .figma-audit-slide {
-  width: 506.667px;
-  height: 380px;
+  width: 100%;
+  height: 100%;
+  min-height: 0;
   aspect-ratio: 4 / 3;
   max-width: 100%;
   position: relative;
@@ -1405,9 +1406,8 @@
 }
 
 .figma-audit-slide img {
-  width: 506.667px;
-  height: 380px;
-  aspect-ratio: 4 / 3;
+  width: 100%;
+  height: 100%;
   max-width: 100%;
   max-height: 100%;
   display: block;
@@ -1725,6 +1725,11 @@
   width: 100%;
 }
 
+.figma-autres-projets-carousel .swiper-slide {
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
 .figma-autres-projets-carousel .swiper-wrapper {
   align-items: flex-start;
 }
@@ -1748,8 +1753,10 @@
 /* Carte Mes autres projets (Figma 103-1248 : 1118×858px pour 1440×1024, contenu à l’intérieur) */
 .figma-projet-mockup {
   position: relative;
-  width: 1118px;
-  height: 858px;
+  width: 100%;
+  max-width: 1118px;
+  height: auto;
+  aspect-ratio: 1118 / 858;
   flex-shrink: 0;
   border-radius: 8px;
   overflow: hidden;
@@ -2224,7 +2231,7 @@
 }
 
 .metadata-label {
-  font-family: 'SF Pro', sans-serif;
+  font-family: 'Inter', sans-serif;
   font-size: 12px;
   font-weight: 400;
   color: #888888;
@@ -2233,7 +2240,7 @@
 }
 
 .metadata-separator {
-  font-family: 'SF Pro', sans-serif;
+  font-family: 'Inter', sans-serif;
   font-size: 12px;
   font-weight: 400;
   color: #888888;
@@ -2304,7 +2311,7 @@
 }
 
 .components-title {
-  font-family: 'SF Pro', sans-serif;
+  font-family: 'Inter', sans-serif;
   font-size: 32px;
   font-weight: 400;
   color: #f1582a;
@@ -2313,7 +2320,7 @@
 }
 
 .components-subtitle {
-  font-family: 'SF Pro', sans-serif;
+  font-family: 'Inter', sans-serif;
   font-size: 24px;
   font-weight: 400;
   color: #666666;
@@ -2367,7 +2374,7 @@
 }
 
 .component-label {
-  font-family: 'SF Pro', sans-serif;
+  font-family: 'Inter', sans-serif;
   font-size: 12px;
   color: #666666;
   text-align: center;
@@ -2382,7 +2389,7 @@
   align-items: center;
   justify-content: center;
   gap: 8px;
-  font-family: 'SF Pro', sans-serif;
+  font-family: 'Inter', sans-serif;
   font-size: 14px;
   font-weight: 500;
 }
@@ -2497,7 +2504,7 @@
 }
 
 .toc-link {
-  font-family: 'SF Pro', sans-serif;
+  font-family: 'Inter', sans-serif;
   font-size: 16px;
   line-height: 1.6;
   color: #222;
@@ -2717,7 +2724,7 @@
 }
 
 .single-project-page .case-studie-text {
-  font-family: 'SF Pro', sans-serif;
+  font-family: 'Inter', sans-serif;
   font-size: 16px;
   line-height: 1.8;
   color: #222;
@@ -2725,7 +2732,7 @@
 }
 
 .single-project-page .case-studie-list {
-  font-family: 'SF Pro', sans-serif;
+  font-family: 'Inter', sans-serif;
   font-size: 16px;
   line-height: 1.8;
   color: #222;
@@ -2839,7 +2846,7 @@
 }
 
 .wireframe-figma-link {
-  font-family: 'SF Pro', sans-serif;
+  font-family: 'Inter', sans-serif;
   font-size: 16px;
   font-weight: 500;
   color: #f1582a;
@@ -3081,7 +3088,7 @@
 }
 
 .single-project-page .results-bottom-percentage {
-  font-family: 'SF Pro', sans-serif;
+  font-family: 'Inter', sans-serif;
   font-size: 18px;
   font-weight: 400;
   color: #666;
@@ -3090,7 +3097,7 @@
 }
 
 .results-bottom-label {
-  font-family: 'SF Pro', sans-serif;
+  font-family: 'Inter', sans-serif;
   font-size: 18px;
   color: #222;
   margin: 0;
@@ -3188,7 +3195,7 @@
 
 .single-project-page .results-feedback p,
 .single-project-page .results-improvements p {
-  font-family: 'SF Pro', sans-serif;
+  font-family: 'Inter', sans-serif;
   font-size: 16px;
   line-height: 1.8;
   color: #222;
@@ -3690,7 +3697,7 @@
 }
 
 .card-content p {
-  font-family: 'SF Pro', sans-serif;
+  font-family: 'Inter', sans-serif;
   font-size: 16px;
   color: #666;
   margin: 0;
@@ -3839,7 +3846,7 @@
 }
 
 .card-content-demo p {
-  font-family: 'SF Pro', sans-serif;
+  font-family: 'Inter', sans-serif;
   font-size: 16px;
   color: #666;
   margin: 0;
@@ -3852,7 +3859,7 @@
   padding: 12px 16px;
   border: 1px solid #b2aaaa;
   border-radius: 8px;
-  font-family: 'SF Pro', sans-serif;
+  font-family: 'Inter', sans-serif;
   font-size: 16px;
   color: #070912;
   background: white;

@@ -267,6 +267,8 @@ function App() {
 
   return (
     <div className={`container ${currentPage === 'menu' ? 'menu-active' : ''}`}>
+      {/* Conteneur pour l'overlay de la search bar (portal) : couvre tout l'écran, sous le header */}
+      <div id="search-overlay-root" className="search-overlay-root" />
       {currentPage !== 'dashboard' && (
         <Header 
           onMenuClick={handleMenuClick} 

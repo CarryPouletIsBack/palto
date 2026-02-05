@@ -171,7 +171,7 @@ body.accueil-page .page.active:not(.single-project-page) {
   justify-content: center;
   position: relative;
   flex-shrink: 0;
-  width: 508px;
+  width: var(--hero-card-width, 508px);
   color: #222;
   animation: heroMainBounce 800ms cubic-bezier(0.22, 1, 0.36, 1) both;
 }
@@ -419,9 +419,15 @@ body.accueil-page .page.active:not(.single-project-page) {
   font-weight: 300;
   font-size: 14px;
   line-height: 1.5;
-  color: #cacaca;
+  color: rgba(255, 255, 255, 1);
   letter-spacing: 1.82px;
   margin: 0;
+}
+
+/* Surcharge pour la carte Hero : .project-info p { color: #222 } dans Project.css est plus spécifique */
+.hero-card.project-card .project-info .project-date,
+.project-slide .project-info .project-date {
+  color: rgba(255, 255, 255, 1);
 }
 
 /* Carte Services */
@@ -504,7 +510,7 @@ body.accueil-page .page.active:not(.single-project-page) {
 /* Responsive */
 @media (max-width: 768px) {
   .main-accueil {
-    padding: 16px 8px;
+    padding: 16px var(--main-padding-x-mobile, 8px);
     margin-top: 180px !important; /* Augmenter la marge en haut */
     min-height: 100vh;
     justify-content: flex-start;
@@ -541,7 +547,7 @@ body.accueil-page .page.active:not(.single-project-page) {
   }
 
   .hero-card {
-    width: 100%;
+    width: var(--hero-card-width, 100%);
   }
 
   .project-card {
@@ -575,7 +581,7 @@ body.accueil-page .page.active:not(.single-project-page) {
 /* Responsive pour les très petits écrans */
 @media (max-width: 480px) {
   .main-accueil {
-    padding: 16px 8px;
+    padding: 16px var(--main-padding-x-mobile, 8px);
     margin-top: 180px !important; /* Augmenter la marge en haut */
   }
 

@@ -320,7 +320,7 @@ export const projectsDataNew: { [key: string]: ProjectData } = {
     duration: '9 mois',
     type: 'Application web',
     team: [
-      'Anthony Merault, Directeur Artistique / Concepteur ux/ui',
+      'Anthony Merault, Art director / Product designer UX/UI',
       'Josian (dev back-end)',
       'Bertolde (dev front-end)'
     ]
@@ -526,7 +526,7 @@ export const projectsDataNew: { [key: string]: ProjectData } = {
     // 9. Conclusion
     conclusion: {
       title: 'Conclusion',
-      content: 'Pedaboard a été un projet clé dans mon parcours, à la fois exigeant et formateur. En tant que Product Designer et Directeur Artistique, j\'ai pu aller bien au-delà du design d\'interface classique : j\'ai structuré une expérience produit complète, réfléchi à la cohérence entre les espaces fonctionnels et accompagné l\'équipe tout au long du processus de conception.\n\nCe projet m\'a permis de consolider mes bases en UX design, d\'approfondir ma compréhension des systèmes complexes et de renforcer ma capacité à faire le lien entre besoins utilisateurs, contraintes techniques et vision produit.\n\nMême si certaines parties n\'ont pas pu être testées avec des utilisateurs, Pedaboard reste pour moi une expérience déterminante, celle où j\'ai vraiment pris conscience de mon rôle de designer produit : créer du sens, simplifier la complexité et concevoir des solutions utiles.',
+      content: 'Pedaboard a été un projet clé dans mon parcours, à la fois exigeant et formateur. En tant que Product Designer UX/UI et Art director, j\'ai pu aller bien au-delà du design d\'interface classique : j\'ai structuré une expérience produit complète, réfléchi à la cohérence entre les espaces fonctionnels et accompagné l\'équipe tout au long du processus de conception.\n\nCe projet m\'a permis de consolider mes bases en UX design, d\'approfondir ma compréhension des systèmes complexes et de renforcer ma capacité à faire le lien entre besoins utilisateurs, contraintes techniques et vision produit.\n\nMême si certaines parties n\'ont pas pu être testées avec des utilisateurs, Pedaboard reste pour moi une expérience déterminante, celle où j\'ai vraiment pris conscience de mon rôle de designer produit : créer du sens, simplifier la complexité et concevoir des solutions utiles.',
       nextSteps: [
         'Ajout d\'un module de facturation intégré',
         'Développement d\'une application mobile companion',
@@ -542,7 +542,7 @@ export const projectsDataNew: { [key: string]: ProjectData } = {
     duration: '9 mois',
     type: 'Application web - CRM',
     team: [
-      'Anthony Merault, Lead Product Designer',
+      'Anthony Merault, Lead Product Designer UX/UI',
       'Frédéric Isambert, Chef de projet',
       'Nicola Bègue, Intégrateur',
       'Evan Rivière, Intégrateur'

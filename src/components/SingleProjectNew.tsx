@@ -490,6 +490,7 @@ const SingleProjectNew: FC<SingleProjectProps> = ({ projectData, onBackClick, co
                 modules={[Pagination]}
                 spaceBetween={24}
                 slidesPerView="auto"
+                centeredSlides={true}
                 pagination={{ clickable: true }}
                 className="processus-cards-swiper"
                 onSwiper={(swiper) => {
@@ -537,15 +538,17 @@ const SingleProjectNew: FC<SingleProjectProps> = ({ projectData, onBackClick, co
               modules={[Pagination]}
               spaceBetween={24}
               slidesPerView="auto"
+              centeredSlides={true}
               pagination={{ clickable: true }}
               className="figma-audit-carousel"
               onSwiper={(swiper) => {
-                const slideWidthPx = 506.667;
+                const idealWidth = 506.667;
                 const applySlideWidth = () => {
+                  const w = Math.min(idealWidth, Math.max(0, swiper.width - 24));
                   swiper.slides.forEach((slide) => {
                     const el = slide as HTMLElement;
-                    el.style.width = `${slideWidthPx}px`;
-                    el.style.minWidth = `${slideWidthPx}px`;
+                    el.style.width = `${w}px`;
+                    el.style.minWidth = `${w}px`;
                   });
                   swiper.update();
                 };
@@ -554,7 +557,7 @@ const SingleProjectNew: FC<SingleProjectProps> = ({ projectData, onBackClick, co
               }}
             >
               {AUDIT_CAROUSEL_IMAGES.map((img, index) => (
-                <SwiperSlide key={index} style={{ width: 506.667, minWidth: 506.667 }}>
+                <SwiperSlide key={index}>
                   <div className="figma-audit-slide">
                     <img src={img.src} alt={img.alt} loading="eager" decoding="async" />
                   </div>
@@ -707,15 +710,17 @@ const SingleProjectNew: FC<SingleProjectProps> = ({ projectData, onBackClick, co
               modules={[Pagination]}
               spaceBetween={24}
               slidesPerView="auto"
+              centeredSlides={true}
               pagination={{ clickable: true }}
               className="figma-audit-carousel"
               onSwiper={(swiper) => {
-                const slideWidthPx = 506.667;
+                const idealWidth = 506.667;
                 const applySlideWidth = () => {
+                  const w = Math.min(idealWidth, Math.max(0, swiper.width - 24));
                   swiper.slides.forEach((slide) => {
                     const el = slide as HTMLElement;
-                    el.style.width = `${slideWidthPx}px`;
-                    el.style.minWidth = `${slideWidthPx}px`;
+                    el.style.width = `${w}px`;
+                    el.style.minWidth = `${w}px`;
                   });
                   swiper.update();
                 };
@@ -724,7 +729,7 @@ const SingleProjectNew: FC<SingleProjectProps> = ({ projectData, onBackClick, co
               }}
             >
               {EXPERIENCE_CAROUSEL_IMAGES.map((img, index) => (
-                <SwiperSlide key={index} style={{ width: 506.667, minWidth: 506.667 }}>
+                <SwiperSlide key={index}>
                   <div className="figma-audit-slide">
                     <img src={img.src} alt={img.alt} loading="eager" decoding="async" />
                   </div>
@@ -751,15 +756,18 @@ const SingleProjectNew: FC<SingleProjectProps> = ({ projectData, onBackClick, co
               className="figma-autres-projets-carousel"
               spaceBetween={24}
               slidesPerView="auto"
+              centeredSlides={true}
               pagination={{ clickable: true }}
               onSwiper={(swiper) => {
-                const cardWidth = 1118;
+                const idealWidth = 1118;
                 const applySlideWidth = () => {
-                  const slides = swiper.slides;
-                  for (let i = 0; i < slides.length; i++) {
-                    (slides[i] as HTMLElement).style.width = `${cardWidth}px`;
-                    (slides[i] as HTMLElement).style.minWidth = `${cardWidth}px`;
-                  }
+                  const w = Math.min(idealWidth, Math.max(0, swiper.width - 24));
+                  swiper.slides.forEach((slide) => {
+                    const el = slide as HTMLElement;
+                    el.style.width = `${w}px`;
+                    el.style.minWidth = `${w}px`;
+                  });
+                  swiper.update();
                 };
                 applySlideWidth();
                 swiper.on('resize', applySlideWidth);
@@ -769,7 +777,7 @@ const SingleProjectNew: FC<SingleProjectProps> = ({ projectData, onBackClick, co
                 { slug: 'Pedaboard', title: 'Pedaboard', date: 'Décembre 2023', badges: ['Application', 'UX/UI', 'CRM'], coverImage: '/images/cover-project-pedaboard.png' },
                 { slug: 'Playdago', title: 'Playdago', date: 'Février 2025', badges: ['Application', 'UX/UI'], coverImage: '/images/cover-project-playdago.png' },
               ].map((proj) => (
-                <SwiperSlide key={proj.slug} style={{ width: 1118, minWidth: 1118 }}>
+                <SwiperSlide key={proj.slug}>
                   <a href={`/project/${proj.slug}`} className="figma-projet-mockup-card">
                     <div className="figma-projet-mockup">
                       <div className="figma-projet-mockup-bar" aria-hidden />

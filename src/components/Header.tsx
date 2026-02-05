@@ -69,7 +69,7 @@ const Header = ({ onMenuClick, onContactClick, onLogoClick, currentPage, onSearc
               ) : (
                 <p className="logo-name">Anthony Merault</p>
               )}
-              <p>Product designer & director artistic</p>
+              <p>Product designer UX/UI & Art director</p>
             </div>
           </button>
           <div className="header-search-wrapper">

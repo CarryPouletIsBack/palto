@@ -1,11 +1,13 @@
 import { useState, useEffect, useRef } from 'react'
-import { createPortal } from 'react-dom'
 import { motion } from 'framer-motion'
 import Button from './Button'
 import MagicBento from './MagicBento'
 import './MobileSearchBar.css'
-import { getProjectsGroupedByCategory, getProjectsAsMenuItems, getProjectByTitle, type MenuItem, type MenuCategory } from '../services/projectService'
+import { getProjectByTitle, type MenuItem, type MenuCategory } from '../services/projectService'
 import { getAllProjects as getAllProjectsFromService } from '../services/projectService'
+import { menuCategories as staticMenuCategories } from '../data/menuCategories'
+
+const ENABLED_PROJECT_TITLES = ['Playdago', 'Pedaboard']
 
 interface MobileSearchBarProps {
   onSearchChange?: (searchTerm: string) => void
@@ -22,34 +24,9 @@ const MobileSearchBar = ({ onSearchChange, onMenuClick, onSearchClick, onPageCha
   const [searchTerm, setSearchTerm] = useState('')
   const [placeholderIndex, setPlaceholderIndex] = useState(0)
   const [placeholderOpacity, setPlaceholderOpacity] = useState(1)
-  const [menuCategories, setMenuCategories] = useState<MenuCategory[]>([])
-  const [allProjects, setAllProjects] = useState<MenuItem[]>([])
-
-  // Charger les projets depuis localStorage
-  useEffect(() => {
-    const categories = getProjectsGroupedByCategory()
-    const projects = getProjectsAsMenuItems()
-    setMenuCategories(categories)
-    setAllProjects(projects)
-  }, [])
-
-  // Écouter les changements de localStorage
-  useEffect(() => {
-    const handleStorageChange = () => {
-      const categories = getProjectsGroupedByCategory()
-      const projects = getProjectsAsMenuItems()
-      setMenuCategories(categories)
-      setAllProjects(projects)
-    }
-
-    window.addEventListener('storage', handleStorageChange)
-    window.addEventListener('projectsUpdated', handleStorageChange)
-
-    return () => {
-      window.removeEventListener('storage', handleStorageChange)
-      window.removeEventListener('projectsUpdated', handleStorageChange)
-    }
-  }, [])
+  // Catégories avec tous les projets (Application, Site web, Logo, Motion, Plv)
+  const [menuCategories] = useState<MenuCategory[]>(staticMenuCategories)
+  const allProjects = staticMenuCategories.flatMap(c => c.projects)
   
   // Calculer l'opacité en fonction de projectSwipeY (uniquement sur la page projet)
   const screenHeight = typeof window !== 'undefined' ? window.innerHeight : 800
@@ -208,7 +185,7 @@ const MobileSearchBar = ({ onSearchChange, onMenuClick, onSearchClick, onPageCha
       setPreviousImage(null)
       setNextImage(null)
     }
-  }, [currentPage, allProjects])
+  }, [currentPage, menuCategories])
 
 
   // Placeholder : une seule div, fondu sortant → changement de texte (opacité 0) → fondu entrant. Pas de crossfade = pas de clignotement.
@@ -397,7 +374,17 @@ const MobileSearchBar = ({ onSearchChange, onMenuClick, onSearchClick, onPageCha
   const opacity = isOnProjectPage ? Math.max(0, Math.min(1, 1 - (projectSwipeY / screenHeight))) : 1
   const groupedResults = getGroupedResults()
   const hasResults = groupedResults.some(group => group.projects.length > 0)
-  const isSearchActive = !isOnProjectPage && showResults && hasResults
+  const isSearchActive = !isOnProjectPage && showResults
+
+  // Bloquer le scroll du main quand la search bar est active
+  useEffect(() => {
+    if (isSearchActive) {
+      document.body.style.overflow = 'hidden'
+      return () => {
+        document.body.style.overflow = ''
+      }
+    }
+  }, [isSearchActive])
 
   // Gérer l'affichage temporaire de l'image dans le bouton précédent (3 secondes)
   useEffect(() => {
@@ -490,16 +477,6 @@ const MobileSearchBar = ({ onSearchChange, onMenuClick, onSearchClick, onPageCha
 
   return (
     <>
-      {/* Overlay flouté quand la search bar est active (portal vers #search-overlay-root) */}
-      {isSearchActive && typeof document !== 'undefined' &&
-        (() => {
-          const root = document.getElementById('search-overlay-root')
-          return root ? createPortal(
-            <div className="mobile-search-bar-overlay active" aria-hidden="true" />,
-            root
-          ) : null
-        })()
-      }
       {!isOnProjectPage && (
       <div
         ref={searchBarContainerRef}
@@ -601,8 +578,8 @@ const MobileSearchBar = ({ onSearchChange, onMenuClick, onSearchClick, onPageCha
       {!isOnProjectPage && (
         <>
           <MagicBento 
-            className={`search-bar ${showResults && hasResults ? 'has-results' : ''}`}
-            style={showResults && hasResults && maxHeight ? { maxHeight } : undefined}
+            className={`search-bar ${showResults ? 'has-results' : ''}`}
+            style={showResults && maxHeight ? { maxHeight } : undefined}
           >
             <div className="search-input-row-wrapper">
               <div className="search-input-row">
@@ -661,17 +638,19 @@ const MobileSearchBar = ({ onSearchChange, onMenuClick, onSearchClick, onPageCha
             </div>
 
             {/* Résultats de recherche en dessous de l'input */}
-        {showResults && hasResults && (
+        {showResults && (
           <div className="search-results">
             {groupedResults.map((group) => (
               <div key={group.category.key} className="search-results-category">
                 <h3 className="search-category-title">{group.category.title}</h3>
                 <div className="search-results-row">
-                  {group.projects.map((project, index) => (
+                  {group.projects.map((project, index) => {
+                    const isDisabled = !ENABLED_PROJECT_TITLES.includes(project.title)
+                    return (
                     <div 
                       key={`${group.category.key}-${index}`}
-                      className="search-result-item"
-                      onClick={() => handleResultClick(project)}
+                      className={`search-result-item${isDisabled ? ' search-result-item-disabled' : ''}`}
+                      onClick={() => !isDisabled && handleResultClick(project)}
                     >
                       <div className="search-result-image">
                         {project.imageSrc ? (
@@ -690,7 +669,8 @@ const MobileSearchBar = ({ onSearchChange, onMenuClick, onSearchClick, onPageCha
                         {project.title}
                       </div>
                     </div>
-                  ))}
+                    )
+                  })}
                 </div>
               </div>
             ))}

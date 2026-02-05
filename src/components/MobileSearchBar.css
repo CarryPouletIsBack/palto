@@ -1,4 +1,9 @@
 /* Mobile Search Bar */
+/* Couleur de fond de la search bar active : modifier uniquement ici */
+:root {
+  --search-bar-active-bg: rgba(255, 255, 255, 0.3);
+}
+
 .mobile-search-bar {
   position: fixed;
   top: 104px; /* Juste en dessous du header (24px padding top + 24px padding bottom + ~56px contenu = ~104px) */
@@ -94,9 +99,9 @@
 /* Bouton de fermeture de projet - même style que le bouton menu */
 .mobile-search-bar .project-close-button {
   flex-shrink: 0;
-  background: rgba(255, 255, 255, 0.1) !important;
+  background: rgba(255, 255, 255, 0.1);
   backdrop-filter: blur(10px);
-  border: 1px solid rgba(216, 216, 216, 0.3) !important;
+  border: 1px solid rgba(216, 216, 216, 0.3);
   position: relative;
   z-index: 3000;
 }
@@ -106,7 +111,7 @@
 }
 
 .mobile-search-bar .project-close-button:hover {
-  background: rgba(255, 255, 255, 0.2) !important;
+  background: rgba(255, 255, 255, 0.2);
 }
 
 .mobile-search-bar .search-bar {
@@ -135,22 +140,72 @@
   isolation: auto;
 }
 
-/* Quand la search bar est active (bouton menu masqué), elle occupe toute la largeur */
+/* Quand la search bar est active : plein écran, alignée à droite */
 .mobile-search-bar.search-active {
+  padding-left: 24px;
+  padding-right: 0;
+  gap: 0;
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  width: 100%;
+  height: 100vh;
+  height: 100dvh;
+  z-index: 10000;
+  display: flex;
+  justify-content: flex-end;
+  align-items: stretch;
+  box-sizing: border-box;
+  pointer-events: auto;
+}
+
+.mobile-search-bar.search-active .mobile-search-bar-content {
+  max-width: var(--hero-card-width, 508px);
+  width: 100%;
+  height: 100%;
+  min-height: 100%;
+  margin-left: auto;
+  margin-right: 0;
+  box-sizing: border-box;
   padding-left: 0;
   padding-right: 0;
   gap: 0;
-  position: relative;
-  z-index: 10000 !important;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
 }
 
-/* Avec résultats : arrondi 24px et overflow pour supprimer tout fond noir à angles droits */
+/* Mobile : mêmes marges left/right que le contenu du main */
+@media (max-width: 768px) {
+  .mobile-search-bar.search-active {
+    padding-left: var(--main-padding-x-mobile, 8px);
+    padding-right: var(--main-padding-x-mobile, 8px);
+    justify-content: stretch;
+  }
+
+  .mobile-search-bar.search-active .mobile-search-bar-content {
+    max-width: 100%;
+    margin-left: 0;
+    margin-right: 0;
+  }
+
+  /* Cible aussi le .search-bar (MagicBento) directement si pas de .mobile-search-bar-content */
+  .mobile-search-bar.search-active > .search-bar,
+  .mobile-search-bar.search-active > .magic-bento {
+    max-width: 100%;
+    width: 100%;
+  }
+}
+
+/* Avec résultats : arrondi 24px + overflow hidden pour supprimer la bande noire en bas */
 .mobile-search-bar.search-active:has(.search-bar.has-results) {
   border-radius: 24px;
   overflow: hidden;
 }
 
-/* Fond search bar active : même couleur sur tous les devices (mobile, tablette, desktop) */
+/* Plus de bande noire derrière la search bar active : fond transparent */
 .mobile-search-bar.search-active::before {
   content: '';
   position: absolute;
@@ -158,37 +213,37 @@
   left: 0;
   right: 0;
   bottom: 0;
-  background: rgba(0, 0, 0, 0.20);
+  background: transparent;
   pointer-events: none;
   z-index: 0;
   border-radius: inherit;
 }
 
-/* Même arrondi et même fond que ci-dessus quand il y a des résultats */
+/* Même arrondi quand il y a des résultats, sans fond sombre */
 .mobile-search-bar.search-active:has(.search-bar.has-results)::before {
-  background: rgba(0, 0, 0, 0.20);
+  background: transparent;
   border-radius: 24px;
 }
 
 .mobile-search-bar.search-active .search-bar {
-  width: 100% !important;
-  min-width: 100% !important;
-  max-width: 100% !important;
-  flex: 1 1 100% !important;
-  flex-basis: 100% !important;
-  flex-grow: 1 !important;
-  flex-shrink: 0 !important;
-  margin-left: 0 !important;
-  margin-right: 0 !important;
-  margin-top: 0 !important;
-  margin-bottom: 0 !important;
+  width: 100%;
+  min-width: 100%;
+  max-width: 100%;
+  flex: 1 1 100%;
+  flex-basis: 100%;
+  flex-grow: 1;
+  flex-shrink: 0;
+  margin: 0;
   transform: scale(1);
-  isolation: auto !important;
-  backdrop-filter: blur(40px) saturate(2) brightness(1.2) !important;
-  -webkit-backdrop-filter: blur(40px) saturate(2) brightness(1.2) !important;
-  background: rgba(255, 255, 255, 0.3) !important;
+  isolation: auto;
+  backdrop-filter: blur(60px) saturate(2) brightness(1.2);
+  -webkit-backdrop-filter: blur(60px) saturate(2) brightness(1.2);
+  background: var(--search-bar-active-bg);
   position: relative;
   z-index: 2;
+  min-height: 0;
+  height: 100%;
+  max-height: none;
 }
 
 /* Quand les résultats sont affichés */
@@ -214,29 +269,31 @@
   transform-origin: left center;
 }
 
-/* SURCHARGER COMPLÈTEMENT quand search-active ET has-results - PRIORITÉ ABSOLUE */
+/* Quand search-active ET has-results : plein écran */
 .mobile-search-bar.search-active .search-bar.has-results {
-  width: 100% !important;
-  min-width: 100% !important;
-  max-width: 100% !important;
-  flex: 1 1 100% !important;
-  flex-basis: 100% !important;
-  flex-grow: 1 !important;
-  flex-shrink: 0 !important;
-  margin-left: 0 !important;
-  margin-right: 0 !important;
-  margin-top: 0 !important;
-  margin-bottom: 0 !important;
-  padding-left: 16px !important;
-  padding-right: 16px !important;
-  isolation: auto !important;
-  backdrop-filter: blur(40px) saturate(2) brightness(1.2) !important;
-  -webkit-backdrop-filter: blur(40px) saturate(2) brightness(1.2) !important;
-  background: rgba(255, 255, 255, 0.3) !important;
-  box-sizing: border-box !important;
-  border-radius: 24px !important;
-  position: relative !important;
-  z-index: 2 !important;
+  width: 100%;
+  min-width: 100%;
+  max-width: 100%;
+  flex: 1 1 auto;
+  flex-basis: 100%;
+  flex-grow: 1;
+  flex-shrink: 1;
+  margin: 0;
+  padding-left: 16px;
+  padding-right: 16px;
+  isolation: auto;
+  backdrop-filter: blur(60px) saturate(2) brightness(1.2);
+  -webkit-backdrop-filter: blur(60px) saturate(2) brightness(1.2);
+  background: var(--search-bar-active-bg);
+  box-sizing: border-box;
+  border-radius: 24px;
+  position: relative;
+  z-index: 2;
+  border: none;
+  box-shadow: none;
+  min-height: 0;
+  height: 100%;
+  max-height: none;
 }
 
 
@@ -288,38 +345,38 @@
 
 /* Bouton Accueil - même taille que la search bar */
 .mobile-search-bar .home-button {
-  width: 57px !important;
-  height: 57px !important;
-  padding-top: 16px !important;
-  padding-bottom: 16px !important;
-  padding-left: 16px !important;
-  padding-right: 16px !important;
-  margin-top: 0px !important;
-  margin-bottom: 0px !important;
-  border-radius: 100px !important;
-  display: none !important;
-  align-items: center !important;
-  justify-content: center !important;
-  box-sizing: border-box !important;
+  width: 57px;
+  height: 57px;
+  padding-top: 16px;
+  padding-bottom: 16px;
+  padding-left: 16px;
+  padding-right: 16px;
+  margin-top: 0px;
+  margin-bottom: 0px;
+  border-radius: 100px;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
   transition: opacity 0.3s ease, visibility 0.3s ease;
 }
 
 /* Masquer le bouton menu quand la search bar est active */
 .mobile-search-bar.search-active .home-button {
-  display: none !important;
+  display: none;
 }
 
 .mobile-search-bar .home-button svg {
-  fill: rgba(171, 171, 172, 1) !important;
-  color: rgba(171, 171, 172, 1) !important;
+  fill: rgba(171, 171, 172, 1);
+  color: rgba(171, 171, 172, 1);
 }
 
 .mobile-search-bar .search-bar:focus-within {
   background: rgba(255, 255, 255, 0.15);
   border: 1px solid rgba(255, 255, 255, 0.3);
   box-shadow: none;
-  backdrop-filter: blur(40px) saturate(2) brightness(1.2) !important;
-  -webkit-backdrop-filter: blur(40px) saturate(2) brightness(1.2) !important;
+  backdrop-filter: blur(60px) saturate(2) brightness(1.2);
+  -webkit-backdrop-filter: blur(60px) saturate(2) brightness(1.2);
 }
 
 .mobile-search-bar .search-bar:focus-within input {
@@ -375,14 +432,16 @@
   box-shadow: none;
 }
 
-/* S'assurer que le blur s'applique quand la search bar est active */
+/* Blur et fond quand la search bar est active + même border que l'input row (focus-within) */
 .mobile-search-bar.search-active .search-bar,
 .mobile-search-bar.search-active .search-bar:focus-within,
 .mobile-search-bar.search-active .search-bar.has-results {
-  isolation: auto !important;
-  backdrop-filter: blur(40px) saturate(2) brightness(1.2) !important;
-  -webkit-backdrop-filter: blur(40px) saturate(2) brightness(1.2) !important;
-  background: rgba(255, 255, 255, 0.3) !important;
+  isolation: auto;
+  backdrop-filter: blur(60px) saturate(2) brightness(1.2);
+  -webkit-backdrop-filter: blur(60px) saturate(2) brightness(1.2);
+  background: rgba(36, 26, 26, 0.57);
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  box-shadow: none;
 }
 
 .mobile-search-bar .search-bar.has-results .search-input-row > svg {
@@ -419,18 +478,18 @@
   min-width: 0;
   padding: 0;
   line-height: 20px;
-  box-shadow: none !important;
+  box-shadow: none;
   margin: 0;
   vertical-align: middle;
   height: 20px;
 }
 
 .mobile-search-bar .search-bar.has-results .search-input {
-  box-shadow: none !important;
+  box-shadow: none;
 }
 
 .mobile-search-bar .search-bar .search-input {
-  box-shadow: none !important;
+  box-shadow: none;
 }
 
 .mobile-search-bar .input-wrapper {
@@ -487,6 +546,8 @@
 .mobile-search-bar.search-active .search-bar.has-results .search-results,
 .mobile-search-bar .search-bar.has-results .search-results {
   border-radius: 0 0 24px 24px;
+  border: none;
+  box-shadow: none;
 }
 
 /* Masquer les scrollbars sur mobile uniquement */
@@ -587,6 +648,16 @@
   background: rgba(255, 255, 255, 0.1);
 }
 
+.mobile-search-bar .search-result-item-disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+.mobile-search-bar .search-result-item-disabled:hover {
+  background: transparent;
+}
+
 .mobile-search-bar .search-result-image {
   width: 100%;
   aspect-ratio: 1;
@@ -599,10 +670,10 @@
 }
 
 .mobile-search-bar .search-result-image img {
-  width: 100% !important;
-  height: 100% !important;
-  object-fit: cover !important;
-  object-position: center !important;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center;
   display: block;
   min-height: 0;
 }
@@ -647,18 +718,18 @@
 
 .mobile-search-bar .back-left-button,
 .mobile-action-buttons .back-left-button {
-  width: 56px !important;
-  height: 56px !important;
-  padding: 0 !important;
-  border-radius: 100px !important;
-  display: flex !important;
-  align-items: center !important;
-  justify-content: center !important;
-  flex-shrink: 0 !important;
-  color: rgba(171, 171, 172, 1) !important;
-  margin-top: 0px !important;
-  margin-bottom: 0px !important;
-  box-sizing: border-box !important;
+  width: 56px;
+  height: 56px;
+  padding: 0;
+  border-radius: 100px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  color: rgba(171, 171, 172, 1);
+  margin-top: 0px;
+  margin-bottom: 0px;
+  box-sizing: border-box;
   position: relative;
   overflow: hidden;
   transition: opacity 0.26s ease-out;
@@ -676,87 +747,87 @@
 
 .mobile-search-bar .back-left-button:hover,
 .mobile-action-buttons .back-left-button:hover {
-  background: rgba(255, 255, 255, 0.3) !important;
-  backdrop-filter: blur(14px) saturate(2) brightness(1.15) !important;
-  -webkit-backdrop-filter: blur(14px) saturate(2) brightness(1.15) !important;
-  border: 1px solid rgba(255, 255, 255, 0.4) !important;
+  background: rgba(255, 255, 255, 0.3);
+  backdrop-filter: blur(14px) saturate(2) brightness(1.15);
+  -webkit-backdrop-filter: blur(14px) saturate(2) brightness(1.15);
+  border: 1px solid rgba(255, 255, 255, 0.4);
   box-shadow:
     0 8px 32px 0 rgba(31, 38, 135, 0.3),
     0 2px 16px 0 rgba(31, 38, 135, 0.15),
     inset 0 1px 0 0 rgba(255, 255, 255, 0.5),
-    inset 0 -1px 0 0 rgba(255, 255, 255, 0.3) !important;
+    inset 0 -1px 0 0 rgba(255, 255, 255, 0.3);
 }
 
 .mobile-search-bar .back-left-button svg,
 .mobile-action-buttons .back-left-button svg {
-  stroke: rgba(171, 171, 172, 1) !important;
-  fill: rgba(171, 171, 172, 1) !important;
-  color: rgba(171, 171, 172, 1) !important;
-  position: absolute !important;
-  top: 50% !important;
-  left: 50% !important;
+  stroke: rgba(171, 171, 172, 1);
+  fill: rgba(171, 171, 172, 1);
+  color: rgba(171, 171, 172, 1);
+  position: absolute;
+  top: 50%;
+  left: 50%;
   transform: translate(-50%, -50%);
-  z-index: 1 !important;
+  z-index: 1;
   pointer-events: none;
 }
 
 .mobile-search-bar .back-left-button .back-left-icon,
 .mobile-action-buttons .back-left-button .back-left-icon {
-  transform: translate(-50%, -50%) scaleX(-1) !important;
+  transform: translate(-50%, -50%) scaleX(-1);
 }
 
 .mobile-search-bar .back-left-button .preview-image,
 .mobile-action-buttons .back-left-button .preview-image {
-  position: absolute !important;
-  top: 0 !important;
-  right: 0 !important;
-  bottom: 0 !important;
-  left: 0 !important;
-  width: 100% !important;
-  height: 100% !important;
-  min-width: 100% !important;
-  min-height: 100% !important;
-  object-fit: cover !important;
-  object-position: center center !important;
-  border-radius: 50% !important;
-  z-index: 5 !important;
-  margin: 0 !important;
-  padding: 0 !important;
-  display: block !important;
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  min-width: 100%;
+  min-height: 100%;
+  object-fit: cover;
+  object-position: center center;
+  border-radius: 50%;
+  z-index: 5;
+  margin: 0;
+  padding: 0;
+  display: block;
 }
 
 .mobile-search-bar .back-left-button .preview-image-visible,
 .mobile-action-buttons .back-left-button .preview-image-visible {
-  opacity: 1 !important;
-  transition: opacity 0.4s ease-in-out !important;
-  z-index: 10 !important;
+  opacity: 1;
+  transition: opacity 0.4s ease-in-out;
+  z-index: 10;
 }
 
 .mobile-search-bar .back-left-button .preview-image-hidden,
 .mobile-action-buttons .back-left-button .preview-image-hidden {
-  opacity: 0 !important;
-  transition: opacity 0.4s ease-in-out !important;
+  opacity: 0;
+  transition: opacity 0.4s ease-in-out;
   pointer-events: none;
-  z-index: 1 !important;
+  z-index: 1;
 }
 
 .mobile-search-bar .back-left-button svg.preview-icon,
 .mobile-action-buttons .back-left-button svg.preview-icon {
-  transition: opacity 0.4s ease-in-out !important;
-  z-index: 2 !important;
+  transition: opacity 0.4s ease-in-out;
+  z-index: 2;
 }
 
 .mobile-search-bar .back-left-button .preview-icon-visible,
 .mobile-action-buttons .back-left-button .preview-icon-visible {
-  opacity: 1 !important;
-  z-index: 2 !important;
+  opacity: 1;
+  z-index: 2;
 }
 
 .mobile-search-bar .back-left-button .preview-icon-hidden,
 .mobile-action-buttons .back-left-button .preview-icon-hidden {
-  opacity: 0 !important;
+  opacity: 0;
   pointer-events: none;
-  z-index: 1 !important;
+  z-index: 1;
 }
 
 .mobile-search-bar .slider-button,
@@ -806,15 +877,15 @@
 
 .mobile-search-bar .slider-button:hover,
 .mobile-action-buttons .slider-button:hover {
-  background: rgba(255, 255, 255, 0.3) !important;
-  backdrop-filter: blur(14px) saturate(2) brightness(1.15) !important;
-  -webkit-backdrop-filter: blur(14px) saturate(2) brightness(1.15) !important;
-  border: 1px solid rgba(255, 255, 255, 0.4) !important;
+  background: rgba(255, 255, 255, 0.3);
+  backdrop-filter: blur(14px) saturate(2) brightness(1.15);
+  -webkit-backdrop-filter: blur(14px) saturate(2) brightness(1.15);
+  border: 1px solid rgba(255, 255, 255, 0.4);
   box-shadow:
     0 8px 32px 0 rgba(31, 38, 135, 0.3),
     0 2px 16px 0 rgba(31, 38, 135, 0.15),
     inset 0 1px 0 0 rgba(255, 255, 255, 0.5),
-    inset 0 -1px 0 0 rgba(255, 255, 255, 0.3) !important;
+    inset 0 -1px 0 0 rgba(255, 255, 255, 0.3);
 }
 
 .mobile-search-bar .slider-button-circle,
@@ -939,10 +1010,10 @@
   /* La search bar active garde toute la largeur même sur les écrans non mobiles */
   .mobile-search-bar.search-active .search-bar,
   .mobile-search-bar.search-active .search-bar.has-results {
-    width: 100% !important;
-    min-width: 100% !important;
-    max-width: 100% !important;
-    flex: 1 1 100% !important;
-    flex-shrink: 0 !important;
+    width: 100%;
+    min-width: 100%;
+    max-width: 100%;
+    flex: 1 1 100%;
+    flex-shrink: 0;
   }
 }

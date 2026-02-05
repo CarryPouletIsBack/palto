@@ -105,7 +105,7 @@
 }
 
 .card-content {
-  font-family: 'SF Pro', sans-serif;
+  font-family: 'Inter', sans-serif;
   font-weight: 400;
   font-size: 18px;
   line-height: 28px;
@@ -256,7 +256,7 @@
 }
 
 .experience-description {
-  font-family: 'SF Pro', sans-serif;
+  font-family: 'Inter', sans-serif;
   font-weight: 400;
   font-size: 18px;
   line-height: 28px;
@@ -300,7 +300,7 @@
   padding: 8px 0;
   position: relative;
   width: 100%;
-  font-family: 'SF Pro', sans-serif;
+  font-family: 'Inter', sans-serif;
   font-weight: 510;
   font-size: 16px;
   line-height: 0;
@@ -570,7 +570,7 @@
 }
 
 .about-intro-title {
-  font-family: 'SF Pro', sans-serif;
+  font-family: 'Inter', sans-serif;
   font-size: 36px;
   font-weight: 700;
   color: white;
@@ -579,7 +579,7 @@
 }
 
 .about-intro-description {
-  font-family: 'SF Pro', sans-serif;
+  font-family: 'Inter', sans-serif;
   font-size: 18px;
   font-weight: 400;
   color: white;

@@ -102,7 +102,7 @@
 }
 
 .tarot-handle {
-  font-family: 'SF Pro', sans-serif;
+  font-family: 'Inter', sans-serif;
   font-size: 10px;
   font-weight: 500;
   color: rgba(255, 255, 255, 0.8);
@@ -110,7 +110,7 @@
 }
 
 .tarot-status {
-  font-family: 'SF Pro', sans-serif;
+  font-family: 'Inter', sans-serif;
   font-size: 9px;
   font-weight: 400;
   color: rgba(255, 255, 255, 0.6);
@@ -122,7 +122,7 @@
   border: 1px solid rgba(255, 255, 255, 0.3);
   border-radius: 20px;
   padding: 6px 16px;
-  font-family: 'SF Pro', sans-serif;
+  font-family: 'Inter', sans-serif;
   font-size: 11px;
   font-weight: 500;
   color: white;
@@ -143,7 +143,7 @@
 }
 
 .tarot-details h3 {
-  font-family: 'SF Pro', sans-serif;
+  font-family: 'Inter', sans-serif;
   font-size: 18px;
   font-weight: 600;
   color: white;
@@ -153,7 +153,7 @@
 }
 
 .tarot-details p {
-  font-family: 'SF Pro', sans-serif;
+  font-family: 'Inter', sans-serif;
   font-size: 14px;
   font-weight: 400;
   color: rgba(255, 255, 255, 0.8);

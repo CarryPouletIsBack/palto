@@ -36,7 +36,7 @@ Portfolio personnel créé avec React, TypeScript et Vite, présentant une colle
 - **Modal de projet** avec animation slide-up/down
 
 ### Design & UX
-- **Typographie** : Polices Space Grotesk, Sora, DM Mono, Inter
+- **Typographie** : Space Grotesk (titres), Inter (corps de texte), Sora, DM Mono, JetBrains Mono
 - **Couleurs** : Thème sombre avec accents orange
 - **Animations** : Transitions fluides et effets de hover
 - **Responsive** : Adaptation mobile avec aspect ratio optimisé
@@ -631,8 +631,8 @@ src/
 - Fond accueil : `#509ED8` (bleu ciel)
 
 ### Typographie
-- Titres : `Space Grotesk` (variable locale depuis `public/fonts/`)
-- Corps : `Inter`
+- Titres : `Space Grotesk` (depuis `public/fonts/`)
+- Corps : `Inter` (police principale, remplace SF Pro sur tout le projet)
 - Monospace : `JetBrains Mono`, `DM Mono`
 - Projets : `Sora`
 
@@ -1135,5 +1135,11 @@ Variables d'environnement non configurées dans Vercel.
 - **API** : react-ga4, @vercel/node
 
 Voir [WORKFLOW.md](./WORKFLOW.md) pour la documentation complète du workflow (Figma, Cursor, Git, GitHub, Vercel, MCP).
+
+### Page Description & Typographie (Février 2025)
+- **Design system Single Project** appliqué à la section Description (À propos) : cartes, stats, expériences, formations alignés sur les couleurs et espacements de la page projet
+- **Tableau Formations** : style du tableau « L’équipe projet » (Single Project) — en-tête #EAEAE6, lignes JetBrains Mono, bordure #b2aaaa ; **scroll horizontal** sur mobile (min-width 480px)
+- **Textes sur fond noir** : titres « À propos de moi », paragraphes d’intro et « Formations » en blanc dans la section Description
+- **Typographie** : remplacement de **SF Pro** par **Inter** dans tout le projet (AboutNew, About, SingleProject, TarotCard, ProjectStats, ProjectCharts)
 
 *Dernière mise à jour : Février 2025*
