@@ -13,6 +13,22 @@
   width: 100%;
 }
 
+/* Conteneur pour le portal de l'overlay search bar : plein écran y compris safe area (encoche, home indicator) */
+.search-overlay-root {
+  position: fixed;
+  top: calc(-1 * env(safe-area-inset-top, 0px));
+  left: calc(-1 * env(safe-area-inset-left, 0px));
+  right: calc(-1 * env(safe-area-inset-right, 0px));
+  bottom: calc(-1 * env(safe-area-inset-bottom, 0px));
+  z-index: 50;
+  pointer-events: none;
+}
+.search-overlay-root > * {
+  position: absolute;
+  inset: 0;
+  pointer-events: auto;
+}
+
 /* Fond pour le menu - géré par body.menu-active et GridPattern */
 .container.menu-active {
   background: transparent;

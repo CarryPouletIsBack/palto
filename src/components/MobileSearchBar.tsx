@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
+import { createPortal } from 'react-dom'
 import { motion } from 'framer-motion'
 import Button from './Button'
 import MagicBento from './MagicBento'
@@ -20,7 +21,7 @@ interface MobileSearchBarProps {
 const MobileSearchBar = ({ onSearchChange, onMenuClick, onSearchClick, onPageChange, currentPage, onProjectClose, onContactClick, projectSwipeY = 0 }: MobileSearchBarProps) => {
   const [searchTerm, setSearchTerm] = useState('')
   const [placeholderIndex, setPlaceholderIndex] = useState(0)
-  const [isPlaceholderVisible, setIsPlaceholderVisible] = useState(true)
+  const [placeholderOpacity, setPlaceholderOpacity] = useState(1)
   const [menuCategories, setMenuCategories] = useState<MenuCategory[]>([])
   const [allProjects, setAllProjects] = useState<MenuItem[]>([])
 
@@ -210,19 +211,21 @@ const MobileSearchBar = ({ onSearchChange, onMenuClick, onSearchClick, onPageCha
   }, [currentPage, allProjects])
 
 
+  // Placeholder : une seule div, fondu sortant → changement de texte (opacité 0) → fondu entrant. Pas de crossfade = pas de clignotement.
+  const PLACEHOLDER_FADE_MS = 450
   useEffect(() => {
+    let timeoutId: ReturnType<typeof setTimeout>
     const interval = setInterval(() => {
-      // Faire disparaître le placeholder
-      setIsPlaceholderVisible(false)
-      
-      // Après la transition, changer le texte et le faire réapparaître
-      setTimeout(() => {
+      setPlaceholderOpacity(0)
+      timeoutId = setTimeout(() => {
         setPlaceholderIndex((prev) => (prev + 1) % placeholders.length)
-        setIsPlaceholderVisible(true)
-      }, 400) // La moitié de la durée de transition
-    }, 3000) // Change toutes les 3 secondes
-
-    return () => clearInterval(interval)
+        setPlaceholderOpacity(1)
+      }, PLACEHOLDER_FADE_MS)
+    }, 3000)
+    return () => {
+      clearInterval(interval)
+      clearTimeout(timeoutId!)
+    }
   }, [])
 
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -439,6 +442,26 @@ const MobileSearchBar = ({ onSearchChange, onMenuClick, onSearchClick, onPageCha
   // Calculer la hauteur max pour mobile avec gestion dynamique du viewport
   const [maxHeight, setMaxHeight] = useState<string>('')
   const searchBarRef = useRef<HTMLDivElement>(null)
+  const searchBarContainerRef = useRef<HTMLDivElement>(null)
+
+  // Fermer la search bar au clic en dehors quand elle est active
+  useEffect(() => {
+    if (!isSearchActive) return
+
+    const handleClickOutside = (e: MouseEvent | TouchEvent) => {
+      const target = e.target as Node
+      if (searchBarContainerRef.current && !searchBarContainerRef.current.contains(target)) {
+        handleCloseSearch()
+      }
+    }
+
+    document.addEventListener('mousedown', handleClickOutside)
+    document.addEventListener('touchstart', handleClickOutside, { passive: true })
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside)
+      document.removeEventListener('touchstart', handleClickOutside)
+    }
+  }, [isSearchActive])
 
   useEffect(() => {
     const updateMaxHeight = () => {
@@ -467,13 +490,21 @@ const MobileSearchBar = ({ onSearchChange, onMenuClick, onSearchClick, onPageCha
 
   return (
     <>
-      {/* Overlay pour assombrir l'arrière-plan quand la search bar est active - DÉSACTIVÉ */}
-      {false && isSearchActive && (
-        <div className={`mobile-search-bar-overlay active`} />
-      )}
-      {/* Temporairement masqué sur les pages de projet */}
-      {isOnProjectPage ? null : (
-      <div className={`${isOnProjectPage ? 'mobile-action-buttons' : 'mobile-search-bar'} ${isSearchActive ? 'search-active' : ''} ${isOnProjectPage ? 'on-project-page' : ''}`}>
+      {/* Overlay flouté quand la search bar est active (portal vers #search-overlay-root) */}
+      {isSearchActive && typeof document !== 'undefined' &&
+        (() => {
+          const root = document.getElementById('search-overlay-root')
+          return root ? createPortal(
+            <div className="mobile-search-bar-overlay active" aria-hidden="true" />,
+            root
+          ) : null
+        })()
+      }
+      {!isOnProjectPage && (
+      <div
+        ref={searchBarContainerRef}
+        className={`${isOnProjectPage ? 'mobile-action-buttons' : 'mobile-search-bar'} ${isSearchActive ? 'search-active' : ''} ${isOnProjectPage ? 'on-project-page' : ''}`}
+      >
       {/* Boutons pour single project */}
       {isOnProjectPage && onProjectClose && showButtons && (
         <motion.div
@@ -509,7 +540,7 @@ const MobileSearchBar = ({ onSearchChange, onMenuClick, onSearchClick, onPageCha
             </svg>
           </Button>
           
-          {/* Bouton slider - Temporairement masqué */}
+          {/* Bouton slider désactivé (réactivable en remplaçant false par true) */}
           {false && (
           <div 
             ref={sliderRef}
@@ -580,9 +611,14 @@ const MobileSearchBar = ({ onSearchChange, onMenuClick, onSearchClick, onPageCha
                 </svg>
                 <div className="search-input-container">
                   {!searchTerm && (
-                    <div 
-                      className={`search-placeholder ${isPlaceholderVisible ? 'visible' : 'hidden'}`}
+                    <div
+                      className="search-placeholder search-placeholder-single"
                       onClick={handleSearchClick}
+                      style={{
+                        opacity: placeholderOpacity,
+                        transition: `opacity ${PLACEHOLDER_FADE_MS}ms ease-in-out`,
+                        pointerEvents: placeholderOpacity > 0 ? 'auto' : 'none',
+                      }}
                     >
                       {placeholders[placeholderIndex]}
                     </div>

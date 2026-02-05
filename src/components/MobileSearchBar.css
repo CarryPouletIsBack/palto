@@ -59,26 +59,27 @@
   padding-bottom: 16px;
 }
 
-/* Overlay pour assombrir l'arrière-plan quand la search bar est active */
+/* Overlay pour assombrir l'arrière-plan quand la search bar est active.
+   Remplit #search-overlay-root qui s'étend déjà dans la safe area (voir App.css). */
 .mobile-search-bar-overlay {
-  position: fixed;
+  position: absolute;
   top: 0;
   left: 0;
   right: 0;
   bottom: 0;
-  background: rgba(0, 0, 0, 0.3);
-  backdrop-filter: blur(2px);
-  -webkit-backdrop-filter: blur(2px);
-  z-index: 3000;
-  pointer-events: none;
+  background: rgba(0, 0, 0, 0.2);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  z-index: 9999;
+  pointer-events: auto;
   opacity: 0;
-  transition: opacity 0.5s ease-in-out;
+  transition: opacity 0.3s ease-out;
 }
 
 .mobile-search-bar-overlay.active {
   opacity: 1;
-  pointer-events: auto; /* Bloque les clics sur le contenu derrière */
-  animation: fadeInOverlay 0.5s ease-in-out;
+  pointer-events: auto;
+  animation: fadeInOverlay 0.3s ease-out;
 }
 
 @keyframes fadeInOverlay {
@@ -143,6 +144,13 @@
   z-index: 10000 !important;
 }
 
+/* Avec résultats : arrondi 24px et overflow pour supprimer tout fond noir à angles droits */
+.mobile-search-bar.search-active:has(.search-bar.has-results) {
+  border-radius: 24px;
+  overflow: hidden;
+}
+
+/* Fond search bar active : même couleur sur tous les devices (mobile, tablette, desktop) */
 .mobile-search-bar.search-active::before {
   content: '';
   position: absolute;
@@ -150,10 +158,16 @@
   left: 0;
   right: 0;
   bottom: 0;
-  background: rgba(0, 0, 0, 0.05);
+  background: rgba(0, 0, 0, 0.20);
   pointer-events: none;
   z-index: 0;
   border-radius: inherit;
+}
+
+/* Même arrondi et même fond que ci-dessus quand il y a des résultats */
+.mobile-search-bar.search-active:has(.search-bar.has-results)::before {
+  background: rgba(0, 0, 0, 0.20);
+  border-radius: 24px;
 }
 
 .mobile-search-bar.search-active .search-bar {
@@ -255,15 +269,17 @@
   z-index: 1;
   white-space: nowrap;
   line-height: 1.5;
-  transition: opacity 0.8s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-.mobile-search-bar .search-placeholder.visible {
-  opacity: 1;
+.mobile-search-bar .search-placeholder.search-placeholder-single {
+  transition: opacity 0.45s ease-in-out;
+  will-change: opacity;
+  transform: translateY(-50%) translateZ(0);
+  backface-visibility: hidden;
 }
 
-.mobile-search-bar .search-placeholder.hidden {
-  opacity: 0;
+.mobile-search-bar .search-input-container:has(.search-placeholder) {
+  position: relative;
 }
 
 .mobile-search-bar .btn {
@@ -417,7 +433,6 @@
   box-shadow: none !important;
 }
 
-/* Input wrapper pour la prédiction mobile */
 .mobile-search-bar .input-wrapper {
   position: relative;
   flex: 1;
@@ -454,71 +469,24 @@
   transform: translateY(-50%) scale(0.95);
 }
 
-/* Prédiction de texte dans l'input mobile */
-.mobile-search-bar .prediction-text {
-  position: absolute;
-  top: 0;
-  left: 0;
-  color: rgba(255, 255, 255, 0.4);
-  font-size: 14px;
-  pointer-events: none;
-  z-index: 1;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  width: 100%;
-  height: 100%;
-  display: flex;
-  align-items: center;
-  line-height: 1;
-}
-
-/* Style spécifique pour le gradient de prédiction mobile */
-.mobile-search-bar .prediction-text .gradient-text.prediction-suggestion {
-  background: linear-gradient(
-    45deg,
-    rgba(255, 255, 255, 0.6),
-    rgba(255, 107, 107, 0.8),
-    rgba(78, 205, 196, 0.8),
-    rgba(69, 183, 209, 0.8),
-    rgba(150, 206, 180, 0.8)
-  );
-  background-size: 300% 300%;
-  background-clip: text;
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  animation: gradientShiftSubtle 4s ease-in-out infinite;
-  display: inline;
-  position: relative;
-}
-
-.mobile-search-bar .prediction-suggestion {
-  font-style: italic;
-  /* L'animation de gradient sera gérée par le composant GradientText */
-}
-
-@keyframes gradientShiftSubtle {
-  0% {
-    background-position: 0% 50%;
-  }
-  50% {
-    background-position: 100% 50%;
-  }
-  100% {
-    background-position: 0% 50%;
-  }
-}
-
-/* Résultats de recherche */
+/* Résultats de recherche : même arrondi que la search-active (24px) en bas pour éviter les angles droits */
 .mobile-search-bar .search-results {
   width: 100%;
   margin-top: 8px;
   overflow-y: auto;
+  overflow-x: hidden;
   flex: 1;
   min-height: 0;
   display: flex;
   flex-direction: column;
   gap: 24px;
+  border-radius: 0 0 24px 24px;
+  background: transparent;
+}
+
+.mobile-search-bar.search-active .search-bar.has-results .search-results,
+.mobile-search-bar .search-bar.has-results .search-results {
+  border-radius: 0 0 24px 24px;
 }
 
 /* Masquer les scrollbars sur mobile uniquement */
