@@ -1,4 +1,5 @@
 import { useMemo, type FC } from 'react';
+import { useLanguage } from '../contexts/LanguageContext';
 import Highcharts from 'highcharts';
 import HighchartsReact from 'highcharts-react-official';
 
@@ -26,6 +27,7 @@ interface PositionnementMatrixChartProps {
 
 /** Style inspiré du demo Highcharts "Sonified function" : axes croisés à 0, grille, rendu épuré */
 const PositionnementMatrixChart: FC<PositionnementMatrixChartProps> = ({ data, className = '' }) => {
+  const { t } = useLanguage();
   const options = useMemo<Highcharts.Options>(() => ({
     chart: {
       type: 'scatter',
@@ -127,10 +129,10 @@ const PositionnementMatrixChart: FC<PositionnementMatrixChartProps> = ({ data, c
       </div>
       <div className="positionnement-matrix-legend">
         <span className="positionnement-matrix-legend-x">
-          Axe horizontal : {data.xAxisLabel}
+          {t('project.axisHorizontal')}: {data.xAxisLabel}
         </span>
         <span className="positionnement-matrix-legend-y">
-          Axe vertical : {data.yAxisLabel}
+          {t('project.axisVertical')}: {data.yAxisLabel}
         </span>
       </div>
     </div>

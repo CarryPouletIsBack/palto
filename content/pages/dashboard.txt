@@ -1,0 +1,3 @@
+Titre: Dashboard - Anthony Merault
+Description: Espace privé (authentification requise) du portfolio. Accès réservé après connexion.
+URL: /fr/dashboard ou /en/dashboard

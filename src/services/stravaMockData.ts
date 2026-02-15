@@ -10,7 +10,7 @@ export const mockAthlete: StravaAthlete = {
   resource_state: 2,
   firstname: 'Anthony',
   lastname: 'Merault',
-  bio: 'Product designer UX/UI & Art director',
+  bio: 'Product Designer | Building Complex SaaS & Design Systems',
   city: 'Paris',
   state: 'Île-de-France',
   country: 'France',

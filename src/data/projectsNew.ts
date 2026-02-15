@@ -161,6 +161,42 @@ export interface ProjectData {
   duration: string;
   type: string;
   team: string[];
+  /** URL du projet (site en ligne) – ouvre dans un nouvel onglet */
+  projectUrl?: string;
+
+  /** Traductions EN (optionnel) */
+  translations?: {
+    en?: {
+      subtitle?: string;
+      summary?: string;
+      team?: string[];
+      objectifs?: string[];
+      teamNote?: string;
+      problematique?: string;
+      solution?: string;
+      year?: string;
+      /** Neutrals palette: role + usage par index */
+      designSystemNeutrals?: Array<{ role: string; usage: string }>;
+      /** Matrice de positionnement */
+      positionnementMatrix?: {
+        xAxisLabel: string;
+        yAxisLabel: string;
+        xMinLabel: string;
+        xMaxLabel: string;
+        yMinLabel: string;
+        yMaxLabel: string;
+        points: Array<{ name: string; description: string; x: number; y: number }>;
+      };
+      /** Processus détaillé */
+      processReunions?: Array<{ label: string; title: string; description: string }>;
+      /** User flow */
+      userFlow?: {
+        title?: string;
+        nodes: Array<{ id: string; name?: string; title?: string }>;
+        links: Array<{ from: string; to: string }>;
+      };
+    };
+  };
 }
 
 export const projectsDataNew: { [key: string]: ProjectData } = {
@@ -320,10 +356,30 @@ export const projectsDataNew: { [key: string]: ProjectData } = {
     duration: '9 mois',
     type: 'Application web',
     team: [
-      'Anthony Merault, Art director / Product designer UX/UI',
+      'Anthony Merault, Product Designer | Building Complex SaaS & Design Systems',
       'Josian (dev back-end)',
       'Bertolde (dev front-end)'
-    ]
+    ],
+    translations: {
+      en: {
+        subtitle: 'Active pedagogy application',
+        summary: 'Playdago is an internal management and piloting tool designed for an active pedagogy professional. The project stems from a clear need: to centralize data currently scattered across multiple platforms (client base, training, orders, newsletter, reminders, events), in order to obtain a reliable overview, reduce mental load and improve activity tracking. The goal was not to replace existing tools (emailing, e-commerce, etc.), but to create a central interface for reading, tracking and reminders, capable of linking all key information around the same client.',
+        team: [
+          'Anthony Merault, Product Designer | Building Complex SaaS & Design Systems',
+          'Josian (Back-end dev)',
+          'Bertolde (Front-end dev)'
+        ],
+        designSystemNeutrals: [
+          { role: 'Main surface', usage: 'Background app' },
+          { role: 'Secondary surface', usage: 'Cards, hover' },
+          { role: 'Elevated surface', usage: 'Modal, card + shadow' },
+          { role: 'Border', usage: 'Separators' },
+          { role: 'Main text', usage: 'Title, text' },
+          { role: 'Secondary text', usage: 'Labels, subtitles' },
+          { role: 'Inverted text', usage: 'Text on colored button' }
+        ]
+      }
+    }
   },
   'Pedaboard': {
     // 1. Titre principal
@@ -526,7 +582,7 @@ export const projectsDataNew: { [key: string]: ProjectData } = {
     // 9. Conclusion
     conclusion: {
       title: 'Conclusion',
-      content: 'Pedaboard a été un projet clé dans mon parcours, à la fois exigeant et formateur. En tant que Product Designer UX/UI et Art director, j\'ai pu aller bien au-delà du design d\'interface classique : j\'ai structuré une expérience produit complète, réfléchi à la cohérence entre les espaces fonctionnels et accompagné l\'équipe tout au long du processus de conception.\n\nCe projet m\'a permis de consolider mes bases en UX design, d\'approfondir ma compréhension des systèmes complexes et de renforcer ma capacité à faire le lien entre besoins utilisateurs, contraintes techniques et vision produit.\n\nMême si certaines parties n\'ont pas pu être testées avec des utilisateurs, Pedaboard reste pour moi une expérience déterminante, celle où j\'ai vraiment pris conscience de mon rôle de designer produit : créer du sens, simplifier la complexité et concevoir des solutions utiles.',
+      content: 'Pedaboard a été un projet clé dans mon parcours, à la fois exigeant et formateur. En tant que Product Designer | Building Complex SaaS & Design Systems, j\'ai pu aller bien au-delà du design d\'interface classique : j\'ai structuré une expérience produit complète, réfléchi à la cohérence entre les espaces fonctionnels et accompagné l\'équipe tout au long du processus de conception.\n\nCe projet m\'a permis de consolider mes bases en UX design, d\'approfondir ma compréhension des systèmes complexes et de renforcer ma capacité à faire le lien entre besoins utilisateurs, contraintes techniques et vision produit.\n\nMême si certaines parties n\'ont pas pu être testées avec des utilisateurs, Pedaboard reste pour moi une expérience déterminante, celle où j\'ai vraiment pris conscience de mon rôle de designer produit : créer du sens, simplifier la complexité et concevoir des solutions utiles.',
       nextSteps: [
         'Ajout d\'un module de facturation intégré',
         'Développement d\'une application mobile companion',
@@ -542,10 +598,192 @@ export const projectsDataNew: { [key: string]: ProjectData } = {
     duration: '9 mois',
     type: 'Application web - CRM',
     team: [
-      'Anthony Merault, Lead Product Designer UX/UI',
+      'Anthony Merault, Product Designer | Building Complex SaaS & Design Systems',
       'Frédéric Isambert, Chef de projet',
       'Nicola Bègue, Intégrateur',
       'Evan Rivière, Intégrateur'
-    ]
+    ],
+    translations: {
+      en: {
+        summary: 'Pedaboard is an internal management and piloting tool designed for an active pedagogy professional. The project stems from a clear need: to centralize data currently scattered across multiple platforms (client base, training, orders, newsletter, reminders, events), in order to obtain a reliable overview, reduce mental load and improve activity tracking. The goal was not to replace existing tools (emailing, e-commerce, etc.), but to create a central interface for reading, tracking and reminders, capable of linking all key information around the same client.',
+        year: 'December 2023',
+        objectifs: [
+          'Improve real-time interaction: Offer a fluid live experience for trainers and learners.',
+          'Maintain engagement: Reproduce in-person game mechanics without the complexity of cognitively heavy tools.',
+          'Tracking: Give trainers the ability to perform in-depth data tracking.'
+        ],
+        teamNote: 'As the sole designer, I had to absorb gamification principles (analysis of Kahoot, physical card games) to transpose them into digital interfaces. I also extended the client\'s visual identity by creating a logo and adjusting the color palette.',
+        problematique: 'Too many platforms to manage the activity, resulting in loss of time and attention.',
+        solution: 'The product must be able to display all useful information from each different platform to optimize time and eliminate the client\'s loss of attention.',
+        positionnementMatrix: {
+          xAxisLabel: 'Effort',
+          yAxisLabel: 'Value',
+          xMinLabel: 'Low',
+          xMaxLabel: 'High',
+          yMinLabel: 'Low',
+          yMaxLabel: 'High',
+          points: [
+            { name: 'Brevo', description: 'client list (company, birth date, contact) etc.', x: -6, y: 6 },
+            { name: 'Formation', description: 'person who signed up for a workshop', x: 6, y: 6 },
+            { name: 'Woocommerce', description: 'product and service sales', x: -6, y: -6 },
+            { name: 'Notion', description: 'task list to complete', x: 6, y: -6 },
+          ],
+        },
+        processReunions: [
+          { label: '1st meeting', title: 'Audit', description: 'Discovery of existing tools, platforms used and daily difficulties. The client explained how her information was scattered and how this complicated client tracking and training management.' },
+          { label: '2nd meeting', title: 'Strategic Scoping', description: 'Co-construction of the specification, prioritizing essential features such as the centralized dashboard, training tracking and automatic notifications.' },
+          { label: '3rd meeting', title: 'Architecture & Flow', description: 'Discussion on pedagogical and organizational constraints, definition of main user journeys and validation of critical workflows.' },
+          { label: '4th meeting', title: 'Validation', description: 'Validation of the first conceptual mockups and collection of detailed feedback on experience and information hierarchy. This phase enabled us to precisely identify functional and UX needs.' }
+        ],
+        userFlow: {
+          title: 'User flow',
+          nodes: [
+            { id: 'login', name: 'Login' },
+            { id: 'dashboard', name: 'Dashboard' },
+            { id: 'compte', name: 'Account' },
+            { id: 'contact', name: 'Contact' },
+            { id: 'page-taches', name: 'Tasks page' },
+            { id: 'formation', name: 'Training' },
+            { id: 'laboratoire', name: 'Laboratory' },
+            { id: 'mot-de-passe-oublie', name: 'Forgot password' },
+            { id: 'fiche-client', name: 'Client sheet' },
+            { id: 'vue-tache', name: 'Task view' },
+            { id: 'details-formation', name: 'Details' },
+            { id: 'details-laboratoire', name: 'Details' },
+          ],
+          links: [
+            { from: 'login', to: 'dashboard' },
+            { from: 'dashboard', to: 'compte' },
+            { from: 'compte', to: 'contact' },
+            { from: 'contact', to: 'page-taches' },
+            { from: 'page-taches', to: 'formation' },
+            { from: 'formation', to: 'laboratoire' },
+            { from: 'login', to: 'mot-de-passe-oublie' },
+            { from: 'contact', to: 'fiche-client' },
+            { from: 'page-taches', to: 'vue-tache' },
+            { from: 'formation', to: 'details-formation' },
+            { from: 'laboratoire', to: 'details-laboratoire' },
+          ],
+        },
+        team: [
+          'Anthony Merault, Product Designer | Building Complex SaaS & Design Systems',
+          'Frédéric Isambert, Project manager',
+          'Nicola Bègue, Integrator',
+          'Evan Rivière, Integrator'
+        ],
+        designSystemNeutrals: [
+          { role: 'Main surface', usage: 'Background app' },
+          { role: 'Secondary surface', usage: 'Cards, hover' },
+          { role: 'Elevated surface', usage: 'Modal, card + shadow' },
+          { role: 'Border', usage: 'Separators' },
+          { role: 'Main text', usage: 'Title, text' },
+          { role: 'Secondary text', usage: 'Labels, subtitles' },
+          { role: 'Inverted text', usage: 'Text on colored button' }
+        ]
+      }
+    }
+  },
+  'Kaldera': {
+    title: 'Kaldera',
+    subtitle: 'Application web de simulation trail',
+    badges: ['Site web', 'UX/UI', '2025', 'Simulation'],
+    summary: 'Kaldera est une application web de simulation trail permettant aux coureurs de visualiser des parcours, préparer leurs entraînements et simuler des courses en conditions réalistes. Le projet vise à offrir une expérience immersive pour planifier et analyser des sorties trail avec des données de relief, dénivelé et météo.',
+    context: {
+      title: 'Contexte & Problématique',
+      content: 'Kaldera répond au besoin des trailers de visualiser et simuler des parcours avant une course ou un entraînement. L\'application intègre des données cartographiques, le dénivelé et des indicateurs de difficulté pour aider les coureurs à mieux préparer leurs sorties. L\'objectif est de créer une interface intuitive et performante pour la simulation trail.'
+    },
+    approach: {
+      title: 'Démarche UX/UI',
+      sections: [
+        { subtitle: 'Recherche utilisateur', content: 'Étude des besoins des trailers et analyse des applications existantes (Strava, AllTrails, etc.) pour identifier les fonctionnalités clés et les opportunités de différenciation.' },
+        { subtitle: 'Prototypage & tests', content: 'Itérations de maquettes sur Figma avec tests utilisateurs pour valider la navigation et l\'affichage des données de simulation.' },
+        { subtitle: 'Design System', content: 'Mise en place d\'un design system cohérent pour garantir une expérience fluide sur l\'ensemble de l\'application web.' }
+      ]
+    },
+    wireframes: {
+      title: 'Maquettes & Prototype',
+      items: [
+        { image: '/images/cover-project-kaldera.png', description: 'Interface principale de Kaldera avec visualisation des parcours trail et données de simulation.' }
+      ]
+    },
+    designSystem: {
+      colorPalette: {
+        title: 'Palette colorimétrique',
+        description: 'Palette inspirée des paysages trail, avec des tons naturels et des accents vifs pour l\'accent sur les données.',
+        categories: {
+          neutrals: {
+            title: 'Neutrals',
+            colors: [
+              { role: 'Surface principale', token: 'surface.primary', color: '#F5F5F5', usage: 'Background app' },
+              { role: 'Surface secondaire', token: 'surface.secondary', color: '#E8E8E8', usage: 'Cartes' },
+              { role: 'Texte principal', token: 'text.primary', color: '#1A1A1A', usage: 'Titres' },
+              { role: 'Texte secondaire', token: 'text.secondary', color: '#666666', usage: 'Labels' }
+            ]
+          },
+          primary: {
+            title: 'Primary',
+            colors: [
+              { role: 'Primaire', token: 'primary.base', color: '#2D5A27', usage: 'Actions principales' },
+              { role: 'Hover', token: 'primary.hover', color: '#234520', usage: 'États hover' }
+            ]
+          },
+          secondary: {
+            title: 'Secondary',
+            colors: [
+              { role: 'Accent', token: 'accent.base', color: '#E07C24', usage: 'Dénivelé, données' }
+            ]
+          },
+          accent: { title: 'Accent', colors: [] },
+          error: {
+            title: 'Error',
+            colors: [
+              { role: 'Erreur', token: 'error.base', color: '#D32F2F', usage: 'Alertes' }
+            ]
+          }
+        }
+      },
+      typography: {
+        title: 'Typographie',
+        description: 'Inter pour l\'interface, hiérarchie claire pour les données de simulation.',
+        items: [
+          { style: 'H1', font: 'Inter', size: '32', lineHeight: '150%' },
+          { style: 'H2', font: 'Inter', size: '24', lineHeight: '150%' },
+          { style: 'p', font: 'Inter', size: '16', lineHeight: '150%' },
+          { style: 'label', font: 'Inter', size: '14', lineHeight: 'Auto' }
+        ]
+      }
+    },
+    implementation: {
+      title: 'Stack technique',
+      technologies: ['React', 'TypeScript', 'Vite', 'MapLibre', 'Tailwind CSS'],
+      architecture: 'Application web responsive avec intégration cartographique et visualisation de données trail.'
+    },
+    results: {
+      title: 'Résultats',
+      metrics: [
+        { label: 'Type', value: 'Application web' },
+        { label: 'Statut', value: 'En développement' }
+      ],
+      feedback: 'Projet de simulation trail en cours de développement.',
+      improvements: 'Intégration de données météo temps réel, comparaison de parcours, mode hors-ligne.'
+    },
+    conclusion: {
+      title: 'Conclusion',
+      content: 'Kaldera vise à devenir un outil de référence pour les trailers souhaitant préparer et simuler leurs parcours.',
+      nextSteps: ['Intégration API cartographique avancée', 'Mode hors-ligne', 'Partage de parcours']
+    },
+    year: '2025',
+    image: '/images/cover-project-kaldera.png',
+    projectUrl: 'https://trackali.com',
+    skills: ['UX/UI', 'Design System', 'React', 'Cartographie', 'Figma'],
+    duration: 'En cours',
+    type: 'Application web',
+    team: ['Anthony Merault, Product Designer | Building Complex SaaS & Design Systems'],
+    translations: {
+      en: {
+        subtitle: 'Trail simulation web app',
+        summary: 'Kaldera is a trail simulation web application that allows runners to visualize routes, prepare their training and simulate races in realistic conditions. The project aims to provide an immersive experience for planning and analyzing trail runs with elevation, terrain and weather data.'
+      }
+    }
   }
 };

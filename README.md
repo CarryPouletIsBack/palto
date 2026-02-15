@@ -5,12 +5,14 @@ Portfolio personnel créé avec React, TypeScript et Vite, présentant une colle
 ## 🚀 Fonctionnalités
 
 ### Navigation & Pages
-- **Navigation complète** entre les pages (Accueil, Menu, À propos, Projets, Dashboard)
+- **URLs avec langue** : préfixe `/fr` ou `/en` pour toutes les pages (ex. `/fr`, `/en/about`, `/fr/kaldera`)
+- **Redirection** : `/` redirige vers `/fr` ou `/en` selon la langue
+- **Navigation** entre Accueil, À propos, Projets, Dashboard
 - **Design responsive** adapté mobile et desktop
 - **Page d'accueil** avec hero section, carousel de projets et cartes d'information
-- **Page menu** avec recherche et filtrage en temps réel par catégories
-- **Page à propos** avec intégration Strava en temps réel (profil, activités, performance, entraînement)
-- **Pages projets individuelles** structurées en sections professionnelles
+- **Page à propos** avec intégration Strava (profil, activités, performance, entraînement)
+- **Pages projets** (Playdago, Pedaboard, Kaldera) en sections professionnelles ; **Kaldera** : lien « Voir le projet » vers [trackali.com](https://trackali.com) (nouvel onglet)
+- **Page 404** : message, liens vers les 3 projets, réseaux sociaux, bouton « Retour à l'accueil »
 - **Dashboard** avec gestion de projets et statistiques Google Analytics
 - **Page de connexion** pour accéder au dashboard
 
@@ -50,7 +52,7 @@ Portfolio personnel créé avec React, TypeScript et Vite, présentant une colle
 - **Framer Motion** pour les animations
 - **CSS personnalisé** pour le styling des composants
 - **GSAP** pour les animations avancées
-- **React Router DOM** pour la navigation
+- **Navigation SPA** avec `history.pushState` / `popstate` (pas de React Router)
 - **Swiper.js** pour les carousels
 - **Highcharts** pour les graphiques avancés (DonutChartRace, StravaSonifiedChart, StravaSplineChart, StravaRadialBarChart)
 - **Shadcn/ui** pour les composants UI (file-tree, scroll-area, button)
@@ -66,12 +68,18 @@ Portfolio personnel créé avec React, TypeScript et Vite, présentant une colle
 
 ## 📱 Pages
 
-1. **Accueil** (`/`) - Page principale avec hero section, titre fixe en bas, carousel de projets et cartes d'information
-2. **Menu** (`/menu`) - Liste de tous les projets avec recherche et filtrage par catégories
-3. **À propos** (`/about`) - Parcours professionnel, compétences, expériences et formations
-4. **Projet** (`/project/:id`) - Page détaillée d'un projet avec 9 sections structurées
-5. **Dashboard** (`/dashboard`) - Interface d'administration avec gestion de projets et statistiques
-6. **Login** (`/login`) - Page de connexion pour accéder au dashboard
+Les URLs incluent le préfixe de langue `/fr` ou `/en`.
+
+| Page        | URL (ex. FR)     | Description |
+|------------|------------------|-------------|
+| Accueil    | `/fr`, `/en`     | Hero, carousel de projets, cartes d'information |
+| À propos   | `/fr/about`, `/en/about` | Parcours, compétences, Strava, formations |
+| Playdago   | `/fr/playdago`, `/en/playdago` | Page projet détaillée |
+| Pedaboard  | `/fr/pedaboard`, `/en/pedaboard` | Page projet détaillée |
+| Kaldera    | `/fr/kaldera`, `/en/kaldera` | Page projet + lien [trackali.com](https://trackali.com) (nouvel onglet) |
+| 404        | toute URL inconnue | Message d'erreur, 3 projets, réseaux, retour accueil |
+| Dashboard  | `/fr/dashboard`, `/en/dashboard` | Interface admin (authentification requise) |
+| Login      | (via dashboard)  | Connexion pour accéder au dashboard |
 
 ## 🎯 Composants Principaux
 
@@ -82,10 +90,10 @@ Portfolio personnel créé avec React, TypeScript et Vite, présentant une colle
 
 ### Composants de Pages
 - `Hero` - Page d'accueil avec projets récents et cartes d'information
-- `Menu` - Grille de projets par catégories avec filtrage
 - `About` - Parcours professionnel et formations
-- `AboutNew` - Page à propos améliorée avec navigation par sections et modèle 3D
-- `SingleProjectNew` - Page projet structurée en sections
+- `AboutNew` - Page à propos avec navigation par sections et modèle 3D
+- `SingleProjectNew` - Page projet structurée en sections (avec lien externe si `projectUrl` défini, ex. Kaldera)
+- `ErrorPage` - Page 404 : message, projets Playdago/Pedaboard/Kaldera, réseaux sociaux, bouton retour accueil
 
 ### Composants UI Réutilisables
 - `Button` - Boutons avec variants (primary/secondary) et mode icon
@@ -105,10 +113,8 @@ Portfolio personnel créé avec React, TypeScript et Vite, présentant une colle
 ## 📊 Architecture du Projet
 
 ### Structure des Données
-Toutes les données sont centralisées dans `/src/data/` :
-- **`menuCategories.ts`** - Catégories et projets du menu (Navigation, Application, Site web, Logo, Motion, PLV)
-- **`aboutData.ts`** - Données de la page À propos (stats, compétences, expériences, formations)
-- **`projectsNew.ts`** - Données détaillées des projets avec structure en sections
+- **`/src/data/`** : `menuCategories.ts`, `aboutData.ts`, `projectsNew.ts` (projets avec sections ; option `projectUrl` pour lien externe, ex. Kaldera → trackali.com)
+- **`/content/pages/`** : Fichiers texte de description par page (`accueil.txt`, `about.txt`, `playdago.txt`, `pedaboard.txt`, `kaldera.txt`, `404.txt`, `dashboard.txt`) pour doc / SEO
 
 ### Structure de Page Projet
 1. **Titre principal** - Avec badges et sous-titre (effet BlurText)
@@ -123,6 +129,12 @@ Toutes les données sont centralisées dans `/src/data/` :
 10. **Résultats & Impact** - Métriques avec Donut Chart Race animés et retours
 
 ## ✨ Fonctionnalités Récentes
+
+### URLs, 404 & Projets (Février 2025)
+- **Langue dans l’URL** : toutes les routes utilisent le préfixe `/fr` ou `/en` ; la racine `/` redirige vers `/fr` ou `/en` ; synchronisation URL ↔ changement de langue.
+- **Page 404** : affichage pour toute URL inconnue ; message traduit, 3 projets (Playdago, Pedaboard, Kaldera), icônes réseaux sociaux, bouton « Retour à l’accueil ».
+- **Lien projet Kaldera** : sur la page projet Kaldera, lien « Voir le projet » vers https://trackali.com (ouverture en nouvel onglet) ; champ optionnel `projectUrl` dans `projectsNew.ts`.
+- **Descriptions par page** : dans `content/pages/`, un fichier `.txt` par page (accueil, about, playdago, pedaboard, kaldera, 404, dashboard) avec titre et description.
 
 ### Page AboutNew
 - **Navigation par sections** : Menu de navigation avec 3 sections (Introduction, Description, Arbre de compétences)
@@ -1142,4 +1154,4 @@ Voir [WORKFLOW.md](./WORKFLOW.md) pour la documentation complète du workflow (F
 - **Textes sur fond noir** : titres « À propos de moi », paragraphes d’intro et « Formations » en blanc dans la section Description
 - **Typographie** : remplacement de **SF Pro** par **Inter** dans tout le projet (AboutNew, About, SingleProject, TarotCard, ProjectStats, ProjectCharts)
 
-*Dernière mise à jour : Février 2025*
+*Dernière mise à jour : Février 2025 — URLs avec langue (/fr, /en), page 404, lien Kaldera (trackali.com), descriptions des pages dans `content/pages/`.*

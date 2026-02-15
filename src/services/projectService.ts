@@ -33,7 +33,7 @@ export const loadProjects = (): { [key: string]: ProjectWithMeta } => {
           ...defaults,
           ...saved,
           id: saved?.id ?? key,
-          coverImage: key === 'Pedaboard' ? '/images/cover-project-pedaboard.png' : key === 'Playdago' ? '/images/cover-project-playdago.png' : saved?.coverImage ?? `/images/${key.toLowerCase()}-cover.png`,
+          coverImage: key === 'Pedaboard' ? '/images/cover-project-pedaboard.png' : key === 'Playdago' ? '/images/cover-project-playdago.png' : key === 'Kaldera' ? '/images/cover-project-kaldera.png' : saved?.coverImage ?? `/images/${key.toLowerCase()}-cover.png`,
           category: saved?.category ?? 'application',
           status: saved?.status ?? 'published',
           lastModified: saved?.lastModified ?? new Date().toISOString(),
@@ -56,7 +56,9 @@ export const loadProjects = (): { [key: string]: ProjectWithMeta } => {
       ? '/images/cover-project-pedaboard.png'
       : key === 'Playdago'
         ? '/images/cover-project-playdago.png'
-        : `/images/${key.toLowerCase()}-cover.png`;
+        : key === 'Kaldera'
+          ? '/images/cover-project-kaldera.png'
+          : `/images/${key.toLowerCase()}-cover.png`;
     projectsWithMeta[key] = {
       ...projectsDataNew[key],
       id: key,

@@ -182,10 +182,64 @@ body.accueil-page .page.active:not(.single-project-page) {
   animation-delay: 140ms;
 }
 
-.footer-card {
-  padding: 12px 16px;
+/* Footer : copyright + liens réseaux (même largeur que hero-card services-card) */
+.hero-footer {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
   gap: 16px;
-  animation-delay: 140ms;
+  padding: 12px 16px;
+  width: var(--hero-card-width, 508px);
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+.hero-footer-copyright {
+  margin: 0;
+  font-family: 'Inter', sans-serif;
+  font-size: 14px;
+  font-weight: 400;
+  color: #ffffff;
+}
+
+.hero-footer-links {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 16px;
+}
+
+.hero-footer-links a {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #ffffff;
+  transition: color 0.2s ease, opacity 0.2s ease;
+}
+
+.hero-footer-links a:hover {
+  color: #ffffff;
+  opacity: 0.8;
+}
+
+.hero-footer-links svg {
+  width: 20px;
+  height: 20px;
+}
+
+@media (max-width: 480px) {
+  .hero-footer {
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+  .hero-footer-copyright {
+    font-size: 13px;
+  }
+  .hero-footer-links svg {
+    width: 18px;
+    height: 18px;
+  }
 }
 
 .project-card {
@@ -201,6 +255,13 @@ body.accueil-page .page.active:not(.single-project-page) {
   gap: 0px;
   animation-delay: 260ms;
   margin-bottom: 12px;
+}
+
+/* Carte désactivée (ex. Mes services) */
+.hero-card-disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  pointer-events: none;
 }
 
 .card-header {
@@ -546,7 +607,8 @@ body.accueil-page .page.active:not(.single-project-page) {
     gap: 16px;
   }
 
-  .hero-card {
+  .hero-card,
+  .hero-footer {
     width: var(--hero-card-width, 100%);
   }
 

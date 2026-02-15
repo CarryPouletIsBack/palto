@@ -927,6 +927,26 @@
   text-align: left;
 }
 
+.project-external-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-family: var(--sp-font-body);
+  font-size: 16px;
+  font-weight: 500;
+  color: var(--sp-badge-text, #f1582a);
+  text-decoration: none;
+  margin-top: 4px;
+  transition: color 0.2s ease, opacity 0.2s ease;
+}
+.project-external-link:hover {
+  color: var(--sp-text);
+  opacity: 0.9;
+}
+.project-external-link svg {
+  flex-shrink: 0;
+}
+
 /* Hero Image */
 .project-hero-image {
   width: 100vw;
@@ -1865,6 +1885,7 @@
   gap: var(--sp-space-lg);
   justify-content: center;
   margin-top: var(--sp-space-md);
+  margin-bottom: 48px; /* Marge en bas pour éviter que les boutons soient collés */
 }
 
 .figma-cta-item {

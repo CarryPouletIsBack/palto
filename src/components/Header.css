@@ -41,7 +41,7 @@
   align-items: center;
 }
 
-/* Wrapper pour MobileSearchBar dans le header */
+/* Wrapper pour MobileSearchBar + LanguageSwitcher dans le header */
 .header-search-wrapper {
   display: flex;
   align-items: center;
@@ -50,6 +50,7 @@
   padding: 0;
   min-width: 0;
   flex-direction: row;
+  gap: 12px;
 }
 
 /* Quand search active : le wrapper remplit la cellule grille à droite du logo */
@@ -57,6 +58,11 @@
   min-height: 0;
   height: 100%;
   align-items: stretch;
+}
+
+/* Language switcher : rester aligné en haut quand search active */
+.header:has(.mobile-search-bar.search-active) .header-search-wrapper .language-switcher {
+  align-self: flex-start;
 }
 
 /* Sur mobile, la search bar prend toute la largeur et est en dessous */
@@ -68,6 +74,11 @@
     order: 2;
     box-sizing: border-box;
     align-items: center;
+    justify-content: center;
+  }
+
+  .header-search-wrapper {
+    flex-wrap: wrap;
     justify-content: center;
   }
 
@@ -288,7 +299,8 @@
   align-items: flex-start;
   gap: 12px;
   margin-left: 0px;
-  flex-shrink: 0;
+  flex-shrink: 1;
+  min-width: 0;
   justify-content: flex-start;
   background: none;
   border: none;
@@ -307,6 +319,7 @@
 
 .logo-section .logo-text {
   text-align: left;
+  min-width: 0;
 }
 
 .logo {
@@ -401,6 +414,10 @@
   margin: 0;
   font-family: 'DM Mono', monospace;
   font-weight: 300;
+  line-height: 1.35;
+  white-space: normal;
+  overflow-wrap: break-word;
+  word-wrap: break-word;
 }
 
 .header-actions {

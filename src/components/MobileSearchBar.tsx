@@ -1,5 +1,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { motion } from 'framer-motion'
+import { useLanguage } from '../contexts/LanguageContext'
+import { trackSearch } from '../services/googleAnalyticsTracking'
 import Button from './Button'
 import MagicBento from './MagicBento'
 import './MobileSearchBar.css'
@@ -7,7 +9,7 @@ import { getProjectByTitle, type MenuItem, type MenuCategory } from '../services
 import { getAllProjects as getAllProjectsFromService } from '../services/projectService'
 import { menuCategories as staticMenuCategories } from '../data/menuCategories'
 
-const ENABLED_PROJECT_TITLES = ['Playdago', 'Pedaboard']
+const ENABLED_PROJECT_TITLES = ['Playdago', 'Pedaboard', 'Kaldera']
 
 interface MobileSearchBarProps {
   onSearchChange?: (searchTerm: string) => void
@@ -21,6 +23,7 @@ interface MobileSearchBarProps {
 }
 
 const MobileSearchBar = ({ onSearchChange, onMenuClick, onSearchClick, onPageChange, currentPage, onProjectClose, onContactClick, projectSwipeY = 0 }: MobileSearchBarProps) => {
+  const { t } = useLanguage()
   const [searchTerm, setSearchTerm] = useState('')
   const [placeholderIndex, setPlaceholderIndex] = useState(0)
   const [placeholderOpacity, setPlaceholderOpacity] = useState(1)
@@ -43,9 +46,9 @@ const MobileSearchBar = ({ onSearchChange, onMenuClick, onSearchClick, onPageCha
   const [showNextImage, setShowNextImage] = useState(false)
   
   const placeholders = [
-    'Recherche le nom d\'un projet',
-    'Recherche par type',
-    'Recherche par année'
+    t('search.placeholder1'),
+    t('search.placeholder2'),
+    t('search.placeholder3'),
   ]
 
   // Fonction pour grouper les résultats par catégorie
@@ -247,6 +250,7 @@ const MobileSearchBar = ({ onSearchChange, onMenuClick, onSearchClick, onPageCha
   }
 
   const handleResultClick = (project: any) => {
+    if (searchTerm.trim()) trackSearch(searchTerm.trim(), getGroupedResults().reduce((acc, g) => acc + g.projects.length, 0))
     setSearchTerm(project.title)
     setShowResults(false)
     if (onSearchChange) {
@@ -430,6 +434,23 @@ const MobileSearchBar = ({ onSearchChange, onMenuClick, onSearchClick, onPageCha
   const [maxHeight, setMaxHeight] = useState<string>('')
   const searchBarRef = useRef<HTMLDivElement>(null)
   const searchBarContainerRef = useRef<HTMLDivElement>(null)
+  const inputRef = useRef<HTMLInputElement>(null)
+  const isMac = typeof navigator !== 'undefined' && (navigator.platform?.includes('Mac') || navigator.userAgent.includes('Mac'))
+
+  // Raccourci clavier Cmd+K (Mac) / Ctrl+K (Windows) pour ouvrir la search bar
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') {
+        if (isOnProjectPage) return
+        e.preventDefault()
+        setShowResults(true)
+        if (onSearchClick) onSearchClick()
+        setTimeout(() => inputRef.current?.focus(), 0)
+      }
+    }
+    document.addEventListener('keydown', handleKeyDown)
+    return () => document.removeEventListener('keydown', handleKeyDown)
+  }, [isOnProjectPage, onSearchClick])
 
   // Fermer la search bar au clic en dehors quand elle est active
   useEffect(() => {
@@ -602,6 +623,7 @@ const MobileSearchBar = ({ onSearchChange, onMenuClick, onSearchClick, onPageCha
                   )}
                   <div className="input-wrapper">
                     <input 
+                      ref={inputRef}
                       type="text" 
                       value={searchTerm}
                       onChange={handleSearchChange}
@@ -622,6 +644,9 @@ const MobileSearchBar = ({ onSearchChange, onMenuClick, onSearchClick, onPageCha
                     )}
                   </div>
                 </div>
+                <kbd className="search-shortcut-hint" aria-hidden>
+                  {isMac ? '⌘' : 'Ctrl'}<span className="search-shortcut-key">K</span>
+                </kbd>
               </div>
               {/* Bouton de fermeture pour la search bar active */}
               {isSearchActive && showCloseButton && (
@@ -646,6 +671,8 @@ const MobileSearchBar = ({ onSearchChange, onMenuClick, onSearchClick, onPageCha
                 <div className="search-results-row">
                   {group.projects.map((project, index) => {
                     const isDisabled = !ENABLED_PROJECT_TITLES.includes(project.title)
+                    const showPlaceholder = isDisabled && project.title !== 'Open challenge'
+                    const imageToShow = showPlaceholder ? null : project.imageSrc
                     return (
                     <div 
                       key={`${group.category.key}-${index}`}
@@ -653,9 +680,9 @@ const MobileSearchBar = ({ onSearchChange, onMenuClick, onSearchClick, onPageCha
                       onClick={() => !isDisabled && handleResultClick(project)}
                     >
                       <div className="search-result-image">
-                        {project.imageSrc ? (
+                        {imageToShow ? (
                           <img 
-                            src={project.imageSrc} 
+                            src={imageToShow} 
                             alt={project.imageAlt}
                             className={project.className}
                           />

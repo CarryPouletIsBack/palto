@@ -1,7 +1,9 @@
 import { useState, useEffect } from 'react'
 import Button from './Button'
 import MobileSearchBar from './MobileSearchBar'
+import LanguageSwitcher from './LanguageSwitcher'
 import Skeleton from './Skeleton'
+import { useLanguage } from '../contexts/LanguageContext'
 import './Header.css'
 import { getStravaAthlete, type StravaAthlete } from '../services/stravaService'
 
@@ -17,6 +19,7 @@ interface HeaderProps {
 }
 
 const Header = ({ onMenuClick, onContactClick, onLogoClick, currentPage, onSearchChange, onPageChange, onProjectClose, projectSwipeY }: HeaderProps) => {
+  const { t } = useLanguage()
   const [stravaAthlete, setStravaAthlete] = useState<StravaAthlete | null>(null)
   const [stravaLoading, setStravaLoading] = useState<boolean>(true)
 
@@ -69,7 +72,7 @@ const Header = ({ onMenuClick, onContactClick, onLogoClick, currentPage, onSearc
               ) : (
                 <p className="logo-name">Anthony Merault</p>
               )}
-              <p>Product designer UX/UI & Art director</p>
+              <p>{t('header.productDesigner')}</p>
             </div>
           </button>
           <div className="header-search-wrapper">
@@ -83,6 +86,7 @@ const Header = ({ onMenuClick, onContactClick, onLogoClick, currentPage, onSearc
               onContactClick={onContactClick}
               projectSwipeY={projectSwipeY}
             />
+            <LanguageSwitcher />
           </div>
           <div className="header-actions" style={{ display: 'none' }}>
             <Button variant="secondary" onClick={onContactClick} className="hidden-contact-btn">Contact</Button>

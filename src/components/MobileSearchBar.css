@@ -178,6 +178,13 @@
 }
 
 /* Mobile : mêmes marges left/right que le contenu du main */
+/* Masquer le raccourci clavier sur mobile */
+@media (max-width: 768px) {
+  .mobile-search-bar .search-shortcut-hint {
+    display: none !important;
+  }
+}
+
 @media (max-width: 768px) {
   .mobile-search-bar.search-active {
     padding-left: var(--main-padding-x-mobile, 8px);
@@ -410,6 +417,25 @@
   display: block;
   vertical-align: middle;
   align-self: center;
+}
+
+/* Raccourci clavier ⌘K / Ctrl+K – masqué sur mobile */
+.mobile-search-bar .search-shortcut-hint {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  flex-shrink: 0;
+  padding: 0;
+  margin: 0;
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.7);
+  background: transparent;
+  border: none;
+}
+.mobile-search-bar .search-shortcut-hint .search-shortcut-key {
+  color: rgba(255, 255, 255, 0.9);
 }
 
 /* Style de champ texte uniquement quand les résultats sont affichés */

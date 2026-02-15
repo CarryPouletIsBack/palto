@@ -1,4 +1,6 @@
 import { useState, useRef, useEffect, useMemo, useCallback, type FC, type MouseEvent, type TouchEvent } from 'react';
+import { useLanguage } from '../contexts/LanguageContext';
+import { trackEvent } from '../services/googleAnalyticsTracking';
 import { motion, useMotionValue } from 'framer-motion';
 import { Swiper, SwiperSlide } from 'swiper/react';
 import { Pagination } from 'swiper/modules';
@@ -10,6 +12,7 @@ import BlurText from './BlurText';
 import DonutChartRace from './DonutChartRace';
 import PositionnementMatrixChart from './PositionnementMatrixChart';
 import UserFlowChart from './UserFlowChart';
+import Button from './Button';
 
 // Constantes en dehors du composant pour éviter les re-créations
 const CLOSE_THRESHOLD = 100;
@@ -64,6 +67,8 @@ interface SingleProjectProps {
 }
 
 const SingleProjectNew: FC<SingleProjectProps> = ({ projectData, onBackClick, coverImage = null, projectCategory = null, onSwipeYChange }) => {
+  const { t, language } = useLanguage();
+  const isEn = language === 'en';
   const [isClosing, setIsClosing] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
   const [scrollTop, setScrollTop] = useState(0);
@@ -318,7 +323,7 @@ const SingleProjectNew: FC<SingleProjectProps> = ({ projectData, onBackClick, co
         {/* Bloc unique Figma : date, titre, badges + Contexte du projet, gap 40px */}
         <div className="project-top-block">
           <div className="project-header-section">
-            {projectData.year && <p className="project-date">{projectData.year}</p>}
+            {projectData.year && <p className="project-date">{isEn && projectData.translations?.en?.year ? projectData.translations.en.year : projectData.year}</p>}
             <h1 className="project-main-title">
               <BlurText text={projectData.title} className="project-main-title" />
             </h1>
@@ -331,24 +336,36 @@ const SingleProjectNew: FC<SingleProjectProps> = ({ projectData, onBackClick, co
                 <span key={index} className="project-badge">{badge}</span>
               ))}
             </div>
-            {projectData.subtitle && <p className="project-subtitle">{projectData.subtitle}</p>}
+            {projectData.subtitle && <p className="project-subtitle">{isEn && projectData.translations?.en?.subtitle ? projectData.translations.en.subtitle : projectData.subtitle}</p>}
+            {projectData.projectUrl && (
+              <a
+                href={projectData.projectUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="project-external-link"
+                onClick={() => trackEvent('click', 'project_external', projectData.title)}
+              >
+                {t('project.viewProject')}
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" /><polyline points="15 3 21 3 21 9" /><line x1="10" y1="14" x2="21" y2="3" /></svg>
+              </a>
+            )}
           </div>
 
           {/* Contexte du projet (même bloc, gap 40px) */}
           {(projectData.objectifs || projectData.teamNote) && (
             <section id="context" className="project-section context-project-section">
               <div className="context-project-wrapper">
-                <h2 className="section-title">Contexte du projet</h2>
+                <h2 className="section-title">{t('project.context')}</h2>
                 <div className="context-project-grid">
                 <div className="context-project-left">
                   <div className="context-intro">
-                    <p>{projectData.summary}</p>
+                    <p>{isEn && projectData.translations?.en?.summary ? projectData.translations.en.summary : projectData.summary}</p>
                   </div>
-                  {projectData.objectifs && projectData.objectifs.length > 0 && (
+                  {(projectData.objectifs?.length ?? 0) > 0 && (
                     <div className="context-objectifs">
-                      <h3 className="context-subtitle">Objectifs</h3>
+                      <h3 className="context-subtitle">{t('project.objectives')}</h3>
                       <div className="context-objectifs-list">
-                        {projectData.objectifs.map((obj, i) => (
+                        {(isEn && projectData.translations?.en?.objectifs ? projectData.translations.en.objectifs : projectData.objectifs!).map((obj, i) => (
                           <p key={i}>{obj}</p>
                         ))}
                       </div>
@@ -356,16 +373,16 @@ const SingleProjectNew: FC<SingleProjectProps> = ({ projectData, onBackClick, co
                   )}
                 </div>
                 <div className="context-project-right">
-                  <h3 className="context-equipe-title">L&apos;équipe projet</h3>
+                  <h3 className="context-equipe-title">{t('project.team')}</h3>
                   <table className="figma-equipe-table">
                     <thead>
                       <tr>
-                        <th>RÔLE</th>
-                        <th>NOM PRÉNOM</th>
+                        <th>{t('project.role')}</th>
+                        <th>{t('project.name')}</th>
                       </tr>
                     </thead>
                     <tbody>
-                      {projectData.team.map((member, index) => {
+                      {(isEn && projectData.translations?.en?.team ? projectData.translations.en.team : projectData.team).map((member, index) => {
                         const parts = member.includes(',') ? member.split(',').map(s => s.trim()) : [member, ''];
                         const name = parts[0] ?? '';
                         const role = parts[1] ?? '';
@@ -379,7 +396,7 @@ const SingleProjectNew: FC<SingleProjectProps> = ({ projectData, onBackClick, co
                     </tbody>
                   </table>
                   {projectData.teamNote && (
-                    <p className="context-team-note">{projectData.teamNote}</p>
+                    <p className="context-team-note">{isEn && projectData.translations?.en?.teamNote ? projectData.translations.en.teamNote : projectData.teamNote}</p>
                   )}
                 </div>
                 </div>
@@ -393,14 +410,14 @@ const SingleProjectNew: FC<SingleProjectProps> = ({ projectData, onBackClick, co
           <div ref={tocRef} className="section-card">
             <nav className="table-of-contents">
               <ul className="toc-list">
-                <li><a href="#introduction" className="toc-link">Résumé / Introduction</a></li>
-                <li><a href="#team" className="toc-link">L'équipe projet</a></li>
+                <li><a href="#introduction" className="toc-link">{t('project.tocSummary')}</a></li>
+                <li><a href="#team" className="toc-link">{t('project.tocTeam')}</a></li>
                 {projectData.approach && (
                   <li><a href="#approach" className="toc-link">{projectData.approach.title}</a></li>
                 )}
-                <li><a href="#case-studie" className="toc-link">Case Studie</a></li>
+                <li><a href="#case-studie" className="toc-link">{t('project.caseStudie')}</a></li>
                 {projectData.wireframes && (
-                  <li><a href="#wireframes" className="toc-link">Idéation & Solutions testées</a></li>
+                  <li><a href="#wireframes" className="toc-link">{t('project.ideation')}</a></li>
                 )}
                 {projectData.designSystem && (
                   <li><a href="#design-system" className="toc-link">{projectData.designSystem.colorPalette.title}</a></li>
@@ -408,8 +425,8 @@ const SingleProjectNew: FC<SingleProjectProps> = ({ projectData, onBackClick, co
                 {projectData.designSystem?.typography && (
                   <li><a href="#typography" className="toc-link">{projectData.designSystem.typography.title}</a></li>
                 )}
-                <li><a href="#implementation" className="toc-link">Implémentation & Technologies</a></li>
-                <li><a href="#results" className="toc-link">Résultats & Impact</a></li>
+                <li><a href="#implementation" className="toc-link">{t('project.implementation')}</a></li>
+                <li><a href="#results" className="toc-link">{t('project.results')}</a></li>
               </ul>
             </nav>
           </div>
@@ -419,7 +436,7 @@ const SingleProjectNew: FC<SingleProjectProps> = ({ projectData, onBackClick, co
         {!projectData.objectifs && !projectData.teamNote && (
         <section id="introduction" className="project-section intro-section">
           <div className="section-card intro-metadata-container">
-            <p className="intro-text">{projectData.summary}</p>
+            <p className="intro-text">{isEn && projectData.translations?.en?.summary ? projectData.translations.en.summary : projectData.summary}</p>
           </div>
         </section>
         )}
@@ -430,18 +447,18 @@ const SingleProjectNew: FC<SingleProjectProps> = ({ projectData, onBackClick, co
             <div className="problematique-solution-grid">
               <div className="problematique-solution-texts">
                 <div className="problematique-block">
-                  <h2 className="section-title">Problématique</h2>
-                  <p className="problematique-text">{projectData.problematique}</p>
+                  <h2 className="section-title">{t('project.problematique')}</h2>
+                  <p className="problematique-text">{isEn && projectData.translations?.en?.problematique ? projectData.translations.en.problematique : projectData.problematique}</p>
                 </div>
                 <div className="solution-block">
-                  <h2 className="section-title">Solution</h2>
-                  <p className="solution-text">{projectData.solution}</p>
+                  <h2 className="section-title">{t('project.solution')}</h2>
+                  <p className="solution-text">{isEn && projectData.translations?.en?.solution ? projectData.translations.en.solution : projectData.solution}</p>
                 </div>
               </div>
               {projectData.positionnementMatrix && (
                 <div className="positionnement-matrix-wrapper">
                   <PositionnementMatrixChart
-                    data={projectData.positionnementMatrix}
+                    data={isEn && projectData.translations?.en?.positionnementMatrix ? projectData.translations.en.positionnementMatrix : projectData.positionnementMatrix}
                     className="positionnement-matrix-chart"
                   />
                 </div>
@@ -454,16 +471,16 @@ const SingleProjectNew: FC<SingleProjectProps> = ({ projectData, onBackClick, co
         {!projectData.teamNote && (
         <section id="team" className="project-section team-section">
           <div className="section-card">
-            <h2 className="section-title">L&apos;équipe projet</h2>
+            <h2 className="section-title">{t('project.team')}</h2>
             <table className="figma-equipe-table">
               <thead>
                 <tr>
-                  <th>RÔLE</th>
-                  <th>NOM PRÉNOM</th>
+                    <th>{t('project.role')}</th>
+                    <th>{t('project.name')}</th>
                 </tr>
               </thead>
               <tbody>
-                {projectData.team.map((member, index) => {
+                {(isEn && projectData.translations?.en?.team ? projectData.translations.en.team : projectData.team).map((member, index) => {
                   const parts = member.includes(',') ? member.split(',').map(s => s.trim()) : [member, ''];
                   const name = parts[0] ?? '';
                   const role = parts[1] ?? '';
@@ -483,8 +500,8 @@ const SingleProjectNew: FC<SingleProjectProps> = ({ projectData, onBackClick, co
         {/* 4. Processus détaillé – 4 cartes (Figma) */}
         {projectData.processReunions && projectData.processReunions.length > 0 && (
           <section id="processus" className="project-section processus-cards-section">
-            <h2 className="section-title">Processus détaillé</h2>
-            <p className="processus-intro">Le projet a débuté par une série de réunions avec la cliente pour comprendre ses besoins et ses contraintes :</p>
+            <h2 className="section-title">{t('project.process')}</h2>
+            <p className="processus-intro">{t('project.processIntro')}</p>
             <div className="processus-cards-wrapper">
               <Swiper
                 modules={[Pagination]}
@@ -507,7 +524,7 @@ const SingleProjectNew: FC<SingleProjectProps> = ({ projectData, onBackClick, co
                   swiper.on('resize', applySlideWidth);
                 }}
               >
-                {projectData.processReunions.map((reunion, index) => (
+                {(isEn && projectData.translations?.en?.processReunions ? projectData.translations.en.processReunions : projectData.processReunions).map((reunion, index) => (
                   <SwiperSlide key={index} style={{ width: 406, minWidth: 406 }}>
                     <div className="processus-card">
                       <div className="processus-card-content">
@@ -520,7 +537,7 @@ const SingleProjectNew: FC<SingleProjectProps> = ({ projectData, onBackClick, co
                 ))}
               </Swiper>
             </div>
-            <p className="processus-summary">Le processus a suivi un cycle constant de recherche → idéation → prototypage → tests → ajustements, avec un dialogue régulier entre la cliente, l&apos;équipe de développement et moi-même. Cette approche a permis de créer une interface efficace, intuitive et parfaitement adaptée aux besoins réels des utilisateurs.</p>
+            <p className="processus-summary">{t('project.processSummary')}</p>
           </section>
         )}
 
@@ -528,10 +545,10 @@ const SingleProjectNew: FC<SingleProjectProps> = ({ projectData, onBackClick, co
 
         {/* Audit */}
         <section id="audit" className="project-section figma-audit-section">
-          <h2 className="section-title">Audit</h2>
+          <h2 className="section-title">{t('project.audit')}</h2>
           <div className="figma-two-cols">
-            <p className="figma-lead">Avant de concevoir les premiers wireframes, j&apos;ai mené une phase de recherche afin de comprendre les usages d&apos;un outil de type CRM et les bonnes pratiques liées aux interfaces de gestion.</p>
-            <p className="figma-body">Cette phase s&apos;est appuyée sur une veille UX/UI autour des dashboards, des systèmes de suivi, des alertes et des interfaces orientées productivité. Elle m&apos;a permis d&apos;identifier des patterns récurrents, notamment sur la hiérarchisation de l&apos;information, l&apos;utilisation des couleurs dans des contextes fonctionnels et la gestion des états (incomplet, en attente, validé).</p>
+            <p className="figma-lead">{t('project.auditLead')}</p>
+            <p className="figma-body">{t('project.auditBody')}</p>
           </div>
           <div className="figma-audit-carousel-wrapper">
             <Swiper
@@ -559,7 +576,7 @@ const SingleProjectNew: FC<SingleProjectProps> = ({ projectData, onBackClick, co
               {AUDIT_CAROUSEL_IMAGES.map((img, index) => (
                 <SwiperSlide key={index}>
                   <div className="figma-audit-slide">
-                    <img src={img.src} alt={img.alt} loading="eager" decoding="async" />
+                    <img src={img.src} alt={t(`project.auditAlt${index + 1}`)} loading="eager" decoding="async" />
                   </div>
                 </SwiperSlide>
               ))}
@@ -569,15 +586,15 @@ const SingleProjectNew: FC<SingleProjectProps> = ({ projectData, onBackClick, co
 
         {/* Architecture & Flux */}
         <section id="architecture" className="project-section figma-architecture-section">
-          <h2 className="section-title">Architecture &amp; Flux</h2>
+          <h2 className="section-title">{t('project.architecture')}</h2>
           <div className="figma-two-cols">
-            <p className="figma-lead">L&apos;entité &quot;Client&quot; est au cœur de notre architecture de base de données. Contrairement à une approche en silos, elle centralise toutes les sous-entités, incluant les Contacts (individus), leurs historiques d&apos;achats via WooCommerce, ainsi que leurs Formations passées ou futures.</p>
-            <p className="figma-body">Cette phase s&apos;est appuyée sur une veille UX/UI autour des dashboards, des systèmes de suivi, des alertes et des interfaces orientées productivité.</p>
+            <p className="figma-lead">{t('project.archLead')}</p>
+            <p className="figma-body">{t('project.archBody')}</p>
           </div>
-          <h3 className="figma-subsection-title">User flow</h3>
+          <h3 className="figma-subsection-title">{t('project.userFlow')}</h3>
           <div className="figma-userflow">
             {projectData.userFlow ? (
-              <UserFlowChart data={projectData.userFlow} className="figma-userflow-chart" />
+              <UserFlowChart data={isEn && projectData.translations?.en?.userFlow ? projectData.translations.en.userFlow : projectData.userFlow} className="figma-userflow-chart" />
             ) : (
               <img src="/single-project/fe88fac0-9c5a-44ad-af6a-151d4da1bfa0.png" alt="User flow" className="figma-userflow-img" />
             )}
@@ -587,26 +604,39 @@ const SingleProjectNew: FC<SingleProjectProps> = ({ projectData, onBackClick, co
         {/* Design system (Figma 100-282 : Palette Pedaboard complète) */}
         {projectData.designSystem && (
           <section id="design-system" className="project-section figma-design-system-section">
-            <h2 className="section-title">Design system</h2>
-            <h3 className="figma-palette-title">Palette &quot;Pedaboard&quot;</h3>
-            <p className="figma-caption">(Material Design)</p>
+            <h2 className="section-title">{t('project.designSystem')}</h2>
+            <h3 className="figma-palette-title">{t('project.palette')}</h3>
+            <p className="figma-caption">{t('project.materialDesign')}</p>
             <div className="figma-palette-table">
               <div className="figma-palette-header">
-                <span>Rôle (Token)</span>
-                <span>Usage / Fonction</span>
-                <span className="figma-palette-header-hex">Valeur Hex</span>
+                <span>{t('project.roleToken')}</span>
+                <span>{t('project.usage')}</span>
+                <span className="figma-palette-header-hex">{t('project.hexValue')}</span>
               </div>
               {(projectData.title === 'Pedaboard'
-                ? [
-                    { role: 'Primary', usage: 'Couleur de marque. Utilisée pour les éléments clés (Boutons principaux, États actifs).', color: '#f07f00' },
-                    { role: 'On Primary', usage: 'Texte & Icônes posés sur la couleur Primary.', color: '#ffffff' },
-                    { role: 'Secondary', usage: 'Marque & Titres. Le "Bleu Canard" identitaire. Utilisé pour les titres, le logo et les éléments interactifs majeurs.', color: '#006d73' },
-                    { role: 'On Secondary', usage: "Lisibilité. Assure la clarté des contenus positionnés sur les éléments d'accentuation (Vert Canard).", color: '#ffffff' },
-                    { role: 'Surface (Main)', usage: "Fond d'Application. Un gris très pâle (« Off-White ») pour structurer l'espace de travail et réduire l'éblouissement.", color: '#f1f3f4' },
-                    { role: 'On Surface', usage: 'Texte Principal. Un Bleu Nuit (et non du noir) qui réduit la fatigue oculaire.', color: '#2b2e48' },
-                    { role: 'On Surface (Subtle)', usage: "Texte Secondaire. Gris moyen pour les métadonnées et labels moins importants, afin de hiérarchiser l'information.", color: '#7d7d7d' },
-                  ]
-                : (projectData.designSystem.colorPalette?.categories?.neutrals?.colors ?? []).slice(0, 7).map((c: { role: string; usage?: string; color: string }) => ({ role: c.role, usage: (c as { usage?: string }).usage ?? '', color: c.color }))
+                ? (isEn
+                    ? [
+                        { role: 'Primary', usage: 'Brand color. Used for key elements (primary buttons, active states).', color: '#f07f00' },
+                        { role: 'On Primary', usage: 'Text & icons on Primary color.', color: '#ffffff' },
+                        { role: 'Secondary', usage: 'Brand & titles. The distinctive "Teal". Used for titles, logo and major interactive elements.', color: '#006d73' },
+                        { role: 'On Secondary', usage: 'Readability. Ensures clarity of content on accent elements (Teal).', color: '#ffffff' },
+                        { role: 'Surface (Main)', usage: 'App background. Very pale grey ("Off-White") to structure the workspace and reduce glare.', color: '#f1f3f4' },
+                        { role: 'On Surface', usage: 'Main text. Navy blue (not black) to reduce eye strain.', color: '#2b2e48' },
+                        { role: 'On Surface (Subtle)', usage: 'Secondary text. Medium grey for metadata and less important labels.', color: '#7d7d7d' },
+                      ]
+                    : [
+                        { role: 'Primary', usage: 'Couleur de marque. Utilisée pour les éléments clés (Boutons principaux, États actifs).', color: '#f07f00' },
+                        { role: 'On Primary', usage: 'Texte & Icônes posés sur la couleur Primary.', color: '#ffffff' },
+                        { role: 'Secondary', usage: 'Marque & Titres. Le "Bleu Canard" identitaire. Utilisé pour les titres, le logo et les éléments interactifs majeurs.', color: '#006d73' },
+                        { role: 'On Secondary', usage: "Lisibilité. Assure la clarté des contenus positionnés sur les éléments d'accentuation (Vert Canard).", color: '#ffffff' },
+                        { role: 'Surface (Main)', usage: "Fond d'Application. Un gris très pâle (« Off-White ») pour structurer l'espace de travail et réduire l'éblouissement.", color: '#f1f3f4' },
+                        { role: 'On Surface', usage: 'Texte Principal. Un Bleu Nuit (et non du noir) qui réduit la fatigue oculaire.', color: '#2b2e48' },
+                        { role: 'On Surface (Subtle)', usage: "Texte Secondaire. Gris moyen pour les métadonnées et labels moins importants, afin de hiérarchiser l'information.", color: '#7d7d7d' },
+                      ])
+                : (projectData.designSystem.colorPalette?.categories?.neutrals?.colors ?? []).slice(0, 7).map((c: { role: string; usage?: string; color: string }, i: number) => {
+                    const en = isEn && projectData.translations?.en?.designSystemNeutrals?.[i];
+                    return { role: en?.role ?? c.role, usage: en?.usage ?? (c as { usage?: string }).usage ?? '', color: c.color };
+                  })
               ).map((c: { role: string; usage: string; color: string }, i: number) => (
                 <div key={i} className="figma-palette-row">
                   <span>{c.role}</span>
@@ -615,16 +645,16 @@ const SingleProjectNew: FC<SingleProjectProps> = ({ projectData, onBackClick, co
                 </div>
               ))}
             </div>
-            <h3 className="figma-typescale-title">Typescale</h3>
-            <p className="figma-caption">Base Value: 16</p>
+            <h3 className="figma-typescale-title">{t('project.typescale')}</h3>
+            <p className="figma-caption">{t('project.baseValue')}</p>
             {projectData.designSystem && (
               <div className="figma-typescale-table">
                 <div className="figma-typescale-header">
-                  <span>Rôle</span>
-                  <span>Typographie</span>
-                  <span>Taille</span>
-                  <span>Interlignage</span>
-                  <span>Exemple</span>
+                  <span>{t('project.roleCol')}</span>
+                  <span>{t('project.typography')}</span>
+                  <span>{t('project.size')}</span>
+                  <span>{t('project.lineHeight')}</span>
+                  <span>{t('project.example')}</span>
                 </div>
                 {(projectData.title === 'Pedaboard'
                   ? [
@@ -665,28 +695,28 @@ const SingleProjectNew: FC<SingleProjectProps> = ({ projectData, onBackClick, co
 
         {/* Conception & Itération (Figma 100-424) */}
         <section id="conception" className="project-section figma-conception-section">
-          <h2 className="section-title">Conception &amp; Itération</h2>
+          <h2 className="section-title">{t('project.conception')}</h2>
           <div className="figma-two-cols">
-            <p className="figma-lead">Avec un délai de conception fixé à deux mois et un budget restreint, j&apos;ai opté pour des solutions techniques simples afin d&apos;assurer la scalabilité dans le temps. Bien que la maquette ait été réalisée en &quot;Desktop First&quot;, le design a été pensé pour une intégration fluide en responsive.</p>
-            <p className="figma-lead">À partir du cadrage, j&apos;ai conçu plusieurs itérations de wireframes jusqu&apos;à obtenir une version optimale en termes de navigation, de lisibilité et de faisabilité technique.</p>
+            <p className="figma-lead">{t('project.conceptionLead1')}</p>
+            <p className="figma-lead">{t('project.conceptionLead2')}</p>
           </div>
           <div className="figma-conception-mockups">
             <div className="figma-conception-card">
               <div className="figma-conception-card-media">
-                <img src="/single-project/92b9c4b3-3a47-4482-ba0f-a5d916be93e1.png" alt="Wireframe — Hello John" />
+                <img src="/single-project/92b9c4b3-3a47-4482-ba0f-a5d916be93e1.png" alt={t('project.wireframeAlt')} />
               </div>
               <div className="figma-conception-captions">
-                <p className="figma-conception-caption">J&apos;ai conservé le header supérieur pour offrir à l&apos;utilisateur un accès immédiat aux actions principales sans recherche inutile. Ce menu regroupe les accès aux 6 pages clés du produit.</p>
-                <p className="figma-conception-caption">Barre d&apos;actions : J&apos;ai intégré une barre d&apos;actions fixe en haut de la zone principale pour simplifier les interactions. Les boutons contextuels restent ainsi toujours visibles et à portée de main.</p>
+                <p className="figma-conception-caption">{t('project.conceptionCaption1')}</p>
+                <p className="figma-conception-caption">{t('project.conceptionCaption2')}</p>
               </div>
             </div>
             <div className="figma-conception-card">
               <div className="figma-conception-card-media">
-                <img src="/single-project/b81a3920-b92d-4a7d-af4c-4223b3f89174.png" alt="Maquette haute fidélité — Hello John" />
+                <img src="/single-project/b81a3920-b92d-4a7d-af4c-4223b3f89174.png" alt={t('project.maquetteAlt')} />
               </div>
               <div className="figma-conception-captions">
-                <p className="figma-conception-caption">J&apos;ai confronté l&apos;identité visuelle de la cliente aux contraintes techniques du dashboard.</p>
-                <p className="figma-conception-caption">L&apos;application brute des couleurs sur cette charte a permis de détecter instantanément les limites : 1. Rupture d&apos;accessibilité : les combinaisons texte/fond manquaient de contraste (notamment cartes clients). 2. Saturation des données : les teintes étaient trop invasives pour une interface dense.</p>
+                <p className="figma-conception-caption">{t('project.conceptionCaption3')}</p>
+                <p className="figma-conception-caption">{t('project.conceptionCaption4')}</p>
               </div>
             </div>
           </div>
@@ -694,16 +724,16 @@ const SingleProjectNew: FC<SingleProjectProps> = ({ projectData, onBackClick, co
 
         {/* Suite aux tests de contraste */}
         <section id="light-mode" className="project-section figma-light-mode-section">
-          <h2 className="figma-big-title">Suite aux tests de contraste précédents, j&apos;ai opéré un virage radical vers une interface claire (Light Mode).</h2>
+          <h2 className="figma-big-title">{t('project.contrastTitle')}</h2>
           <img src="/single-project/faffcc0f-0914-47bb-96dc-d2ab2b613174.png" alt="Light Mode" className="figma-full-width-img" />
         </section>
 
         {/* Expérience Utilisateur Finale */}
         <section id="experience-finale" className="project-section figma-experience-section">
-          <h2 className="section-title">Expérience Utilisateur Finale</h2>
+          <h2 className="section-title">{t('project.experienceFinale')}</h2>
           <div className="figma-two-cols">
-            <p className="figma-lead">Pour cette version finale, j&apos;ai privilégié une approche &quot;Clean UI&quot; en Light Mode. L&apos;objectif était de réduire drastiquement la charge mentale de l&apos;utilisateur face à la densité des données.</p>
-            <p className="figma-lead">L&apos;interface s&apos;efface au profit du contenu : les zones d&apos;actions (Tâches, Rappels) sont immédiatement identifiables grâce aux touches de couleurs vives, tandis que les tableaux de données (Clients, Formations) offrent une lisibilité maximale pour une gestion quotidienne sans fatigue visuelle.</p>
+            <p className="figma-lead">{t('project.experienceLead1')}</p>
+            <p className="figma-lead">{t('project.experienceLead2')}</p>
           </div>
           <div className="figma-audit-carousel-wrapper">
             <Swiper
@@ -731,7 +761,7 @@ const SingleProjectNew: FC<SingleProjectProps> = ({ projectData, onBackClick, co
               {EXPERIENCE_CAROUSEL_IMAGES.map((img, index) => (
                 <SwiperSlide key={index}>
                   <div className="figma-audit-slide">
-                    <img src={img.src} alt={img.alt} loading="eager" decoding="async" />
+                    <img src={img.src} alt={t(`project.experienceAlt${index + 1}`)} loading="eager" decoding="async" />
                   </div>
                 </SwiperSlide>
               ))}
@@ -741,15 +771,15 @@ const SingleProjectNew: FC<SingleProjectProps> = ({ projectData, onBackClick, co
 
         {/* Phase d'Intégration */}
         <section id="integration" className="project-section figma-integration-section">
-          <h2 className="section-title">Phase d&apos;Intégration</h2>
-          <h2 className="figma-big-title">Le projet est actuellement en cours de développement par l&apos;équipe technique. La mise en production étant à venir, aucune métrique quantitative (KPIs) n&apos;est disponible à ce jour.</h2>
-          <p className="figma-lead">Cependant, la phase de Handoff (passage de relais) a permis de valider la faisabilité technique de l&apos;ensemble des composants, et les premiers retours qualitatifs sur le prototype animé confirment une nette amélioration de la fluidité de navigation par rapport aux outils précédents.</p>
-          <img src="/single-project/68389a49-1620-4ab4-84a3-af8b45fd142f.png" alt="Intégration" className="figma-full-width-img" />
+          <h2 className="section-title">{t('project.integration')}</h2>
+          <h2 className="figma-big-title">{t('project.integrationTitle')}</h2>
+          <p className="figma-lead">{t('project.integrationLead')}</p>
+          <img src="/single-project/68389a49-1620-4ab4-84a3-af8b45fd142f.png" alt={t('project.integrationAlt')} className="figma-full-width-img" />
         </section>
 
         {/* Mes autres projets (Figma 117-135 : slider type carousel) */}
         <section id="autres-projets" className="project-section figma-autres-projets-section">
-          <h2 className="section-title">Mes autres projets</h2>
+          <h2 className="section-title">{t('project.otherProjects')}</h2>
           <div className="figma-autres-projets-carousel-wrapper">
             <Swiper
               modules={[Pagination]}
@@ -774,8 +804,9 @@ const SingleProjectNew: FC<SingleProjectProps> = ({ projectData, onBackClick, co
               }}
             >
               {[
-                { slug: 'Pedaboard', title: 'Pedaboard', date: 'Décembre 2023', badges: ['Application', 'UX/UI', 'CRM'], coverImage: '/images/cover-project-pedaboard.png' },
-                { slug: 'Playdago', title: 'Playdago', date: 'Février 2025', badges: ['Application', 'UX/UI'], coverImage: '/images/cover-project-playdago.png' },
+                { slug: 'Pedaboard', title: 'Pedaboard', date: t('project.december2023'), badges: [t('hero.categoryApplication'), 'UX/UI', 'CRM'], coverImage: '/images/cover-project-pedaboard.png' },
+                { slug: 'Playdago', title: 'Playdago', date: t('project.february2025'), badges: [t('hero.categoryApplication'), 'UX/UI'], coverImage: '/images/cover-project-playdago.png' },
+                { slug: 'Kaldera', title: 'Kaldera', date: '2025', badges: [t('hero.categorySiteWeb'), 'UX/UI', 'Simulation'], coverImage: '/images/cover-project-kaldera.png' },
               ].map((proj) => (
                 <SwiperSlide key={proj.slug}>
                   <a href={`/project/${proj.slug}`} className="figma-projet-mockup-card">
@@ -805,20 +836,48 @@ const SingleProjectNew: FC<SingleProjectProps> = ({ projectData, onBackClick, co
 
         {/* Que fait-on ? */}
         <section id="que-fait-on" className="project-section figma-cta-section">
-          <h2 className="section-title">Que fait-on ?</h2>
+          <h2 className="section-title">{t('project.whatNext')}</h2>
           <div className="figma-cta-grid">
-            <a href="#processus" className="figma-cta-item">
-              <span>Retourner en haut</span>
-            </a>
-            <a href="/" onClick={(e) => { e.preventDefault(); onBackClick(); }} className="figma-cta-item">
-              <span>Retour à l&apos;accueil</span>
-            </a>
-            <a href="/about" className="figma-cta-item">
-              <span>à propos</span>
-            </a>
-            <a href="/#contact" className="figma-cta-item">
-              <span>Me contacter</span>
-            </a>
+            <Button
+              variant="secondary"
+              className="figma-cta-item"
+              onClick={() => {
+                trackEvent('click', 'project_cta', 'back_to_top');
+                document.getElementById('processus')?.scrollIntoView({ behavior: 'smooth' });
+              }}
+            >
+              {t('project.backToTop')}
+            </Button>
+            <Button
+              variant="secondary"
+              className="figma-cta-item"
+              onClick={() => {
+                trackEvent('click', 'project_cta', 'back_home');
+                onBackClick();
+              }}
+            >
+              {t('project.backHome')}
+            </Button>
+            <Button
+              variant="secondary"
+              className="figma-cta-item"
+              onClick={() => {
+                trackEvent('click', 'project_cta', 'about');
+                window.location.href = '/about';
+              }}
+            >
+              {t('project.aboutLink')}
+            </Button>
+            <Button
+              variant="secondary"
+              className="figma-cta-item"
+              onClick={() => {
+                trackEvent('click', 'project_cta', 'contact');
+                window.location.href = '/#contact';
+              }}
+            >
+              {t('project.contactMe')}
+            </Button>
           </div>
         </section>
         </div>

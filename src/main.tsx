@@ -1,11 +1,12 @@
 import React from 'react'
 import ReactDOM from 'react-dom/client'
 import App from './App'
+import { LanguageProvider } from './contexts/LanguageContext'
 import { initGA } from './services/googleAnalyticsTracking'
 import './styles/globals.css'
 import './index.css'
 
-// Initialiser Google Analytics au démarrage
+// Initialiser Google Analytics au démarrage (Clarity via GTM)
 initGA()
 
 try {
@@ -16,7 +17,9 @@ try {
   
   ReactDOM.createRoot(rootElement).render(
     <React.StrictMode>
-      <App />
+      <LanguageProvider>
+        <App />
+      </LanguageProvider>
     </React.StrictMode>,
   )
 } catch (error) {

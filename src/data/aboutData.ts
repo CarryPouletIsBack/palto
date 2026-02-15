@@ -39,9 +39,9 @@ export const aboutData = {
 
   // Description principale
   mainDescription: {
-    title: 'Product Designer UX/UI et Art director',
+    title: 'Product Designer | Building Complex SaaS & Design Systems',
     content: [
-      "Product Designer UX/UI et Art director, je conçois des expériences visuelles et digitales qui allient créativité et efficacité.",
+      "Product Designer | Building Complex SaaS & Design Systems, je conçois des expériences visuelles et digitales qui allient créativité et efficacité.",
       "Fort d'un parcours mêlant design graphique, webdesign et direction artistique, j'ai travaillé sur des projets variés allant de la création d'identités visuelles à la conception d'interfaces complètes (sites web, CRM, dashboards)."
     ]
   },
@@ -92,7 +92,7 @@ export const aboutData = {
   experiences: [
     {
       company: 'Skydo digital',
-      badges: ['Product designer UX/UI', 'Art director'],
+      badges: ['Product Designer', 'Building Complex SaaS & Design Systems'],
       period: 'CDD directeur artistique Février 2025 - Octobre 2025',
       description: [
         'Pilotage de projets de design digital de bout en bout : ateliers de co-création, conception UX, UI et suivi du développement.',
@@ -104,7 +104,7 @@ export const aboutData = {
     },
     {
       company: 'Skydo digital',
-      badges: ['Product designer UX/UI', 'Art director'],
+      badges: ['Product Designer', 'Building Complex SaaS & Design Systems'],
       period: 'Alternance Master directeur artistique Studi Aout 2023 - Février 2025',
       description: [
         'Direction artistique et conception graphique print & digital.',

@@ -1,6 +1,7 @@
 import './AboutNew.css'
 import './About.css'
 import { useState, useEffect, useMemo } from 'react'
+import { useLanguage } from '../contexts/LanguageContext'
 import { TreeNode } from './flow/FlowTree'
 import { flowData } from '../data/flowData'
 import type { FlowNodeData } from '../data/flowData'
@@ -27,6 +28,7 @@ const debugLog = (...args: any[]) => {
 }
 
 const AboutNew = () => {
+  const { t, language } = useLanguage()
   const [selectedNodes, setSelectedNodes] = useState<Set<string>>(new Set())
   const [selectedNodeData, setSelectedNodeData] = useState<FlowNodeData | null>(null)
   const [popupPosition, setPopupPosition] = useState<{ x: number; y: number } | null>(null)
@@ -326,19 +328,19 @@ const AboutNew = () => {
           className={`nav-menu-button ${activeSection === 'about-intro' ? 'active' : ''}`}
           onClick={() => scrollToSection('about-intro')}
         >
-          Introduction
+          {t('nav.intro')}
         </button>
         <button 
           className={`nav-menu-button ${activeSection === 'about-description' ? 'active' : ''}`}
           onClick={() => scrollToSection('about-description')}
         >
-          Description
+          {t('nav.description')}
         </button>
         <button 
           className={`nav-menu-button ${activeSection === 'about-tree' ? 'active' : ''}`}
           onClick={() => scrollToSection('about-tree')}
         >
-          Arbre de compétences
+          {t('nav.tree')}
         </button>
       </div>
 
@@ -369,7 +371,7 @@ const AboutNew = () => {
                 {/* Première carte - Informations personnelles */}
                 <div className="hero-card services-card">
                   <div className="card-header">
-                    <h2 className="card-title">Profil</h2>
+                    <h2 className="card-title">{t('about.cardProfile')}</h2>
                     <div className="card-arrow">
                       <svg width="24" height="24" viewBox="0 0 24 24" fill="none" className="arrow-icon">
                         <path d="M5 12H19M19 12L12 5M19 12L12 19" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
@@ -392,7 +394,7 @@ const AboutNew = () => {
                     ) : stravaError ? (
                       <div className="service-item">
                         <div className="service-text">
-                          <p style={{ color: '#f1582a', fontSize: '14px' }}>Erreur de chargement</p>
+                          <p style={{ color: '#f1582a', fontSize: '14px' }}>{t('about.loadError')}</p>
                         </div>
                       </div>
                     ) : stravaAthlete ? (
@@ -415,7 +417,7 @@ const AboutNew = () => {
                             </div>
                             {stravaAthlete.weight && (
                               <p style={{ color: '#71717a', fontSize: '12px', marginTop: '8px' }}>
-                                Poids: {stravaAthlete.weight} kg
+                                {t('about.weight')}: {stravaAthlete.weight} kg
                               </p>
                             )}
                           </div>
@@ -428,7 +430,7 @@ const AboutNew = () => {
                 {/* Deuxième carte - Graphique Radar Strava */}
                 <div className="hero-card services-card strava-radar-card">
                   <div className="card-header">
-                    <h2 className="card-title">Performance</h2>
+                    <h2 className="card-title">{t('about.cardPerformance')}</h2>
                     <div className="card-arrow">
                       <svg width="24" height="24" viewBox="0 0 24 24" fill="none" className="arrow-icon">
                         <path d="M5 12H19M19 12L12 5M19 12L12 19" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
@@ -442,12 +444,12 @@ const AboutNew = () => {
                       </div>
                     ) : stravaError ? (
                       <div className="strava-radar-placeholder">
-                        <p style={{ color: '#f1582a', marginBottom: '8px' }}>Erreur</p>
+                        <p style={{ color: '#f1582a', marginBottom: '8px' }}>{t('about.error')}</p>
                         <p style={{ fontSize: '12px', color: '#71717a' }}>{stravaError}</p>
                       </div>
                     ) : stravaActivities2025.length === 0 ? (
                       <div className="strava-radar-placeholder">
-                        <p>Aucune activité disponible</p>
+                        <p>{t('about.noActivity')}</p>
                       </div>
                     ) : (
                       <StravaRadialBarChart activities={stravaActivities2025} />
@@ -480,7 +482,7 @@ const AboutNew = () => {
                 {/* Première carte - Graphique d'entraînement */}
                 <div className="hero-card services-card">
                   <div className="card-header">
-                    <h2 className="card-title">Entraînement</h2>
+                    <h2 className="card-title">{t('about.cardTraining')}</h2>
                     <div className="card-arrow">
                       <svg width="24" height="24" viewBox="0 0 24 24" fill="none" className="arrow-icon">
                         <path d="M5 12H19M19 12L12 5M19 12L12 19" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
@@ -500,17 +502,17 @@ const AboutNew = () => {
                       </div>
                     ) : stravaError ? (
                       <div style={{ width: '100%', height: 200, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', color: '#f1582a', fontSize: '14px', padding: '16px', textAlign: 'center' }}>
-                        <p style={{ marginBottom: '8px', fontWeight: '500' }}>Erreur</p>
+                        <p style={{ marginBottom: '8px', fontWeight: '500' }}>{t('about.error')}</p>
                         <p style={{ fontSize: '12px', color: '#71717a' }}>{stravaError}</p>
                       </div>
                     ) : stravaActivities2025.length === 0 ? (
                       <div style={{ width: '100%', height: 200, display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'rgba(0,0,0,0.4)', fontSize: '14px' }}>
-                        Aucune activité disponible
+                        {t('about.noActivity')}
                       </div>
                     ) : (
                       <>
                         <div className="strava-total-km">
-                          <p className="strava-total-km-label">Total 2025</p>
+                          <p className="strava-total-km-label">{t('about.total2025')}</p>
                           <p className="strava-total-km-value">{totalKm2025} km</p>
                         </div>
                         <StravaSplineChart activities={stravaAllRuns} />
@@ -522,7 +524,7 @@ const AboutNew = () => {
                 {/* Deuxième carte - Activités Strava */}
                 <div className="hero-card services-card">
                   <div className="card-header">
-                    <h2 className="card-title">Activités</h2>
+                    <h2 className="card-title">{t('about.cardActivities')}</h2>
                     <div className="card-arrow">
                       <svg width="24" height="24" viewBox="0 0 24 24" fill="none" className="arrow-icon">
                         <path d="M5 12H19M19 12L12 5M19 12L12 19" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
@@ -538,7 +540,7 @@ const AboutNew = () => {
                       <div className="service-item">
                         <div className="service-text">
                           <p style={{ color: '#f1582a', fontSize: '14px', marginBottom: '8px', fontWeight: '500' }}>
-                            Erreur de connexion Strava
+                            {t('about.stravaError')}
                           </p>
                           <p style={{ color: '#71717a', fontSize: '12px' }}>
                             {stravaError}
@@ -675,20 +677,20 @@ const AboutNew = () => {
                       <div className="service-item">
                         <div className="service-text">
                           <p style={{ color: '#f1582a', fontSize: '14px', marginBottom: '8px', fontWeight: '500' }}>
-                            Erreur de connexion Strava
+                            {t('about.stravaError')}
                           </p>
                           <p style={{ color: '#71717a', fontSize: '12px' }}>
                             {stravaError}
                           </p>
                           <p style={{ color: '#71717a', fontSize: '11px', marginTop: '8px', fontStyle: 'italic' }}>
-                            Vérifiez que vercel dev est lancé et que les variables d'environnement sont configurées.
+                            {t('about.vercelHint')}
                           </p>
                         </div>
                       </div>
                     ) : (
                       <div className="service-item">
                         <div className="service-text">
-                          <p style={{ color: '#71717a', fontSize: '14px' }}>Aucune activité disponible</p>
+                          <p style={{ color: '#71717a', fontSize: '14px' }}>{t('about.noActivity')}</p>
                         </div>
                       </div>
                     )}
@@ -705,25 +707,30 @@ const AboutNew = () => {
             <div className="about-intro-section">
               <div className="about-intro-content">
                 <div className="about-text-column">
-                  <h2 className="about-intro-title">À propos de moi</h2>
+                  <h2 className="about-intro-title">{t('about.introTitle')}</h2>
                   <p className="about-intro-description">
-                    Passionné par le design et le développement, je crée des expériences digitales 
-                    qui marquent les esprits. Mon approche allie créativité et technique pour 
-                    transformer vos idées en solutions innovantes.
+                    {t('about.introDesc1')}
                   </p>
                   <p className="about-intro-description">
-                    Spécialisé dans le design d'interface et le développement front-end, 
-                    je mets mon expertise au service de projets variés, de l'application mobile 
-                    au site web corporate.
+                    {t('about.introDesc2')}
                   </p>
                 </div>
                 <div className="about-photo-column">
-                  <div className="about-photo-container">
-                    <img 
-                      src="/images/portrait-anthony.jpg" 
-                      alt="Anthony Merault" 
-                      className="about-photo"
-                    />
+                  <div className="about-photo-wrapper">
+                    <div className="about-photo-container">
+                      <img 
+                        src="/images/portrait-anthony.jpg" 
+                        alt="Anthony Merault" 
+                        className="about-photo"
+                      />
+                    </div>
+                    <a
+                      href={language === 'en' ? '/cv-anthony-merault-en.pdf' : '/cv-anthony-merault.pdf'}
+                      download
+                      className="about-download-cv-button"
+                    >
+                      {t('about.downloadCv')}
+                    </a>
                   </div>
                 </div>
               </div>
@@ -731,33 +738,42 @@ const AboutNew = () => {
 
             {/* Section listing - Statistiques */}
             <div className="listing-section">
-              {aboutData.stats.map((stat, index) => (
+              {aboutData.stats.map((stat, index) => {
+                const labelKey: Record<string, string> = {
+                  'en agence': 'about.statAgency',
+                  'Projets': 'about.statProjects',
+                  'Site web': 'about.statSites',
+                  'SaaS': 'about.statSaaS',
+                  'Identité graphique': 'about.statIdentity',
+                  'Niveau': 'about.statLevel',
+                }
+                const labelTranslated = labelKey[stat.label] ? t(labelKey[stat.label]) : stat.label
+                return (
                 <HoverCard key={index} intensity={0.05} scale={1.02}>
                   <div className="stat-card">
                     {stat.label === 'Niveau' ? (
                       <>
-                        <p>{stat.label}</p>
+                        <p>{labelTranslated}</p>
                         <h3>{stat.value}</h3>
                       </>
                     ) : (
                       <>
                         <h3>{stat.value}</h3>
-                        <p>{stat.label}</p>
+                        <p>{labelTranslated}</p>
                       </>
                     )}
                   </div>
                 </HoverCard>
-              ))}
+              )})}
             </div>
 
             {/* Carte principale cardLg */}
             <div className="card-lg">
               <div className="card-border"></div>
-              <p className="card-title">{aboutData.mainDescription.title}</p>
+              <p className="card-title">{t('about.mainTitle')}</p>
               <div className="card-content">
-                {aboutData.mainDescription.content.map((paragraph, index) => (
-                  <p key={index}>{paragraph}</p>
-                ))}
+                <p>{t('about.mainDesc1')}</p>
+                <p>{t('about.mainDesc2')}</p>
               </div>
             </div>
 
@@ -768,7 +784,7 @@ const AboutNew = () => {
                 {/* Carte Compétences */}
                 <div className="card-small">
                   <div className="card-border"></div>
-                  <p className="card-title">{aboutData.skills.title}</p>
+                  <p className="card-title">{t('about.skillsTitle')}</p>
                   <div className="card-content">
                     {aboutData.skills.items.map((skill, index) => (
                       <p key={index}>{skill}</p>
@@ -779,7 +795,7 @@ const AboutNew = () => {
                 {/* Carte Outils */}
                 <div className="card-small">
                   <div className="card-border"></div>
-                  <p className="card-title">{aboutData.tools.title}</p>
+                  <p className="card-title">{t('about.toolsTitle')}</p>
                   <div className="card-content">
                     {aboutData.tools.items.map((tool, index) => (
                       <p key={index}>{tool}</p>
@@ -790,7 +806,7 @@ const AboutNew = () => {
                 {/* Carte Intérêts */}
                 <div className="card-small">
                   <div className="card-border"></div>
-                  <p className="card-title">{aboutData.interests.title}</p>
+                  <p className="card-title">{t('about.interestsTitle')}</p>
                   <div className="card-content">
                     {aboutData.interests.items.map((interest, index) => (
                       <p key={index}>{interest}</p>
@@ -803,7 +819,7 @@ const AboutNew = () => {
               <div className="content-right">
                 <div className="card-large">
                   <div className="card-border"></div>
-                  <p className="card-title">Expériences</p>
+                  <p className="card-title">{t('about.experiencesTitle')}</p>
 
                   {aboutData.experiences.map((experience, index) => (
                     <div key={index} className="experience-item">
@@ -829,19 +845,19 @@ const AboutNew = () => {
             </div>
 
             {/* Section Formations */}
-            <p className="formations-title">Formations</p>
+            <p className="formations-title">{t('about.formationsTitle')}</p>
 
             {/* Tableau des formations */}
             <div className="formations-table">
               <div className="table-header">
                 <div className="table-col-name">
-                  <p>Nom</p>
+                  <p>{t('about.tableName')}</p>
                 </div>
                 <div className="table-col-school">
-                  <p>école</p>
+                  <p>{t('about.tableSchool')}</p>
                 </div>
                 <div className="table-col-year">
-                  <p>Année</p>
+                  <p>{t('about.tableYear')}</p>
                 </div>
               </div>
               
@@ -894,7 +910,7 @@ const AboutNew = () => {
                 )}
                 {selectedNodeData.branches && selectedNodeData.branches.length > 0 && (
                   <div className="node-popup-competences">
-                    <h4 className="node-popup-competences-title">Compétences :</h4>
+                    <h4 className="node-popup-competences-title">{t('about.competencesTitle')}</h4>
                     <ul className="node-popup-competences-list">
                       {selectedNodeData.branches.map((branch) => (
                         <li key={branch.id} className="node-popup-competence-item">

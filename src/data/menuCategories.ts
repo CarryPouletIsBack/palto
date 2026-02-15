@@ -15,10 +15,10 @@ export interface MenuCategory {
 
 // Données des catégories et projets du menu
 export const menuCategories: MenuCategory[] = [
-  {
-    key: 'application',
-    title: 'Application',
-    projects: [
+{
+      key: 'application',
+      title: 'Application',
+      projects: [
       { 
         imageSrc: "/images/cover-project-playdago.png", 
         imageAlt: "Playdago", 
@@ -28,6 +28,11 @@ export const menuCategories: MenuCategory[] = [
         imageSrc: "/images/f27446bbc5c96f74d44074bc97b9be64f7cdf4cf.png", 
         imageAlt: "Pedaboard", 
         title: "Pedaboard" 
+      },
+      { 
+        imageSrc: "/images/cover-project-kaldera.png", 
+        imageAlt: "Kaldera", 
+        title: "Kaldera" 
       },
       { 
         imageSrc: "/images/d09371ff5fd475e08d0476d1b301dd9aabb49d5c.png", 

@@ -162,100 +162,52 @@ export const flowData: FlowNodeData = {
             },
           ],
           next: {
-            id: "product_intermediaire",
-            label: "Product Design Intermédiaire",
-            description: "Niveau intermédiaire : maîtrise des outils et méthodologies, capacité à mener des projets autonomes.",
-            branches: [
-              {
-                id: "branche_product_thinking",
-                label: "Product Thinking",
-                description: "Analyse des besoins, priorisation, arbitrages UX / business, vision globale du produit."
-              },
-              {
-                id: "branche_research",
-                label: "User Research",
-                description: "Recherche utilisateur, tests utilisateurs structurés, méthodologies de découverte, validation de solutions."
-              },
-              {
-                id: "branche_data",
-                label: "Data & Impact",
-                description: "Data produit & analytics, design orienté impact (metrics), analyse des performances, décisions data-driven."
-              },
-              {
-                id: "secondaire_veille",
-                label: "Veille & culture",
-                description: "Tendances produit, benchmark, analyse concurrentielle.",
+            id: "maitrise_intermediaire",
+            label: "Maîtrise Intermédiaire",
+            description: "Maîtrise des compétences du niveau Intermédiaire, validation permettant d'accéder au niveau Confirmé dans le domaine Product Design.",
+            next: {
+              id: "product_confirme",
+              label: "Product Design Confirmé",
+              description: "Niveau confirmé : expertise reconnue, capacité à lead des projets complexes et à influencer la stratégie.",
+              next: {
+                id: "cime_confirme",
+                label: "Product Designer confirmé",
+                description: "Niveau senior avec une expertise reconnue dans le design de produits.",
+                disabled: true,
                 next: {
-                  id: "feuille_webflow",
-                  label: "Webflow",
-                  description: "Prototypage web et création de sites interactifs sans code.",
-                  disabled: true,
-                },
-              },
-              {
-                id: "secondaire_systemes",
-                label: "Systèmes",
-                description: "Logique de composants, scalabilité, réutilisabilité.",
-                next: {
-                  id: "feuille_dev",
-                  label: "HTML/CSS/React",
-                  description: "Notions de développement pour mieux collaborer avec les développeurs.",
-                  next: { 
-                    id: "feuille_cursor", 
-                    label: "Cursor / IA",
-                    description: "Outils IA pour accélérer le développement et améliorer la productivité."
-                  },
-                },
-              },
-              {
-                id: "maitrise_intermediaire",
-                label: "Maîtrise Intermédiaire",
-                description: "Maîtrise des compétences du niveau Intermédiaire, validation permettant d'accéder au niveau Confirmé dans le domaine Product Design.",
-                next: {
-                  id: "product_confirme",
-                  label: "Product Design Confirmé",
-                  description: "Niveau confirmé : expertise reconnue, capacité à lead des projets complexes et à influencer la stratégie.",
+                  id: "maitrise_confirme",
+                  label: "Maîtrise Confirmé",
+                  description: "Maîtrise des compétences du niveau Confirmé, validation permettant d'accéder au niveau Évolution dans le domaine Product Design.",
                   next: {
-                    id: "cime_confirme",
-                    label: "Product Designer confirmé",
-                    description: "Niveau senior avec une expertise reconnue dans le design de produits.",
-                    disabled: true,
+                    id: "product_evolution",
+                    label: "Product Design Évolution",
+                    description: "Niveau évolution : leadership stratégique, contribution à haut niveau, vision long terme.",
                     next: {
-                      id: "maitrise_confirme",
-                      label: "Maîtrise Confirmé",
-                      description: "Maîtrise des compétences du niveau Confirmé, validation permettant d'accéder au niveau Évolution dans le domaine Product Design.",
+                      id: "cime_lead",
+                      label: "Lead un produit",
+                      description: "Capacité à lead un produit de A à Z, de la stratégie à l'exécution.",
                       next: {
-                        id: "product_evolution",
-                        label: "Product Design Évolution",
-                        description: "Niveau évolution : leadership stratégique, contribution à haut niveau, vision long terme.",
+                        id: "cime_decisions",
+                        label: "Décisions usage + data",
+                        description: "Décisions basées sur usage + data, approche data-driven du design.",
+                        disabled: true,
                         next: {
-                          id: "cime_lead",
-                          label: "Lead un produit",
-                          description: "Capacité à lead un produit de A à Z, de la stratégie à l'exécution.",
-                          next: {
-                            id: "cime_decisions",
-                            label: "Décisions usage + data",
-                            description: "Décisions basées sur usage + data, approche data-driven du design.",
-                            disabled: true,
-                            next: { 
-                              id: "cime_strategie", 
-                              label: "Contribution stratégique",
-                              description: "Vision stratégique et contribution à la direction produit au niveau exécutif."
-                            },
-                          },
+                          id: "cime_strategie",
+                          label: "Contribution stratégique",
+                          description: "Vision stratégique et contribution à la direction produit au niveau exécutif."
                         },
                       },
                     },
                   },
                 },
               },
-            ],
+            },
           },
         },
       ],
     },
-            {
-              id: "domaine_da",
+    {
+      id: "domaine_da",
               label: "Direction Artistique",
               description: "Domaine : cohérence visuelle, branding & identité, exigence esthétique, regard critique, sensibilité artistique appliquée au produit.",
               branches: [

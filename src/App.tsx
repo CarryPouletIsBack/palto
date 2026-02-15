@@ -8,11 +8,20 @@ import Project from './components/Project'
 import ProjectCoverCarousel from './components/ProjectCoverCarousel'
 import Dashboard from './components/Dashboard'
 import Login from './components/Login'
+import ErrorPage from './components/ErrorPage'
 import { isAuthenticated } from './services/authService'
-import { trackPageView } from './services/googleAnalyticsTracking'
+import { trackPageView, trackEvent } from './services/googleAnalyticsTracking'
+import { useLanguage } from './contexts/LanguageContext'
 import './App.css'
 
+const PROJECT_COVER_IMAGES: Record<string, string> = {
+  Playdago: '/images/cover-project-playdago.png',
+  Pedaboard: '/images/cover-project-pedaboard.png',
+  Kaldera: '/images/cover-project-kaldera.png',
+}
+
 function App() {
+  const { language, setLanguage } = useLanguage()
   const [currentPage, setCurrentPage] = useState('accueil')
   const [previousPage, setPreviousPage] = useState('accueil')
   const [currentProjectImage, setCurrentProjectImage] = useState<string | null>(null)
@@ -32,26 +41,48 @@ function App() {
     return () => window.removeEventListener('error', handleError)
   }, [])
 
-  // Vérifier l'authentification au chargement
+  // Vérifier l'authentification au chargement + détecter langue et route depuis l'URL
   useEffect(() => {
     const urlParams = new URLSearchParams(window.location.search)
     const pageParam = urlParams.get('page')
     const pathname = window.location.pathname
-    
+
+    // Langue depuis l'URL : /fr/... ou /en/...
+    if (pathname.startsWith('/fr') || pathname === '/fr') {
+      setLanguage('fr')
+    } else if (pathname.startsWith('/en') || pathname === '/en') {
+      setLanguage('en')
+    }
+
     // Détecter la route depuis le pathname ou le paramètre page
     let targetPage = pageParam
-    
-    // Si pas de paramètre page, vérifier le pathname
+
+    // Si pas de paramètre page, vérifier le pathname (supporter /fr et /en en préfixe)
+    let pathToMatch = pathname
+    if (pathname.startsWith('/fr') || pathname.startsWith('/en')) {
+      pathToMatch = pathname.replace(/^\/(fr|en)/, '') || '/'
+    }
     if (!targetPage) {
-      if (pathname === '/dashboard' || pathname.startsWith('/dashboard')) {
+      if (pathToMatch === '/' || pathToMatch === '') {
+        targetPage = 'accueil'
+      } else if (pathToMatch === '/dashboard' || pathToMatch.startsWith('/dashboard')) {
         targetPage = 'dashboard'
-      } else if (pathname === '/menu' || pathname.startsWith('/menu')) {
+      } else if (pathToMatch === '/menu' || pathToMatch.startsWith('/menu')) {
         targetPage = 'menu'
-      } else if (pathname === '/about' || pathname === '/apropos' || pathname.startsWith('/about')) {
-        targetPage = 'apropos'
-      } else if (pathname.startsWith('/project/')) {
-        const projectId = pathname.replace('/project/', '')
-        targetPage = `project-${projectId}`
+      } else if (pathToMatch === '/about' || pathToMatch === '/apropos' || pathToMatch.startsWith('/about')) {
+        targetPage = 'aproposnew'
+      } else if (pathToMatch.startsWith('/project/')) {
+        const projectId = pathToMatch.replace(/^\/project\//, '').toLowerCase()
+        const projectName = projectId === 'playdago' ? 'Playdago' : projectId === 'pedaboard' ? 'Pedaboard' : projectId === 'kaldera' ? 'Kaldera' : projectId.charAt(0).toUpperCase() + projectId.slice(1)
+        targetPage = `project-${projectName}`
+      } else if (/^\/playdago$/i.test(pathToMatch)) {
+        targetPage = 'project-Playdago'
+      } else if (/^\/pedaboard$/i.test(pathToMatch)) {
+        targetPage = 'project-Pedaboard'
+      } else if (/^\/kaldera$/i.test(pathToMatch)) {
+        targetPage = 'project-Kaldera'
+      } else {
+        targetPage = '404'
       }
     }
     
@@ -72,32 +103,108 @@ function App() {
         window.history.replaceState({}, document.title, newUrl.toString())
       }
     } else {
-      setIsLoggedIn(true) // Pas besoin d'auth pour les autres pages
+      setIsLoggedIn(true)
       if (targetPage) {
         setCurrentPage(targetPage)
+        if (targetPage.startsWith('project-')) {
+          setPreviousPage('accueil')
+          const projectName = targetPage.replace('project-', '')
+          setCurrentProjectImage(PROJECT_COVER_IMAGES[projectName] ?? null)
+        }
       }
     }
     
     setIsAuthChecked(true)
   }, [])
 
+  // Rediriger / ou '' vers /fr ou /en pour afficher la langue dans l'URL
+  useEffect(() => {
+    if (!isAuthChecked) return
+    const pathname = window.location.pathname
+    if (pathname === '/' || pathname === '') {
+      window.history.replaceState({}, document.title, language === 'en' ? '/en' : '/fr')
+    }
+  }, [isAuthChecked, language])
+
+  // Mapping page -> URL path (avec préfixe langue /fr ou /en)
+  const getPathFromPage = (page: string): string => {
+    const prefix = language === 'en' ? '/en' : '/fr'
+    if (page === 'accueil' || page === '404') return prefix
+    if (page === 'apropos' || page === 'aproposnew') return `${prefix}/about`
+    if (page === 'dashboard') return `${prefix}/dashboard`
+    if (page.startsWith('project-')) {
+      const name = page.replace('project-', '')
+      const slug = name.toLowerCase()
+      if (slug === 'playdago') return `${prefix}/playdago`
+      if (slug === 'pedaboard') return `${prefix}/pedaboard`
+      if (slug === 'kaldera') return `${prefix}/kaldera`
+      return `${prefix}/project/${name}`
+    }
+    return prefix
+  }
+
+  // Synchroniser l'URL quand la langue change (garder la même page)
+  useEffect(() => {
+    if (!isAuthChecked) return
+    const path = getPathFromPage(currentPage)
+    const currentPath = window.location.pathname + window.location.search
+    if (path !== currentPath && currentPage !== 'dashboard') {
+      window.history.replaceState({}, document.title, path)
+    }
+  }, [language])
+
+  // Écouter le bouton Retour du navigateur
+  useEffect(() => {
+    const handlePopState = () => {
+      const pathname = window.location.pathname
+      const pathToMatch = pathname.startsWith('/fr') || pathname.startsWith('/en')
+        ? pathname.replace(/^\/(fr|en)/, '') || '/'
+        : pathname
+      if (pathToMatch === '/' || pathToMatch === '') {
+        setCurrentPage('accueil')
+      } else if (pathToMatch === '/about') {
+        setCurrentPage('aproposnew')
+      } else if (pathToMatch === '/dashboard') {
+        setCurrentPage('dashboard')
+      } else if (/^\/playdago$/i.test(pathToMatch)) {
+        setPreviousPage('accueil')
+        setCurrentPage('project-Playdago')
+      } else if (/^\/pedaboard$/i.test(pathToMatch)) {
+        setPreviousPage('accueil')
+        setCurrentPage('project-Pedaboard')
+      } else if (/^\/kaldera$/i.test(pathToMatch)) {
+        setPreviousPage('accueil')
+        setCurrentPage('project-Kaldera')
+      } else if (pathToMatch.startsWith('/project/')) {
+        const id = pathToMatch.replace(/^\/project\//, '')
+        const name = id.charAt(0).toUpperCase() + id.slice(1).toLowerCase()
+        setPreviousPage('accueil')
+        setCurrentPage(`project-${name}`)
+      } else {
+        setCurrentPage('404')
+      }
+    }
+    window.addEventListener('popstate', handlePopState)
+    return () => window.removeEventListener('popstate', handlePopState)
+  }, [])
+
   // Fonction helper pour obtenir le titre de la page
   const getPageTitle = (page: string): string => {
     const titles: Record<string, string> = {
-      'accueil': 'Accueil - Anthony Merault - Product Designer UX/UI',
-      'menu': 'Menu - Anthony Merault - Product Designer UX/UI',
-      'apropos': 'À propos - Anthony Merault - Product Designer UX/UI',
-      'aproposnew': 'À propos - Anthony Merault - Product Designer UX/UI',
-      'dashboard': 'Dashboard - Anthony Merault - Product Designer UX/UI',
-      'login': 'Connexion - Anthony Merault - Product Designer UX/UI',
+      'accueil': 'Accueil - Anthony Merault - Product Designer | Building Complex SaaS & Design Systems',
+      'menu': 'Menu - Anthony Merault - Product Designer | Building Complex SaaS & Design Systems',
+      'apropos': 'À propos - Anthony Merault - Product Designer | Building Complex SaaS & Design Systems',
+      'aproposnew': 'À propos - Anthony Merault - Product Designer | Building Complex SaaS & Design Systems',
+      'dashboard': 'Dashboard - Anthony Merault - Product Designer | Building Complex SaaS & Design Systems',
+      'login': 'Connexion - Anthony Merault - Product Designer | Building Complex SaaS & Design Systems',
     }
     
     if (page.startsWith('project-')) {
       const projectName = page.replace('project-', '')
-      return `${projectName} - Projet - Anthony Merault - Product Designer UX/UI`
+      return `${projectName} - Projet - Anthony Merault - Product Designer | Building Complex SaaS & Design Systems`
     }
     
-    return titles[page] || 'Anthony Merault - Product Designer UX/UI'
+    return titles[page] || 'Anthony Merault - Product Designer | Building Complex SaaS & Design Systems'
   }
 
   // Gestion des paramètres d'URL pour la navigation (sauf dashboard)
@@ -144,29 +251,28 @@ function App() {
       setPreviousPage(currentPage)
       if (projectImage) setCurrentProjectImage(projectImage)
       if (projectCategory) setCurrentProjectCategory(projectCategory)
+      const projectName = page.replace('project-', '')
+      trackEvent('open_project', 'navigation', projectName)
+      window.history.pushState({}, '', getPathFromPage(page))
+    } else {
+      if (page === 'apropos' || page === 'aproposnew') trackEvent('click', 'navigation', 'about')
+      window.history.pushState({}, '', getPathFromPage(page))
     }
     setCurrentPage(page)
   }
 
   const handleMenuClick = () => {
-    // TEMPORAIRE : Menu masqué - retour à l'accueil
+    trackEvent('click', 'navigation', 'menu_home')
     setPreviousPage(currentPage)
     setCurrentPage('accueil')
-    
-    // Code original commenté :
-    // if (currentPage === 'menu') {
-    //   // Si on est dans le menu, retourner à la page précédente
-    //   setCurrentPage(previousPage)
-    // } else {
-    //   // Si on est sur une autre page, sauvegarder la page actuelle et aller au menu
-    //   setPreviousPage(currentPage)
-    //   setCurrentPage('menu')
-    // }
+    window.history.pushState({}, '', getPathFromPage('accueil'))
   }
 
   const handleContactClick = () => {
+    trackEvent('click', 'contact', 'header_contact')
     setPreviousPage(currentPage)
-    setCurrentPage('apropos')
+    setCurrentPage('aproposnew')
+    window.history.pushState({}, '', getPathFromPage('aproposnew'))
   }
 
   const handleSearchChange = () => {
@@ -174,15 +280,16 @@ function App() {
   }
 
   const handleLogoClick = () => {
+    trackEvent('click', 'navigation', 'logo_home')
     setPreviousPage(currentPage)
     setCurrentPage('accueil')
+    window.history.pushState({}, '', getPathFromPage('accueil'))
   }
 
   const handleLoginSuccess = () => {
     setIsLoggedIn(true)
     setCurrentPage('dashboard')
-    // Mettre à jour l'URL sans recharger la page
-    window.history.pushState({}, '', '?page=dashboard')
+    window.history.pushState({}, '', getPathFromPage('dashboard'))
   }
 
   const renderCurrentPage = () => {
@@ -194,15 +301,30 @@ function App() {
         {currentPage === 'accueil' && (
           <Hero onPageChange={handlePageChange} />
         )}
+
+        {/* Page d'erreur 404 */}
+        {currentPage === '404' && (
+          <ErrorPage
+            code={404}
+            onBackToHome={() => {
+              setCurrentPage('accueil')
+              window.history.pushState({}, '', getPathFromPage('accueil'))
+            }}
+            onProjectClick={(slug) => {
+              setPreviousPage('accueil')
+              setCurrentPage(`project-${slug}`)
+              setCurrentProjectImage(PROJECT_COVER_IMAGES[slug] ?? null)
+              window.history.pushState({}, '', getPathFromPage(`project-${slug}`))
+            }}
+          />
+        )}
         
         {/* Afficher les autres pages normalement quand on n'est pas sur un projet */}
-        {!isProjectPage && currentPage !== 'accueil' && (
+        {!isProjectPage && currentPage !== 'accueil' && currentPage !== '404' && (
           <>
             {currentPage === 'apropos' && <About />}
             {currentPage === 'aproposnew' && <AboutNew />}
             {currentPage === 'dashboard' && <Dashboard onBackClick={() => setCurrentPage('accueil')} />}
-            {/* TEMPORAIRE : Menu masqué */}
-            {/* {currentPage === 'menu' && <Menu onPageChange={handlePageChange} searchTerm={searchTerm} />} */}
           </>
         )}
         
@@ -212,7 +334,6 @@ function App() {
             {previousPage === 'accueil' && <Hero onPageChange={handlePageChange} />}
             {previousPage === 'apropos' && <About />}
             {previousPage === 'aproposnew' && <AboutNew />}
-            {/* {previousPage === 'menu' && <Menu onPageChange={handlePageChange} searchTerm={searchTerm} />} */}
           </>
         )}
         
@@ -229,8 +350,10 @@ function App() {
         {isProjectPage && (
           <Project 
             onBackClick={() => {
-              setProjectSwipeY(0) // Réinitialiser la valeur Y quand on ferme
+              trackEvent('close_project', 'navigation', currentPage.replace('project-', ''))
+              setProjectSwipeY(0)
               setCurrentPage(previousPage)
+              window.history.pushState({}, '', getPathFromPage(previousPage))
             }} 
             projectName={currentPage.startsWith('project-') ? currentPage.replace('project-', '') : undefined}
             coverImage={currentProjectImage} 
@@ -282,10 +405,6 @@ function App() {
         />
       )}
       {renderCurrentPage()}
-      
-      
-      {/* Search bar mobile - maintenant dans le Header */}
-      {/* <SpeedInsights /> */}
     </div>
   )
 }
