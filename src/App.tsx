@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
+import { Analytics } from '@vercel/analytics/react'
 // import { SpeedInsights } from '@vercel/speed-insights/react'
 import Header from './components/Header'
 import Hero from './components/Hero'
@@ -530,6 +531,7 @@ function App() {
 
   return (
     <div className={`container ${currentPage === 'menu' ? 'menu-active' : ''}`}>
+      <Analytics />
       <Toaster position="bottom-right" theme="dark" />
       {/* Conteneur pour l'overlay de la search bar (portal) : couvre tout l'écran, sous le header */}
       <div id="search-overlay-root" className="search-overlay-root" />
