@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useMemo, useState, useCallback, useEffect } from 'react';
 import { Swiper, SwiperSlide } from 'swiper/react';
 import { Pagination, Autoplay } from 'swiper/modules';
 import 'swiper/css';
@@ -12,14 +12,47 @@ interface ProjectCoverCarouselProps {
   onClose?: () => void;
   onPreviousProject?: () => void;
   onNextProject?: () => void;
+  onFullscreenOpen?: () => void;
+  onFullscreenClose?: () => void;
+  coverFullscreenActive?: boolean;
+  /** Contrôlé par le parent (App) : la modal s'ouvre après le délai du glissement */
+  isFullscreenModalOpen?: boolean;
 }
 
-const ProjectCoverCarousel: React.FC<ProjectCoverCarouselProps> = ({ coverImage, projectName, swipeY = 0, onClose, onPreviousProject, onNextProject }) => {
+const ProjectCoverCarousel: React.FC<ProjectCoverCarouselProps> = ({ coverImage, projectName, swipeY = 0, onClose, onPreviousProject, onNextProject, onFullscreenOpen, onFullscreenClose, coverFullscreenActive = false, isFullscreenModalOpen = false }) => {
+  const [fullscreenIndex, setFullscreenIndex] = useState(0);
+
   // Dupliquer l'image pour tester le carousel
   const images = useMemo(() => {
-    // Dupliquer l'image 3 fois pour tester le carousel
     return [coverImage, coverImage, coverImage];
   }, [coverImage, projectName]);
+
+  const openFullscreen = useCallback(() => {
+    onFullscreenOpen?.();
+  }, [onFullscreenOpen]);
+
+  const closeFullscreen = useCallback(() => {
+    setFullscreenIndex(0);
+    onFullscreenClose?.();
+  }, [onFullscreenClose]);
+
+  useEffect(() => {
+    if (!isFullscreenModalOpen) return;
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') closeFullscreen();
+      if (e.key === 'ArrowLeft') setFullscreenIndex((i) => (i <= 0 ? images.length - 1 : i - 1));
+      if (e.key === 'ArrowRight') setFullscreenIndex((i) => (i >= images.length - 1 ? 0 : i + 1));
+    };
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
+  }, [isFullscreenModalOpen, images.length, closeFullscreen]);
+
+  const goPrev = useCallback(() => {
+    setFullscreenIndex((i) => (i <= 0 ? images.length - 1 : i - 1));
+  }, [images.length]);
+  const goNext = useCallback(() => {
+    setFullscreenIndex((i) => (i >= images.length - 1 ? 0 : i + 1));
+  }, [images.length]);
 
   const hasVideoExtension = (src: string) => /\.(mp4|webm|mov|avi|mkv)$/i.test(src);
   const isMpAudioProject = projectName.toLowerCase().includes('mp audio');
@@ -27,7 +60,7 @@ const ProjectCoverCarousel: React.FC<ProjectCoverCarouselProps> = ({ coverImage,
   return (
     <>
       <div 
-        className="project-cover-image-above"
+        className={`project-cover-image-above ${coverFullscreenActive ? 'project-cover-fullscreen-expanded' : ''}`}
         style={{
           transform: `translateY(${swipeY}px)`,
           transition: swipeY === 0 ? 'transform 0.4s cubic-bezier(0.16, 1, 0.3, 1)' : 'none'
@@ -74,6 +107,20 @@ const ProjectCoverCarousel: React.FC<ProjectCoverCarouselProps> = ({ coverImage,
       </Swiper>
       </div>
 
+      {/* Icône fullscreen en bas à droite de l'image cover */}
+      <div className="project-cover-fullscreen-trigger-layer" aria-hidden>
+        <button
+          type="button"
+          className="project-cover-fullscreen-btn"
+          onClick={openFullscreen}
+          aria-label="Agrandir l'image"
+        >
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+            <path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3" />
+          </svg>
+        </button>
+      </div>
+
       {/* Couche boutons au premier plan (z-index 2001) pour rester cliquables au scroll */}
       <div className="project-cover-buttons-layer">
         {onClose && (
@@ -118,6 +165,77 @@ const ProjectCoverCarousel: React.FC<ProjectCoverCarouselProps> = ({ coverImage,
           </div>
         )}
       </div>
+
+      {/* Modal plein écran : image en grand avec carousel (flèches) */}
+      {isFullscreenModalOpen && (
+        <div
+          className="project-cover-fullscreen-overlay"
+          role="dialog"
+          aria-modal="true"
+          aria-label="Image de couverture en grand"
+          onClick={(e) => e.target === e.currentTarget && closeFullscreen()}
+        >
+          {/* Bouton fermer en bas à droite (même position que le bouton fullscreen) */}
+          <button
+            type="button"
+            className="project-cover-fullscreen-close project-cover-fullscreen-close-bottom"
+            onClick={closeFullscreen}
+            aria-label="Fermer"
+          >
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+              <line x1="18" y1="6" x2="6" y2="18" />
+              <line x1="6" y1="6" x2="18" y2="18" />
+            </svg>
+          </button>
+          {images.length > 1 && (
+            <button
+              type="button"
+              className="project-cover-fullscreen-arrow project-cover-fullscreen-arrow-prev"
+              onClick={goPrev}
+              aria-label="Image précédente"
+            >
+              <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+                <polyline points="15 18 9 12 15 6" />
+              </svg>
+            </button>
+          )}
+          <div className="project-cover-fullscreen-slide">
+            {hasVideoExtension(images[fullscreenIndex]) || isMpAudioProject ? (
+              <video
+                src={images[fullscreenIndex]}
+                autoPlay
+                loop
+                muted
+                playsInline
+                className="project-cover-fullscreen-media"
+              />
+            ) : (
+              <img
+                src={images[fullscreenIndex]}
+                alt={`${projectName} - Image ${fullscreenIndex + 1}`}
+                className="project-cover-fullscreen-media"
+              />
+            )}
+          </div>
+          {images.length > 1 && (
+            <button
+              type="button"
+              className="project-cover-fullscreen-arrow project-cover-fullscreen-arrow-next"
+              onClick={goNext}
+              aria-label="Image suivante"
+            >
+              <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+                <polyline points="9 18 15 12 9 6" />
+              </svg>
+            </button>
+          )}
+          {images.length > 1 && (
+            <span className="project-cover-fullscreen-counter" aria-live="polite">
+              {fullscreenIndex + 1} / {images.length}
+            </span>
+          )}
+        </div>
+      )}
     </>
   );
 };

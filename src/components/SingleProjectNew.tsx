@@ -64,9 +64,10 @@ interface SingleProjectProps {
   coverImage?: string | null;
   projectCategory?: string | null;
   onSwipeYChange?: (y: number) => void;
+  coverFullscreenActive?: boolean;
 }
 
-const SingleProjectNew: FC<SingleProjectProps> = ({ projectData, onBackClick, coverImage = null, projectCategory = null, onSwipeYChange }) => {
+const SingleProjectNew: FC<SingleProjectProps> = ({ projectData, onBackClick, coverImage = null, projectCategory = null, onSwipeYChange, coverFullscreenActive = false }) => {
   const { t, language } = useLanguage();
   const isEn = language === 'en';
   const [isClosing, setIsClosing] = useState(false);
@@ -115,6 +116,12 @@ const SingleProjectNew: FC<SingleProjectProps> = ({ projectData, onBackClick, co
       onSwipeYChange(0);
     }
   }, []); // Seulement au montage
+
+  // Remonter en haut de la page à chaque changement de projet (prev/next)
+  useEffect(() => {
+    const el = pageRef.current;
+    if (el) el.scrollTo(0, 0);
+  }, [projectData.id]);
 
   // JSON-LD CreativeWork pour que les IA et crawlers (avec JS) puissent lire le contenu du projet
   useEffect(() => {
@@ -309,27 +316,26 @@ const SingleProjectNew: FC<SingleProjectProps> = ({ projectData, onBackClick, co
     <>
       <motion.div 
         ref={pageRef}
-        className={`page active single-project-page ${isClosing ? 'closing' : ''} ${isDragging ? 'dragging' : ''}`}
-        style={isDragging ? {
-          y: y,
-          top: `${topPosition}px`,
-        } : isClosing ? {
-          y: screenHeight,
-          top: `${topPosition}px`,
-        } : {
-          y: 0,
-          top: `${topPosition}px`,
-        }}
-        animate={!isDragging && isClosing ? {
-          y: screenHeight,
-        } : !isDragging ? {
-          y: 0,
-        } : undefined}
-        transition={{
-          type: "spring",
-          stiffness: 300,
-          damping: 30,
-        }}
+        className={`page active single-project-page ${isClosing ? 'closing' : ''} ${isDragging ? 'dragging' : ''} ${coverFullscreenActive ? 'cover-fullscreen-active' : ''}`}
+        style={
+          isDragging
+            ? { y: y, top: `${topPosition}px` }
+            : { top: `${topPosition}px` }
+        }
+        animate={
+          isDragging
+            ? undefined
+            : (isClosing || coverFullscreenActive)
+              ? { y: screenHeight }
+              : { y: 0 }
+        }
+        transition={coverFullscreenActive
+          ? { duration: 0.4, ease: [0.25, 0.1, 0.25, 1] }
+          : {
+              type: "spring",
+              stiffness: 300,
+              damping: 30,
+            }}
         initial={false}
       >
         {/* Barre de fermeture en haut */}

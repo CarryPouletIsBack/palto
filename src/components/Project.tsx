@@ -1,7 +1,8 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import SingleProjectNew from './SingleProjectNew';
 import { getProjectByTitle, getAllProjects, type ProjectWithMeta } from '../services/projectService';
 import { type ProjectData } from '../data/projectsNew';
+import './Project.css';
 
 interface ProjectProps {
   onBackClick: () => void;
@@ -9,25 +10,39 @@ interface ProjectProps {
   coverImage?: string | null;
   projectCategory?: string | null;
   onSwipeYChange?: (y: number) => void;
+  coverFullscreenActive?: boolean;
 }
 
-const Project = ({ onBackClick, projectName = 'Playdago', coverImage = null, projectCategory = null, onSwipeYChange }: ProjectProps) => {
+function loadProject(projectName: string): ProjectData | null {
+  const project = getProjectByTitle(projectName);
+  if (project) return project as ProjectData;
+  const allProjects = getAllProjects();
+  const found = allProjects.find(p => p.id === projectName || p.title === projectName);
+  return found ? (found as ProjectData) : null;
+}
+
+const Project = ({ onBackClick, projectName = 'Playdago', coverImage = null, projectCategory = null, onSwipeYChange, coverFullscreenActive = false }: ProjectProps) => {
   const [projectData, setProjectData] = useState<ProjectData | null>(null);
+  const [isTransitioning, setIsTransitioning] = useState(false);
+  const previousProjectNameRef = useRef<string | null>(null);
 
   useEffect(() => {
-    // Charger le projet depuis localStorage
-    const project = getProjectByTitle(projectName);
-    if (project) {
-      // Convertir ProjectWithMeta en ProjectData
-      setProjectData(project as ProjectData);
-    } else {
-      // Fallback : chercher par ID si le titre ne correspond pas
-      const allProjects = getAllProjects();
-      const foundProject = allProjects.find(p => p.id === projectName || p.title === projectName);
-      if (foundProject) {
-        setProjectData(foundProject as ProjectData);
-      }
+    const isSwitch = previousProjectNameRef.current !== null && previousProjectNameRef.current !== projectName;
+    previousProjectNameRef.current = projectName;
+
+    if (isSwitch) {
+      setIsTransitioning(true);
+      setProjectData(null);
+      const t = setTimeout(() => {
+        const next = loadProject(projectName);
+        setProjectData(next);
+        setIsTransitioning(false);
+      }, 420);
+      return () => clearTimeout(t);
     }
+
+    const next = loadProject(projectName);
+    setProjectData(next);
   }, [projectName]);
 
   // Écouter les changements de localStorage
@@ -48,10 +63,15 @@ const Project = ({ onBackClick, projectName = 'Playdago', coverImage = null, pro
     };
   }, [projectName]);
 
-  if (!projectData) {
-    return <div>Chargement...</div>;
+  if (!projectData || isTransitioning) {
+    return (
+      <div className="project-loading" aria-live="polite">
+        <div className="project-loading-spinner" aria-hidden />
+        <span className="project-loading-text">Chargement du projet…</span>
+      </div>
+    );
   }
-  
+
   return (
     <SingleProjectNew 
       projectData={projectData} 
@@ -59,6 +79,7 @@ const Project = ({ onBackClick, projectName = 'Playdago', coverImage = null, pro
       coverImage={coverImage}
       projectCategory={projectCategory}
       onSwipeYChange={onSwipeYChange}
+      coverFullscreenActive={coverFullscreenActive}
     />
   );
 };

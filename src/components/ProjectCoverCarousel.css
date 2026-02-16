@@ -6,6 +6,12 @@
   height: calc(50vh + 150px);
   z-index: 1999;
   overflow: hidden;
+  transition: height 0.4s cubic-bezier(0.25, 0.1, 0.25, 1);
+}
+
+/* Quand la page projet glisse vers le bas (fullscreen), la cover prend toute la hauteur */
+.project-cover-image-above.project-cover-fullscreen-expanded {
+  height: 100vh;
 }
 
 /* Couche des boutons au premier plan : reste au-dessus de la page au scroll */
@@ -104,6 +110,62 @@
 }
 
 /* Overlay #FFF8F5 à 66 % d’opacité derrière l’image du cover */
+/* Zone en bas à droite de la cover pour le bouton fullscreen */
+.project-cover-fullscreen-trigger-layer {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: calc(50vh + 150px);
+  z-index: 2000;
+  pointer-events: none;
+  display: flex;
+  align-items: flex-end;
+  justify-content: flex-end;
+  padding: 0 24px 72px 0;
+  transition: height 0.4s cubic-bezier(0.25, 0.1, 0.25, 1);
+}
+
+.project-cover-image-above.project-cover-fullscreen-expanded + .project-cover-fullscreen-trigger-layer {
+  height: 100vh;
+}
+.project-cover-fullscreen-trigger-layer .project-cover-fullscreen-btn {
+  pointer-events: auto;
+}
+
+.project-cover-fullscreen-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 48px;
+  height: 48px;
+  padding: 0;
+  border: none;
+  border-radius: 50%;
+  cursor: pointer;
+  background: rgba(255, 255, 255, 0.25);
+  backdrop-filter: blur(12px) saturate(1.8) brightness(1.1);
+  -webkit-backdrop-filter: blur(12px) saturate(1.8) brightness(1.1);
+  box-shadow:
+    0 8px 32px 0 rgba(31, 38, 135, 0.2),
+    0 2px 16px 0 rgba(31, 38, 135, 0.1),
+    inset 0 1px 0 0 rgba(255, 255, 255, 0.4),
+    inset 0 -1px 0 0 rgba(255, 255, 255, 0.2);
+  transition: background 0.2s ease, transform 0.2s ease;
+  color: #000;
+}
+.project-cover-fullscreen-btn:hover {
+  background: rgba(255, 255, 255, 0.4);
+  transform: scale(1.05);
+}
+.project-cover-fullscreen-btn:active {
+  transform: scale(0.98);
+}
+.project-cover-fullscreen-btn svg {
+  flex-shrink: 0;
+}
+
+/* Overlay #FFF8F5 à 66 % d'opacité derrière l'image du cover */
 .project-cover-image-above::before {
   content: '';
   position: absolute;
@@ -172,6 +234,144 @@
   border: none !important;
   outline: none !important;
   box-shadow: none !important;
+}
+
+/* Modal plein écran : image en grand + carousel (flèches) */
+.project-cover-fullscreen-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 3000;
+  background: #000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+/* Image qui recouvre toute la page */
+.project-cover-fullscreen-slide {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+}
+.project-cover-fullscreen-media {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center;
+  display: block;
+}
+
+/* Bouton fermer en bas à droite : même style que le bouton fullscreen (glass) */
+.project-cover-fullscreen-close {
+  position: absolute;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 48px;
+  height: 48px;
+  padding: 0;
+  border: none;
+  border-radius: 50%;
+  cursor: pointer;
+  background: rgba(255, 255, 255, 0.25);
+  backdrop-filter: blur(12px) saturate(1.8) brightness(1.1);
+  -webkit-backdrop-filter: blur(12px) saturate(1.8) brightness(1.1);
+  box-shadow:
+    0 8px 32px 0 rgba(31, 38, 135, 0.2),
+    0 2px 16px 0 rgba(31, 38, 135, 0.1),
+    inset 0 1px 0 0 rgba(255, 255, 255, 0.4),
+    inset 0 -1px 0 0 rgba(255, 255, 255, 0.2);
+  transition: background 0.2s ease, transform 0.2s ease;
+  color: #000;
+}
+/* Même position que le bouton fullscreen sur la cover (bas droite) */
+.project-cover-fullscreen-close-bottom {
+  bottom: 72px;
+  right: 24px;
+  top: auto;
+  left: auto;
+}
+.project-cover-fullscreen-close:hover {
+  background: rgba(255, 255, 255, 0.4);
+  transform: scale(1.05);
+}
+.project-cover-fullscreen-close:active {
+  transform: scale(0.98);
+}
+.project-cover-fullscreen-close svg {
+  flex-shrink: 0;
+}
+
+/* Flèches : même style que le bouton fullscreen (glass) */
+.project-cover-fullscreen-arrow {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 48px;
+  height: 48px;
+  padding: 0;
+  border: none;
+  border-radius: 50%;
+  cursor: pointer;
+  background: rgba(255, 255, 255, 0.25);
+  backdrop-filter: blur(12px) saturate(1.8) brightness(1.1);
+  -webkit-backdrop-filter: blur(12px) saturate(1.8) brightness(1.1);
+  box-shadow:
+    0 8px 32px 0 rgba(31, 38, 135, 0.2),
+    0 2px 16px 0 rgba(31, 38, 135, 0.1),
+    inset 0 1px 0 0 rgba(255, 255, 255, 0.4),
+    inset 0 -1px 0 0 rgba(255, 255, 255, 0.2);
+  transition: background 0.2s ease, transform 0.2s ease;
+  color: #000;
+  flex-shrink: 0;
+}
+.project-cover-fullscreen-arrow:hover {
+  background: rgba(255, 255, 255, 0.4);
+  transform: translateY(-50%) scale(1.05);
+}
+.project-cover-fullscreen-arrow:active {
+  transform: translateY(-50%) scale(0.98);
+}
+.project-cover-fullscreen-arrow svg {
+  flex-shrink: 0;
+}
+.project-cover-fullscreen-arrow-prev {
+  left: 24px;
+}
+.project-cover-fullscreen-arrow-next {
+  right: 24px;
+}
+
+.project-cover-fullscreen-counter {
+  position: absolute;
+  bottom: 24px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 10;
+  font-size: 14px;
+  color: rgba(255, 255, 255, 0.9);
+  font-family: 'DM Mono', monospace;
+  padding: 8px 16px;
+  border-radius: 100px;
+  background: rgba(255, 255, 255, 0.25);
+  backdrop-filter: blur(12px) saturate(1.8) brightness(1.1);
+  -webkit-backdrop-filter: blur(12px) saturate(1.8) brightness(1.1);
+  box-shadow:
+    0 8px 32px 0 rgba(31, 38, 135, 0.2),
+    0 2px 16px 0 rgba(31, 38, 135, 0.1),
+    inset 0 1px 0 0 rgba(255, 255, 255, 0.4),
+    inset 0 -1px 0 0 rgba(255, 255, 255, 0.2);
 }
 
 /* Responsive */

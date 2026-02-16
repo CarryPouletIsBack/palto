@@ -424,6 +424,9 @@ body.accueil-page .page.active:not(.single-project-page) {
   display: flex;
   flex-direction: column;
   gap: 4px;
+  /* Pas de fond ni bordure sur le texte du carousel (évite la reprise de .project-info dans Project.css) */
+  background: transparent;
+  border: none;
 }
 
 /* Custom pagination bullets */
@@ -475,39 +478,42 @@ body.accueil-page .page.active:not(.single-project-page) {
   }
 }
 
-.project-category {
-  font-family: 'DM Mono', monospace;
-  font-weight: 300;
-  font-size: 12px;
-  line-height: 1.5;
-  color: white;
-  letter-spacing: 1.56px;
-  margin: 0;
+/* Surcharge pour la carte Hero : pas de fond sur le bloc texte du carousel */
+.hero-card.project-card .project-info {
+  background: transparent;
+  border: none;
 }
 
-.project-title {
+/* Styles des textes uniquement dans les cartes du carousel Hero */
+.hero-card.project-card .project-info .project-title,
+.project-slide .project-info .project-title {
   font-family: 'Space Grotesk', sans-serif;
   font-size: 42px;
   font-weight: 800;
-  color: #ffffff;
+  color: #fff;
   margin: 0;
   text-align: left;
 }
 
-.project-date {
+.hero-card.project-card .project-info .project-category,
+.project-slide .project-info .project-category {
   font-family: 'DM Mono', monospace;
   font-weight: 300;
-  font-size: 14px;
+  font-size: 12px;
   line-height: 1.5;
-  color: rgba(255, 255, 255, 1);
-  letter-spacing: 1.82px;
+  color: #fff;
+  letter-spacing: 1.56px;
   margin: 0;
 }
 
-/* Surcharge pour la carte Hero : .project-info p { color: #222 } dans Project.css est plus spécifique */
 .hero-card.project-card .project-info .project-date,
 .project-slide .project-info .project-date {
-  color: rgba(255, 255, 255, 1);
+  font-family: var(--sp-font-mono, 'DM Mono', monospace);
+  font-size: 12px;
+  line-height: 20px;
+  font-weight: 500;
+  color: #fff;
+  margin: 0;
 }
 
 /* Carte Services */

@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 // import { SpeedInsights } from '@vercel/speed-insights/react'
 import Header from './components/Header'
 import Hero from './components/Hero'
@@ -29,9 +29,21 @@ function App() {
   const [currentProjectImage, setCurrentProjectImage] = useState<string | null>(null)
   const [currentProjectCategory, setCurrentProjectCategory] = useState<string | null>(null)
   const [projectSwipeY, setProjectSwipeY] = useState(0)
+  const [coverFullscreenActive, setCoverFullscreenActive] = useState(false)
+  const [coverFullscreenModalOpen, setCoverFullscreenModalOpen] = useState(false)
+  const coverFullscreenModalTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const [error, setError] = useState<Error | null>(null)
   const [isAuthChecked, setIsAuthChecked] = useState(false)
   const [isLoggedIn, setIsLoggedIn] = useState(false)
+
+  // Nettoyer le timeout fullscreen cover à la destruction
+  useEffect(() => {
+    return () => {
+      if (coverFullscreenModalTimeoutRef.current) {
+        clearTimeout(coverFullscreenModalTimeoutRef.current)
+      }
+    }
+  }, [])
 
   // Gestion d'erreur globale
   useEffect(() => {
@@ -400,6 +412,25 @@ function App() {
             coverImage={currentProjectImage} 
             projectName={currentPage.startsWith('project-') ? currentPage.replace('project-', '') : 'Playdago'}
             swipeY={projectSwipeY}
+            coverFullscreenActive={coverFullscreenActive}
+            isFullscreenModalOpen={coverFullscreenModalOpen}
+            onFullscreenOpen={() => {
+              if (coverFullscreenModalTimeoutRef.current) clearTimeout(coverFullscreenModalTimeoutRef.current)
+              setCoverFullscreenActive(true)
+              setCoverFullscreenModalOpen(false)
+              coverFullscreenModalTimeoutRef.current = setTimeout(() => {
+                coverFullscreenModalTimeoutRef.current = null
+                setCoverFullscreenModalOpen(true)
+              }, 550)
+            }}
+            onFullscreenClose={() => {
+              if (coverFullscreenModalTimeoutRef.current) {
+                clearTimeout(coverFullscreenModalTimeoutRef.current)
+                coverFullscreenModalTimeoutRef.current = null
+              }
+              setCoverFullscreenModalOpen(false)
+              setCoverFullscreenActive(false)
+            }}
             onClose={() => {
               trackEvent('close_project', 'navigation', currentPage.replace('project-', ''))
               setProjectSwipeY(0)
@@ -407,6 +438,7 @@ function App() {
               window.history.pushState({}, '', getPathFromPage(previousPage))
             }}
             onPreviousProject={() => {
+              window.scrollTo(0, 0)
               const currentName = currentPage.startsWith('project-') ? currentPage.replace('project-', '') : 'Playdago'
               const idx = PROJECT_ORDER.indexOf(currentName as typeof PROJECT_ORDER[number])
               const prevIdx = idx <= 0 ? PROJECT_ORDER.length - 1 : idx - 1
@@ -419,6 +451,7 @@ function App() {
               window.history.pushState({}, '', getPathFromPage(`project-${prevName}`))
             }}
             onNextProject={() => {
+              window.scrollTo(0, 0)
               const currentName = currentPage.startsWith('project-') ? currentPage.replace('project-', '') : 'Playdago'
               const idx = PROJECT_ORDER.indexOf(currentName as typeof PROJECT_ORDER[number])
               const nextIdx = idx < 0 ? 0 : (idx + 1) % PROJECT_ORDER.length
@@ -446,6 +479,7 @@ function App() {
             coverImage={currentProjectImage} 
             projectCategory={currentProjectCategory}
             onSwipeYChange={setProjectSwipeY}
+            coverFullscreenActive={coverFullscreenActive}
           />
         )}
       </>

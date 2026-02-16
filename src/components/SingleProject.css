@@ -135,6 +135,11 @@
   animation: slideDown 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
+/* Fullscreen cover : pas d'animation CSS pour laisser Framer Motion gérer le translateY */
+.single-project-page.cover-fullscreen-active {
+  animation: none !important;
+}
+
 
 /* Main : valeurs Figma (maquette 1440px – padding 48px 80px, gap 80px) */
 .single-project-page .main-single-project {
