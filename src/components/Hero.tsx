@@ -13,7 +13,8 @@ interface HeroProps {
 }
 
 const Hero = ({ onPageChange }: HeroProps) => {
-  const { t } = useLanguage()
+  const { t, language } = useLanguage()
+  const prefix = language === 'en' ? '/en' : '/fr'
   const [allProjects, setAllProjects] = useState<MenuItem[]>([])
 
   useEffect(() => {
@@ -161,6 +162,71 @@ const Hero = ({ onPageChange }: HeroProps) => {
                 </div>
               </div>
             </div>
+
+              {/* Liens internes pour SEO et sitelinks Google (Pedaboard, Playdago, Kaldera, À propos, Contact) */}
+              <nav className="hero-seo-links" aria-label={t('hero.seoDiscover')}>
+                <span className="hero-seo-links-title">{t('hero.seoDiscover')}</span>
+                <a
+                  href={`${prefix}/pedaboard`}
+                  className="hero-seo-link"
+                  onClick={(e) => {
+                    e.preventDefault()
+                    onPageChange('project-Pedaboard', '/images/cover-project-pedaboard.png', 'Site web')
+                    trackEvent('click', 'seo_link', 'pedaboard')
+                  }}
+                >
+                  Pedaboard
+                </a>
+                <span className="hero-seo-desc"> — {t('hero.seoPedaboardDesc')}</span>
+                <a
+                  href={`${prefix}/playdago`}
+                  className="hero-seo-link"
+                  onClick={(e) => {
+                    e.preventDefault()
+                    onPageChange('project-Playdago', '/images/cover-project-playdago.png', 'Application')
+                    trackEvent('click', 'seo_link', 'playdago')
+                  }}
+                >
+                  Playdago
+                </a>
+                <span className="hero-seo-desc"> — {t('hero.seoPlaydagoDesc')}</span>
+                <a
+                  href={`${prefix}/kaldera`}
+                  className="hero-seo-link"
+                  onClick={(e) => {
+                    e.preventDefault()
+                    onPageChange('project-Kaldera', '/images/cover-project-kaldera.png', 'Site web')
+                    trackEvent('click', 'seo_link', 'kaldera')
+                  }}
+                >
+                  Kaldera
+                </a>
+                <span className="hero-seo-desc"> — {t('hero.seoKalderaDesc')}</span>
+                <a
+                  href={`${prefix}/about`}
+                  className="hero-seo-link"
+                  onClick={(e) => {
+                    e.preventDefault()
+                    onPageChange('aproposnew')
+                    trackEvent('click', 'seo_link', 'about')
+                  }}
+                >
+                  {t('nav.about')}
+                </a>
+                <span className="hero-seo-desc"> — {t('hero.seoAboutDesc')}</span>
+                <a
+                  href={`${prefix}/about`}
+                  className="hero-seo-link"
+                  onClick={(e) => {
+                    e.preventDefault()
+                    onPageChange('aproposnew')
+                    trackEvent('click', 'seo_link', 'contact')
+                  }}
+                >
+                  {t('nav.contact')}
+                </a>
+                <span className="hero-seo-desc"> — {t('hero.seoContactDesc')}</span>
+              </nav>
 
               {/* Footer : copyright + liens réseaux */}
               <div className="hero-footer">

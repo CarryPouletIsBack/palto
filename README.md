@@ -224,6 +224,8 @@ Les URLs incluent le préfixe de langue `/fr` ou `/en`.
 - **Balises hreflang** : Pour chaque page, le head contient dynamiquement trois liens `rel="alternate"` : `hreflang="fr"`, `hreflang="en"`, et `hreflang="x-default"` (pointe vers la version EN). Google utilise ces balises pour associer les versions FR et EN et éviter le duplicate content. **x-default = anglais** : si la langue de l’utilisateur est inconnue (ou US/UK, etc.), Google affiche la version EN par défaut.
 - **URL de base pour le SEO** : En production, définir `VITE_SITE_URL=https://anthony-merault.fr` (ou ton domaine) dans les variables d’environnement Vercel. Sans cette variable, le script utilise `window.location.origin` (correct en prod si le site est servi sur le bon domaine).
 - **Titre et méta** : Le titre du document (`document.title`) est mis à jour à chaque changement de page. La méta description par défaut (dans `index.html`) est en anglais pour la racine.
+- **Canonical** : Chaque page reçoit dynamiquement un `<link rel="canonical">` vers son URL propre (évite le duplicate content avec paramètres UTM, etc.).
+- **Checklist complète** : Voir [SEO_INDEXATION.md](./SEO_INDEXATION.md) pour le récapitulatif (déjà en place, à faire manuellement, optionnel).
 
 ## 🚀 Installation et Lancement
 

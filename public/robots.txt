@@ -4,9 +4,15 @@
 User-agent: *
 Allow: /
 
+# Contenu lisible par les IA / crawlers sans JS :
+# - /projects-content.json (texte des projets en JSON)
+# - /content-for-crawlers.html (même contenu en HTML)
+
 # Ne pas indexer les zones privées et les API
 Disallow: /api/
 Disallow: /dashboard
+Disallow: /fr/dashboard
+Disallow: /en/dashboard
 Disallow: /login
 
 # Sitemap

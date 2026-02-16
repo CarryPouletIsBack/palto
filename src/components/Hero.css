@@ -183,6 +183,25 @@ body.accueil-page .page.active:not(.single-project-page) {
 }
 
 /* Footer : copyright + liens réseaux (même largeur que hero-card services-card) */
+/* Liens internes SEO / sitelinks : masqués visuellement, restent dans le DOM pour crawlers et référencement */
+.hero-seo-links {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
+}
+.hero-seo-links-title,
+.hero-seo-link,
+.hero-seo-desc {
+  /* styles conservés pour le contenu mais non visibles */
+}
+
 .hero-footer {
   display: flex;
   flex-direction: row;

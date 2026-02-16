@@ -161,10 +161,24 @@ function App() {
     }
   }, [language])
 
-  // SEO : balises hreflang + x-default (anglais par défaut pour public international / Linear)
+  // SEO : canonical, hreflang + x-default (anglais par défaut pour public international / Linear)
   const siteBaseUrl = (import.meta.env.VITE_SITE_URL as string) || (typeof window !== 'undefined' ? window.location.origin : '')
   useEffect(() => {
     if (!siteBaseUrl || currentPage === 'dashboard') return
+    const base = siteBaseUrl.replace(/\/$/, '')
+    const currentPath = getPathFromPage(currentPage)
+    const canonicalUrl = `${base}${currentPath}`
+
+    // Canonical : URL propre de la page (évite duplicate content avec ?utm_* etc.)
+    let canonical = document.querySelector('link[rel="canonical"]') as HTMLLinkElement | null
+    if (!canonical) {
+      canonical = document.createElement('link')
+      canonical.rel = 'canonical'
+      document.head.appendChild(canonical)
+    }
+    canonical.href = canonicalUrl
+
+    // hreflang
     const existing = document.querySelectorAll('link[rel="alternate"][hreflang]')
     existing.forEach((el) => el.remove())
     const pathFr = getPathForLang(currentPage, 'fr')
@@ -172,15 +186,15 @@ function App() {
     const linkFr = document.createElement('link')
     linkFr.rel = 'alternate'
     linkFr.hreflang = 'fr'
-    linkFr.href = `${siteBaseUrl.replace(/\/$/, '')}${pathFr}`
+    linkFr.href = `${base}${pathFr}`
     const linkEn = document.createElement('link')
     linkEn.rel = 'alternate'
     linkEn.hreflang = 'en'
-    linkEn.href = `${siteBaseUrl.replace(/\/$/, '')}${pathEn}`
+    linkEn.href = `${base}${pathEn}`
     const linkDefault = document.createElement('link')
     linkDefault.rel = 'alternate'
     linkDefault.hreflang = 'x-default'
-    linkDefault.href = `${siteBaseUrl.replace(/\/$/, '')}${pathEn}`
+    linkDefault.href = `${base}${pathEn}`
     document.head.appendChild(linkFr)
     document.head.appendChild(linkEn)
     document.head.appendChild(linkDefault)

@@ -1,0 +1,43 @@
+{
+  "description": "Contenu textuel des pages projet pour crawlers et IA (sans exécution JavaScript). Anthony Merault - Product Designer | Building Complex SaaS & Design Systems.",
+  "siteUrl": "https://anthony-merault.fr",
+  "projects": [
+    {
+      "slug": "playdago",
+      "title": "Playdago",
+      "subtitle": "Application de pédagogie active",
+      "year": "2024",
+      "summary": "Playdago est un outil interne de gestion et de pilotage conçu pour une professionnelle de la pédagogie active. Le projet part d'un besoin clair : centraliser des données aujourd'hui éparpillées sur plusieurs plateformes (base clients, formations, commandes, newsletter, rappels, événements), afin d'obtenir une vue d'ensemble fiable, réduire la charge mentale et améliorer le suivi des activités. L'objectif n'était pas de remplacer les outils existants (emailing, e-commerce, etc.), mais de créer une interface centrale de lecture, de suivi et de rappel, capable de relier toutes les informations clés autour d'un même client.",
+      "context": "Playdago est un outil interne de gestion et de pilotage conçu pour une professionnelle de la pédagogie active. Le projet part d'un besoin clair : centraliser des données aujourd'hui éparpillées sur plusieurs plateformes (base clients, formations, commandes, newsletter, rappels, événements), afin d'obtenir une vue d'ensemble fiable, réduire la charge mentale et améliorer le suivi des activités.",
+      "urlFr": "https://anthony-merault.fr/fr/playdago",
+      "urlEn": "https://anthony-merault.fr/en/playdago"
+    },
+    {
+      "slug": "pedaboard",
+      "title": "Pedaboard",
+      "subtitle": "CRM et pilotage pour la pédagogie active",
+      "year": "2025",
+      "summary": "Pedaboard est un outil interne de gestion et de pilotage conçu pour une professionnelle de la pédagogie active. Le projet part d'un besoin clair : centraliser des données aujourd'hui éparpillées sur plusieurs plateformes (base clients, formations, commandes, newsletter, rappels, événements), afin d'obtenir une vue d'ensemble fiable, réduire la charge mentale et améliorer le suivi des activités. L'objectif n'était pas de remplacer les outils existants (emailing, e-commerce, etc.), mais de créer une interface centrale de lecture, de suivi et de rappel, capable de relier toutes les informations clés autour d'un même client.",
+      "context": "Pedaboard est un outil interne de gestion et de pilotage conçu pour une professionnelle de la pédagogie active. Le projet part d'un besoin clair : centraliser des données éparpillées sur plusieurs plateformes (base clients, formations, commandes, newsletter, rappels, événements), afin d'obtenir une vue d'ensemble fiable et améliorer le suivi des activités.",
+      "urlFr": "https://anthony-merault.fr/fr/pedaboard",
+      "urlEn": "https://anthony-merault.fr/en/pedaboard"
+    },
+    {
+      "slug": "kaldera",
+      "title": "Kaldera",
+      "subtitle": "Application web de simulation trail",
+      "year": "2025",
+      "summary": "Kaldera est une application web de simulation trail permettant aux coureurs de visualiser des parcours, préparer leurs entraînements et simuler des courses en conditions réalistes. Le projet vise à offrir une expérience immersive pour planifier et analyser des sorties trail avec des données de relief, dénivelé et météo.",
+      "context": "Kaldera répond au besoin des trailers de visualiser et simuler des parcours avant une course ou un entraînement. L'application intègre des données cartographiques, le dénivelé et des indicateurs de difficulté pour aider les coureurs à mieux préparer leurs sorties. L'objectif est de créer une interface intuitive et performante pour la simulation trail.",
+      "projectUrl": "https://trackali.com",
+      "urlFr": "https://anthony-merault.fr/fr/kaldera",
+      "urlEn": "https://anthony-merault.fr/en/kaldera"
+    }
+  ],
+  "about": {
+    "title": "À propos",
+    "description": "Anthony Merault - Product Designer | Building Complex SaaS & Design Systems. Parcours, compétences, expériences et formations. Portfolio et projets : Pedaboard, Playdago, Kaldera.",
+    "urlFr": "https://anthony-merault.fr/fr/about",
+    "urlEn": "https://anthony-merault.fr/en/about"
+  }
+}
