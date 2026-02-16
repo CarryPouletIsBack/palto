@@ -309,7 +309,7 @@
   flex-shrink: 0;
 }
 
-/* Flèches : même style que le bouton fullscreen (glass) */
+/* Flèches : même style que le bouton fullscreen (glass) + apparition en fondu */
 .project-cover-fullscreen-arrow {
   position: absolute;
   top: 50%;
@@ -335,6 +335,8 @@
   transition: background 0.2s ease, transform 0.2s ease;
   color: #000;
   flex-shrink: 0;
+  opacity: 0;
+  animation: project-cover-fullscreen-fade-in 0.4s ease 0.2s forwards;
 }
 .project-cover-fullscreen-arrow:hover {
   background: rgba(255, 255, 255, 0.4);
@@ -372,6 +374,17 @@
     0 2px 16px 0 rgba(31, 38, 135, 0.1),
     inset 0 1px 0 0 rgba(255, 255, 255, 0.4),
     inset 0 -1px 0 0 rgba(255, 255, 255, 0.2);
+  opacity: 0;
+  animation: project-cover-fullscreen-fade-in 0.4s ease 0.2s forwards;
+}
+
+@keyframes project-cover-fullscreen-fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
 }
 
 /* Responsive */
