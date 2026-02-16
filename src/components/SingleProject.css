@@ -4213,3 +4213,45 @@
 .wireframe-file-tree-container [aria-hidden="true"][class*="absolute"] {
   background-color: #666666 !important;
 }
+
+/* Bouton Contact fixe en bas d'écran (visible au scroll) – même style que close/arrows cover */
+.single-project-contact-fab-wrap {
+  position: fixed;
+  bottom: 24px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 2001;
+  pointer-events: auto;
+}
+
+.single-project-contact-fab {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 12px 24px;
+  border: none;
+  border-radius: 100px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+  font-family: var(--sp-font-body, 'Inter', sans-serif);
+  color: #000;
+  background: rgba(255, 255, 255, 0.25);
+  backdrop-filter: blur(12px) saturate(1.8) brightness(1.1);
+  -webkit-backdrop-filter: blur(12px) saturate(1.8) brightness(1.1);
+  box-shadow:
+    0 8px 32px 0 rgba(31, 38, 135, 0.2),
+    0 2px 16px 0 rgba(31, 38, 135, 0.1),
+    inset 0 1px 0 0 rgba(255, 255, 255, 0.4),
+    inset 0 -1px 0 0 rgba(255, 255, 255, 0.2);
+  transition: background 0.2s ease, transform 0.2s ease;
+}
+
+.single-project-contact-fab:hover {
+  background: rgba(255, 255, 255, 0.4);
+  transform: scale(1.05);
+}
+
+.single-project-contact-fab:active {
+  transform: scale(0.98);
+}

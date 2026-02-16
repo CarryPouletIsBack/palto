@@ -922,6 +922,23 @@ const SingleProjectNew: FC<SingleProjectProps> = ({ projectData, onBackClick, co
         />
         </div>
       </motion.div>
+
+      {/* Bouton Contact fixe en bas d'écran, visible au scroll (même style que close/arrows) */}
+      {scrollTop > 150 && (
+        <div className="single-project-contact-fab-wrap">
+          <button
+            type="button"
+            className="single-project-contact-fab"
+            onClick={() => {
+              trackEvent('click', 'project_cta', 'contact_fab');
+              setShowContactModal(true);
+            }}
+            aria-label={t('project.contactMe')}
+          >
+            {t('project.contactMe')}
+          </button>
+        </div>
+      )}
     </>
   );
 };

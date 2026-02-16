@@ -1,3 +1,4 @@
+import { createPortal } from 'react-dom';
 import { useLanguage } from '../contexts/LanguageContext';
 import ContactForm from './ContactForm';
 import './ContactModal.css';
@@ -13,7 +14,7 @@ export default function ContactModal({ isOpen, onClose }: ContactModalProps) {
 
   if (!isOpen) return null;
 
-  return (
+  const modal = (
     <div
       className="contact-modal-overlay"
       role="dialog"
@@ -38,4 +39,6 @@ export default function ContactModal({ isOpen, onClose }: ContactModalProps) {
       </div>
     </div>
   );
+
+  return createPortal(modal, document.body);
 }
