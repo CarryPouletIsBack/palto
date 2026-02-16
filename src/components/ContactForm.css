@@ -1,5 +1,6 @@
 /* Contact form – style Linear / Dark (zinc) */
 .contact-form {
+  position: relative;
   padding: 24px 0;
 }
 
@@ -39,6 +40,31 @@
 .contact-form-textarea {
   resize: none;
   min-height: 100px;
+}
+
+/* Espace entre le champ message et le bouton Envoyer */
+.contact-form-submit-wrap {
+  padding-top: 20px;
+}
+
+/* Honeypot anti-spam : invisible pour l'utilisateur */
+.contact-form-honeypot {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+.contact-form-honeypot-input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+  pointer-events: none;
 }
 
 .contact-form-error {

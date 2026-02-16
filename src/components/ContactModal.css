@@ -1,0 +1,61 @@
+.contact-modal-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 4000;
+  background: rgba(0, 0, 0, 0.6);
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding: 0 24px;
+  /* Descendre le contenu pour qu'il ne passe pas derrière le header */
+  padding-top: 100px;
+  overflow-y: auto;
+  box-sizing: border-box;
+}
+
+.contact-modal-box {
+  position: relative;
+  width: 100%;
+  max-width: 480px;
+  background: rgba(24, 24, 27, 0.98);
+  border: 1px solid rgba(39, 39, 42, 1);
+  border-radius: 16px;
+  padding: 32px;
+  margin-bottom: 48px;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+}
+
+.contact-modal-close {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  border: none;
+  border-radius: 8px;
+  background: transparent;
+  color: rgba(161, 161, 170, 1);
+  font-size: 24px;
+  line-height: 1;
+  cursor: pointer;
+  transition: color 0.2s, background 0.2s;
+}
+
+.contact-modal-close:hover {
+  color: rgba(244, 244, 245, 1);
+  background: rgba(39, 39, 42, 1);
+}
+
+.contact-modal-title {
+  font-size: 24px;
+  font-weight: 600;
+  margin: 0 0 8px 0;
+  color: rgba(244, 244, 245, 1);
+}
+
+.contact-modal-subtitle {
+  font-size: 14px;
+  color: rgba(161, 161, 170, 1);
+  margin: 0 0 24px 0;
+}

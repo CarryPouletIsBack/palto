@@ -13,6 +13,7 @@ import DonutChartRace from './DonutChartRace';
 import PositionnementMatrixChart from './PositionnementMatrixChart';
 import UserFlowChart from './UserFlowChart';
 import Button from './Button';
+import ContactModal from './ContactModal';
 
 // Constantes en dehors du composant pour éviter les re-créations
 const CLOSE_THRESHOLD = 100;
@@ -72,6 +73,7 @@ const SingleProjectNew: FC<SingleProjectProps> = ({ projectData, onBackClick, co
   const isEn = language === 'en';
   const [isClosing, setIsClosing] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
+  const [showContactModal, setShowContactModal] = useState(false);
   const [scrollTop, setScrollTop] = useState(0);
   const pageRef = useRef<HTMLDivElement>(null);
   const barRef = useRef<HTMLDivElement>(null);
@@ -907,13 +909,17 @@ const SingleProjectNew: FC<SingleProjectProps> = ({ projectData, onBackClick, co
               className="figma-cta-item"
               onClick={() => {
                 trackEvent('click', 'project_cta', 'contact');
-                window.location.href = '/#contact';
+                setShowContactModal(true);
               }}
             >
               {t('project.contactMe')}
             </Button>
           </div>
         </section>
+        <ContactModal
+          isOpen={showContactModal}
+          onClose={() => setShowContactModal(false)}
+        />
         </div>
       </motion.div>
     </>

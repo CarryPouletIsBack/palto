@@ -33,7 +33,7 @@ export default async function handler(
 
   try {
     const body = typeof req.body === 'string' ? JSON.parse(req.body) : req.body;
-    const { name, email, message } = body;
+    const { name, email, message, company, website } = body;
 
     if (!name || !email || !message) {
       return res.status(400).json({
@@ -41,12 +41,19 @@ export default async function handler(
       });
     }
 
+    if (website && String(website).trim() !== '') {
+      return res.status(400).json({ error: 'Invalid request' });
+    }
+
+    const companyLine = company && String(company).trim() ? `Entreprise : ${String(company).trim()}\n\n` : '';
+    const textBody = `${companyLine}${message}`;
+
     const data = await resend.emails.send({
       from: process.env.RESEND_FROM ?? 'Portfolio <onboarding@resend.dev>',
       to: [toEmail],
-      subject: `Nouveau message de ${name}`,
+      subject: `Nouveau message de ${name}${company && String(company).trim() ? ` (${String(company).trim()})` : ''}`,
       reply_to: email,
-      text: message,
+      text: textBody,
     });
 
     return res.status(200).json(data);

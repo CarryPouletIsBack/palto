@@ -20,6 +20,11 @@ vercel dev
 
 Puis ouvre le site et va sur la page Contact. Avec `npm run dev` seul, l’appel à `/api/send` échouera (pas de backend).
 
+## Anti-spam
+
+- **Honeypot** : champ invisible `website` dans le formulaire ; si un bot le remplit, l’API rejette.
+- **Optionnel** : limite par IP ou CAPTCHA si besoin.
+
 ## Dépendances
 
 - **resend** : envoi d’emails
