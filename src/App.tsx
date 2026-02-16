@@ -9,6 +9,8 @@ import ProjectCoverCarousel from './components/ProjectCoverCarousel'
 import Dashboard from './components/Dashboard'
 import Login from './components/Login'
 import ErrorPage from './components/ErrorPage'
+import Contact from './components/Contact'
+import { Toaster } from 'sonner'
 import { isAuthenticated } from './services/authService'
 import { trackPageView, trackEvent } from './services/googleAnalyticsTracking'
 import { useLanguage } from './contexts/LanguageContext'
@@ -85,6 +87,8 @@ function App() {
         targetPage = 'menu'
       } else if (pathToMatch === '/about' || pathToMatch === '/apropos' || pathToMatch.startsWith('/about')) {
         targetPage = 'aproposnew'
+      } else if (pathToMatch === '/contact' || pathToMatch.startsWith('/contact')) {
+        targetPage = 'contact'
       } else if (pathToMatch.startsWith('/project/')) {
         const projectId = pathToMatch.replace(/^\/project\//, '').toLowerCase()
         const projectName = projectId === 'playdago' ? 'Playdago' : projectId === 'pedaboard' ? 'Pedaboard' : projectId === 'kaldera' ? 'Kaldera' : projectId.charAt(0).toUpperCase() + projectId.slice(1)
@@ -151,6 +155,7 @@ function App() {
     const prefix = lang === 'en' ? '/en' : '/fr'
     if (page === 'accueil' || page === '404') return prefix
     if (page === 'apropos' || page === 'aproposnew') return `${prefix}/about`
+    if (page === 'contact') return `${prefix}/contact`
     if (page === 'dashboard') return `${prefix}/dashboard`
     if (page.startsWith('project-')) {
       const name = page.replace('project-', '')
@@ -233,6 +238,8 @@ function App() {
         setCurrentPage('accueil')
       } else if (pathToMatch === '/about') {
         setCurrentPage('aproposnew')
+      } else if (pathToMatch === '/contact') {
+        setCurrentPage('contact')
       } else if (pathToMatch === '/dashboard') {
         setCurrentPage('dashboard')
       } else if (/^\/playdago$/i.test(pathToMatch)) {
@@ -264,6 +271,7 @@ function App() {
       'menu': 'Menu - Anthony Merault - Product Designer | Building Complex SaaS & Design Systems',
       'apropos': 'À propos - Anthony Merault - Product Designer | Building Complex SaaS & Design Systems',
       'aproposnew': 'À propos - Anthony Merault - Product Designer | Building Complex SaaS & Design Systems',
+      'contact': 'Contact - Anthony Merault - Product Designer | Building Complex SaaS & Design Systems',
       'dashboard': 'Dashboard - Anthony Merault - Product Designer | Building Complex SaaS & Design Systems',
       'login': 'Connexion - Anthony Merault - Product Designer | Building Complex SaaS & Design Systems',
     }
@@ -340,8 +348,8 @@ function App() {
   const handleContactClick = () => {
     trackEvent('click', 'contact', 'header_contact')
     setPreviousPage(currentPage)
-    setCurrentPage('aproposnew')
-    window.history.pushState({}, '', getPathFromPage('aproposnew'))
+    setCurrentPage('contact')
+    window.history.pushState({}, '', getPathFromPage('contact'))
   }
 
   const handleSearchChange = () => {
@@ -393,6 +401,14 @@ function App() {
           <>
             {currentPage === 'apropos' && <About />}
             {currentPage === 'aproposnew' && <AboutNew />}
+            {currentPage === 'contact' && (
+              <Contact
+                onBackClick={() => {
+                  setCurrentPage(previousPage)
+                  window.history.pushState({}, '', getPathFromPage(previousPage))
+                }}
+              />
+            )}
             {currentPage === 'dashboard' && <Dashboard onBackClick={() => setCurrentPage('accueil')} />}
           </>
         )}
@@ -403,6 +419,9 @@ function App() {
             {previousPage === 'accueil' && <Hero onPageChange={handlePageChange} />}
             {previousPage === 'apropos' && <About />}
             {previousPage === 'aproposnew' && <AboutNew />}
+            {previousPage === 'contact' && (
+              <Contact onBackClick={() => {}} />
+            )}
           </>
         )}
         
@@ -511,6 +530,7 @@ function App() {
 
   return (
     <div className={`container ${currentPage === 'menu' ? 'menu-active' : ''}`}>
+      <Toaster position="bottom-right" theme="dark" />
       {/* Conteneur pour l'overlay de la search bar (portal) : couvre tout l'écran, sous le header */}
       <div id="search-overlay-root" className="search-overlay-root" />
       {currentPage !== 'dashboard' && (
