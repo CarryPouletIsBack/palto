@@ -11,6 +11,7 @@ import Dashboard from './components/Dashboard'
 import Login from './components/Login'
 import ErrorPage from './components/ErrorPage'
 import Contact from './components/Contact'
+import Rb2bScript from './components/Rb2bScript'
 import { Toaster } from 'sonner'
 import { isAuthenticated } from './services/authService'
 import { trackPageView, trackEvent } from './services/googleAnalyticsTracking'
@@ -532,6 +533,7 @@ function App() {
   return (
     <div className={`container ${currentPage === 'menu' ? 'menu-active' : ''}`}>
       <Analytics />
+      <Rb2bScript />
       <Toaster position="bottom-right" theme="dark" />
       {/* Conteneur pour l'overlay de la search bar (portal) : couvre tout l'écran, sous le header */}
       <div id="search-overlay-root" className="search-overlay-root" />
