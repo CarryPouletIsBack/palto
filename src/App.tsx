@@ -20,6 +20,8 @@ const PROJECT_COVER_IMAGES: Record<string, string> = {
   Kaldera: '/images/cover-project-kaldera.png',
 }
 
+const PROJECT_ORDER = ['Playdago', 'Pedaboard', 'Kaldera'] as const
+
 function App() {
   const { language, setLanguage } = useLanguage()
   const [currentPage, setCurrentPage] = useState('accueil')
@@ -129,6 +131,12 @@ function App() {
   // Mapping page -> URL path (avec préfixe langue /fr ou /en)
   const getPathFromPage = (page: string): string => {
     const prefix = language === 'en' ? '/en' : '/fr'
+    return getPathForLang(page, language)
+  }
+
+  /** Path pour une page et une langue donnée (pour hreflang SEO). */
+  function getPathForLang(page: string, lang: 'fr' | 'en'): string {
+    const prefix = lang === 'en' ? '/en' : '/fr'
     if (page === 'accueil' || page === '404') return prefix
     if (page === 'apropos' || page === 'aproposnew') return `${prefix}/about`
     if (page === 'dashboard') return `${prefix}/dashboard`
@@ -152,6 +160,41 @@ function App() {
       window.history.replaceState({}, document.title, path)
     }
   }, [language])
+
+  // SEO : balises hreflang + x-default (anglais par défaut pour public international / Linear)
+  const siteBaseUrl = (import.meta.env.VITE_SITE_URL as string) || (typeof window !== 'undefined' ? window.location.origin : '')
+  useEffect(() => {
+    if (!siteBaseUrl || currentPage === 'dashboard') return
+    const existing = document.querySelectorAll('link[rel="alternate"][hreflang]')
+    existing.forEach((el) => el.remove())
+    const pathFr = getPathForLang(currentPage, 'fr')
+    const pathEn = getPathForLang(currentPage, 'en')
+    const linkFr = document.createElement('link')
+    linkFr.rel = 'alternate'
+    linkFr.hreflang = 'fr'
+    linkFr.href = `${siteBaseUrl.replace(/\/$/, '')}${pathFr}`
+    const linkEn = document.createElement('link')
+    linkEn.rel = 'alternate'
+    linkEn.hreflang = 'en'
+    linkEn.href = `${siteBaseUrl.replace(/\/$/, '')}${pathEn}`
+    const linkDefault = document.createElement('link')
+    linkDefault.rel = 'alternate'
+    linkDefault.hreflang = 'x-default'
+    linkDefault.href = `${siteBaseUrl.replace(/\/$/, '')}${pathEn}`
+    document.head.appendChild(linkFr)
+    document.head.appendChild(linkEn)
+    document.head.appendChild(linkDefault)
+    return () => {
+      linkFr.remove()
+      linkEn.remove()
+      linkDefault.remove()
+    }
+  }, [currentPage, siteBaseUrl])
+
+  // Titre du document (onglet + SEO) à chaque changement de page
+  useEffect(() => {
+    document.title = getPageTitle(currentPage)
+  }, [currentPage])
 
   // Écouter le bouton Retour du navigateur
   useEffect(() => {
@@ -343,6 +386,36 @@ function App() {
             coverImage={currentProjectImage} 
             projectName={currentPage.startsWith('project-') ? currentPage.replace('project-', '') : 'Playdago'}
             swipeY={projectSwipeY}
+            onClose={() => {
+              trackEvent('close_project', 'navigation', currentPage.replace('project-', ''))
+              setProjectSwipeY(0)
+              setCurrentPage(previousPage)
+              window.history.pushState({}, '', getPathFromPage(previousPage))
+            }}
+            onPreviousProject={() => {
+              const currentName = currentPage.startsWith('project-') ? currentPage.replace('project-', '') : 'Playdago'
+              const idx = PROJECT_ORDER.indexOf(currentName as typeof PROJECT_ORDER[number])
+              const prevIdx = idx <= 0 ? PROJECT_ORDER.length - 1 : idx - 1
+              const prevName = PROJECT_ORDER[prevIdx]
+              trackEvent('previous_project', 'navigation', prevName)
+              setPreviousPage('accueil')
+              setCurrentPage(`project-${prevName}`)
+              setCurrentProjectImage(PROJECT_COVER_IMAGES[prevName] ?? null)
+              setProjectSwipeY(0)
+              window.history.pushState({}, '', getPathFromPage(`project-${prevName}`))
+            }}
+            onNextProject={() => {
+              const currentName = currentPage.startsWith('project-') ? currentPage.replace('project-', '') : 'Playdago'
+              const idx = PROJECT_ORDER.indexOf(currentName as typeof PROJECT_ORDER[number])
+              const nextIdx = idx < 0 ? 0 : (idx + 1) % PROJECT_ORDER.length
+              const nextName = PROJECT_ORDER[nextIdx]
+              trackEvent('next_project', 'navigation', nextName)
+              setPreviousPage('accueil')
+              setCurrentPage(`project-${nextName}`)
+              setCurrentProjectImage(PROJECT_COVER_IMAGES[nextName] ?? null)
+              setProjectSwipeY(0)
+              window.history.pushState({}, '', getPathFromPage(`project-${nextName}`))
+            }}
           />
         )}
         

@@ -218,6 +218,13 @@ Les URLs incluent le préfixe de langue `/fr` ou `/en`.
 - Éléments interactifs accessibles (`<button>` au lieu de `<div onClick>`)
 - Attributs d'accessibilité (`aria-label`, `alt` descriptifs)
 
+## 🌐 SEO & Indexation (FR / EN)
+
+- **Indexer les deux langues** : Les pages `/fr` et `/en` (et toutes les variantes : `/fr/about`, `/en/playdago`, etc.) sont faites pour être indexées. Cela permet d’être trouvé par les recruteurs en France (recherche en français) et à l’international (recherche en anglais, ex. Linear).
+- **Balises hreflang** : Pour chaque page, le head contient dynamiquement trois liens `rel="alternate"` : `hreflang="fr"`, `hreflang="en"`, et `hreflang="x-default"` (pointe vers la version EN). Google utilise ces balises pour associer les versions FR et EN et éviter le duplicate content. **x-default = anglais** : si la langue de l’utilisateur est inconnue (ou US/UK, etc.), Google affiche la version EN par défaut.
+- **URL de base pour le SEO** : En production, définir `VITE_SITE_URL=https://anthony-merault.fr` (ou ton domaine) dans les variables d’environnement Vercel. Sans cette variable, le script utilise `window.location.origin` (correct en prod si le site est servi sur le bon domaine).
+- **Titre et méta** : Le titre du document (`document.title`) est mis à jour à chaque changement de page. La méta description par défaut (dans `index.html`) est en anglais pour la racine.
+
 ## 🚀 Installation et Lancement
 
 ```bash
@@ -242,6 +249,10 @@ VITE_GOOGLE_REDIRECT_URI=http://localhost:5173/api/google-auth/callback
 # Google Analytics Tracking (react-ga4)
 # ⚠️ IMPORTANT : Pour react-ga4 (côté client), on DOIT utiliser VITE_ même dans Vercel
 VITE_GA_MEASUREMENT_ID=G-MS120551E9
+
+# SEO : URL canonique du site (pour les balises hreflang en production)
+# Ex. VITE_SITE_URL=https://anthony-merault.fr
+# VITE_SITE_URL=https://ton-domaine.fr
 
 # Dashboard (pour l'authentification)
 DASHBOARD_PASSWORD=votre_mot_de_passe
