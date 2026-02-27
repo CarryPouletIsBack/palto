@@ -377,7 +377,7 @@ function App() {
       <>
         {/* Afficher la page d'accueil */}
         {currentPage === 'accueil' && (
-          <Hero onPageChange={handlePageChange} />
+          <Hero onPageChange={handlePageChange} onContactClick={handleContactClick} />
         )}
 
         {/* Page d'erreur 404 */}
@@ -417,7 +417,7 @@ function App() {
         {/* Afficher la page précédente en arrière-plan quand on est sur un projet */}
         {isProjectPage && (
           <>
-            {previousPage === 'accueil' && <Hero onPageChange={handlePageChange} />}
+            {previousPage === 'accueil' && <Hero onPageChange={handlePageChange} onContactClick={handleContactClick} />}
             {previousPage === 'apropos' && <About />}
             {previousPage === 'aproposnew' && <AboutNew />}
             {previousPage === 'contact' && (

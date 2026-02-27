@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useLanguage } from '../contexts/LanguageContext'
 import { trackEvent } from '../services/googleAnalyticsTracking'
+import LanguageSwitcher from './LanguageSwitcher'
 import './Hero.css'
 import { getProjectsGroupedByCategory, type MenuItem } from '../services/projectService'
 import { Swiper, SwiperSlide } from 'swiper/react'
@@ -10,9 +11,13 @@ import 'swiper/css/pagination'
 
 interface HeroProps {
   onPageChange: (page: string, projectImage?: string, projectCategory?: string) => void
+  onContactClick?: () => void
 }
 
-const Hero = ({ onPageChange }: HeroProps) => {
+/** Mettre à true pour réafficher le carousel (code conservé) */
+const SHOW_CAROUSEL = false
+
+const Hero = ({ onPageChange, onContactClick }: HeroProps) => {
   const { t, language } = useLanguage()
   const prefix = language === 'en' ? '/en' : '/fr'
   const [allProjects, setAllProjects] = useState<MenuItem[]>([])
@@ -56,6 +61,7 @@ const Hero = ({ onPageChange }: HeroProps) => {
 
   return (
     <div className="page active">
+      <div className="hero-bg-grid" aria-hidden />
       <div className="main-accueil">
         <div className="hero-main">
           {/* Colonne de gauche */}
@@ -70,97 +76,106 @@ const Hero = ({ onPageChange }: HeroProps) => {
           {/* Colonne de droite */}
           <div className="hero-right-column">
             <div className="hero-right-column-scroll">
-              {/* Carte Infos */}
-              <div className="hero-card info-card">
-              <div className="card-header">
-                <h2 className="card-title">{t('hero.infos')}</h2>
-                <button className="card-arrow" onClick={() => onPageChange('aproposnew')} aria-label="Aller à la page À propos (nouvelle version)">
-                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" className="arrow-icon">
-                    <path d="M5 12H19M19 12L12 5M19 12L12 19" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                  </svg>
-                </button>
-              </div>
-            </div>
-
-            {/* Carte Projet Carousel */}
-            <div className="hero-card project-card">
-              <div className="project-content">
-                <Swiper
-                  modules={[Pagination]}
-                  spaceBetween={0}
-                  slidesPerView={1}
-                  pagination={{ 
-                    clickable: true,
-                    bulletClass: 'swiper-pagination-bullet custom-bullet',
-                    bulletActiveClass: 'swiper-pagination-bullet-active custom-bullet-active'
-                  }}
-                  className="swiper-container"
-                >
-                  {allProjects.map((project, index) => (
-                    <SwiperSlide key={index}>
-                      <div 
-                        className="project-slide"
-                        onClick={() => onPageChange(`project-${project.title}`, project.imageSrc, project.category)}
-                        style={{ cursor: 'pointer' }}
-                      >
-                        <div className="project-image-container">
-                          <img 
-                            src={project.imageSrc} 
-                            alt={project.title} 
-                            className="project-image"
-                          />
-                          <div className="project-overlay"></div>
-                        </div>
-                        <div className="project-info">
-                          <p className="project-category">
-                            {project.category === 'Application' ? t('hero.categoryApplication') :
-                             project.category === 'Site web' ? t('hero.categorySiteWeb') :
-                             project.category === 'Logo' ? t('hero.categoryLogo') :
-                             project.category === 'Motion' ? t('hero.categoryMotion') :
-                             (project.category === 'PLV' || project.category === 'Plv') ? t('hero.categoryPlv') : project.category}
-                          </p>
-                          <h3 className="project-title">{project.title}</h3>
-                          <p className="project-date">{projectDates[index] || '01/01/2025'}</p>
-                        </div>
-                      </div>
-                    </SwiperSlide>
-                  ))}
-                </Swiper>
-              </div>
-            </div>
-
-            {/* Carte Mes services (désactivée) */}
-            <div className="hero-card services-card hero-card-disabled">
-              <div className="card-header">
-                <h2 className="card-title">{t('hero.services')}</h2>
-                <div className="card-arrow">
-                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" className="arrow-icon">
-                    <path d="M5 12H19M19 12L12 5M19 12L12 19" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                  </svg>
-                </div>
-              </div>
-              <div className="services-content">
-                <div className="service-item">
-                  <div className="service-text">
-                    <p className="service-description">
-                      {t('hero.servicesDescription')}
-                    </p>
-                    <div className="service-tags">
-                      <span className="tag">{t('hero.tagManagement')}</span>
-                      <span className="tag">{t('hero.tagMaquette')}</span>
-                      <span className="tag">{t('hero.tagVision')}</span>
-                      <span className="tag">{t('hero.tagDesignSystem')}</span>
-                      <span className="tag">{t('hero.tagBranding')}</span>
-                      <span className="tag">{t('hero.tagConsultant')}</span>
-                    </div>
-                  </div>
-                  <div className="service-arrow">
+              {/* Carte Infos (entièrement cliquable) */}
+              <div
+                className="hero-card info-card"
+                onClick={() => onPageChange('aproposnew')}
+                onKeyDown={(e) => e.key === 'Enter' && onPageChange('aproposnew')}
+                role="button"
+                tabIndex={0}
+                aria-label={t('hero.infos')}
+              >
+                <div className="card-header">
+                  <h2 className="card-title">{t('hero.infos')}</h2>
+                  <div className="card-arrow" aria-hidden>
                     <svg width="24" height="24" viewBox="0 0 24 24" fill="none" className="arrow-icon">
-                      <path d="M7 17L17 7M17 7H7M17 7V17" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                      <path d="M5 12H19M19 12L12 5M19 12L12 19" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
                     </svg>
                   </div>
                 </div>
               </div>
+
+            {/* Carte Projet Carousel (masqué : SHOW_CAROUSEL = false, code conservé pour réactivation) */}
+            {SHOW_CAROUSEL && (
+              <div className="hero-card project-card">
+                <div className="project-content">
+                  <Swiper
+                    modules={[Pagination]}
+                    spaceBetween={0}
+                    slidesPerView={1}
+                    pagination={{ 
+                      clickable: true,
+                      bulletClass: 'swiper-pagination-bullet custom-bullet',
+                      bulletActiveClass: 'swiper-pagination-bullet-active custom-bullet-active'
+                    }}
+                    className="swiper-container"
+                  >
+                    {allProjects.map((project, index) => (
+                      <SwiperSlide key={index}>
+                        <div 
+                          className="project-slide"
+                          onClick={() => onPageChange(`project-${project.title}`, project.imageSrc, project.category)}
+                          style={{ cursor: 'pointer' }}
+                        >
+                          <div className="project-image-container">
+                            <img 
+                              src={project.imageSrc} 
+                              alt={project.title} 
+                              className="project-image"
+                            />
+                            <div className="project-overlay"></div>
+                          </div>
+                          <div className="project-info">
+                            <p className="project-category">
+                              {project.category === 'Application' ? t('hero.categoryApplication') :
+                               project.category === 'Site web' ? t('hero.categorySiteWeb') :
+                               project.category === 'Logo' ? t('hero.categoryLogo') :
+                               project.category === 'Motion' ? t('hero.categoryMotion') :
+                               (project.category === 'PLV' || project.category === 'Plv') ? t('hero.categoryPlv') : project.category}
+                            </p>
+                            <h3 className="project-title">{project.title}</h3>
+                            <p className="project-date">{projectDates[index] || '01/01/2025'}</p>
+                          </div>
+                        </div>
+                      </SwiperSlide>
+                    ))}
+                  </Swiper>
+                </div>
+              </div>
+            )}
+
+            {/* Liste des 3 projets : Playdago, Kaldera, Pedaboard (même style que le carousel) */}
+            <div className="hero-projects-list">
+              {[
+                { title: 'Pedaboard', imageSrc: '/images/cover-project-pedaboard.png', category: 'Site web', date: '10/11/2024' },
+                { title: 'Kaldera', imageSrc: '/images/cover-project-kaldera.png', category: 'Site web', date: '15/12/2024' },
+                { title: 'Playdago', imageSrc: '/images/cover-project-playdago.png', category: 'Application', date: '01/01/2025' },
+              ].map((project) => (
+                <div key={project.title} className="hero-card project-card">
+                  <div className="project-content">
+                    <div
+                      className="project-slide"
+                      onClick={() => onPageChange(`project-${project.title}`, project.imageSrc, project.category)}
+                      role="button"
+                      tabIndex={0}
+                      onKeyDown={(e) => e.key === 'Enter' && onPageChange(`project-${project.title}`, project.imageSrc, project.category)}
+                      style={{ cursor: 'pointer' }}
+                    >
+                      <div className="project-image-container">
+                        <img src={project.imageSrc} alt={project.title} className="project-image" />
+                        <div className="project-overlay" />
+                      </div>
+                      <div className="project-info">
+                        <p className="project-category">
+                          {project.category === 'Application' ? t('hero.categoryApplication') : t('hero.categorySiteWeb')}
+                        </p>
+                        <h3 className="project-title">{project.title}</h3>
+                        <p className="project-date">{project.date}</p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              ))}
             </div>
 
               {/* Liens internes pour SEO et sitelinks Google (Pedaboard, Playdago, Kaldera, À propos, Contact) */}
@@ -228,11 +243,31 @@ const Hero = ({ onPageChange }: HeroProps) => {
                 <span className="hero-seo-desc"> — {t('hero.seoContactDesc')}</span>
               </nav>
 
-              {/* Footer : copyright + liens réseaux */}
+              {/* Carte Contact (même style que Infos, juste au-dessus du footer) */}
+              <div
+                className="hero-card info-card"
+                onClick={() => onContactClick?.()}
+                onKeyDown={(e) => e.key === 'Enter' && onContactClick?.()}
+                role="button"
+                tabIndex={0}
+                aria-label={t('nav.contact')}
+              >
+                <div className="card-header">
+                  <h2 className="card-title">{t('nav.contact')}</h2>
+                  <div className="card-arrow" aria-hidden>
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" className="arrow-icon">
+                      <path d="M5 12H19M19 12L12 5M19 12L12 19" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                    </svg>
+                  </div>
+                </div>
+              </div>
+
+              {/* Footer : copyright, FR|EN, icônes GitHub/LinkedIn/Figma */}
               <div className="hero-footer">
                 <p className="hero-footer-copyright">
                   {t('hero.footer', { year: new Date().getFullYear() })}
                 </p>
+                <LanguageSwitcher />
                 <div className="hero-footer-links">
                   <a href="https://github.com/CarryPouletIsBack/" target="_blank" rel="noopener noreferrer" aria-label="GitHub" onClick={() => trackEvent('click', 'social', 'github')}>
                     <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor" aria-hidden>

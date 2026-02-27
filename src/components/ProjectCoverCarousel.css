@@ -7,6 +7,7 @@
   z-index: 1999;
   overflow: hidden;
   transition: height 0.4s cubic-bezier(0.25, 0.1, 0.25, 1);
+  background-color: #509ED8; /* Fond bleu derrière l'image cover */
 }
 
 /* Quand la page projet glisse vers le bas (fullscreen), la cover prend toute la hauteur */

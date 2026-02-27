@@ -598,6 +598,11 @@
   line-height: 1.3;
 }
 
+/* Masquer les flèches des cartes dans la section introduction */
+.apropos-new-page #about-intro .hero-card.services-card .card-arrow {
+  display: none !important;
+}
+
 .apropos-new-page .intro-column .hero-card.services-card .card-arrow svg,
 .apropos-new-page .intro-column .hero-card.services-card .card-arrow .arrow-icon {
   color: #1f2937 !important;

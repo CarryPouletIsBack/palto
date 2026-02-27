@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react'
 import Button from './Button'
 import MobileSearchBar from './MobileSearchBar'
-import LanguageSwitcher from './LanguageSwitcher'
 import Skeleton from './Skeleton'
 import { useLanguage } from '../contexts/LanguageContext'
 import './Header.css'
@@ -86,7 +85,6 @@ const Header = ({ onMenuClick, onContactClick, onLogoClick, currentPage, onSearc
               onContactClick={onContactClick}
               projectSwipeY={projectSwipeY}
             />
-            <LanguageSwitcher />
           </div>
           <div className="header-actions" style={{ display: 'none' }}>
             <Button variant="secondary" onClick={onContactClick} className="hidden-contact-btn">Contact</Button>
