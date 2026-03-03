@@ -32,6 +32,7 @@ function App() {
   const [currentProjectImage, setCurrentProjectImage] = useState<string | null>(null)
   const [currentProjectCategory, setCurrentProjectCategory] = useState<string | null>(null)
   const [projectSwipeY, setProjectSwipeY] = useState(0)
+  const [coverLiftProgress, setCoverLiftProgress] = useState(0)
   const [coverFullscreenActive, setCoverFullscreenActive] = useState(false)
   const [coverFullscreenModalOpen, setCoverFullscreenModalOpen] = useState(false)
   const coverFullscreenModalTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
@@ -432,6 +433,7 @@ function App() {
             coverImage={currentProjectImage} 
             projectName={currentPage.startsWith('project-') ? currentPage.replace('project-', '') : 'Playdago'}
             swipeY={projectSwipeY}
+            coverLiftProgress={coverLiftProgress}
             coverFullscreenActive={coverFullscreenActive}
             isFullscreenModalOpen={coverFullscreenModalOpen}
             onFullscreenOpen={() => {
@@ -454,6 +456,7 @@ function App() {
             onClose={() => {
               trackEvent('close_project', 'navigation', currentPage.replace('project-', ''))
               setProjectSwipeY(0)
+              setCoverLiftProgress(0)
               setCurrentPage(previousPage)
               window.history.pushState({}, '', getPathFromPage(previousPage))
             }}
@@ -468,6 +471,7 @@ function App() {
               setCurrentPage(`project-${prevName}`)
               setCurrentProjectImage(PROJECT_COVER_IMAGES[prevName] ?? null)
               setProjectSwipeY(0)
+              setCoverLiftProgress(0)
               window.history.pushState({}, '', getPathFromPage(`project-${prevName}`))
             }}
             onNextProject={() => {
@@ -481,6 +485,7 @@ function App() {
               setCurrentPage(`project-${nextName}`)
               setCurrentProjectImage(PROJECT_COVER_IMAGES[nextName] ?? null)
               setProjectSwipeY(0)
+              setCoverLiftProgress(0)
               window.history.pushState({}, '', getPathFromPage(`project-${nextName}`))
             }}
           />
@@ -492,6 +497,7 @@ function App() {
             onBackClick={() => {
               trackEvent('close_project', 'navigation', currentPage.replace('project-', ''))
               setProjectSwipeY(0)
+              setCoverLiftProgress(0)
               setCurrentPage(previousPage)
               window.history.pushState({}, '', getPathFromPage(previousPage))
             }} 
@@ -499,6 +505,7 @@ function App() {
             coverImage={currentProjectImage} 
             projectCategory={currentProjectCategory}
             onSwipeYChange={setProjectSwipeY}
+            onLiftProgressChange={setCoverLiftProgress}
             coverFullscreenActive={coverFullscreenActive}
           />
         )}

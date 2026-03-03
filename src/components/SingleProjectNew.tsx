@@ -12,11 +12,44 @@ import BlurText from './BlurText';
 import DonutChartRace from './DonutChartRace';
 import PositionnementMatrixChart from './PositionnementMatrixChart';
 import UserFlowChart from './UserFlowChart';
+import { TreeNode } from './flow/FlowTree';
+import type { FlowNodeData } from '../data/flowData';
 import Button from './Button';
 import ContactModal from './ContactModal';
 
+/** User flow → arbre : tous les enfants en branches (vertical) → Compte, Contact, Page Tâches, Formation, Laboratoire sur la même colonne après Dashboard */
+function userFlowToFlowData(userFlow: { nodes: { id: string; name?: string; title?: string }[]; links: { from: string; to: string }[] }): FlowNodeData | null {
+  const { nodes, links } = userFlow;
+  if (!nodes?.length || !links?.length) return null;
+  const nodeMap = new Map(nodes.map((n) => [n.id, { id: n.id, label: n.name || n.title || n.id }]));
+  const childrenByFrom = new Map<string, string[]>();
+  const toIds = new Set(links.map((l) => l.to));
+  for (const l of links) {
+    if (!childrenByFrom.has(l.from)) childrenByFrom.set(l.from, []);
+    childrenByFrom.get(l.from)!.push(l.to);
+  }
+  const rootIds = nodes.map((n) => n.id).filter((id) => !toIds.has(id));
+  if (rootIds.length === 0) return null;
+  function buildNode(id: string): FlowNodeData {
+    const info = nodeMap.get(id);
+    const label = info?.label ?? id;
+    const childIds = childrenByFrom.get(id) ?? [];
+    if (childIds.length === 0) return { id, label };
+    return { id, label, branches: childIds.map((cid) => buildNode(cid)) };
+  }
+  return buildNode(rootIds[0]);
+}
+
 // Constantes en dehors du composant pour éviter les re-créations
 const CLOSE_THRESHOLD = 100;
+
+/** Animation d'entrée au scroll pour les sections (comme les titres) */
+const scrollSectionProps = {
+  initial: { opacity: 0, y: 28 },
+  whileInView: { opacity: 1, y: 0 },
+  viewport: { once: true, margin: '0px 0px -60px 0px' as const },
+  transition: { duration: 0.4, ease: [0.25, 0.1, 0.25, 1] },
+};
 
 // Import des icônes SVG
 import searchIconBlue from '../assets/4610de4ae01e3b351bbcba9c930287159bbda981.svg'
@@ -65,20 +98,92 @@ interface SingleProjectProps {
   coverImage?: string | null;
   projectCategory?: string | null;
   onSwipeYChange?: (y: number) => void;
+  onLiftProgressChange?: (progress: number) => void;
   coverFullscreenActive?: boolean;
 }
 
-const SingleProjectNew: FC<SingleProjectProps> = ({ projectData, onBackClick, coverImage = null, projectCategory = null, onSwipeYChange, coverFullscreenActive = false }) => {
+const SingleProjectNew: FC<SingleProjectProps> = ({ projectData, onBackClick, coverImage = null, projectCategory = null, onSwipeYChange, onLiftProgressChange, coverFullscreenActive = false }) => {
   const { t, language } = useLanguage();
   const isEn = language === 'en';
   const [isClosing, setIsClosing] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
   const [showContactModal, setShowContactModal] = useState(false);
-  const [scrollTop, setScrollTop] = useState(0);
+  const LIFT_SCROLL_MAX = 200; // Pixels de "scroll" pour que le panneau touche le haut
+  const [liftScroll, setLiftScroll] = useState(0); // 0 à LIFT_SCROLL_MAX : phase où seul le panneau monte
+  const [contentScrollTop, setContentScrollTop] = useState(0); // scroll du contenu une fois le panneau en haut
   const pageRef = useRef<HTMLDivElement>(null);
   const barRef = useRef<HTMLDivElement>(null);
   const tocRef = useRef<HTMLDivElement>(null);
-  
+  const userflowTreeContainerRef = useRef<HTMLDivElement>(null);
+
+  const [selectedNodes, setSelectedNodes] = useState<Set<string>>(new Set());
+  const [selectedNodeData, setSelectedNodeData] = useState<FlowNodeData | null>(null);
+  const [popupPosition, setPopupPosition] = useState<{ x: number; y: number } | null>(null);
+
+  const findNode = useCallback((data: FlowNodeData, id: string): FlowNodeData | null => {
+    if (data.id === id) return data;
+    if (data.branches) {
+      for (const branch of data.branches) {
+        const found = findNode(branch, id);
+        if (found) return found;
+      }
+    }
+    if (data.next) {
+      const found = findNode(data.next, id);
+      if (found) return found;
+    }
+    return null;
+  }, []);
+
+  const findAncestors = useCallback((data: FlowNodeData, targetId: string, path: string[] = []): string[] | null => {
+    if (data.id === targetId) return path;
+    if (data.branches) {
+      for (const branch of data.branches) {
+        const result = findAncestors(branch, targetId, [...path, data.id]);
+        if (result) return result;
+      }
+    }
+    if (data.next) {
+      const result = findAncestors(data.next, targetId, [...path, data.id]);
+      if (result) return result;
+    }
+    return null;
+  }, []);
+
+  const userFlowTreeData = useMemo(() => {
+    const uf = projectData.userFlow ? (isEn && projectData.translations?.en?.userFlow ? projectData.translations.en.userFlow : projectData.userFlow) : null;
+    return uf ? userFlowToFlowData(uf) : null;
+  }, [projectData.userFlow, projectData.translations, isEn]);
+
+  const handleNodeClick = useCallback((nodeId: string, event?: React.MouseEvent) => {
+    if (!userFlowTreeData) return;
+    const node = findNode(userFlowTreeData, nodeId);
+    if (node) {
+      if (selectedNodeData?.id === nodeId) {
+        setSelectedNodeData(null);
+        setPopupPosition(null);
+        setSelectedNodes(new Set());
+      } else {
+        if (event && userflowTreeContainerRef.current) {
+          const rect = (event.currentTarget as HTMLElement).getBoundingClientRect();
+          const containerRect = userflowTreeContainerRef.current.getBoundingClientRect();
+          setPopupPosition({
+            x: rect.right - containerRect.left + 16,
+            y: rect.top - containerRect.top + rect.height / 2,
+          });
+        }
+        setSelectedNodeData(node);
+        const ancestors = findAncestors(userFlowTreeData, nodeId);
+        setSelectedNodes(new Set(ancestors ? [...ancestors, nodeId] : [nodeId]));
+      }
+    }
+  }, [findNode, findAncestors, selectedNodeData?.id, userFlowTreeData]);
+
+  const closePopup = useCallback(() => {
+    setSelectedNodeData(null);
+    setPopupPosition(null);
+  }, []);
+
   // Motion values pour le swipe down
   const y = useMotionValue(0);
   
@@ -87,29 +192,113 @@ const SingleProjectNew: FC<SingleProjectProps> = ({ projectData, onBackClick, co
     return typeof window !== 'undefined' ? window.innerHeight : 800;
   }, []);
 
-  // Calculer la position top en fonction du scroll (de 48vh + 100px à 0)
+  // Position top : uniquement pilotée par liftScroll (pas par le scroll du contenu)
+  const initialTop = useMemo(() => screenHeight * 0.48 + 100, [screenHeight]);
   const topPosition = useMemo(() => {
-    const maxScroll = 200; // Nombre de pixels de scroll pour atteindre le haut
-    const initialTop = screenHeight * 0.48 + 100; // 48vh + 100px en pixels
-    const scrollProgress = Math.min(scrollTop / maxScroll, 1); // 0 à 1
-    return initialTop * (1 - scrollProgress); // De 48vh + 100px à 0
-  }, [scrollTop, screenHeight]);
+    const progress = Math.min(liftScroll / LIFT_SCROLL_MAX, 1);
+    return initialTop * (1 - progress);
+  }, [liftScroll, initialTop]);
 
-  // Écouter le scroll pour mettre à jour la position
+  // Notifier le parent pour assombrir la cover (0 = pas assombri, 1 = panneau en haut)
   useEffect(() => {
-    const handleScroll = () => {
-      if (pageRef.current) {
-        setScrollTop(pageRef.current.scrollTop);
+    if (!onLiftProgressChange) return;
+    const progress = Math.min(1, Math.max(0, 1 - topPosition / initialTop));
+    onLiftProgressChange(progress);
+  }, [topPosition, initialTop, onLiftProgressChange]);
+
+  // Wheel/touch : pendant la phase de montée, seul le panneau monte ; mises à jour throttlées en rAF pour fluidité
+  const liftDeltaRef = useRef(0);
+  const rafScheduledRef = useRef(false);
+  const liftScrollRef = useRef(0);
+  liftScrollRef.current = liftScroll;
+
+  useEffect(() => {
+    const el = pageRef.current;
+    if (!el) return;
+
+    const flushLift = () => {
+      rafScheduledRef.current = false;
+      const delta = liftDeltaRef.current;
+      liftDeltaRef.current = 0;
+      if (delta === 0) return;
+      setLiftScroll(prev => {
+        const next = Math.max(0, Math.min(LIFT_SCROLL_MAX, prev + delta));
+        return next;
+      });
+    };
+
+    const scheduleFlush = () => {
+      if (rafScheduledRef.current) return;
+      rafScheduledRef.current = true;
+      requestAnimationFrame(flushLift);
+    };
+
+    const handleWheel = (e: WheelEvent) => {
+      const scrollTop = el.scrollTop;
+      const maxLift = LIFT_SCROLL_MAX;
+      const current = liftScrollRef.current;
+
+      if (e.deltaY > 0) {
+        if (current < maxLift) {
+          liftDeltaRef.current += e.deltaY;
+          scheduleFlush();
+          e.preventDefault();
+        }
+      } else {
+        if (scrollTop <= 0 && current > 0) {
+          liftDeltaRef.current += e.deltaY;
+          scheduleFlush();
+          e.preventDefault();
+        }
       }
     };
 
-    const pageElement = pageRef.current;
-    if (pageElement) {
-      pageElement.addEventListener('scroll', handleScroll, { passive: true });
-      return () => {
-        pageElement.removeEventListener('scroll', handleScroll);
-      };
-    }
+    const touchStartY = { current: 0 };
+    const handleTouchStart = (e: TouchEvent) => {
+      touchStartY.current = e.touches[0].clientY;
+    };
+    const handleTouchMove = (e: TouchEvent) => {
+      const y = e.touches[0].clientY;
+      const deltaY = touchStartY.current - y;
+      touchStartY.current = y;
+
+      const scrollTop = el.scrollTop;
+      const maxLift = LIFT_SCROLL_MAX;
+      const current = liftScrollRef.current;
+
+      if (deltaY > 0) {
+        if (current < maxLift) {
+          liftDeltaRef.current += deltaY;
+          scheduleFlush();
+          e.preventDefault();
+        }
+      } else {
+        if (scrollTop <= 0 && current > 0) {
+          liftDeltaRef.current += deltaY;
+          scheduleFlush();
+          e.preventDefault();
+        }
+      }
+    };
+
+    el.addEventListener('wheel', handleWheel, { passive: false });
+    el.addEventListener('touchstart', handleTouchStart, { passive: true });
+    el.addEventListener('touchmove', handleTouchMove, { passive: false });
+
+    return () => {
+      el.removeEventListener('wheel', handleWheel);
+      el.removeEventListener('touchstart', handleTouchStart);
+      el.removeEventListener('touchmove', handleTouchMove);
+    };
+  }, []);
+
+  // Suivre le scroll du contenu (pour FAB et autres) une fois le panneau en haut
+  useEffect(() => {
+    const el = pageRef.current;
+    if (!el) return;
+    const handleScroll = () => setContentScrollTop(el.scrollTop);
+    el.addEventListener('scroll', handleScroll, { passive: true });
+    return () => el.removeEventListener('scroll', handleScroll);
   }, []);
 
   // Notifier le parent de la valeur initiale
@@ -119,11 +308,14 @@ const SingleProjectNew: FC<SingleProjectProps> = ({ projectData, onBackClick, co
     }
   }, []); // Seulement au montage
 
-  // Remonter en haut de la page à chaque changement de projet (prev/next)
+  // Remonter en haut de la page et réinitialiser la phase de montée à chaque changement de projet (prev/next)
   useEffect(() => {
+    setLiftScroll(0);
+    setContentScrollTop(0);
+    onLiftProgressChange?.(0);
     const el = pageRef.current;
     if (el) el.scrollTo(0, 0);
-  }, [projectData.id]);
+  }, [projectData.id, onLiftProgressChange]);
 
   // JSON-LD CreativeWork pour que les IA et crawlers (avec JS) puissent lire le contenu du projet
   useEffect(() => {
@@ -321,8 +513,8 @@ const SingleProjectNew: FC<SingleProjectProps> = ({ projectData, onBackClick, co
         className={`page active single-project-page ${isClosing ? 'closing' : ''} ${isDragging ? 'dragging' : ''} ${coverFullscreenActive ? 'cover-fullscreen-active' : ''}`}
         style={
           isDragging
-            ? { y: y, top: `${topPosition}px` }
-            : { top: `${topPosition}px` }
+            ? { y: y, top: `${topPosition}px`, borderRadius: topPosition <= 0 ? 0 : '24px 24px 0 0' }
+            : { top: `${topPosition}px`, borderRadius: topPosition <= 0 ? 0 : '24px 24px 0 0' }
         }
         animate={
           isDragging
@@ -364,10 +556,10 @@ const SingleProjectNew: FC<SingleProjectProps> = ({ projectData, onBackClick, co
               <BlurText text={projectData.title} className="project-main-title" />
             </h1>
             <div className="project-badges">
-              {projectCategory && <span className="project-badge">{projectCategory}</span>}
+              {projectCategory && projectCategory !== '2025' && <span className="project-badge">{projectCategory}</span>}
               {projectData.badges?.filter(badge => {
                 const categoryBadges = ['Application', 'Site Web', 'Navigation', 'Logo', 'Motion', 'PLV'];
-                return !categoryBadges.includes(badge);
+                return !categoryBadges.includes(badge) && badge !== '2025';
               }).map((badge, index) => (
                 <span key={index} className="project-badge">{badge}</span>
               ))}
@@ -389,7 +581,7 @@ const SingleProjectNew: FC<SingleProjectProps> = ({ projectData, onBackClick, co
 
           {/* Contexte du projet (même bloc, gap 40px) */}
           {(projectData.objectifs || projectData.teamNote) && (
-            <section id="context" className="project-section context-project-section">
+            <motion.section id="context" className="project-section context-project-section" {...scrollSectionProps}>
               <div className="context-project-wrapper">
                 <h2 className="section-title">{t('project.context')}</h2>
                 <div className="context-project-grid">
@@ -400,11 +592,11 @@ const SingleProjectNew: FC<SingleProjectProps> = ({ projectData, onBackClick, co
                   {(projectData.objectifs?.length ?? 0) > 0 && (
                     <div className="context-objectifs">
                       <h3 className="context-subtitle">{t('project.objectives')}</h3>
-                      <div className="context-objectifs-list">
+                      <ol className="context-objectifs-list">
                         {(isEn && projectData.translations?.en?.objectifs ? projectData.translations.en.objectifs : projectData.objectifs!).map((obj, i) => (
-                          <p key={i}>{obj}</p>
+                          <li key={i}>{obj}</li>
                         ))}
-                      </div>
+                      </ol>
                     </div>
                   )}
                 </div>
@@ -432,17 +624,20 @@ const SingleProjectNew: FC<SingleProjectProps> = ({ projectData, onBackClick, co
                     </tbody>
                   </table>
                   {projectData.teamNote && (
-                    <p className="context-team-note">{isEn && projectData.translations?.en?.teamNote ? projectData.translations.en.teamNote : projectData.teamNote}</p>
+                    <div className="context-my-role">
+                      <h3 className="context-subtitle">{t('project.myRole')}</h3>
+                      <p className="context-team-note">{isEn && projectData.translations?.en?.teamNote ? projectData.translations.en.teamNote : projectData.teamNote}</p>
+                    </div>
                   )}
                 </div>
                 </div>
               </div>
-            </section>
+            </motion.section>
           )}
         </div>
 
         {/* 1.5. Sommaire */}
-        <section className="project-section table-of-contents-section">
+        <motion.section className="project-section table-of-contents-section" {...scrollSectionProps}>
           <div ref={tocRef} className="section-card">
             <nav className="table-of-contents">
               <ul className="toc-list">
@@ -466,20 +661,20 @@ const SingleProjectNew: FC<SingleProjectProps> = ({ projectData, onBackClick, co
               </ul>
             </nav>
           </div>
-        </section>
+        </motion.section>
 
         {/* 2. Résumé / Introduction (masqué si Contexte du projet affiché) */}
         {!projectData.objectifs && !projectData.teamNote && (
-        <section id="introduction" className="project-section intro-section">
+        <motion.section id="introduction" className="project-section intro-section" {...scrollSectionProps}>
           <div className="section-card intro-metadata-container">
             <p className="intro-text">{isEn && projectData.translations?.en?.summary ? projectData.translations.en.summary : projectData.summary}</p>
           </div>
-        </section>
+        </motion.section>
         )}
 
         {/* 2b. Problématique / Solution (gauche) + Matrice de positionnement (droite) */}
         {(projectData.problematique || projectData.solution || projectData.positionnementMatrix) && (
-          <section id="problematique" className="project-section problematique-section">
+          <motion.section id="problematique" className="project-section problematique-section" {...scrollSectionProps}>
             <div className="problematique-solution-grid">
               <div className="problematique-solution-texts">
                 <div className="problematique-block">
@@ -496,16 +691,17 @@ const SingleProjectNew: FC<SingleProjectProps> = ({ projectData, onBackClick, co
                   <PositionnementMatrixChart
                     data={isEn && projectData.translations?.en?.positionnementMatrix ? projectData.translations.en.positionnementMatrix : projectData.positionnementMatrix}
                     className="positionnement-matrix-chart"
+                    scrollRootRef={pageRef}
                   />
                 </div>
               )}
             </div>
-          </section>
+          </motion.section>
         )}
 
         {/* 3. L'équipe projet (Figma 96-98) */}
         {!projectData.teamNote && (
-        <section id="team" className="project-section team-section">
+        <motion.section id="team" className="project-section team-section" {...scrollSectionProps}>
           <div className="section-card">
             <h2 className="section-title">{t('project.team')}</h2>
             <table className="figma-equipe-table">
@@ -530,12 +726,12 @@ const SingleProjectNew: FC<SingleProjectProps> = ({ projectData, onBackClick, co
               </tbody>
             </table>
           </div>
-        </section>
+        </motion.section>
         )}
 
         {/* 4. Processus détaillé – 4 cartes (Figma) */}
         {projectData.processReunions && projectData.processReunions.length > 0 && (
-          <section id="processus" className="project-section processus-cards-section">
+          <motion.section id="processus" className="project-section processus-cards-section" {...scrollSectionProps}>
             <h2 className="section-title">{t('project.process')}</h2>
             <p className="processus-intro">{t('project.processIntro')}</p>
             <div className="processus-cards-wrapper">
@@ -543,7 +739,7 @@ const SingleProjectNew: FC<SingleProjectProps> = ({ projectData, onBackClick, co
                 modules={[Pagination]}
                 spaceBetween={24}
                 slidesPerView="auto"
-                centeredSlides={true}
+                centeredSlides={false}
                 pagination={{ clickable: true }}
                 className="processus-cards-swiper"
                 onSwiper={(swiper) => {
@@ -574,13 +770,13 @@ const SingleProjectNew: FC<SingleProjectProps> = ({ projectData, onBackClick, co
               </Swiper>
             </div>
             <p className="processus-summary">{t('project.processSummary')}</p>
-          </section>
+          </motion.section>
         )}
 
         {/* === Contenu Figma 10-84 (après processus) === */}
 
         {/* Audit */}
-        <section id="audit" className="project-section figma-audit-section">
+        <motion.section id="audit" className="project-section figma-audit-section" {...scrollSectionProps}>
           <h2 className="section-title">{t('project.audit')}</h2>
           <div className="figma-two-cols">
             <p className="figma-lead">{t('project.auditLead')}</p>
@@ -591,7 +787,7 @@ const SingleProjectNew: FC<SingleProjectProps> = ({ projectData, onBackClick, co
               modules={[Pagination]}
               spaceBetween={24}
               slidesPerView="auto"
-              centeredSlides={true}
+              centeredSlides={false}
               pagination={{ clickable: true }}
               className="figma-audit-carousel"
               onSwiper={(swiper) => {
@@ -618,28 +814,65 @@ const SingleProjectNew: FC<SingleProjectProps> = ({ projectData, onBackClick, co
               ))}
             </Swiper>
           </div>
-        </section>
+        </motion.section>
 
         {/* Architecture & Flux */}
-        <section id="architecture" className="project-section figma-architecture-section">
+        <motion.section id="architecture" className="project-section figma-architecture-section" {...scrollSectionProps}>
           <h2 className="section-title">{t('project.architecture')}</h2>
           <div className="figma-two-cols">
             <p className="figma-lead">{t('project.archLead')}</p>
             <p className="figma-body">{t('project.archBody')}</p>
           </div>
           <h3 className="figma-subsection-title">{t('project.userFlow')}</h3>
-          <div className="figma-userflow">
-            {projectData.userFlow ? (
-              <UserFlowChart data={isEn && projectData.translations?.en?.userFlow ? projectData.translations.en.userFlow : projectData.userFlow} className="figma-userflow-chart" />
+          <div className="figma-userflow userflow-arbre-style">
+            {userFlowTreeData ? (
+              <div className="skill-tree-wrapper">
+                <div ref={userflowTreeContainerRef} id="userflow-tree" className="skill-tree-container">
+                  <TreeNode
+                    data={userFlowTreeData}
+                    selectedNodes={selectedNodes}
+                    onNodeClick={handleNodeClick}
+                    variant="userflow"
+                  />
+                  {selectedNodeData && popupPosition && (
+                    <div
+                      className="node-popup-tooltip"
+                      style={{
+                        left: `${popupPosition.x}px`,
+                        top: `${popupPosition.y}px`,
+                        transform: 'translateY(-50%)',
+                      }}
+                    >
+                      <button type="button" className="node-popup-close" onClick={closePopup} aria-label="Fermer">×</button>
+                      <h3 className="node-popup-title">{selectedNodeData.label}</h3>
+                      {selectedNodeData.description && (
+                        <p className="node-popup-description">{selectedNodeData.description}</p>
+                      )}
+                      {selectedNodeData.branches && selectedNodeData.branches.length > 0 && (
+                        <div className="node-popup-competences">
+                          <h4 className="node-popup-competences-title">{t('about.competencesTitle')}</h4>
+                          <ul className="node-popup-competences-list">
+                            {selectedNodeData.branches.map((branch) => (
+                              <li key={branch.id} className="node-popup-competence-item">
+                                {branch.label}
+                              </li>
+                            ))}
+                          </ul>
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
+              </div>
             ) : (
               <img src="/single-project/fe88fac0-9c5a-44ad-af6a-151d4da1bfa0.png" alt="User flow" className="figma-userflow-img" />
             )}
           </div>
-        </section>
+        </motion.section>
 
         {/* Design system (Figma 100-282 : Palette Pedaboard complète) */}
         {projectData.designSystem && (
-          <section id="design-system" className="project-section figma-design-system-section">
+          <motion.section id="design-system" className="project-section figma-design-system-section" {...scrollSectionProps}>
             <h2 className="section-title">{t('project.designSystem')}</h2>
             <h3 className="figma-palette-title">{t('project.palette')}</h3>
             <p className="figma-caption">{t('project.materialDesign')}</p>
@@ -726,11 +959,11 @@ const SingleProjectNew: FC<SingleProjectProps> = ({ projectData, onBackClick, co
                 ))}
               </div>
             )}
-          </section>
+          </motion.section>
         )}
 
         {/* Conception & Itération (Figma 100-424) */}
-        <section id="conception" className="project-section figma-conception-section">
+        <motion.section id="conception" className="project-section figma-conception-section" {...scrollSectionProps}>
           <h2 className="section-title">{t('project.conception')}</h2>
           <div className="figma-two-cols">
             <p className="figma-lead">{t('project.conceptionLead1')}</p>
@@ -756,16 +989,16 @@ const SingleProjectNew: FC<SingleProjectProps> = ({ projectData, onBackClick, co
               </div>
             </div>
           </div>
-        </section>
+        </motion.section>
 
         {/* Suite aux tests de contraste */}
-        <section id="light-mode" className="project-section figma-light-mode-section">
+        <motion.section id="light-mode" className="project-section figma-light-mode-section" {...scrollSectionProps}>
           <h2 className="figma-big-title">{t('project.contrastTitle')}</h2>
           <img src="/single-project/faffcc0f-0914-47bb-96dc-d2ab2b613174.png" alt="Light Mode" className="figma-full-width-img" />
-        </section>
+        </motion.section>
 
         {/* Expérience Utilisateur Finale */}
-        <section id="experience-finale" className="project-section figma-experience-section">
+        <motion.section id="experience-finale" className="project-section figma-experience-section" {...scrollSectionProps}>
           <h2 className="section-title">{t('project.experienceFinale')}</h2>
           <div className="figma-two-cols">
             <p className="figma-lead">{t('project.experienceLead1')}</p>
@@ -776,7 +1009,7 @@ const SingleProjectNew: FC<SingleProjectProps> = ({ projectData, onBackClick, co
               modules={[Pagination]}
               spaceBetween={24}
               slidesPerView="auto"
-              centeredSlides={true}
+              centeredSlides={false}
               pagination={{ clickable: true }}
               className="figma-audit-carousel"
               onSwiper={(swiper) => {
@@ -803,18 +1036,18 @@ const SingleProjectNew: FC<SingleProjectProps> = ({ projectData, onBackClick, co
               ))}
             </Swiper>
           </div>
-        </section>
+        </motion.section>
 
         {/* Phase d'Intégration */}
-        <section id="integration" className="project-section figma-integration-section">
+        <motion.section id="integration" className="project-section figma-integration-section" {...scrollSectionProps}>
           <h2 className="section-title">{t('project.integration')}</h2>
           <h2 className="figma-big-title">{t('project.integrationTitle')}</h2>
           <p className="figma-lead">{t('project.integrationLead')}</p>
           <img src="/single-project/68389a49-1620-4ab4-84a3-af8b45fd142f.png" alt={t('project.integrationAlt')} className="figma-full-width-img" />
-        </section>
+        </motion.section>
 
         {/* Mes autres projets (Figma 117-135 : slider type carousel) */}
-        <section id="autres-projets" className="project-section figma-autres-projets-section">
+        <motion.section id="autres-projets" className="project-section figma-autres-projets-section" {...scrollSectionProps}>
           <h2 className="section-title">{t('project.otherProjects')}</h2>
           <div className="figma-autres-projets-carousel-wrapper">
             <Swiper
@@ -840,14 +1073,13 @@ const SingleProjectNew: FC<SingleProjectProps> = ({ projectData, onBackClick, co
               }}
             >
               {[
-                { slug: 'Pedaboard', title: 'Pedaboard', date: t('project.december2023'), badges: [t('hero.categoryApplication'), 'UX/UI', 'CRM'], coverImage: '/images/cover-project-pedaboard.png' },
+                { slug: 'Pedaboard', title: 'Pedaboard', date: t('project.december2023'), badges: [t('hero.categoryApplicationWeb'), 'UX/UI', 'CRM'], coverImage: '/images/cover-project-pedaboard.png' },
                 { slug: 'Playdago', title: 'Playdago', date: t('project.february2025'), badges: [t('hero.categoryApplication'), 'UX/UI'], coverImage: '/images/cover-project-playdago.png' },
                 { slug: 'Kaldera', title: 'Kaldera', date: '2025', badges: [t('hero.categorySiteWeb'), 'UX/UI', 'Simulation'], coverImage: '/images/cover-project-kaldera.png' },
               ].map((proj) => (
                 <SwiperSlide key={proj.slug}>
                   <a href={`/project/${proj.slug}`} className="figma-projet-mockup-card">
                     <div className="figma-projet-mockup">
-                      <div className="figma-projet-mockup-bar" aria-hidden />
                       <div className="figma-projet-mockup-screen">
                         <img src={proj.coverImage} alt={proj.title} loading="lazy" decoding="async" />
                       </div>
@@ -868,54 +1100,8 @@ const SingleProjectNew: FC<SingleProjectProps> = ({ projectData, onBackClick, co
               ))}
             </Swiper>
           </div>
-        </section>
+        </motion.section>
 
-        {/* Que fait-on ? */}
-        <section id="que-fait-on" className="project-section figma-cta-section">
-          <h2 className="section-title">{t('project.whatNext')}</h2>
-          <div className="figma-cta-grid">
-            <Button
-              variant="secondary"
-              className="figma-cta-item"
-              onClick={() => {
-                trackEvent('click', 'project_cta', 'back_to_top');
-                document.getElementById('processus')?.scrollIntoView({ behavior: 'smooth' });
-              }}
-            >
-              {t('project.backToTop')}
-            </Button>
-            <Button
-              variant="secondary"
-              className="figma-cta-item"
-              onClick={() => {
-                trackEvent('click', 'project_cta', 'back_home');
-                onBackClick();
-              }}
-            >
-              {t('project.backHome')}
-            </Button>
-            <Button
-              variant="secondary"
-              className="figma-cta-item"
-              onClick={() => {
-                trackEvent('click', 'project_cta', 'about');
-                window.location.href = '/about';
-              }}
-            >
-              {t('project.aboutLink')}
-            </Button>
-            <Button
-              variant="secondary"
-              className="figma-cta-item"
-              onClick={() => {
-                trackEvent('click', 'project_cta', 'contact');
-                setShowContactModal(true);
-              }}
-            >
-              {t('project.contactMe')}
-            </Button>
-          </div>
-        </section>
         <ContactModal
           isOpen={showContactModal}
           onClose={() => setShowContactModal(false)}
@@ -924,7 +1110,7 @@ const SingleProjectNew: FC<SingleProjectProps> = ({ projectData, onBackClick, co
       </motion.div>
 
       {/* Bouton Contact fixe en bas d'écran, visible au scroll (même style que close/arrows) */}
-      {scrollTop > 150 && (
+      {(liftScroll + contentScrollTop) > 150 && (
         <div className="single-project-contact-fab-wrap">
           <button
             type="button"

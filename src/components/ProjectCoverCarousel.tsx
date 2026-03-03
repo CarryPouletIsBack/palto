@@ -9,6 +9,8 @@ interface ProjectCoverCarouselProps {
   coverImage: string;
   projectName: string;
   swipeY?: number;
+  /** 0 = pas assombri, 1 = panneau en haut (cover au maximum assombrie) */
+  coverLiftProgress?: number;
   onClose?: () => void;
   onPreviousProject?: () => void;
   onNextProject?: () => void;
@@ -19,7 +21,7 @@ interface ProjectCoverCarouselProps {
   isFullscreenModalOpen?: boolean;
 }
 
-const ProjectCoverCarousel: React.FC<ProjectCoverCarouselProps> = ({ coverImage, projectName, swipeY = 0, onClose, onPreviousProject, onNextProject, onFullscreenOpen, onFullscreenClose, coverFullscreenActive = false, isFullscreenModalOpen = false }) => {
+const ProjectCoverCarousel: React.FC<ProjectCoverCarouselProps> = ({ coverImage, projectName, swipeY = 0, coverLiftProgress = 0, onClose, onPreviousProject, onNextProject, onFullscreenOpen, onFullscreenClose, coverFullscreenActive = false, isFullscreenModalOpen = false }) => {
   const [fullscreenIndex, setFullscreenIndex] = useState(0);
 
   // Dupliquer l'image pour tester le carousel
@@ -66,6 +68,15 @@ const ProjectCoverCarousel: React.FC<ProjectCoverCarouselProps> = ({ coverImage,
           transition: swipeY === 0 ? 'transform 0.4s cubic-bezier(0.16, 1, 0.3, 1)' : 'none'
         }}
       >
+        {/* Overlay sombre : s'intensifie quand le panneau monte vers le haut */}
+        <div
+          className="project-cover-dark-overlay"
+          style={{
+            opacity: coverLiftProgress * 0.5,
+            transition: 'opacity 0.15s ease-out'
+          }}
+          aria-hidden
+        />
         <Swiper
         modules={[Pagination, Autoplay]}
         pagination={{

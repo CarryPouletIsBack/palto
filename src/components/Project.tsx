@@ -10,6 +10,7 @@ interface ProjectProps {
   coverImage?: string | null;
   projectCategory?: string | null;
   onSwipeYChange?: (y: number) => void;
+  onLiftProgressChange?: (progress: number) => void;
   coverFullscreenActive?: boolean;
 }
 
@@ -21,7 +22,7 @@ function loadProject(projectName: string): ProjectData | null {
   return found ? (found as ProjectData) : null;
 }
 
-const Project = ({ onBackClick, projectName = 'Playdago', coverImage = null, projectCategory = null, onSwipeYChange, coverFullscreenActive = false }: ProjectProps) => {
+const Project = ({ onBackClick, projectName = 'Playdago', coverImage = null, projectCategory = null, onSwipeYChange, onLiftProgressChange, coverFullscreenActive = false }: ProjectProps) => {
   const [projectData, setProjectData] = useState<ProjectData | null>(null);
   const [isTransitioning, setIsTransitioning] = useState(false);
   const previousProjectNameRef = useRef<string | null>(null);
@@ -79,6 +80,7 @@ const Project = ({ onBackClick, projectName = 'Playdago', coverImage = null, pro
       coverImage={coverImage}
       projectCategory={projectCategory}
       onSwipeYChange={onSwipeYChange}
+      onLiftProgressChange={onLiftProgressChange}
       coverFullscreenActive={coverFullscreenActive}
     />
   );

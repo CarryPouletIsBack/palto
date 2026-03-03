@@ -8,6 +8,7 @@ interface TreeNodeProps {
   depth?: number;
   selectedNodes?: Set<string>;
   onNodeClick?: (nodeId: string, event?: MouseEvent) => void;
+  variant?: 'competences' | 'userflow';
 }
 
 const LINE_COLOR = "bg-zinc-700";
@@ -55,12 +56,16 @@ export const TreeNode = ({
   depth = 0,
   selectedNodes = new Set(),
   onNodeClick,
+  variant = 'competences',
 }) => {
   const hasBranches = data.branches && data.branches.length > 0;
   const hasNext = !!data.next;
   const isSelected = selectedNodes.has(data.id);
   const isDisabled = data.disabled === true;
-  
+  const isUserflow = variant === 'userflow';
+  const useSimpleBubble = isUserflow || !(data.branches && data.branches.length > 0 && data.id !== "racines" && data.id !== "domaine_product" && data.id !== "domaine_da");
+  const useVerticalBranches = hasBranches && (isUserflow || data.id === "racines" || data.id === "domaine_product" || data.id === "domaine_da");
+
   const handleClick = (e: MouseEvent) => {
     if (isDisabled) return; // Ne pas permettre le clic si désactivé
     if (onNodeClick) {
@@ -79,9 +84,9 @@ export const TreeNode = ({
         data-node-id={data.id}
         className={cn(
           "relative z-10 border text-sm font-medium transition-colors",
-          data.branches && data.branches.length > 0 && data.id !== "racines" && data.id !== "domaine_product" && data.id !== "domaine_da"
-            ? "rounded-[24px] flex flex-row items-center gap-3 min-w-[320px] px-4 py-3 box-border"
-            : "rounded-full flex flex-col items-center gap-1.5 px-6 py-3",
+          useSimpleBubble
+            ? "rounded-full flex flex-col items-center gap-1.5 " + (isUserflow ? "userflow-bubble px-8 py-4" : "px-6 py-3")
+            : "rounded-[24px] flex flex-row items-center gap-3 min-w-[320px] px-4 py-3 box-border",
           isDisabled ? "cursor-not-allowed opacity-50" : "cursor-pointer hover:border-zinc-500 hover:bg-zinc-900",
           isDisabled ? NODE_BG_DISABLED : NODE_BG,
           isDisabled ? NODE_BORDER_DISABLED : (isSelected ? NODE_BORDER_ACTIVE : NODE_BORDER),
@@ -89,11 +94,11 @@ export const TreeNode = ({
           isDisabled ? TEXT_COLOR_DISABLED : TEXT_COLOR
         )}
       >
-        {data.branches && data.branches.length > 0 && data.id !== "racines" && data.id !== "domaine_product" && data.id !== "domaine_da" ? (
+        {!useSimpleBubble ? (
           <>
             <div className="font-semibold whitespace-nowrap">{data.label}</div>
             <div className="flex flex-row items-center gap-2 flex-shrink-0">
-            {data.branches.slice(0, 3).map((branch) => {
+            {data.branches!.slice(0, 3).map((branch) => {
               const branchIsSelected = selectedNodes.has(branch.id);
               const shouldHighlight = isSelected || branchIsSelected;
               const initials = getInitials(branch.label);
@@ -123,7 +128,7 @@ export const TreeNode = ({
                 </motion.div>
               );
             })}
-            {data.branches.length > 3 && (
+            {data.branches!.length > 3 && (
               <motion.div
                 initial={{ opacity: 0, scale: 0 }}
                 animate={{ opacity: 1, scale: 1 }}
@@ -135,9 +140,9 @@ export const TreeNode = ({
                   TEXT_COLOR,
                   "opacity-60"
                 )}
-                title={`${data.branches.length - 3} compétence${data.branches.length - 3 > 1 ? 's' : ''} supplémentaire${data.branches.length - 3 > 1 ? 's' : ''}`}
+                title={`${data.branches!.length - 3} compétence${data.branches!.length - 3 > 1 ? 's' : ''} supplémentaire${data.branches!.length - 3 > 1 ? 's' : ''}`}
               >
-                +{data.branches.length - 3}
+                +{data.branches!.length - 3}
               </motion.div>
             )}
             </div>
@@ -164,12 +169,13 @@ export const TreeNode = ({
             depth={depth + 1}
             selectedNodes={selectedNodes}
             onNodeClick={onNodeClick}
+            variant={variant}
           />
         </div>
       )}
 
       {/* Vertical Branches */}
-      {hasBranches && (data.id === "racines" || data.id === "domaine_product" || data.id === "domaine_da") ? (
+      {useVerticalBranches ? (
         <div className="flex flex-row items-center">
           {/* Connector from Parent to Spine */}
           <motion.div 
@@ -224,12 +230,13 @@ export const TreeNode = ({
                   </div>
 
                   {/* Child Content Wrapper */}
-                  <div className="py-3 flex items-center mb-6">
+                  <div className={cn("py-3 flex items-center mb-6", isUserflow && "userflow-branch-spacing")}>
                     <TreeNode
                       data={branch}
                       depth={depth + 1}
                       selectedNodes={selectedNodes}
                       onNodeClick={onNodeClick}
+                      variant={variant}
                     />
                   </div>
                 </div>

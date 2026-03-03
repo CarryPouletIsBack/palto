@@ -15,6 +15,15 @@
   height: 100vh;
 }
 
+/* Overlay sombre : s'intensifie quand le panneau monte (coverLiftProgress 0 → 1) */
+.project-cover-dark-overlay {
+  position: absolute;
+  inset: 0;
+  background: #000;
+  pointer-events: none;
+  z-index: 2;
+}
+
 /* Couche des boutons au premier plan : reste au-dessus de la page au scroll */
 .project-cover-buttons-layer {
   position: fixed;

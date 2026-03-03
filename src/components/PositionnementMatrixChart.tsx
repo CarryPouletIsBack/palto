@@ -1,5 +1,6 @@
-import { useMemo, type FC } from 'react';
+import { useMemo, useState, type FC, type RefObject } from 'react';
 import { useLanguage } from '../contexts/LanguageContext';
+import { motion } from 'framer-motion';
 import Highcharts from 'highcharts';
 import HighchartsReact from 'highcharts-react-official';
 
@@ -23,11 +24,14 @@ export interface PositionnementMatrixData {
 interface PositionnementMatrixChartProps {
   data: PositionnementMatrixData;
   className?: string;
+  /** Référence du conteneur qui scroll (ex. .single-project-page) pour déclencher l'animation au bon moment */
+  scrollRootRef?: RefObject<HTMLElement | null>;
 }
 
 /** Style inspiré du demo Highcharts "Sonified function" : axes croisés à 0, grille, rendu épuré */
-const PositionnementMatrixChart: FC<PositionnementMatrixChartProps> = ({ data, className = '' }) => {
+const PositionnementMatrixChart: FC<PositionnementMatrixChartProps> = ({ data, className = '', scrollRootRef }) => {
   const { t } = useLanguage();
+  const [hasEnteredView, setHasEnteredView] = useState(false);
   const options = useMemo<Highcharts.Options>(() => ({
     chart: {
       type: 'scatter',
@@ -79,22 +83,11 @@ const PositionnementMatrixChart: FC<PositionnementMatrixChartProps> = ({ data, c
         style: { fontSize: '11px', color: '#666' },
       },
     },
-    tooltip: {
-      useHTML: true,
-      formatter: function (this: Highcharts.TooltipFormatterContextObject) {
-        const p = this.point as Highcharts.Point & { description?: string };
-        return `<strong>${p.name}</strong><br/>${p.description ?? ''}`;
-      },
-    },
+    tooltip: { enabled: false },
     plotOptions: {
       scatter: {
         marker: {
-          radius: 6,
-          symbol: 'circle',
-          lineWidth: 1,
-          lineColor: '#333',
-          fillColor: '#fff',
-          states: { hover: { radius: 8, lineWidth: 2 } },
+          enabled: false,
         },
         dataLabels: {
           enabled: true,
@@ -118,24 +111,37 @@ const PositionnementMatrixChart: FC<PositionnementMatrixChartProps> = ({ data, c
         description: p.description,
       })),
       color: '#333',
-      marker: { fillColor: '#fff' },
     }],
   }), [data]);
 
   return (
-    <div className={`positionnement-matrix ${className}`.trim()}>
-      <div className="positionnement-matrix-chart-area">
-        <HighchartsReact highcharts={Highcharts} options={options} />
+    <motion.div
+      className="positionnement-matrix-entrance"
+      initial={{ opacity: 0, y: 14 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{
+        root: scrollRootRef ?? undefined,
+        once: true,
+        margin: '0px 0px -80px 0px',
+        amount: 0.15,
+      }}
+      transition={{ duration: 0.7, ease: [0.25, 0.1, 0.25, 1] }}
+      onViewportEnter={() => setHasEnteredView(true)}
+    >
+      <div className={`positionnement-matrix ${className} ${hasEnteredView ? 'in-view' : ''}`.trim()}>
+        <div className="positionnement-matrix-chart-area">
+          <HighchartsReact highcharts={Highcharts} options={options} />
+        </div>
+        <div className="positionnement-matrix-legend">
+          <span className="positionnement-matrix-legend-x">
+            {t('project.axisHorizontal')}: {data.xAxisLabel}
+          </span>
+          <span className="positionnement-matrix-legend-y">
+            {t('project.axisVertical')}: {data.yAxisLabel}
+          </span>
+        </div>
       </div>
-      <div className="positionnement-matrix-legend">
-        <span className="positionnement-matrix-legend-x">
-          {t('project.axisHorizontal')}: {data.xAxisLabel}
-        </span>
-        <span className="positionnement-matrix-legend-y">
-          {t('project.axisVertical')}: {data.yAxisLabel}
-        </span>
-      </div>
-    </div>
+    </motion.div>
   );
 };
 

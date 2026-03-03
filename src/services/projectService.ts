@@ -3,7 +3,7 @@ import { projectsDataNew } from '../data/projectsNew';
 
 const STORAGE_KEY = 'portfolio_projects';
 /** Incrémenter pour forcer la réutilisation des données du code (ex. nouveaux champs positionnementMatrix, userFlow) */
-const DATA_VERSION = 2;
+const DATA_VERSION = 5;
 const DATA_VERSION_KEY = 'portfolio_projects_version';
 
 export interface ProjectWithMeta extends ProjectData {
@@ -32,9 +32,10 @@ export const loadProjects = (): { [key: string]: ProjectWithMeta } => {
         merged[key] = {
           ...defaults,
           ...saved,
+          userFlow: defaults.userFlow ?? saved?.userFlow,
           id: saved?.id ?? key,
           coverImage: key === 'Pedaboard' ? '/images/cover-project-pedaboard.png' : key === 'Playdago' ? '/images/cover-project-playdago.png' : key === 'Kaldera' ? '/images/cover-project-kaldera.png' : saved?.coverImage ?? `/images/${key.toLowerCase()}-cover.png`,
-          category: saved?.category ?? 'application',
+          category: saved?.category ?? (key === 'Pedaboard' ? 'applicationWeb' : 'application'),
           status: saved?.status ?? 'published',
           lastModified: saved?.lastModified ?? new Date().toISOString(),
           createdAt: saved?.createdAt ?? new Date().toISOString(),
@@ -63,7 +64,7 @@ export const loadProjects = (): { [key: string]: ProjectWithMeta } => {
       ...projectsDataNew[key],
       id: key,
       coverImage,
-      category: 'application',
+      category: key === 'Pedaboard' ? 'applicationWeb' : 'application',
       status: 'published',
       lastModified: new Date().toISOString(),
       createdAt: new Date().toISOString(),
@@ -201,6 +202,7 @@ export const getProjectsGroupedByCategory = (): MenuCategory[] => {
   // Mapping des catégories
   const categoryMap: { [key: string]: { key: string; title: string } } = {
     'application': { key: 'application', title: 'Application' },
+    'applicationWeb': { key: 'applicationWeb', title: 'Application web' },
     'siteWeb': { key: 'siteWeb', title: 'Site web' },
     'logo': { key: 'logo', title: 'Logo' },
     'motion': { key: 'motion', title: 'Motion' },

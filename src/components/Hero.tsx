@@ -128,6 +128,7 @@ const Hero = ({ onPageChange, onContactClick }: HeroProps) => {
                           <div className="project-info">
                             <p className="project-category">
                               {project.category === 'Application' ? t('hero.categoryApplication') :
+                               project.category === 'Application web' ? t('hero.categoryApplicationWeb') :
                                project.category === 'Site web' ? t('hero.categorySiteWeb') :
                                project.category === 'Logo' ? t('hero.categoryLogo') :
                                project.category === 'Motion' ? t('hero.categoryMotion') :
@@ -147,7 +148,7 @@ const Hero = ({ onPageChange, onContactClick }: HeroProps) => {
             {/* Liste des 3 projets : Playdago, Kaldera, Pedaboard (même style que le carousel) */}
             <div className="hero-projects-list">
               {[
-                { title: 'Pedaboard', imageSrc: '/images/cover-project-pedaboard.png', category: 'Site web', date: '10/11/2024' },
+                { title: 'Pedaboard', imageSrc: '/images/cover-project-pedaboard.png', category: 'Application web', date: '10/11/2024' },
                 { title: 'Kaldera', imageSrc: '/images/cover-project-kaldera.png', category: 'Site web', date: '15/12/2024' },
                 { title: 'Playdago', imageSrc: '/images/cover-project-playdago.png', category: 'Application', date: '01/01/2025' },
               ].map((project) => (
@@ -167,7 +168,7 @@ const Hero = ({ onPageChange, onContactClick }: HeroProps) => {
                       </div>
                       <div className="project-info">
                         <p className="project-category">
-                          {project.category === 'Application' ? t('hero.categoryApplication') : t('hero.categorySiteWeb')}
+                          {project.category === 'Application' ? t('hero.categoryApplication') : project.category === 'Application web' ? t('hero.categoryApplicationWeb') : t('hero.categorySiteWeb')}
                         </p>
                         <h3 className="project-title">{project.title}</h3>
                         <p className="project-date">{project.date}</p>
@@ -186,7 +187,7 @@ const Hero = ({ onPageChange, onContactClick }: HeroProps) => {
                   className="hero-seo-link"
                   onClick={(e) => {
                     e.preventDefault()
-                    onPageChange('project-Pedaboard', '/images/cover-project-pedaboard.png', 'Site web')
+                    onPageChange('project-Pedaboard', '/images/cover-project-pedaboard.png', 'Application web')
                     trackEvent('click', 'seo_link', 'pedaboard')
                   }}
                 >

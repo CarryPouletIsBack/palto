@@ -178,7 +178,7 @@ const SingleProject: React.FC<SingleProjectProps> = ({ projectData, onBackClick 
               </div>
               <div className="flow-line vertical"></div>
               <div className="flow-node password">
-                <span>Mot de passe oublié</span>
+                <span>Compte</span>
               </div>
               <div className="flow-line vertical"></div>
               <div className="flow-node dashboard">
