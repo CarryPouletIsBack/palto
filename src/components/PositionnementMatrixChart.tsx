@@ -14,6 +14,10 @@ export interface PositionnementMatrixPoint {
 export interface PositionnementMatrixData {
   xAxisLabel: string;
   yAxisLabel: string;
+  /** Optionnel : préfixe complet affiché dans la légende (avant le ':'), ex. "Axe X (Horizontal) " */
+  axisHorizontalPrefix?: string;
+  /** Optionnel : préfixe complet affiché dans la légende (avant le ':'), ex. "Axe Y (Vertical) " */
+  axisVerticalPrefix?: string;
   xMinLabel: string;
   xMaxLabel: string;
   yMinLabel: string;
@@ -134,10 +138,10 @@ const PositionnementMatrixChart: FC<PositionnementMatrixChartProps> = ({ data, c
         </div>
         <div className="positionnement-matrix-legend">
           <span className="positionnement-matrix-legend-x">
-            {t('project.axisHorizontal')}: {data.xAxisLabel}
+            {(data.axisHorizontalPrefix ?? t('project.axisHorizontal'))}: {data.xAxisLabel}
           </span>
           <span className="positionnement-matrix-legend-y">
-            {t('project.axisVertical')}: {data.yAxisLabel}
+            {(data.axisVerticalPrefix ?? t('project.axisVertical'))}: {data.yAxisLabel}
           </span>
         </div>
       </div>

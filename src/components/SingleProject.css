@@ -148,7 +148,7 @@
   display: flex;
   flex-direction: column;
   align-items: flex-start;
-  gap: 132px;
+  gap: 40px;
   flex-shrink: 0;
   align-self: stretch;
   position: static;
@@ -181,7 +181,7 @@
   .single-project-page .main-single-project {
     padding-left: var(--sp-main-padding-x-tablet);
     padding-right: var(--sp-main-padding-x-tablet);
-    gap: var(--sp-main-gap-tablet);
+    gap: 40px;
   }
 }
 
@@ -192,7 +192,7 @@
     padding-bottom: var(--sp-main-padding-bottom);
     padding-left: var(--sp-main-padding-x-mobile);
     padding-right: var(--sp-main-padding-x-mobile);
-    gap: var(--sp-main-gap-mobile);
+    gap: 40px;
   }
 }
 
@@ -1014,10 +1014,21 @@
   padding-right: 0;
 }
 
+/* Intro : ne pas ajouter de padding gauche/droite (rely on main padding) */
+.single-project-page .project-section.intro-section {
+  padding-left: 0;
+  padding-right: 0;
+}
+
 @media (max-width: 768px) {
   .single-project-page .project-section {
     padding-left: 16px;
     padding-right: 16px;
+  }
+
+  .single-project-page .project-section.intro-section {
+    padding-left: 0;
+    padding-right: 0;
   }
 }
 
@@ -1394,6 +1405,16 @@
   margin: 0 0 4px;
 }
 
+/* Sous-titre sous le titre (ex: Audit -> Benchmark concurrentiel) */
+.processus-card-subtitle {
+  font-family: var(--sp-font-mono);
+  font-size: 14px;
+  line-height: 20px;
+  font-weight: 400;
+  color: rgba(255, 248, 245, 0.92);
+  margin: 0 0 4px;
+}
+
 /* État par défaut : texte en dégradé, hauteur limitée (effet de fondu) */
 .processus-card-desc {
   max-height: 48px;
@@ -1450,6 +1471,15 @@
   font-weight: 400;
   color: var(--sp-text);
   margin: 0;
+}
+
+.figma-audit-subtitle {
+  font-family: var(--sp-font-mono);
+  font-size: 14px;
+  line-height: 20px;
+  font-weight: 400;
+  color: var(--sp-text);
+  margin: 0 0 var(--sp-space-md);
 }
 
 .figma-body {
@@ -2561,14 +2591,14 @@
 }
 
 .single-project-page .intro-metadata-container {
-  padding-left: 24px;
-  padding-right: 24px;
+  padding-left: 0;
+  padding-right: 0;
 }
 
 @media (max-width: 768px) {
   .single-project-page .intro-metadata-container {
-    padding-left: 16px;
-    padding-right: 16px;
+    padding-left: 0;
+    padding-right: 0;
   }
 }
 
@@ -2834,22 +2864,45 @@
   display: flex;
   gap: 24px;
   align-items: flex-start;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
 }
 
-.intro-section .intro-text {
+.intro-text {
   font-size: 18px;
   line-height: 1.8;
   color: #222;
-  font-weight: 400;
-  flex: 1 1 50%;
-  min-width: 300px;
-  max-width: 50%;
+  font-weight: 800;
+}
+
+.intro-text-block--full .intro-text {
+  font-weight: 800;
+}
+
+/* 1er paragraphe (PlayDaGo...) */
+.intro-text-primary .intro-text {
+  font-weight: 800;
+}
+
+/* 2nd paragraphe (Le défi...) */
+.intro-text-secondary .intro-text {
+  font-weight: 200;
+}
+
+.intro-text-block {
+  flex: 1 1 0;
+  min-width: 0;
+  max-width: none;
+}
+
+.intro-text-block--full {
+  flex: 1 1 100%;
+  min-width: 0;
+  max-width: 100%;
 }
 
 /* Sur mobile, reprendre toute la largeur */
 @media (max-width: 768px) {
-  .intro-section .intro-text {
+  .intro-text-block {
     width: 100%;
     max-width: 100%;
     flex: 1 1 100%;
@@ -2890,7 +2943,7 @@
     flex-direction: column;
   }
   
-  .intro-metadata-container .intro-text {
+  .intro-metadata-container .intro-text-block {
     width: 100%;
     max-width: 100%;
     flex: 0 0 auto;
@@ -4248,7 +4301,7 @@
     padding-bottom: var(--sp-main-padding-bottom);
     padding-left: var(--sp-main-padding-x-mobile);
     padding-right: var(--sp-main-padding-x-mobile);
-    gap: var(--sp-main-gap-mobile);
+    gap: 40px;
   }
   
   /* Responsive pour nouvelle structure */

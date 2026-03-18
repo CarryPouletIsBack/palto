@@ -15,6 +15,9 @@ export interface ProjectData {
   problematique?: string;
   /** Solution (Figma) */
   solution?: string;
+  /** Audit / Analyse (Figma) */
+  auditLead?: string;
+  auditBody?: string;
   /** Matrice de positionnement (Figma 97-50) : scatter X=Effort, Y=Valeur */
   positionnementMatrix?: {
     xAxisLabel: string;
@@ -26,7 +29,7 @@ export interface ProjectData {
     points: Array<{ name: string; description: string; x: number; y: number }>;
   };
   /** 1er/2e/3e/4e réunion pour Processus détaillé (Figma) */
-  processReunions?: Array<{ label: string; title: string; description: string }>;
+  processReunions?: Array<{ label: string; title: string; subtitle?: string; description: string }>;
   /** User flow (Figma 100-148) : Organization chart Highcharts */
   userFlow?: {
     title?: string;
@@ -174,6 +177,8 @@ export interface ProjectData {
       teamNote?: string;
       problematique?: string;
       solution?: string;
+      auditLead?: string;
+      auditBody?: string;
       year?: string;
       /** Neutrals palette: role + usage par index */
       designSystemNeutrals?: Array<{ role: string; usage: string }>;
@@ -188,7 +193,7 @@ export interface ProjectData {
         points: Array<{ name: string; description: string; x: number; y: number }>;
       };
       /** Processus détaillé */
-      processReunions?: Array<{ label: string; title: string; description: string }>;
+      processReunions?: Array<{ label: string; title: string; subtitle?: string; description: string }>;
       /** User flow */
       userFlow?: {
         title?: string;
@@ -207,12 +212,46 @@ export const projectsDataNew: { [key: string]: ProjectData } = {
     badges: ['UX/UI', '2024', 'Application'],
     
     // 2. Résumé / Introduction (aligné Figma 49-229, adapté Playdago)
-    summary: 'Playdago est un outil interne de gestion et de pilotage conçu pour une professionnelle de la pédagogie active. Le projet part d\'un besoin clair : centraliser des données aujourd\'hui éparpillées sur plusieurs plateformes (base clients, formations, commandes, newsletter, rappels, événements), afin d\'obtenir une vue d\'ensemble fiable, réduire la charge mentale et améliorer le suivi des activités. L\'objectif n\'était pas de remplacer les outils existants (emailing, e-commerce, etc.), mais de créer une interface centrale de lecture, de suivi et de rappel, capable de relier toutes les informations clés autour d\'un même client.',
+    summary: 'PlayDaGo a été créé pour répondre à une demande spécifique : comment organiser et concevoir des ateliers ludiques (cartes, dés, matching) à distance.\n\nLe défi n\u2019était pas seulement de digitaliser l\'ensemble du processus, mais de retranscrire le côté\u00A0sensoriel\u00A0des ateliers en\u00A0présentiel. de la création du groupe jusqu\'au suivi des résultats après l\'atelier.',
+
+    // Contexte du projet (Figma)
+    objectifs: [
+      'Améliorer l\'interaction en temps réel : Offrir une expérience fluide en direct pour les formateurs et les apprenants.',
+      'Maintenir l\'engagement : Reproduire les mécanismes de jeu en présentiel sans la complexité des outils cognitivement lourds.',
+      'Un suivi : Offrir aux formateurs la possibilité d\'effectuer un suivi approfondi des données.'
+    ],
+
+    teamNote: 'En tant que seul designer, j\'ai dû assimiler les principes de la gamification (analyse de Kahoot, jeux de cartes physiques) pour les transposer en interfaces numériques. J\'ai également étendu l\'identité visuelle de la cliente en créant un logo et en ajustant la palette de couleurs.',
     
     // 3. Contexte & Problématique
     context: {
       title: 'Contexte & Problématique',
-      content: 'Playdago est un outil interne de gestion et de pilotage conçu pour une professionnelle de la pédagogie active. Le projet part d\'un besoin clair : centraliser des données aujourd\'hui éparpillées sur plusieurs plateformes (base clients, formations, commandes, newsletter, rappels, événements), afin d\'obtenir une vue d\'ensemble fiable, réduire la charge mentale et améliorer le suivi des activités. L\'objectif n\'était pas de remplacer les outils existants (emailing, e-commerce, etc.), mais de créer une interface centrale de lecture, de suivi et de rappel, capable de relier toutes les informations clés autour d\'un même client.'
+      content: 'PlayDaGo a été créé pour répondre à une demande spécifique : comment organiser et concevoir des ateliers ludiques (cartes, dés, matching) à distance.\n\nLe défi n\u2019était pas seulement de digitaliser l\'ensemble du processus, mais de retranscrire le côté\u00A0sensoriel\u00A0des ateliers en\u00A0présentiel. de la création du groupe jusqu\'au suivi des résultats après l\'atelier.'
+    },
+
+    // 4. Problématique / Solution
+    problematique: 'La cliente utilisait plusieurs plateformes distinctes, pour animer ces différents ateliers. De plus, les outils existants ne permettaient pas une personnalisation suffisante des dés, cartes et supports utilisés lors des séances. La problématique : comment fusionner plusieurs plateformes en une seule application intuitive et pédagogique ?',
+    solution: 'Concevoir une plateforme unique permettant de centraliser l\'animation des ateliers. L\'outil offre la possibilité de créer et de personnaliser les dés, cartes et supports pédagogiques, afin de s\'adapter aux besoins spécifiques de chaque séance et de simplifier leur animation.',
+    auditLead:
+      "J'ai commencé l'analyse du projet à partir de Wooclap, un outil déjà utilisé par Cyrielle dans certains contextes de formation. Wooclap m'a servi de référence pour sa capacité à s'intégrer facilement dans un temps de formation existant et à engager les apprenants sans complexifier l'animation. Cette approche a confirmé l'importance de concevoir un outil qui accompagne le formateur, plutôt que de structurer la session à sa place.",
+
+    auditBody:
+      "J’ai commencé l’analyse du projet à partir de Wooclap, un outil déjà utilisé par Cyrielle dans certains contextes de formation. Wooclap m’a servi de référence pour sa capacité à s’intégrer facilement dans un temps de formation existant et à engager les apprenants sans complexifier l’animation. Cette approche a confirmé l’importance de concevoir un outil qui accompagne le formateur, plutôt que de structurer la session à sa place.",
+    positionnementMatrix: {
+      axisHorizontalPrefix: 'Axe X (Horizontal) ',
+      axisVerticalPrefix: 'Axe Y (Vertical) ',
+      xAxisLabel: 'Personnalisation',
+      yAxisLabel: 'Niveau d\'Interaction',
+      xMinLabel: 'Faible',
+      xMaxLabel: 'Élevé',
+      yMinLabel: 'Faible',
+      yMaxLabel: 'Élevé',
+      points: [
+        { name: 'Brevo', description: 'liste de client (société, date d\'anniversaire, contact) etc.', x: -6, y: 6 },
+        { name: 'Formation', description: 'personne ayant souscrit a un atelier', x: 6, y: 6 },
+        { name: 'Woocommerce', description: 'vente de produit et de service', x: -6, y: -6 },
+        { name: 'Notion', description: 'liste de tâches à réaliser', x: 6, y: -6 },
+      ],
     },
     
     // 4. Démarche & Approche
@@ -357,17 +396,52 @@ export const projectsDataNew: { [key: string]: ProjectData } = {
     type: 'Application web',
     team: [
       'Anthony Merault, Product Designer | Building Complex SaaS & Design Systems',
-      'Josian (dev back-end)',
-      'Bertolde (dev front-end)'
+      'Frédéric Isambert, Chef de projet',
+      'Nicola Bègue, developpeur front',
+      'Evan Rivière, developpeur back'
     ],
     translations: {
       en: {
         subtitle: 'Active pedagogy application',
         summary: 'Playdago is an internal management and piloting tool designed for an active pedagogy professional. The project stems from a clear need: to centralize data currently scattered across multiple platforms (client base, training, orders, newsletter, reminders, events), in order to obtain a reliable overview, reduce mental load and improve activity tracking. The goal was not to replace existing tools (emailing, e-commerce, etc.), but to create a central interface for reading, tracking and reminders, capable of linking all key information around the same client.',
+        objectifs: [
+          'Improve real-time interaction: Offer a fluid live experience for trainers and learners.',
+          'Maintain engagement: Reproduce in-person game mechanics without the complexity of cognitively heavy tools.',
+          'Tracking: Give trainers the ability to perform in-depth data tracking.'
+        ],
+
+        problematique: 'The client used several separate platforms to run these different workshops. In addition, existing tools did not allow enough customization of the dice, cards and materials used during the sessions. The issue was: how to merge several platforms into a single intuitive, educational application?',
+        solution: 'Design a single platform to centralize workshop facilitation. The tool makes it possible to create and customize dice, cards and learning materials, so they can be adapted to the specific needs of each session and make facilitation easier.',
+
+        teamNote: 'As the sole designer, I had to absorb gamification principles (analysis of Kahoot, physical card games) to transpose them into digital interfaces. I also extended the client\'s visual identity by creating a logo and adjusting the color palette.',
+
+        positionnementMatrix: {
+          axisHorizontalPrefix: 'X Axis (Horizontal) ',
+          axisVerticalPrefix: 'Y Axis (Vertical) ',
+          xAxisLabel: 'Personalization',
+          yAxisLabel: 'Interaction Level',
+          xMinLabel: 'Low',
+          xMaxLabel: 'High',
+          yMinLabel: 'Low',
+          yMaxLabel: 'High',
+          points: [
+            { name: 'Brevo', description: 'client list (company, birth date, contact) etc.', x: -6, y: 6 },
+            { name: 'Formation', description: 'person who signed up for a workshop', x: 6, y: 6 },
+            { name: 'Woocommerce', description: 'product and service sales', x: -6, y: -6 },
+            { name: 'Notion', description: 'task list to complete', x: 6, y: -6 },
+          ],
+        },
+        auditLead:
+          'I began analyzing the project with Wooclap, a tool already used by Cyrielle in some training contexts. Wooclap served as a reference for its ability to integrate easily into an existing training time slot and to engage learners without complicating facilitation. This approach confirmed the importance of designing a tool that supports the facilitator, rather than structuring the session for them.',
+
+        auditBody:
+          'I began analyzing the project with Wooclap, a tool already used by Cyrielle in certain training contexts. Wooclap served as a reference for its ability to integrate easily into an existing training session and to engage learners without complicating facilitation. This approach confirmed the importance of designing a tool that supports the facilitator, rather than structuring the session for them.',
+
         team: [
           'Anthony Merault, Product Designer | Building Complex SaaS & Design Systems',
-          'Josian (Back-end dev)',
-          'Bertolde (Front-end dev)'
+          'Frédéric Isambert, Project manager',
+          'Nicola Bègue, Front-end developer',
+          'Evan Rivière, Back-end developer'
         ],
         designSystemNeutrals: [
           { role: 'Main surface', usage: 'Background app' },

@@ -116,6 +116,13 @@ const SingleProjectNew: FC<SingleProjectProps> = ({ projectData, onBackClick, co
   const tocRef = useRef<HTMLDivElement>(null);
   const userflowTreeContainerRef = useRef<HTMLDivElement>(null);
 
+  const introText =
+    isEn && projectData.translations?.en?.summary ? projectData.translations.en.summary : projectData.summary;
+  const introParagraphs = introText
+    .split(/\n\s*\n/g)
+    .map((p) => p.trim())
+    .filter(Boolean);
+
   const [selectedNodes, setSelectedNodes] = useState<Set<string>>(new Set());
   const [selectedNodeData, setSelectedNodeData] = useState<FlowNodeData | null>(null);
   const [popupPosition, setPopupPosition] = useState<{ x: number; y: number } | null>(null);
@@ -667,7 +674,18 @@ const SingleProjectNew: FC<SingleProjectProps> = ({ projectData, onBackClick, co
         {!projectData.objectifs && !projectData.teamNote && (
         <motion.section id="introduction" className="project-section intro-section" {...scrollSectionProps}>
           <div className="section-card intro-metadata-container">
-            <p className="intro-text">{isEn && projectData.translations?.en?.summary ? projectData.translations.en.summary : projectData.summary}</p>
+            {introParagraphs.map((part, index) => (
+              <div
+                key={index}
+                className={
+                  introParagraphs.length === 1
+                    ? 'intro-text-block intro-text-block--full'
+                    : `intro-text-block ${index === 0 ? 'intro-text-primary' : 'intro-text-secondary'}`
+                }
+              >
+                <p className="intro-text">{part}</p>
+              </div>
+            ))}
           </div>
         </motion.section>
         )}
@@ -762,6 +780,9 @@ const SingleProjectNew: FC<SingleProjectProps> = ({ projectData, onBackClick, co
                       <div className="processus-card-content">
                         <span className="processus-card-label">{reunion.label}</span>
                         <h3 className="processus-card-title">{reunion.title}</h3>
+                        {reunion.subtitle && (
+                          <p className="processus-card-subtitle">{reunion.subtitle}</p>
+                        )}
                         <p className="processus-card-desc">{reunion.description}</p>
                       </div>
                     </div>
@@ -778,9 +799,22 @@ const SingleProjectNew: FC<SingleProjectProps> = ({ projectData, onBackClick, co
         {/* Audit */}
         <motion.section id="audit" className="project-section figma-audit-section" {...scrollSectionProps}>
           <h2 className="section-title">{t('project.audit')}</h2>
+          {projectData.title === 'Playdago' && (
+            <p className="figma-audit-subtitle">
+              {isEn ? 'Competitive benchmarking' : 'Benchmark concurrentiel'}
+            </p>
+          )}
           <div className="figma-two-cols">
-            <p className="figma-lead">{t('project.auditLead')}</p>
-            <p className="figma-body">{t('project.auditBody')}</p>
+            <p className="figma-lead">
+              {isEn
+                ? projectData.translations?.en?.auditLead ?? t('project.auditLead')
+                : projectData.auditLead ?? t('project.auditLead')}
+            </p>
+            <p className="figma-body">
+              {isEn
+                ? projectData.translations?.en?.auditBody ?? t('project.auditBody')
+                : projectData.auditBody ?? t('project.auditBody')}
+            </p>
           </div>
           <div className="figma-audit-carousel-wrapper">
             <Swiper

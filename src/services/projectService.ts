@@ -3,7 +3,7 @@ import { projectsDataNew } from '../data/projectsNew';
 
 const STORAGE_KEY = 'portfolio_projects';
 /** Incrémenter pour forcer la réutilisation des données du code (ex. nouveaux champs positionnementMatrix, userFlow) */
-const DATA_VERSION = 5;
+const DATA_VERSION = 8;
 const DATA_VERSION_KEY = 'portfolio_projects_version';
 
 export interface ProjectWithMeta extends ProjectData {
