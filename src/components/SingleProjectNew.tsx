@@ -16,6 +16,9 @@ import { TreeNode } from './flow/FlowTree';
 import type { FlowNodeData } from '../data/flowData';
 import Button from './Button';
 import ContactModal from './ContactModal';
+import { PlaydagoPaletteTable, PlaydagoTypescaleTable } from './PlaydagoDesignSystemTables';
+
+type PlaydagoDsMode = 'carousel' | 'palette' | 'typescale';
 
 /** User flow → arbre : tous les enfants en branches (vertical) → Compte, Contact, Page Tâches, Formation, Laboratoire sur la même colonne après Dashboard */
 function userFlowToFlowData(userFlow: { nodes: { id: string; name?: string; title?: string }[]; links: { from: string; to: string }[] }): FlowNodeData | null {
@@ -75,15 +78,52 @@ import formationIconBlue from '../assets/44168eca3dd85916f934d8ab1b7b41967aff31f
 import formationIconWhite from '../assets/93d42323f5ac3dc5fadde5c92e8d5135e38d2981.svg'
 import boutiqueIconBlue from '../assets/9dc5c3ec76d7852c81cd48b560b25b52336544c2.svg'
 import boutiqueIconWhite from '../assets/3bea835efaa0ca18d639afff7d53d9069da477c0.svg'
+/** Première slide Audit : Playdago uniquement (Pedaboard / autres gardent l’asset Figma partagé) */
+import auditCarouselBluePlaydago from '../assets/audit/Blue.png';
+/** Slides 2–4 carrousels Playdago (Audit, Design system) — dossier « creation atelier » (racine audit) */
+import auditCarouselCreationAtelierLancerDes from '../assets/audit/creation atelier/lancer de des.png';
+import auditCarouselCreationAtelierPersonnalisationDes from '../assets/audit/creation atelier/lancer de des/personnalisation du des.png';
+import auditCarouselCreationAtelierActionPopup from '../assets/audit/creation atelier/lancer de des/popup/action.png';
+import playdagoLightModeBody from '../assets/playdago/body.png';
+/** Chaque image des dossiers `audit/concept 1/` et `audit/concept 2/` = un trait cliquable sur la graduation (ordre = tri du chemin fichier). */
+const PLAYDAGO_CONCEPTION_CONCEPT_1_GLOB = import.meta.glob<{ default: string }>(
+  '../assets/audit/concept 1/**/*.{png,jpg,jpeg,webp}',
+  { eager: true }
+);
+const PLAYDAGO_CONCEPTION_CONCEPT_2_GLOB = import.meta.glob<{ default: string }>(
+  '../assets/audit/concept 2/**/*.{png,jpg,jpeg,webp}',
+  { eager: true }
+);
+
+function playdagoGlobToSortedSlides(glob: Record<string, { default: string }>): { src: string }[] {
+  return Object.keys(glob)
+    .sort((a, b) => a.localeCompare(b, undefined, { sensitivity: 'base', numeric: true }))
+    .map((path) => ({ src: glob[path].default }));
+}
+
+/** Conception Playdago : 2 itérations = contenu des dossiers concept 1 & concept 2 (nombre de traits = nombre de fichiers par dossier). */
+const PLAYDAGO_CONCEPTION_CONCEPT_GROUPS: { src: string }[][] = [
+  playdagoGlobToSortedSlides(PLAYDAGO_CONCEPTION_CONCEPT_1_GLOB),
+  playdagoGlobToSortedSlides(PLAYDAGO_CONCEPTION_CONCEPT_2_GLOB),
+];
+
 /** Base URL pour les assets (public/) – respecte base en prod si défini) */
 const assetBase = (import.meta.env.BASE_URL || '/').replace(/\/$/, '') + '/';
 
-/** URLs des images du carrousel Audit (public/single-project/) */
-const AUDIT_CAROUSEL_IMAGES = [
-  { src: `${assetBase}single-project/16399a4e-f4ad-465b-beb3-98b56cc27f6b.png`, alt: 'Audit – veille UX/UI 1' },
-  { src: `${assetBase}single-project/f6437219-c377-476d-820c-a6d2a5f9fabd.png`, alt: 'Audit – veille UX/UI 2' },
-  { src: `${assetBase}single-project/f6a7cf16-6dd5-4dee-9cb5-9231547be2f4.png`, alt: 'Audit – veille UX/UI 3' },
-] as const;
+/** Slide 2 Audit par défaut (Pedaboard, Kaldera, etc.) */
+const AUDIT_CAROUSEL_SLIDE_2_DEFAULT_SRC = `${assetBase}single-project/f6437219-c377-476d-820c-a6d2a5f9fabd.png`;
+
+/** Slide 3 du carrousel Audit (Pedaboard, Kaldera — Playdago : creation atelier) */
+const AUDIT_CAROUSEL_SLIDE_3_DEFAULT = {
+  src: `${assetBase}single-project/f6a7cf16-6dd5-4dee-9cb5-9231547be2f4.png`,
+  alt: 'Audit – veille UX/UI 3',
+} as const;
+
+/** Première slide Audit par défaut (ex. Pedaboard, Kaldera) — ne pas confondre avec Playdago */
+const AUDIT_CAROUSEL_FIRST_DEFAULT = {
+  src: `${assetBase}single-project/16399a4e-f4ad-465b-beb3-98b56cc27f6b.png`,
+  alt: 'Audit – veille UX/UI 1',
+} as const;
 
 /** URLs des images du carrousel Expérience Utilisateur Finale (même carousel que Audit) */
 const EXPERIENCE_CAROUSEL_IMAGES = [
@@ -91,6 +131,30 @@ const EXPERIENCE_CAROUSEL_IMAGES = [
   { src: `${assetBase}single-project/0a6760e8-d76a-4d0e-b311-9d2d1f65e33a.png`, alt: 'Expérience 2' },
   { src: `${assetBase}single-project/a6e3eda5-8a3b-4755-98c0-e1158e9765c5.png`, alt: 'Expérience 3' },
 ] as const;
+
+/** Icône graduation minimaliste (axe + traits) — avant le libellé « Concept n » */
+function PlaydagoConceptionGraduationIcon() {
+  return (
+    <svg
+      className="playdago-conception-grad-icon"
+      viewBox="0 0 20 20"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+      aria-hidden="true"
+    >
+      <path
+        d="M9 3v14"
+        stroke="currentColor"
+        strokeWidth="1.5"
+        strokeLinecap="round"
+      />
+      <path d="M9 5h4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+      <path d="M9 9h2.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+      <path d="M9 13h4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+      <path d="M9 17h2.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+    </svg>
+  );
+}
 
 interface SingleProjectProps {
   projectData: ProjectData;
@@ -108,6 +172,11 @@ const SingleProjectNew: FC<SingleProjectProps> = ({ projectData, onBackClick, co
   const [isClosing, setIsClosing] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
   const [showContactModal, setShowContactModal] = useState(false);
+  /** Playdago — bloc Design system : onglets Carrousel | Palette | Typéchelle */
+  const [playdagoDsMode, setPlaydagoDsMode] = useState<PlaydagoDsMode>('carousel');
+  /** Conception & Itération : indice du concept (graduations) et indice du visuel dans le carrousel vertical du concept actif */
+  const [playdagoConceptionConceptIndex, setPlaydagoConceptionConceptIndex] = useState(0);
+  const [playdagoConceptionSlideIndex, setPlaydagoConceptionSlideIndex] = useState(0);
   const LIFT_SCROLL_MAX = 200; // Pixels de "scroll" pour que le panneau touche le haut
   const [liftScroll, setLiftScroll] = useState(0); // 0 à LIFT_SCROLL_MAX : phase où seul le panneau monte
   const [contentScrollTop, setContentScrollTop] = useState(0); // scroll du contenu une fois le panneau en haut
@@ -115,6 +184,9 @@ const SingleProjectNew: FC<SingleProjectProps> = ({ projectData, onBackClick, co
   const barRef = useRef<HTMLDivElement>(null);
   const tocRef = useRef<HTMLDivElement>(null);
   const userflowTreeContainerRef = useRef<HTMLDivElement>(null);
+  /** Hauteur de la zone image centrale → contraint graduations + carrousel vertical (scroll interne) */
+  const playdagoConceptionStageInnerRef = useRef<HTMLDivElement>(null);
+  const [playdagoConceptionSideMaxPx, setPlaydagoConceptionSideMaxPx] = useState<number | null>(null);
 
   const introText =
     isEn && projectData.translations?.en?.summary ? projectData.translations.en.summary : projectData.summary;
@@ -161,6 +233,108 @@ const SingleProjectNew: FC<SingleProjectProps> = ({ projectData, onBackClick, co
     const uf = projectData.userFlow ? (isEn && projectData.translations?.en?.userFlow ? projectData.translations.en.userFlow : projectData.userFlow) : null;
     return uf ? userFlowToFlowData(uf) : null;
   }, [projectData.userFlow, projectData.translations, isEn]);
+
+  const auditCarouselImages = useMemo(() => {
+    const first =
+      projectData.title === 'Playdago'
+        ? { src: auditCarouselBluePlaydago, alt: 'Audit – veille UX/UI 1' as const }
+        : AUDIT_CAROUSEL_FIRST_DEFAULT;
+    const second =
+      projectData.title === 'Playdago'
+        ? { src: auditCarouselCreationAtelierLancerDes, alt: 'Audit – veille UX/UI 2' as const }
+        : { src: AUDIT_CAROUSEL_SLIDE_2_DEFAULT_SRC, alt: 'Audit – veille UX/UI 2' as const };
+    const third =
+      projectData.title === 'Playdago'
+        ? { src: auditCarouselCreationAtelierPersonnalisationDes, alt: 'Audit – veille UX/UI 3' as const }
+        : AUDIT_CAROUSEL_SLIDE_3_DEFAULT;
+    const fourth =
+      projectData.title === 'Playdago'
+        ? { src: auditCarouselCreationAtelierActionPopup, alt: 'Audit – veille UX/UI 4' as const }
+        : null;
+    return fourth ? [first, second, third, fourth] : [first, second, third];
+  }, [projectData.title]);
+
+  /** Groupes d’images par concept (Conception Playdago uniquement ; autres projets : repli 1 concept / 1 image) */
+  const playdagoConceptionConceptGroups = useMemo(() => {
+    if (projectData.title === 'Playdago') return PLAYDAGO_CONCEPTION_CONCEPT_GROUPS;
+    return [[{ src: AUDIT_CAROUSEL_FIRST_DEFAULT.src }]];
+  }, [projectData.title]);
+
+  const conceptionSafeConceptIdx =
+    playdagoConceptionConceptGroups.length === 0
+      ? 0
+      : Math.min(
+          Math.max(0, playdagoConceptionConceptIndex),
+          playdagoConceptionConceptGroups.length - 1
+        );
+
+  const playdagoConceptionCurrentSlides = playdagoConceptionConceptGroups[conceptionSafeConceptIdx] ?? [];
+
+  /** Conception & Itération (Playdago) : H3 + corps — priorité aux champs conception*, repli sur le doublon design system */
+  const playdagoConceptionPivotH3 = useMemo(() => {
+    if (projectData.title !== 'Playdago') return undefined;
+    return (
+      (isEn && projectData.translations?.en?.conceptionDuplicatePivotH3
+        ? projectData.translations.en.conceptionDuplicatePivotH3
+        : projectData.conceptionDuplicatePivotH3) ??
+      (isEn && projectData.translations?.en?.architectureDsDuplicatePivotH3
+        ? projectData.translations.en.architectureDsDuplicatePivotH3
+        : projectData.architectureDsDuplicatePivotH3)
+    );
+  }, [projectData, isEn]);
+
+  const playdagoConceptionBody = useMemo(() => {
+    if (projectData.title !== 'Playdago') return '';
+    return (
+      (isEn && projectData.translations?.en?.conceptionDuplicateBody
+        ? projectData.translations.en.conceptionDuplicateBody
+        : projectData.conceptionDuplicateBody) ??
+      (isEn && projectData.translations?.en?.architectureDsDuplicateBody
+        ? projectData.translations.en.architectureDsDuplicateBody
+        : projectData.architectureDsDuplicateBody ?? '')
+    );
+  }, [projectData, isEn]);
+
+  const conceptionSafeSlideIdx =
+    playdagoConceptionCurrentSlides.length === 0
+      ? 0
+      : Math.min(
+          Math.max(0, playdagoConceptionSlideIndex),
+          playdagoConceptionCurrentSlides.length - 1
+        );
+
+  useEffect(() => {
+    setPlaydagoConceptionConceptIndex((i) =>
+      Math.min(i, Math.max(0, playdagoConceptionConceptGroups.length - 1))
+    );
+  }, [playdagoConceptionConceptGroups.length]);
+
+  useEffect(() => {
+    setPlaydagoConceptionSlideIndex((i) =>
+      Math.min(i, Math.max(0, playdagoConceptionCurrentSlides.length - 1))
+    );
+  }, [conceptionSafeConceptIdx, playdagoConceptionCurrentSlides.length]);
+
+  useEffect(() => {
+    const el = playdagoConceptionStageInnerRef.current;
+    if (!el) {
+      setPlaydagoConceptionSideMaxPx(null);
+      return;
+    }
+    const apply = () => {
+      const h = el.getBoundingClientRect().height;
+      if (h > 0) setPlaydagoConceptionSideMaxPx(Math.round(h));
+    };
+    apply();
+    const ro = new ResizeObserver(apply);
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, [
+    projectData.title,
+    conceptionSafeConceptIdx,
+    conceptionSafeSlideIdx,
+    playdagoConceptionCurrentSlides.length,
+  ]);
 
   const handleNodeClick = useCallback((nodeId: string, event?: React.MouseEvent) => {
     if (!userFlowTreeData) return;
@@ -660,7 +834,7 @@ const SingleProjectNew: FC<SingleProjectProps> = ({ projectData, onBackClick, co
                 {projectData.designSystem && (
                   <li><a href="#design-system" className="toc-link">{projectData.designSystem.colorPalette.title}</a></li>
                 )}
-                {projectData.designSystem?.typography && (
+                {projectData.designSystem?.typography && projectData.title !== 'Playdago' && (
                   <li><a href="#typography" className="toc-link">{projectData.designSystem.typography.title}</a></li>
                 )}
                 <li><a href="#implementation" className="toc-link">{t('project.implementation')}</a></li>
@@ -823,7 +997,11 @@ const SingleProjectNew: FC<SingleProjectProps> = ({ projectData, onBackClick, co
               slidesPerView="auto"
               centeredSlides={false}
               pagination={{ clickable: true }}
-              className="figma-audit-carousel"
+              className={
+                projectData.title === 'Playdago'
+                  ? 'figma-audit-carousel figma-audit-carousel--playdago'
+                  : 'figma-audit-carousel'
+              }
               onSwiper={(swiper) => {
                 const idealWidth = 506.667;
                 const applySlideWidth = () => {
@@ -839,9 +1017,15 @@ const SingleProjectNew: FC<SingleProjectProps> = ({ projectData, onBackClick, co
                 swiper.on('resize', applySlideWidth);
               }}
             >
-              {AUDIT_CAROUSEL_IMAGES.map((img, index) => (
+              {auditCarouselImages.map((img, index) => (
                 <SwiperSlide key={index}>
-                  <div className="figma-audit-slide">
+                  <div
+                    className={
+                      projectData.title === 'Playdago' && index === 0
+                        ? 'figma-audit-slide figma-audit-slide--playdago-blue'
+                        : 'figma-audit-slide'
+                    }
+                  >
                     <img src={img.src} alt={t(`project.auditAlt${index + 1}`)} loading="eager" decoding="async" />
                   </div>
                 </SwiperSlide>
@@ -854,7 +1038,11 @@ const SingleProjectNew: FC<SingleProjectProps> = ({ projectData, onBackClick, co
         <motion.section id="architecture" className="project-section figma-architecture-section" {...scrollSectionProps}>
           <h2 className="section-title">{t('project.architecture')}</h2>
           <div className="figma-two-cols">
-            <p className="figma-lead">{t('project.archLead')}</p>
+            <p className="figma-lead">
+              {isEn && projectData.translations?.en?.archLead
+                ? projectData.translations.en.archLead
+                : projectData.archLead ?? t('project.archLead')}
+            </p>
             <p className="figma-body">{t('project.archBody')}</p>
           </div>
           <h3 className="figma-subsection-title">{t('project.userFlow')}</h3>
@@ -902,10 +1090,219 @@ const SingleProjectNew: FC<SingleProjectProps> = ({ projectData, onBackClick, co
               <img src="/single-project/fe88fac0-9c5a-44ad-af6a-151d4da1bfa0.png" alt="User flow" className="figma-userflow-img" />
             )}
           </div>
+
+          {/* Playdago : Design system — segments Carrousel | Palette | Typéchelle (doublon sous le premier bloc) */}
+          {projectData.title === 'Playdago' && (
+            <>
+              <div id="design-system" className="figma-audit-playdago-duplicate">
+                <h3 className="figma-subsection-title">{t('project.designSystem')}</h3>
+                <div className="playdago-ds-segment-group" role="tablist" aria-label={t('project.designSystem')}>
+                  <button
+                    type="button"
+                    role="tab"
+                    aria-selected={playdagoDsMode === 'carousel'}
+                    className={`playdago-ds-segment${playdagoDsMode === 'carousel' ? ' playdago-ds-segment--active' : ''}`}
+                    onClick={() => setPlaydagoDsMode('carousel')}
+                  >
+                    {t('project.dsTabCarousel')}
+                  </button>
+                  <button
+                    type="button"
+                    role="tab"
+                    aria-selected={playdagoDsMode === 'palette'}
+                    className={`playdago-ds-segment${playdagoDsMode === 'palette' ? ' playdago-ds-segment--active' : ''}`}
+                    onClick={() => setPlaydagoDsMode('palette')}
+                  >
+                    {t('project.dsTabPalette')}
+                  </button>
+                  <button
+                    type="button"
+                    role="tab"
+                    aria-selected={playdagoDsMode === 'typescale'}
+                    className={`playdago-ds-segment${playdagoDsMode === 'typescale' ? ' playdago-ds-segment--active' : ''}`}
+                    onClick={() => setPlaydagoDsMode('typescale')}
+                  >
+                    {t('project.dsTabTypescale')}
+                  </button>
+                </div>
+                <div className="figma-two-cols">
+                  <p className="figma-lead whitespace-pre-line">
+                    {isEn && projectData.translations?.en?.architectureDsDuplicateLead
+                      ? projectData.translations.en.architectureDsDuplicateLead
+                      : projectData.architectureDsDuplicateLead ?? ''}
+                  </p>
+                  <p className="figma-body whitespace-pre-line">
+                    {isEn && projectData.translations?.en?.architectureDsDuplicateBody
+                      ? projectData.translations.en.architectureDsDuplicateBody
+                      : projectData.architectureDsDuplicateBody ?? ''}
+                  </p>
+                </div>
+                {playdagoDsMode === 'palette' && projectData.designSystem ? (
+                  <div className="figma-audit-carousel-wrapper playdago-ds-tables-wrap">
+                    <PlaydagoPaletteTable projectData={projectData} isEn={isEn} t={t} />
+                  </div>
+                ) : playdagoDsMode === 'typescale' && projectData.designSystem ? (
+                  <div className="figma-audit-carousel-wrapper playdago-ds-tables-wrap">
+                    <PlaydagoTypescaleTable projectData={projectData} t={t} />
+                  </div>
+                ) : (
+                  <div className="figma-audit-carousel-wrapper">
+                    <Swiper
+                      modules={[Pagination]}
+                      spaceBetween={24}
+                      slidesPerView="auto"
+                      centeredSlides={false}
+                      pagination={{ clickable: true }}
+                      className="figma-audit-carousel figma-audit-carousel--playdago"
+                      onSwiper={(swiper) => {
+                        const idealWidth = 506.667;
+                        const applySlideWidth = () => {
+                          const w = Math.min(idealWidth, Math.max(0, swiper.width - 24));
+                          swiper.slides.forEach((slide) => {
+                            const el = slide as HTMLElement;
+                            el.style.width = `${w}px`;
+                            el.style.minWidth = `${w}px`;
+                          });
+                          swiper.update();
+                        };
+                        applySlideWidth();
+                        swiper.on('resize', applySlideWidth);
+                      }}
+                    >
+                      {auditCarouselImages.map((img, index) => (
+                        <SwiperSlide key={`audit-dup-${index}`}>
+                          <div
+                            className={
+                              index === 0
+                                ? 'figma-audit-slide figma-audit-slide--playdago-blue'
+                                : 'figma-audit-slide'
+                            }
+                          >
+                            <img src={img.src} alt={t(`project.auditAlt${index + 1}`)} loading="lazy" decoding="async" />
+                          </div>
+                        </SwiperSlide>
+                      ))}
+                    </Swiper>
+                  </div>
+                )}
+              </div>
+
+              <div className="figma-audit-playdago-duplicate figma-audit-playdago-duplicate--stacked">
+                <h3 className="figma-subsection-title">{t('project.conception')}</h3>
+                <div className="figma-two-cols figma-two-cols--playdago-conception-copy">
+                  <p className="figma-lead whitespace-pre-line">
+                    {isEn && projectData.translations?.en?.conceptionDuplicateLead
+                      ? projectData.translations.en.conceptionDuplicateLead
+                      : projectData.conceptionDuplicateLead ?? ''}
+                  </p>
+                  <div className="playdago-ds-stacked-body-col">
+                    {playdagoConceptionPivotH3 && (
+                      <h3 className="figma-ds-pivot-h3">{playdagoConceptionPivotH3}</h3>
+                    )}
+                    <p className="figma-body whitespace-pre-line">{playdagoConceptionBody}</p>
+                  </div>
+                </div>
+                <div className="figma-audit-carousel-wrapper playdago-conception-gallery-wrap">
+                  <div
+                    className="playdago-conception-gallery"
+                    role="region"
+                    aria-label={t('project.conception')}
+                    style={
+                      {
+                        '--playdago-conception-n': playdagoConceptionConceptGroups.length,
+                        '--playdago-conception-images-n': playdagoConceptionCurrentSlides.length,
+                        ...(playdagoConceptionSideMaxPx != null
+                          ? { '--playdago-conception-side-max-h': `${playdagoConceptionSideMaxPx}px` }
+                          : {}),
+                      } as React.CSSProperties
+                    }
+                  >
+                    <div
+                      className="playdago-conception-concept-triggers"
+                      role="group"
+                      aria-label={t('project.conceptionGraduationGroup')}
+                    >
+                      {playdagoConceptionConceptGroups.map((_, conceptIdx) => (
+                        <button
+                          key={conceptIdx}
+                          type="button"
+                          className={`playdago-conception-concept-item${
+                            conceptionSafeConceptIdx === conceptIdx
+                              ? ' playdago-conception-concept-item--active'
+                              : ''
+                          }`}
+                          aria-pressed={conceptionSafeConceptIdx === conceptIdx}
+                          aria-controls="playdago-conception-main"
+                          onClick={() => {
+                            setPlaydagoConceptionConceptIndex(conceptIdx);
+                            setPlaydagoConceptionSlideIndex(0);
+                          }}
+                        >
+                          <span className="playdago-conception-concept-item__icon">
+                            <PlaydagoConceptionGraduationIcon />
+                          </span>
+                          <span className="playdago-conception-concept-item__label">
+                            {t('project.conceptGraduationLabel', { n: conceptIdx + 1 })}
+                          </span>
+                        </button>
+                      ))}
+                    </div>
+                    <div className="playdago-conception-stage">
+                      <div
+                        ref={playdagoConceptionStageInnerRef}
+                        className="playdago-conception-stage-inner"
+                        id="playdago-conception-main"
+                      >
+                        <img
+                          src={playdagoConceptionCurrentSlides[conceptionSafeSlideIdx]?.src}
+                          alt={t('project.conceptionStageAlt', {
+                            concept: conceptionSafeConceptIdx + 1,
+                            slide: conceptionSafeSlideIdx + 1,
+                          })}
+                          loading="lazy"
+                          decoding="async"
+                          onLoad={() => {
+                            const el = playdagoConceptionStageInnerRef.current;
+                            if (el) {
+                              const h = el.getBoundingClientRect().height;
+                              if (h > 0) setPlaydagoConceptionSideMaxPx(Math.round(h));
+                            }
+                          }}
+                        />
+                      </div>
+                    </div>
+                    <div className="playdago-conception-thumbs-wrap">
+                      <div
+                        className="playdago-conception-thumbs"
+                        role="tablist"
+                        aria-label={t('project.conceptionVerticalCarousel')}
+                      >
+                        {playdagoConceptionCurrentSlides.map((img, index) => (
+                          <button
+                            key={`${conceptionSafeConceptIdx}-${index}`}
+                            type="button"
+                            role="tab"
+                            id={`playdago-conception-thumb-${conceptionSafeConceptIdx}-${index}`}
+                            tabIndex={playdagoConceptionSlideIndex === index ? 0 : -1}
+                            aria-selected={playdagoConceptionSlideIndex === index}
+                            aria-controls="playdago-conception-main"
+                            className={`playdago-conception-thumb${playdagoConceptionSlideIndex === index ? ' playdago-conception-thumb--active' : ''}`}
+                            onClick={() => setPlaydagoConceptionSlideIndex(index)}
+                          >
+                            <img src={img.src} alt="" />
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </>
+          )}
         </motion.section>
 
-        {/* Design system (Figma 100-282 : Palette Pedaboard complète) */}
-        {projectData.designSystem && (
+        {/* Design system — Playdago : contenu déplacé sous Architecture (switch carrousel / tables) */}
+        {projectData.designSystem && projectData.title !== 'Playdago' && (
           <motion.section id="design-system" className="project-section figma-design-system-section" {...scrollSectionProps}>
             <h2 className="section-title">{t('project.designSystem')}</h2>
             <h3 className="figma-palette-title">{t('project.palette')}</h3>
@@ -996,7 +1393,8 @@ const SingleProjectNew: FC<SingleProjectProps> = ({ projectData, onBackClick, co
           </motion.section>
         )}
 
-        {/* Conception & Itération (Figma 100-424) */}
+        {/* Conception & Itération (Figma 100-424) — masqué sur Playdago (doublon couvert par le bloc sous l’arbre user flow) */}
+        {projectData.title !== 'Playdago' && (
         <motion.section id="conception" className="project-section figma-conception-section" {...scrollSectionProps}>
           <h2 className="section-title">{t('project.conception')}</h2>
           <div className="figma-two-cols">
@@ -1024,11 +1422,12 @@ const SingleProjectNew: FC<SingleProjectProps> = ({ projectData, onBackClick, co
             </div>
           </div>
         </motion.section>
+        )}
 
         {/* Suite aux tests de contraste */}
         <motion.section id="light-mode" className="project-section figma-light-mode-section" {...scrollSectionProps}>
           <h2 className="figma-big-title">{t('project.contrastTitle')}</h2>
-          <img src="/single-project/faffcc0f-0914-47bb-96dc-d2ab2b613174.png" alt="Light Mode" className="figma-full-width-img" />
+          <img src={playdagoLightModeBody} alt="Light Mode" className="figma-full-width-img" />
         </motion.section>
 
         {/* Expérience Utilisateur Finale */}

@@ -1,7 +1,13 @@
-import { type MouseEvent } from "react";
+import { type MouseEvent, useLayoutEffect, useRef, useState } from "react";
 import { motion } from "framer-motion";
 import type { FlowNodeData } from "../../data/flowData";
 import { cn } from "../../lib/utils";
+
+/**
+ * Arbres UX (compétences, user flow).
+ * Référence produit : le user flow Playdago (`#userflow-tree`, SingleProject, variant `userflow`).
+ * Tout nouvel alignement / connecteurs / espacements des autres arbres du site devra s’aligner sur ce comportement (mise à jour des autres usages à planifier).
+ */
 
 interface TreeNodeProps {
   data: FlowNodeData;
@@ -65,6 +71,50 @@ export const TreeNode = ({
   const isUserflow = variant === 'userflow';
   const useSimpleBubble = isUserflow || !(data.branches && data.branches.length > 0 && data.id !== "racines" && data.id !== "domaine_product" && data.id !== "domaine_da");
   const useVerticalBranches = hasBranches && (isUserflow || data.id === "racines" || data.id === "domaine_product" || data.id === "domaine_da");
+  const branchListVertical = useVerticalBranches && data.branches ? data.branches : null;
+  const branchCountVertical = branchListVertical?.length ?? 0;
+  const branchIdsKey = branchListVertical?.map((b) => b.id).join("\0") ?? "";
+  /** User flow + 2+ enfants : colonne unique absolute (traverse gap-y) ; sinon demi-segments par ligne (compétences) */
+  const spineUnified = isUserflow && branchCountVertical > 1;
+  const spineColRef = useRef<HTMLDivElement>(null);
+  const [spineBetweenCenters, setSpineBetweenCenters] = useState({ top: 0, height: 0 });
+
+  useLayoutEffect(() => {
+    if (!spineUnified) return;
+    const col = spineColRef.current;
+    if (!col) return;
+
+    const updateSpine = () => {
+      /* Enfants directs uniquement — sinon les sous-branches (ex. Ateliers) fausseraient premier/dernier centre */
+      const rows = Array.from(col.children).filter(
+        (el): el is HTMLElement => el.hasAttribute("data-branch-row")
+      );
+      if (rows.length < 2) {
+        setSpineBetweenCenters({ top: 0, height: 0 });
+        return;
+      }
+      const first = rows[0];
+      const last = rows[rows.length - 1];
+      const cr = col.getBoundingClientRect();
+      const f = first.getBoundingClientRect();
+      const l = last.getBoundingClientRect();
+      const y1 = f.top + f.height / 2 - cr.top;
+      const y2 = l.top + l.height / 2 - cr.top;
+      setSpineBetweenCenters({ top: y1, height: Math.max(0, y2 - y1) });
+    };
+
+    updateSpine();
+    const ro = new ResizeObserver(updateSpine);
+    ro.observe(col);
+    Array.from(col.children).forEach((el) => {
+      if (el.hasAttribute("data-branch-row")) ro.observe(el);
+    });
+    window.addEventListener("resize", updateSpine);
+    return () => {
+      ro.disconnect();
+      window.removeEventListener("resize", updateSpine);
+    };
+  }, [spineUnified, branchCountVertical, branchIdsKey]);
 
   const handleClick = (e: MouseEvent) => {
     if (isDisabled) return; // Ne pas permettre le clic si désactivé
@@ -188,49 +238,81 @@ export const TreeNode = ({
              )} 
           />
           
-          {/* The Spine and Children List */}
-          <div className="flex flex-col">
-            {data.branches!.map((branch, index) => {
+          <div
+            ref={spineColRef}
+            className={cn(
+              "relative flex flex-col",
+              spineUnified && "gap-y-6"
+            )}
+          >
+            {spineUnified && spineBetweenCenters.height > 0 && (
+              <div
+                className={cn(
+                  "pointer-events-none absolute left-0 z-0 w-[2px]",
+                  isSelected ? LINE_COLOR_ACTIVE : LINE_COLOR
+                )}
+                style={{
+                  top: spineBetweenCenters.top,
+                  height: spineBetweenCenters.height,
+                }}
+                aria-hidden
+              />
+            )}
+
+            {branchListVertical!.map((branch, index) => {
               const isFirstChild = index === 0;
-              const isLastChild = index === data.branches!.length - 1;
-              const isOnlyChild = data.branches!.length === 1;
+              const isLastChild = index === branchCountVertical - 1;
+              const isOnlyChild = branchCountVertical === 1;
               const branchIsSelected = selectedNodes.has(branch.id);
               const shouldHighlightBranch = isSelected || branchIsSelected;
 
               return (
-                <div key={branch.id} className="relative flex flex-row">
-                  {/* Spine Segment Container */}
-                  <div className="relative w-0 shrink-0">
-                     {!isOnlyChild && (
-                       <>
-                         {/* Top Half (Connects from top to center) */}
-                         {!isFirstChild && (
-                           <div className={cn(
-                             "absolute -top-[2px] left-0 h-[50%] w-[2px]", 
-                             shouldHighlightBranch ? LINE_COLOR_ACTIVE : LINE_COLOR
-                           )} />
-                         )}
-                         {/* Bottom Half (Connects from center to bottom) */}
-                         {!isLastChild && (
-                           <div className={cn(
-                             "absolute top-[50%] left-0 h-[50%] w-[2px]", 
-                             shouldHighlightBranch ? LINE_COLOR_ACTIVE : LINE_COLOR
-                           )} />
-                         )}
-                       </>
-                     )}
-                  </div>
+                <div
+                  key={branch.id}
+                  data-branch-row
+                  className="relative z-10 flex flex-row items-center"
+                >
+                  {!spineUnified && (
+                    <div className="relative w-0 shrink-0 self-stretch">
+                      {!isOnlyChild && (
+                        <>
+                          {!isFirstChild && (
+                            <div
+                              className={cn(
+                                "absolute left-0 top-0 h-[calc(50%+1px)] w-[2px]",
+                                shouldHighlightBranch ? LINE_COLOR_ACTIVE : LINE_COLOR
+                              )}
+                            />
+                          )}
+                          {!isLastChild && (
+                            <div
+                              className={cn(
+                                "absolute left-0 top-[calc(50%-1px)] h-[calc(50%+1px)] w-[2px]",
+                                shouldHighlightBranch ? LINE_COLOR_ACTIVE : LINE_COLOR
+                              )}
+                            />
+                          )}
+                        </>
+                      )}
+                    </div>
+                  )}
 
-                  {/* Horizontal Connector to Child */}
-                  <div className="flex flex-col justify-center">
-                     <div className={cn(
-                       "h-[2px] w-12", 
-                       shouldHighlightBranch ? LINE_COLOR_ACTIVE : LINE_COLOR
-                     )} />
-                  </div>
+                  {spineUnified && <div className="w-0 shrink-0" aria-hidden />}
 
-                  {/* Child Content Wrapper */}
-                  <div className={cn("py-3 flex items-center mb-6", isUserflow && "userflow-branch-spacing")}>
+                  <div
+                    className={cn(
+                      "h-[2px] w-12 shrink-0",
+                      shouldHighlightBranch ? LINE_COLOR_ACTIVE : LINE_COLOR
+                    )}
+                  />
+
+                  <div
+                    className={cn(
+                      !isUserflow && "py-3 mb-6",
+                      "flex min-h-0 items-center",
+                      !isUserflow && "userflow-branch-spacing"
+                    )}
+                  >
                     <TreeNode
                       data={branch}
                       depth={depth + 1}

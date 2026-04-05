@@ -18,6 +18,18 @@ export interface ProjectData {
   /** Audit / Analyse (Figma) */
   auditLead?: string;
   auditBody?: string;
+  /** Section Architecture & Flux — 1er paragraphe (optionnel ; sinon libellé global) */
+  archLead?: string;
+  /** Teaser Design system (2 colonnes) sous l’arbre user flow — ex. Playdago */
+  architectureDsDuplicateLead?: string;
+  architectureDsDuplicateBody?: string;
+  /** 1er paragraphe section « Conception & Itération » (Playdago) — distinct du teaser Design system */
+  conceptionDuplicateLead?: string;
+  /** H3 + corps sous le lead (Conception uniquement) — si absent, repli sur architectureDsDuplicatePivotH3 / Body */
+  conceptionDuplicatePivotH3?: string;
+  conceptionDuplicateBody?: string;
+  /** H3 au-dessus du 2e paragraphe (bloc Conception dupliqué Playdago uniquement) */
+  architectureDsDuplicatePivotH3?: string;
   /** Matrice de positionnement (Figma 97-50) : scatter X=Effort, Y=Valeur */
   positionnementMatrix?: {
     xAxisLabel: string;
@@ -179,6 +191,13 @@ export interface ProjectData {
       solution?: string;
       auditLead?: string;
       auditBody?: string;
+      archLead?: string;
+      architectureDsDuplicateLead?: string;
+      architectureDsDuplicateBody?: string;
+      architectureDsDuplicatePivotH3?: string;
+      conceptionDuplicateLead?: string;
+      conceptionDuplicatePivotH3?: string;
+      conceptionDuplicateBody?: string;
       year?: string;
       /** Neutrals palette: role + usage par index */
       designSystemNeutrals?: Array<{ role: string; usage: string }>;
@@ -237,6 +256,33 @@ export const projectsDataNew: { [key: string]: ProjectData } = {
 
     auditBody:
       "J’ai commencé l’analyse du projet à partir de Wooclap, un outil déjà utilisé par Cyrielle dans certains contextes de formation. Wooclap m’a servi de référence pour sa capacité à s’intégrer facilement dans un temps de formation existant et à engager les apprenants sans complexifier l’animation. Cette approche a confirmé l’importance de concevoir un outil qui accompagne le formateur, plutôt que de structurer la session à sa place.",
+
+    archLead:
+      "La base de l'architecture repose sur une distinction stricte des rôles afin d'éviter toute confusion. Cela garantit une clarté organisationnelle essentielle pour la bonne exécution des tâches et la coordination efficace des équipes.",
+
+    architectureDsDuplicateLead: `L'interface a été conçue pour se fondre au service de l'interaction pédagogique.
+
+Afin d'assurer cette neutralité, j'ai développé un système de design basé sur Material Design.`,
+
+    conceptionDuplicateLead: `La conception de l'interface de création d'atelier ("Builder") a posé le défi ergonomique principal du projet. Il a été nécessaire de gérer une densité d'interactions importantes : ajustement précis des cartes (couleurs, polices, découpage), configuration du déroulement et ajout d'actions interstitielles (vidéo, diapositive) entre les étapes du jeu.`,
+
+    conceptionDuplicatePivotH3: 'Architecture & Chronologie',
+
+    conceptionDuplicateBody: `Dans les premières itérations, je me suis inspiré du modèle mental de Canva pour maximiser l'espace de travail. J'ai divisé l'écran en trois zones :
+Le Canvas Central : Pour l'édition visuelle des cartes.
+La Chronologie Inférieure : Pour visualiser le séquençage linéaire de l'atelier (lecture de gauche à droite) et insérer les médias.
+Le Panneau Latéral (Droite) : Pour regrouper les paramètres optionnels et les métadonnées, évitant ainsi la surcharge cognitive.
+
+Bien que conforme au cahier des charges initial, cette structure a ensuite évolué pour inclure des étapes de validation (Monitoring), offrant au formateur un contrôle plus détaillé sur la qualité de son atelier avant le lancement.`,
+
+    architectureDsDuplicateBody: `Palette Neutre : Des teintes désaturées ont été choisies pour minimiser la fatigue oculaire lors des sessions longues.
+
+Hiérarchie des Surfaces : Un système composé de 4 niveaux (Arrière-plan, Base, Secondaire, Superposition) pour gérer la densité d'information.
+
+Grille 4pt : Une structure à la fois dense et aérée, essentielle pour organiser les nombreux éléments interactifs (cartes, jetons) sur un même écran.`,
+
+    architectureDsDuplicatePivotH3: 'Rationalisation et pivot technique',
+
     positionnementMatrix: {
       axisHorizontalPrefix: 'Axe X (Horizontal) ',
       axisVerticalPrefix: 'Axe Y (Vertical) ',
@@ -251,6 +297,38 @@ export const projectsDataNew: { [key: string]: ProjectData } = {
         { name: 'Formation', description: 'personne ayant souscrit a un atelier', x: 6, y: 6 },
         { name: 'Woocommerce', description: 'vente de produit et de service', x: -6, y: -6 },
         { name: 'Notion', description: 'liste de tâches à réaliser', x: 6, y: -6 },
+      ],
+    },
+
+    /** Flux utilisateur (arbre #userflow-tree — section Architecture & Flux). Référence UX pour tous les arbres du site ; alignement des autres arbres à prévoir ultérieurement. */
+    userFlow: {
+      title: 'User flow',
+      nodes: [
+        { id: 'login', name: 'Authentification' },
+        { id: 'dashboard', name: 'Tableau de bord' },
+        { id: 'compte', name: 'Ateliers' },
+        { id: 'matching', name: 'Matching' },
+        { id: 'lancer-des', name: 'Lancer de dés' },
+        { id: 'jeux-lettres', name: 'Jeux de lettres' },
+        { id: 'ateliers', name: 'Groupes' },
+        { id: 'creation', name: 'Librairie' },
+        { id: 'session', name: 'Administration' },
+        { id: 'suivi', name: 'Statistiques' },
+        { id: 'detail-atelier', name: 'Groupe/detail' },
+        { id: 'config', name: 'Librairie/DetailAtelier' },
+      ],
+      links: [
+        { from: 'login', to: 'dashboard' },
+        { from: 'dashboard', to: 'compte' },
+        { from: 'dashboard', to: 'ateliers' },
+        { from: 'dashboard', to: 'creation' },
+        { from: 'dashboard', to: 'session' },
+        { from: 'dashboard', to: 'suivi' },
+        { from: 'compte', to: 'matching' },
+        { from: 'compte', to: 'lancer-des' },
+        { from: 'compte', to: 'jeux-lettres' },
+        { from: 'ateliers', to: 'detail-atelier' },
+        { from: 'creation', to: 'config' },
       ],
     },
     
@@ -436,6 +514,63 @@ export const projectsDataNew: { [key: string]: ProjectData } = {
 
         auditBody:
           'I began analyzing the project with Wooclap, a tool already used by Cyrielle in certain training contexts. Wooclap served as a reference for its ability to integrate easily into an existing training session and to engage learners without complicating facilitation. This approach confirmed the importance of designing a tool that supports the facilitator, rather than structuring the session for them.',
+
+        archLead:
+          'The foundation of the architecture relies on a strict distinction of roles to avoid any confusion. This ensures organizational clarity that is essential for proper task execution and effective team coordination.',
+
+        architectureDsDuplicateLead: `The interface was designed to recede in service of pedagogical interaction.
+
+To ensure this neutrality, I developed a design system based on Material Design.`,
+
+        architectureDsDuplicateBody: `Neutral palette: Desaturated tones were chosen to minimize eye strain during long sessions.
+
+Surface hierarchy: A system of four levels (Background, Base, Secondary, Overlay) to manage information density.
+
+4pt grid: A structure that is both dense and airy, essential for organizing the many interactive elements (cards, tokens) on a single screen.`,
+
+        architectureDsDuplicatePivotH3: 'Rationalization and technical pivot',
+
+        conceptionDuplicateLead: `The workshop creation interface ("Builder") posed the project's main ergonomic challenge. We had to manage a high density of interactions: precise adjustment of cards (colors, fonts, cropping), flow configuration, and adding interstitial actions (video, slide) between game steps.`,
+
+        conceptionDuplicatePivotH3: 'Architecture & chronology',
+
+        conceptionDuplicateBody: `In the early iterations, I drew inspiration from Canva's mental model to maximize workspace. I divided the screen into three zones:
+Central canvas: For visual editing of cards.
+Lower timeline: To visualize the linear sequencing of the workshop (left-to-right reading) and insert media.
+Right side panel: To group optional settings and metadata, avoiding cognitive overload.
+
+Although aligned with the initial specification, this structure later evolved to include validation steps (Monitoring), giving the facilitator more detailed control over the quality of their workshop before launch.`,
+
+        userFlow: {
+          title: 'User flow',
+          nodes: [
+            { id: 'login', name: 'Authentication' },
+            { id: 'dashboard', name: 'Dashboard' },
+            { id: 'compte', name: 'Workshops' },
+            { id: 'matching', name: 'Matching' },
+            { id: 'lancer-des', name: 'Dice roll' },
+            { id: 'jeux-lettres', name: 'Letter games' },
+            { id: 'ateliers', name: 'Groups' },
+            { id: 'creation', name: 'Library' },
+            { id: 'session', name: 'Administration' },
+            { id: 'suivi', name: 'Statistics' },
+            { id: 'detail-atelier', name: 'Group/detail' },
+            { id: 'config', name: 'Library/DetailAtelier' },
+          ],
+          links: [
+            { from: 'login', to: 'dashboard' },
+            { from: 'dashboard', to: 'compte' },
+            { from: 'dashboard', to: 'ateliers' },
+            { from: 'dashboard', to: 'creation' },
+            { from: 'dashboard', to: 'session' },
+            { from: 'dashboard', to: 'suivi' },
+            { from: 'compte', to: 'matching' },
+            { from: 'compte', to: 'lancer-des' },
+            { from: 'compte', to: 'jeux-lettres' },
+            { from: 'ateliers', to: 'detail-atelier' },
+            { from: 'creation', to: 'config' },
+          ],
+        },
 
         team: [
           'Anthony Merault, Product Designer | Building Complex SaaS & Design Systems',
