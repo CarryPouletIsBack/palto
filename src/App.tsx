@@ -33,6 +33,8 @@ function App() {
   const [currentProjectCategory, setCurrentProjectCategory] = useState<string | null>(null)
   const [projectSwipeY, setProjectSwipeY] = useState(0)
   const [coverLiftProgress, setCoverLiftProgress] = useState(0)
+  /** Lift + scroll contenu (SingleProject) — masquer le bouton fermer sur la cover */
+  const [projectScrollCombined, setProjectScrollCombined] = useState(0)
   const [coverFullscreenActive, setCoverFullscreenActive] = useState(false)
   const [coverFullscreenModalOpen, setCoverFullscreenModalOpen] = useState(false)
   const coverFullscreenModalTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
@@ -48,6 +50,11 @@ function App() {
       }
     }
   }, [])
+
+  const isProjectRoute = currentPage.startsWith('project-') || currentPage === 'project'
+  useEffect(() => {
+    if (!isProjectRoute) setProjectScrollCombined(0)
+  }, [isProjectRoute])
 
   // Gestion d'erreur globale
   useEffect(() => {
@@ -434,6 +441,7 @@ function App() {
             projectName={currentPage.startsWith('project-') ? currentPage.replace('project-', '') : 'Playdago'}
             swipeY={projectSwipeY}
             coverLiftProgress={coverLiftProgress}
+            hideCloseOnScroll={projectScrollCombined > 32}
             coverFullscreenActive={coverFullscreenActive}
             isFullscreenModalOpen={coverFullscreenModalOpen}
             onFullscreenOpen={() => {
@@ -506,6 +514,7 @@ function App() {
             projectCategory={currentProjectCategory}
             onSwipeYChange={setProjectSwipeY}
             onLiftProgressChange={setCoverLiftProgress}
+            onProjectScrollCombinedChange={setProjectScrollCombined}
             coverFullscreenActive={coverFullscreenActive}
           />
         )}

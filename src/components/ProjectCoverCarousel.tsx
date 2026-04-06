@@ -19,9 +19,24 @@ interface ProjectCoverCarouselProps {
   coverFullscreenActive?: boolean;
   /** Contrôlé par le parent (App) : la modal s'ouvre après le délai du glissement */
   isFullscreenModalOpen?: boolean;
+  /** true : masque le bouton fermer de la cover (ex. dès qu’on scroll dans le projet) */
+  hideCloseOnScroll?: boolean;
 }
 
-const ProjectCoverCarousel: React.FC<ProjectCoverCarouselProps> = ({ coverImage, projectName, swipeY = 0, coverLiftProgress = 0, onClose, onPreviousProject, onNextProject, onFullscreenOpen, onFullscreenClose, coverFullscreenActive = false, isFullscreenModalOpen = false }) => {
+const ProjectCoverCarousel: React.FC<ProjectCoverCarouselProps> = ({
+  coverImage,
+  projectName,
+  swipeY = 0,
+  coverLiftProgress = 0,
+  onClose,
+  onPreviousProject,
+  onNextProject,
+  onFullscreenOpen,
+  onFullscreenClose,
+  coverFullscreenActive = false,
+  isFullscreenModalOpen = false,
+  hideCloseOnScroll = false,
+}) => {
   const [fullscreenIndex, setFullscreenIndex] = useState(0);
 
   // Dupliquer l'image pour tester le carousel
@@ -137,9 +152,11 @@ const ProjectCoverCarousel: React.FC<ProjectCoverCarouselProps> = ({ coverImage,
         {onClose && (
           <button
             type="button"
-            className="project-cover-close-btn"
+            className={`project-cover-close-btn${hideCloseOnScroll ? ' project-cover-close-btn--scroll-hidden' : ''}`}
             onClick={onClose}
             aria-label="Fermer"
+            aria-hidden={hideCloseOnScroll}
+            tabIndex={hideCloseOnScroll ? -1 : undefined}
           >
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
               <line x1="18" y1="6" x2="6" y2="18" />

@@ -3,7 +3,7 @@ import { projectsDataNew } from '../data/projectsNew';
 
 const STORAGE_KEY = 'portfolio_projects';
 /** Incrémenter pour forcer la réutilisation des données du code (ex. nouveaux champs positionnementMatrix, userFlow) */
-const DATA_VERSION = 8;
+const DATA_VERSION = 10;
 const DATA_VERSION_KEY = 'portfolio_projects_version';
 
 export interface ProjectWithMeta extends ProjectData {
@@ -33,6 +33,25 @@ export const loadProjects = (): { [key: string]: ProjectWithMeta } => {
           ...defaults,
           ...saved,
           userFlow: defaults.userFlow ?? saved?.userFlow,
+          auditLeadAfterCarousel: defaults.auditLeadAfterCarousel ?? saved?.auditLeadAfterCarousel,
+          auditBodyAfterCarousel: defaults.auditBodyAfterCarousel ?? saved?.auditBodyAfterCarousel,
+          translations:
+            defaults.translations || saved?.translations
+              ? {
+                  ...defaults.translations,
+                  ...saved?.translations,
+                  en: {
+                    ...defaults.translations?.en,
+                    ...saved?.translations?.en,
+                    auditLeadAfterCarousel:
+                      defaults.translations?.en?.auditLeadAfterCarousel ??
+                      saved?.translations?.en?.auditLeadAfterCarousel,
+                    auditBodyAfterCarousel:
+                      defaults.translations?.en?.auditBodyAfterCarousel ??
+                      saved?.translations?.en?.auditBodyAfterCarousel,
+                  },
+                }
+              : undefined,
           id: saved?.id ?? key,
           coverImage: key === 'Pedaboard' ? '/images/cover-project-pedaboard.png' : key === 'Playdago' ? '/images/cover-project-playdago.png' : key === 'Kaldera' ? '/images/cover-project-kaldera.png' : saved?.coverImage ?? `/images/${key.toLowerCase()}-cover.png`,
           category: saved?.category ?? (key === 'Pedaboard' ? 'applicationWeb' : 'application'),

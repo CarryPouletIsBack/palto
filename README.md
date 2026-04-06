@@ -32,7 +32,7 @@ Portfolio personnel créé avec React, TypeScript et Vite, présentant une colle
 - **Animations fluides** avec Framer Motion et CSS
 - **Barre de recherche** avec placeholder animé et suggestions
 - **Search bar mobile** avec dégradé et résultats en grille
-- **Effets visuels** (Magic Bento, BlurText, GradientText, ShinyText)
+- **Effets visuels** (Magic Bento, Scroll Stack, Card Swap, BlurText, GradientText, ShinyText)
 - **Background dynamique** qui change selon la page active
 - **Loading states** avec skeletons
 - **Modal de projet** avec animation slide-up/down
@@ -99,7 +99,11 @@ Les URLs incluent le préfixe de langue `/fr` ou `/en`.
 - `Button` - Boutons avec variants (primary/secondary) et mode icon
 - `ProjectItem` - Carte projet avec détection de couleur automatique
 - `HoverCard` - Effet de hover avec suivi de souris
-- `MagicBento` - Effet de bordure animée au hover
+- `MagicBento` - Grille type bento (React Bits) : tuiles image / contenu, animations optionnelles ; mode « shell » pour wrapper la barre de recherche sans tuiles
+- `ScrollStack` / `ScrollStackItem` - Pile de cartes liée au scroll (React Bits adapté) : scroll natif, cache de layout, lissage RAF, centrage vertical optionnel (`centerStackVertically`), racine scroll custom (`scrollRootRef`, ex. `.single-project-page`)
+- `CardSwap` - Carousel de cartes 3D (React Bits)
+- `PlaydagoH1HandwritingLogo` - Logo manuscrit Playdago au-dessus de la section mode clair
+- `PlaydagoDesignSystemTables` - Tableaux palette / typéchelle (mode bento pour la grille design system)
 - `ShinyText` - Animation de texte brillant
 - `GradientText` - Texte avec dégradé animé
 - `DecryptedText` - Effet de texte décrypté
@@ -129,6 +133,14 @@ Les URLs incluent le préfixe de langue `/fr` ou `/en`.
 10. **Résultats & Impact** - Métriques avec Donut Chart Race animés et retours
 
 ## ✨ Fonctionnalités Récentes
+
+### Single Project — Playdago (avril 2026, branche `single-project-playdago`)
+- **Design system (section Architecture)** : grille **Magic Bento** (captures Figma, tableaux palette / typéchelle intégrés dans des tuiles).
+- **Card Swap** : trois vues (dashboard, personnalisation du dé, distribution des cartes).
+- **Mode clair** : **Scroll Stack** sur les captures pleine largeur — défilement via le conteneur `.single-project-page`, pas `window` ; animation adoucie (easing, lerp) ; dépilement progressif après la phase « pin » pour éviter un chevauchement prolongé.
+- **Section « Phase d’intégration »** : retirée de la page projet.
+- **Mes autres projets** : carrousel Swiper (overflow, `centeredSlidesBounds`, largeurs arrondies) pour limiter les chevauchements.
+- **Fichiers principaux** : `ScrollStack.tsx`, `ScrollStack.css`, `CardSwap.tsx`, `MagicBento.tsx`, `PlaydagoH1HandwritingLogo.tsx`, `PlaydagoDesignSystemTables.tsx`, `SingleProjectNew.tsx`, `SingleProject.css`.
 
 ### URLs, 404 & Projets (Février 2025)
 - **Langue dans l’URL** : toutes les routes utilisent le préfixe `/fr` ou `/en` ; la racine `/` redirige vers `/fr` ou `/en` ; synchronisation URL ↔ changement de langue.
@@ -1167,4 +1179,4 @@ Voir [WORKFLOW.md](./WORKFLOW.md) pour la documentation complète du workflow (F
 - **Textes sur fond noir** : titres « À propos de moi », paragraphes d’intro et « Formations » en blanc dans la section Description
 - **Typographie** : remplacement de **SF Pro** par **Inter** dans tout le projet (AboutNew, About, SingleProject, TarotCard, ProjectStats, ProjectCharts)
 
-*Dernière mise à jour : Février 2025 — URLs avec langue (/fr, /en), page 404, lien Kaldera (trackali.com), descriptions des pages dans `content/pages/`.*
+*Dernière mise à jour : avril 2026 — page projet Playdago (Magic Bento, Scroll Stack, Card Swap) ; précédemment fév. 2025 : URLs /fr et /en, 404, Kaldera (trackali.com), `content/pages/`.*

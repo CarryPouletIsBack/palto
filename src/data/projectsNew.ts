@@ -18,6 +18,10 @@ export interface ProjectData {
   /** Audit / Analyse (Figma) */
   auditLead?: string;
   auditBody?: string;
+  /** Colonne gauche sous le carrousel audit (si absent : repli sur auditLead) */
+  auditLeadAfterCarousel?: string;
+  /** Colonne droite sous le carrousel audit (si absent : repli sur auditBody) */
+  auditBodyAfterCarousel?: string;
   /** Section Architecture & Flux — 1er paragraphe (optionnel ; sinon libellé global) */
   archLead?: string;
   /** Teaser Design system (2 colonnes) sous l’arbre user flow — ex. Playdago */
@@ -191,6 +195,8 @@ export interface ProjectData {
       solution?: string;
       auditLead?: string;
       auditBody?: string;
+      auditLeadAfterCarousel?: string;
+      auditBodyAfterCarousel?: string;
       archLead?: string;
       architectureDsDuplicateLead?: string;
       architectureDsDuplicateBody?: string;
@@ -228,7 +234,7 @@ export const projectsDataNew: { [key: string]: ProjectData } = {
     // 1. Titre principal
     title: 'Playdago',
     subtitle: 'Application de pédagogie active',
-    badges: ['UX/UI', '2024', 'Application'],
+    badges: ['UX/UI', '2025', 'SaaS', 'Application'],
     
     // 2. Résumé / Introduction (aligné Figma 49-229, adapté Playdago)
     summary: 'PlayDaGo a été créé pour répondre à une demande spécifique : comment organiser et concevoir des ateliers ludiques (cartes, dés, matching) à distance.\n\nLe défi n\u2019était pas seulement de digitaliser l\'ensemble du processus, mais de retranscrire le côté\u00A0sensoriel\u00A0des ateliers en\u00A0présentiel. de la création du groupe jusqu\'au suivi des résultats après l\'atelier.',
@@ -254,8 +260,11 @@ export const projectsDataNew: { [key: string]: ProjectData } = {
     auditLead:
       "J'ai commencé l'analyse du projet à partir de Wooclap, un outil déjà utilisé par Cyrielle dans certains contextes de formation. Wooclap m'a servi de référence pour sa capacité à s'intégrer facilement dans un temps de formation existant et à engager les apprenants sans complexifier l'animation. Cette approche a confirmé l'importance de concevoir un outil qui accompagne le formateur, plutôt que de structurer la session à sa place.",
 
-    auditBody:
-      "J’ai commencé l’analyse du projet à partir de Wooclap, un outil déjà utilisé par Cyrielle dans certains contextes de formation. Wooclap m’a servi de référence pour sa capacité à s’intégrer facilement dans un temps de formation existant et à engager les apprenants sans complexifier l’animation. Cette approche a confirmé l’importance de concevoir un outil qui accompagne le formateur, plutôt que de structurer la session à sa place.",
+    auditBody: `À partir de ce constat, j'ai orienté PlayDaGo vers un positionnement différent. Je me suis inspiré de la simplicité d'activation et de l'intégration fluide de Wooclap, tout en cherchant à dépasser ses limites par une personnalisation complète des contenus et des règles d'atelier. La création et l'édition des cartes, des decks et des mécaniques sont devenues des éléments centraux du produit. Cette analyse a rapidement mis en évidence une limite majeure pour le projet. Les formats proposés par Wooclap sont prédéfinis et offrent peu de possibilités de personnalisation.`,
+
+    auditLeadAfterCarousel: `Cette analyse a rapidement mis en évidence une limite majeure pour le projet. Les formats proposés par Wooclap sont prédéfinis et offrent peu de possibilités de personnalisation. Or, la pédagogie de Cyrielle repose sur des supports conçus sur mesure — cartes, dés et mécaniques spécifiques — qui constituent le cœur de sa méthode. Ne pas pouvoir adapter ces supports revenait à perdre l'identité même de son approche pédagogique.`,
+
+    auditBodyAfterCarousel: `J'ai également étudié Kahoot, dont le positionnement très orienté jeu et la logique de session événementielle ont permis de clarifier ce que PlayDaGo ne devait pas être. L'importance accordée au code PIN et au rythme imposé par l'outil se sont révélés peu adaptés à des formations structurées et progressives. Ce travail de benchmark m'a permis de définir un positionnement clair pour PlayDaGo : un outil pensé pour les formateurs, qui combine simplicité d'usage et contrôle total sur les supports pédagogiques, afin de prolonger des pratiques existantes plutôt que de les contraindre.`,
 
     archLead:
       "La base de l'architecture repose sur une distinction stricte des rôles afin d'éviter toute confusion. Cela garantit une clarté organisationnelle essentielle pour la bonne exécution des tâches et la coordination efficace des équipes.",
@@ -467,7 +476,7 @@ Grille 4pt : Une structure à la fois dense et aérée, essentielle pour organis
     },
     
     // Métadonnées
-    year: '2024',
+    year: '2025',
     image: '/images/cover-project-playdago.png',
     skills: ['UX Research', 'Design system', 'UI', 'Branding', 'Figma', 'React js'],
     duration: '9 mois',
@@ -512,8 +521,11 @@ Grille 4pt : Une structure à la fois dense et aérée, essentielle pour organis
         auditLead:
           'I began analyzing the project with Wooclap, a tool already used by Cyrielle in some training contexts. Wooclap served as a reference for its ability to integrate easily into an existing training time slot and to engage learners without complicating facilitation. This approach confirmed the importance of designing a tool that supports the facilitator, rather than structuring the session for them.',
 
-        auditBody:
-          'I began analyzing the project with Wooclap, a tool already used by Cyrielle in certain training contexts. Wooclap served as a reference for its ability to integrate easily into an existing training session and to engage learners without complicating facilitation. This approach confirmed the importance of designing a tool that supports the facilitator, rather than structuring the session for them.',
+        auditBody: `From this finding, I steered PlayDaGo toward a different positioning. I drew inspiration from Wooclap's ease of activation and smooth integration, while aiming to go beyond its limits through full customization of content and workshop rules. Creating and editing cards, decks and mechanics became central to the product. This analysis quickly revealed a major limitation for the project. The formats offered by Wooclap are predefined and allow little customization.`,
+
+        auditLeadAfterCarousel: `This analysis quickly revealed a major limitation for the project. The formats offered by Wooclap are predefined and allow little customization. Yet Cyrielle's pedagogy relies on tailor-made materials—cards, dice and specific mechanics—that are at the heart of her method. Being unable to adapt these materials meant losing the very identity of her pedagogical approach.`,
+
+        auditBodyAfterCarousel: `I also studied Kahoot, whose strongly game-oriented positioning and event-style session logic helped clarify what PlayDaGo should not be. The emphasis on PIN codes and the pace imposed by the tool proved poorly suited to structured, progressive training. This benchmarking work allowed me to define a clear positioning for PlayDaGo: a tool designed for trainers that combines ease of use and full control over learning materials, to extend existing practices rather than constraining them.`,
 
         archLead:
           'The foundation of the architecture relies on a strict distinction of roles to avoid any confusion. This ensures organizational clarity that is essential for proper task execution and effective team coordination.',

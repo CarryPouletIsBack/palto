@@ -39,6 +39,8 @@
   --sp-main-padding-x-tablet: 48px;
   --sp-main-gap-tablet: 48px;
   --sp-main-padding-x-mobile: 16px;
+  /** Gouttière mobile single project (contenu lisible) */
+  --sp-main-padding-x-mobile-compact: 12px;
   --sp-main-padding-y-mobile: 24px;
   --sp-main-gap-mobile: 24px;
   --spacing-xxxl: 48px;
@@ -142,7 +144,7 @@
 }
 
 
-/* Main : valeurs Figma (maquette 1440px – padding 48px 80px, gap 80px) */
+/* Main : ≥1286px — pas de padding horizontal (pleine largeur dans max-width 1280, Figma 1440) */
 .single-project-page .main-single-project {
   box-sizing: border-box;
   display: flex;
@@ -159,10 +161,42 @@
   flex: 1;
   padding-top: var(--sp-main-padding-top);
   padding-bottom: var(--sp-main-padding-bottom);
-  padding-left: var(--sp-main-padding-x);
-  padding-right: var(--sp-main-padding-x);
+  padding-left: 0;
+  padding-right: 0;
   min-height: calc(100vh - 112px);
   transition: padding 0.2s ease, gap 0.2s ease;
+}
+
+/*
+ * ≤1285px : gouttière sur tout le main (alignée esprit maquette 1440 : jusqu’à 48px).
+ * Les blocs sommaire / intro / équipe / processus n’ajoutent plus leur propre padding (évite le double).
+ */
+@media (max-width: 1285px) {
+  .single-project-page .main-single-project {
+    padding-left: clamp(16px, 2.8vw + 18px, 48px);
+    padding-right: clamp(16px, 2.8vw + 18px, 48px);
+  }
+
+  .single-project-page .main-single-project > .table-of-contents-section,
+  .single-project-page .main-single-project > .intro-section,
+  .single-project-page .main-single-project > .team-section,
+  .single-project-page .main-single-project > .processus-cards-section {
+    padding-left: 0;
+    padding-right: 0;
+  }
+}
+
+/* Gouttière horizontale : sommaire, intro, équipe, processus — uniquement grand écran (main sans padding) */
+@media (min-width: 1286px) {
+  .single-project-page .main-single-project > .table-of-contents-section,
+  .single-project-page .main-single-project > .intro-section,
+  .single-project-page .main-single-project > .team-section,
+  .single-project-page .main-single-project > .processus-cards-section {
+    padding-left: var(--sp-padding-x-fluid);
+    padding-right: var(--sp-padding-x-fluid);
+    box-sizing: border-box;
+    width: 100%;
+  }
 }
 
 /* Les sections sont des enfants directs : l’espacement vient du gap du main, pas de margin */
@@ -176,31 +210,21 @@
   padding-bottom: 0;
 }
 
-/* Tablette : Figma spacing xxxl (48px) pour padding horizontal et gap */
+/* Tablette : gap (padding h horizontal géré par max-width: 1285px) */
 @media (max-width: 1024px) {
   .single-project-page .main-single-project {
-    padding-left: var(--sp-main-padding-x-tablet);
-    padding-right: var(--sp-main-padding-x-tablet);
     gap: 40px;
   }
 }
 
-/* Mobile : Figma spacing m (24px) / m-2 (16px) pour padding, gap 24px */
+/* Mobile : 12px gauche/droite sur tout le contenu du main */
 @media (max-width: 768px) {
   .single-project-page .main-single-project {
     padding-top: var(--sp-main-padding-y-mobile);
     padding-bottom: var(--sp-main-padding-bottom);
-    padding-left: var(--sp-main-padding-x-mobile);
-    padding-right: var(--sp-main-padding-x-mobile);
+    padding-left: var(--sp-main-padding-x-mobile-compact);
+    padding-right: var(--sp-main-padding-x-mobile-compact);
     gap: 40px;
-  }
-}
-
-/* Très petit viewport : même padding horizontal que mobile */
-@media (max-width: 480px) {
-  .single-project-page .main-single-project {
-    padding-left: var(--sp-main-padding-x-mobile);
-    padding-right: var(--sp-main-padding-x-mobile);
   }
 }
 
@@ -1014,22 +1038,10 @@
   padding-right: 0;
 }
 
-/* Intro : ne pas ajouter de padding gauche/droite (rely on main padding) */
+/* Intro : gouttière via .main-single-project > .intro-section */
 .single-project-page .project-section.intro-section {
   padding-left: 0;
   padding-right: 0;
-}
-
-@media (max-width: 768px) {
-  .single-project-page .project-section {
-    padding-left: 16px;
-    padding-right: 16px;
-  }
-
-  .single-project-page .project-section.intro-section {
-    padding-left: 0;
-    padding-right: 0;
-  }
 }
 
 /* ===== Bloc unique Figma : header + Contexte du projet, gap 40px ===== */
@@ -1047,7 +1059,8 @@
 
 .context-project-wrapper {
   width: 100%;
-  max-width: var(--sp-content-max);
+  max-width: none;
+  box-sizing: border-box;
 }
 
 /* Grille Contexte du projet (Figma node 10-135) */
@@ -1150,6 +1163,10 @@
 
 .context-my-role {
   margin-top: 40px;
+  padding: var(--sp-space-lg, 24px);
+  border: 1px solid var(--sp-border);
+  border-radius: 8px;
+  box-sizing: border-box;
 }
 
 .context-my-role .context-subtitle {
@@ -1213,15 +1230,19 @@
 
 /* Section Problématique : pas de padding horizontal pour aligner la grille */
 .single-project-page #problematique.problematique-section,
+.single-project-page #audit,
 .single-project-page #architecture,
 .single-project-page #design-system,
 .single-project-page #conception,
 .single-project-page #light-mode,
-.single-project-page #experience-finale,
-.single-project-page #integration,
 .single-project-page #context {
   padding-left: 0;
   padding-right: 0;
+}
+
+/* User flow en pleine largeur : ne pas rogner le débordement calculé (full-bleed) */
+.single-project-page #architecture {
+  overflow-x: visible;
 }
 
 /* Matrice de positionnement – style Highcharts "Sonified function" (axes croisés à 0, grille) */
@@ -1508,6 +1529,18 @@
 /* Carrousel Audit (Figma node 98-59) : slide centrale + aperçus gauche/droite visibles */
 .figma-audit-section {
   overflow: visible;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+}
+
+/* Carrousel puis bloc texte : toujours empilés, le texte reste visuellement sous le carrousel */
+.figma-audit-carousel-stack {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  align-items: stretch;
+  flex-shrink: 0;
 }
 
 /* Full-bleed : le carrousel s’étend sur toute la largeur du viewport pour montrer les slides adjacentes */
@@ -1516,6 +1549,19 @@
   padding-bottom: 2.5rem;
   width: 100%;
   display: block;
+  flex-shrink: 0;
+  position: relative;
+  z-index: 0;
+}
+
+/* Même grille lead + body que au-dessus du carrousel */
+.figma-audit-section .figma-two-cols--audit-after-carousel {
+  margin-top: var(--sp-space-xl, 32px);
+  margin-bottom: 0;
+  position: relative;
+  z-index: 1;
+  flex-shrink: 0;
+  width: 100%;
 }
 
 .figma-audit-carousel,
@@ -1688,7 +1734,8 @@
   min-width: 0;
 }
 
-.figma-two-cols--playdago-conception-copy .figma-ds-pivot-h3 {
+.figma-two-cols--playdago-conception-copy .figma-ds-pivot-h3,
+.playdago-ds-stacked-body-col--swap-row .figma-ds-pivot-h3 {
   font-family: var(--sp-font-title);
   font-size: 18px;
   line-height: 24px;
@@ -1697,9 +1744,116 @@
   margin: 0 0 var(--sp-space-sm, 12px);
 }
 
+/* Conception Playdago : texte « Architecture & Chronologie » à gauche, Card Swap à droite */
+.playdago-conception-swap-copy-row {
+  display: grid;
+  grid-template-columns: minmax(240px, 38%) minmax(0, 1fr);
+  gap: clamp(24px, 4vw, 48px);
+  align-items: start;
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
+  margin-top: var(--sp-space-md, 16px);
+  box-sizing: border-box;
+}
+
+.figma-lead--playdago-conception-stacked {
+  margin-top: 0;
+  margin-bottom: 0;
+  max-width: 100%;
+}
+
+.playdago-conception-gallery-wrap--swap-copy-row {
+  margin-top: 0;
+  min-width: 0;
+  box-sizing: border-box;
+  /* Marge intérieure : la pile 3D dépasse un peu en X ; sans gouttière le clip rognait surtout à droite */
+  padding-inline: clamp(10px, 3.5vw, 20px);
+  /* Évite scroll horizontal page tout en laissant la gouttière visible à l’intérieur */
+  max-width: 100%;
+  overflow-x: hidden;
+  overflow-x: clip;
+}
+
+.playdago-conception-gallery-wrap--swap-copy-row .playdago-conception-card-swap-wrap {
+  margin-left: 0;
+  margin-right: 0;
+  max-width: 100%;
+  /* Cartes plus grandes (560×400) : zone plus haute pour la pile 3D */
+  min-height: clamp(420px, 50vh, 600px);
+  padding-top: clamp(40px, 8vh, 96px);
+  padding-bottom: clamp(20px, 3vw, 36px);
+}
+
+.playdago-ds-stacked-body-col--swap-row {
+  min-width: 0;
+}
+
+@media (max-width: 900px) {
+  .playdago-conception-swap-copy-row {
+    grid-template-columns: 1fr;
+    gap: var(--sp-space-lg, 24px);
+  }
+}
+
 /* Conception & Itération (Playdago) : concepts + icône règle | image centrale | miniatures verticales */
 .playdago-conception-gallery-wrap {
   max-width: 100%;
+}
+
+/* Galerie Concept 1 / 2 masquée (aperçu via Card Swap sous le bloc) */
+.playdago-conception-gallery--hidden {
+  display: none !important;
+}
+
+/* Card Swap (React Bits) — sous la galerie Conception & Itération */
+.playdago-conception-card-swap-wrap {
+  position: relative;
+  width: 100%;
+  max-width: min(100%, 1120px);
+  margin: clamp(20px, 3vw, 36px) auto 0;
+  /* Marge haute + min-height : la pile 3D dépasse au-dessus du bloc — évite rognage navigateur */
+  min-height: clamp(360px, 42vh, 480px);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding-top: clamp(32px, 6vh, 72px);
+  padding-bottom: clamp(16px, 3vw, 28px);
+  box-sizing: border-box;
+  overflow: visible;
+  /* flex : min-width auto empêchait parfois le rétrécissement → débordement à droite */
+  min-width: 0;
+  /* Largeur réelle de la colonne : si < 560px, CardSwap garde height=400 en inline → cadre trop haut ; on corrige via @container */
+  container-type: inline-size;
+  container-name: playdago-card-swap;
+}
+
+.playdago-conception-card-swap-wrap > * {
+  min-width: 0;
+  max-width: 100%;
+}
+
+/* Capture entière dans la carte (évite object-cover qui coupe header / bords) */
+.playdago-card-swap-img {
+  display: block;
+  object-fit: contain;
+  object-position: top center;
+}
+
+/* Colonne plus étroite que 560px : width fluide + height fixe (400) → ratio cassé ; forcer 16:9 sur le viewport CardSwap et les cartes */
+@container playdago-card-swap (max-width: 559px) {
+  .playdago-card-swap-aspect {
+    width: 100% !important;
+    max-width: min(100%, 560px);
+    height: auto !important;
+    aspect-ratio: 16 / 9;
+  }
+
+  .playdago-card-swap-aspect > div.absolute {
+    width: 100% !important;
+    height: 100% !important;
+    box-sizing: border-box;
+  }
 }
 
 .playdago-conception-gallery {
@@ -1996,7 +2150,9 @@
 
 /* Même disposition : concepts | image | carrousel vertical ; tout se réduit (pas d’empilement) */
 @media (max-width: 720px) {
-  .playdago-conception-gallery-wrap {
+  /* Scroll horizontal uniquement pour la vraie galerie (concepts | stage | thumbs).
+     Pas pour la variante Card Swap (.playdago-conception-gallery-wrap--swap-copy-row) : galerie masquée → scroll parasite + débordement. */
+  .playdago-conception-gallery-wrap:not(.playdago-conception-gallery-wrap--swap-copy-row) {
     overflow-x: auto;
     -webkit-overflow-scrolling: touch;
   }
@@ -2061,39 +2217,268 @@
   margin-top: var(--sp-space-md, 24px);
 }
 
+/* Design system Playdago — Magic Bento (React Bits), à la place du carrousel Description */
+.playdago-ds-magic-bento-wrap {
+  margin-top: var(--sp-space-lg, 32px);
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  isolation: isolate;
+}
+
+/* Tuiles contenu du bento : fond noir (override style inline MagicBento) + tableaux lisibles */
+.playdago-ds-magic-bento-wrap .magic-bento-card--content {
+  background-color: #000000 !important;
+  border-color: rgba(255, 255, 255, 0.14) !important;
+}
+
+.playdago-ds-magic-bento-wrap .magic-bento-card--content .magic-bento-cell--content {
+  color: rgba(255, 255, 255, 0.88);
+  container-type: inline-size;
+  container-name: playdago-bento-ts;
+}
+
+.playdago-ds-magic-bento-wrap .magic-bento-cell--content .figma-palette-table,
+.playdago-ds-magic-bento-wrap .magic-bento-cell--content .figma-typescale-table {
+  background: #000000;
+  color: rgba(255, 255, 255, 0.9);
+}
+
+.playdago-ds-magic-bento-wrap .magic-bento-cell--content .figma-palette-header,
+.playdago-ds-magic-bento-wrap .magic-bento-cell--content .figma-typescale-header {
+  background: rgba(255, 255, 255, 0.06);
+  color: rgba(255, 255, 255, 0.78);
+  border-bottom-color: rgba(255, 255, 255, 0.12);
+}
+
+.playdago-ds-magic-bento-wrap .magic-bento-cell--content .figma-palette-row,
+.playdago-ds-magic-bento-wrap .magic-bento-cell--content .figma-typescale-row {
+  color: rgba(255, 255, 255, 0.88);
+  border-bottom-color: rgba(255, 255, 255, 0.1);
+}
+
+.playdago-ds-magic-bento-wrap .magic-bento-cell--content .figma-typescale-role,
+.playdago-ds-magic-bento-wrap .magic-bento-cell--content .figma-typescale-typo,
+.playdago-ds-magic-bento-wrap .magic-bento-cell--content .figma-typescale-size,
+.playdago-ds-magic-bento-wrap .magic-bento-cell--content .figma-typescale-line {
+  color: rgba(255, 255, 255, 0.62);
+}
+
+.playdago-ds-magic-bento-wrap .magic-bento-cell--content .figma-typescale-example {
+  color: rgba(255, 255, 255, 0.92) !important;
+}
+
+.playdago-ds-magic-bento-wrap .magic-bento-cell--content .figma-swatch {
+  border-color: rgba(255, 255, 255, 0.22);
+}
+
+/* Tableaux palette / typescale dans les tuiles bento — rétrécissent avec la tuile (pas de min-width fixe) */
+.playdago-ds-magic-bento-wrap .magic-bento-cell--content .playdago-ds-tables {
+  background-color: #000000;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+}
+
+/* Typéchelle pleine largeur hors bento : inchangé (scroll horizontal global du tableau) */
+
+/* Typéchelle dans le bento uniquement : pas de chevauchement — mins en ch, typo + exemple plus larges, gap net */
+.playdago-ds-magic-bento-wrap .magic-bento-cell--content .figma-typescale-table--bento {
+  overflow-x: auto;
+  overflow-y: visible;
+  -webkit-overflow-scrolling: touch;
+  margin-top: 0.35rem;
+}
+
+.playdago-ds-magic-bento-wrap .magic-bento-cell--content .figma-typescale-table--bento .figma-typescale-header,
+.playdago-ds-magic-bento-wrap .magic-bento-cell--content .figma-typescale-table--bento .figma-typescale-row {
+  display: grid;
+  box-sizing: border-box;
+  width: 100%;
+  min-width: 0;
+  align-items: start;
+  /* Rôle | Typographie (part plus large) | Taille | Interlignage | Exemple — uniquement des fr + min 0 pour éviter tout chevauchement */
+  grid-template-columns:
+    minmax(0, 0.58fr)
+    minmax(0, 1.52fr)
+    minmax(0, 0.72fr)
+    minmax(0, 0.78fr)
+    minmax(0, 1.4fr);
+  column-gap: clamp(8px, 0.9vw, 14px);
+  row-gap: 6px;
+  padding: clamp(6px, 0.55vw, 10px) clamp(6px, 0.65vw, 12px);
+  column-gap: clamp(8px, 2.5cqi, 14px);
+  padding: clamp(6px, 1.75cqi, 10px) clamp(6px, 2cqi, 12px);
+}
+
+.playdago-ds-magic-bento-wrap .magic-bento-cell--content .figma-typescale-table--bento .figma-typescale-header > span,
+.playdago-ds-magic-bento-wrap .magic-bento-cell--content .figma-typescale-table--bento .figma-typescale-row > span {
+  min-width: 0;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+.playdago-ds-magic-bento-wrap .magic-bento-cell--content .figma-typescale-table--bento .figma-typescale-header span {
+  line-height: 1.25;
+  overflow-wrap: break-word;
+  hyphens: auto;
+}
+
+.playdago-ds-magic-bento-wrap .magic-bento-cell--content .figma-typescale-table--bento .figma-typescale-role {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.playdago-ds-magic-bento-wrap .magic-bento-cell--content .figma-typescale-table--bento .figma-typescale-typo {
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3;
+  line-clamp: 3;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+  line-height: 1.3;
+}
+
+.playdago-ds-magic-bento-wrap .magic-bento-cell--content .figma-typescale-table--bento .figma-typescale-size,
+.playdago-ds-magic-bento-wrap .magic-bento-cell--content .figma-typescale-table--bento .figma-typescale-line {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.playdago-ds-magic-bento-wrap .magic-bento-cell--content .figma-typescale-table--bento .figma-typescale-example {
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 4;
+  line-clamp: 4;
+  overflow-wrap: break-word;
+  word-break: break-word;
+  line-height: 1.3 !important;
+}
+
+/* Palette : colonnes fluides dans la tuile */
+.playdago-ds-magic-bento-wrap .magic-bento-cell--content .figma-palette-header,
+.playdago-ds-magic-bento-wrap .magic-bento-cell--content .figma-palette-row {
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.2fr) minmax(0, 1.1fr);
+  gap: clamp(4px, 0.5vw, 12px);
+  padding: clamp(6px, 0.6vw, 12px) clamp(6px, 0.75vw, 16px);
+  gap: clamp(4px, 2cqi, 12px);
+  padding: clamp(6px, 2cqi, 12px) clamp(6px, 2.5cqi, 16px);
+}
+
+.playdago-ds-magic-bento-wrap .magic-bento-cell--content .figma-swatch {
+  min-width: 0;
+  font-size: clamp(0.6rem, 0.65vw, 0.875rem);
+  font-size: clamp(0.6rem, 2.5cqi, 0.875rem);
+}
+
+.playdago-ds-magic-bento-wrap .magic-bento-cell--content .figma-palette-title,
+.playdago-ds-magic-bento-wrap .magic-bento-cell--content .figma-typescale-title {
+  font-size: clamp(0.95rem, 1.5vw, 1.1rem);
+  line-height: 1.25;
+  margin: 0 0 0.25rem;
+  color: rgba(255, 255, 255, 0.95);
+}
+
+.playdago-ds-magic-bento-wrap .magic-bento-cell--content .figma-caption {
+  font-size: 0.75rem;
+  margin-bottom: 0.5rem;
+  color: rgba(255, 255, 255, 0.55);
+}
+
+.playdago-ds-magic-bento-wrap .magic-bento-cell--content .figma-palette-header,
+.playdago-ds-magic-bento-wrap .magic-bento-cell--content .figma-palette-row {
+  font-size: 0.7rem;
+  gap: 0.35rem;
+}
+
+.playdago-ds-magic-bento-wrap .magic-bento-cell--content .figma-typescale-table--bento .figma-typescale-header,
+.playdago-ds-magic-bento-wrap .magic-bento-cell--content .figma-typescale-table--bento .figma-typescale-row {
+  font-size: clamp(0.6rem, 0.7vw, 0.75rem);
+  font-size: clamp(0.6rem, 2.2cqi, 0.75rem);
+}
+
 .playdago-ds-tables .figma-palette-title,
 .playdago-ds-tables .figma-typescale-title {
   margin-top: 0;
 }
 
 /* Arbre User flow – style arbre de compétences (fond sombre, scroll horizontal, bulles type Login) */
-.single-project-page .figma-userflow.userflow-arbre-style {
-  margin-left: calc(-1 * var(--sp-padding-x-fluid, 80px));
-  margin-right: calc(-1 * var(--sp-padding-x-fluid, 80px));
-  width: calc(100% + 2 * var(--sp-padding-x-fluid, 80px));
-  max-width: none;
+/* Plein écran : ignore gouttière du main / max-width (bord à bord viewport) */
+.single-project-page #architecture .figma-userflow.userflow-arbre-style {
+  width: 100vw;
+  max-width: 100vw;
+  margin-left: calc(50% - 50vw);
+  position: relative;
+  box-sizing: border-box;
+  overflow-x: visible;
+  min-width: 0;
+}
+
+@supports (width: 100dvw) {
+  .single-project-page #architecture .figma-userflow.userflow-arbre-style {
+    width: 100dvw;
+    max-width: 100dvw;
+    margin-left: calc(50% - 50dvw);
+  }
 }
 
 .single-project-page .figma-userflow .skill-tree-wrapper {
   width: 100%;
-  min-width: fit-content;
-  overflow-x: auto;
-  overflow-y: visible;
+  max-width: 100%;
+  min-width: 0;
+  overflow: auto;
   -webkit-overflow-scrolling: touch;
-  scroll-behavior: smooth;
+  max-height: min(85vh, 720px);
+  /* auto : une fois le scroll interne en butée, la molette fait défiler la page (pas contain) */
+  overscroll-behavior: auto;
   padding-left: 0;
-  padding-right: var(--sp-padding-x-fluid, 80px);
+  padding-right: 0;
   background: #0a0a0a;
+  box-sizing: border-box;
 }
 
+/* #userflow-tree : quadrillage comme l’accueil (.hero-bg-grid — Hero.css) ; sur le conteneur pour qu’il défile avec l’arbre */
 .single-project-page .figma-userflow .skill-tree-container {
   position: relative;
-  padding: 40px 40px 80px 48px;
-  padding-left: 48px;
+  padding: 40px clamp(12px, 3vw, 24px) 80px;
   min-width: fit-content;
+  width: 100%;
+  max-width: none;
   display: flex;
   align-items: flex-start;
   justify-content: flex-start;
+  box-sizing: border-box;
+  background-color: #0a0a0a;
+  /* Quadrillage à peine visible (accueil ≈ 0.08) */
+  background-image:
+    linear-gradient(rgba(255, 255, 255, 0.028) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.028) 1px, transparent 1px);
+  background-size: 40px 40px;
+}
+
+/* Souris : curseur grab + pan JS (SingleProjectNew) ; tactile : laisser le scroll natif du wrapper */
+@media (pointer: fine) {
+  .single-project-page .figma-userflow .skill-tree-container {
+    touch-action: manipulation;
+    cursor: grab;
+  }
+
+  .single-project-page .figma-userflow .skill-tree-container.userflow-tree--grabbing {
+    cursor: grabbing;
+    user-select: none;
+  }
+}
+
+@media (pointer: coarse) {
+  .single-project-page .figma-userflow .skill-tree-container {
+    touch-action: pan-x pan-y pinch-zoom;
+    cursor: default;
+  }
 }
 
 /* Padding explicite des bulles du user flow (priorité sur Tailwind) */
@@ -2113,30 +2498,14 @@
 }
 
 @media (max-width: 1024px) {
-  .single-project-page .figma-userflow.userflow-arbre-style {
-    margin-left: calc(-1 * var(--sp-main-padding-x-tablet, 48px));
-    margin-right: calc(-1 * var(--sp-main-padding-x-tablet, 48px));
-    width: calc(100% + 2 * var(--sp-main-padding-x-tablet, 48px));
-  }
-  .single-project-page .figma-userflow .skill-tree-wrapper {
-    padding-right: var(--sp-main-padding-x-tablet, 48px);
-  }
   .single-project-page .figma-userflow .skill-tree-container {
-    padding: 24px 28px 60px;
+    padding: 24px clamp(12px, 3vw, 20px) 60px;
   }
 }
 
 @media (max-width: 768px) {
-  .single-project-page .figma-userflow.userflow-arbre-style {
-    margin-left: calc(-1 * var(--sp-main-padding-x-mobile, 16px));
-    margin-right: calc(-1 * var(--sp-main-padding-x-mobile, 16px));
-    width: calc(100% + 2 * var(--sp-main-padding-x-mobile, 16px));
-  }
-  .single-project-page .figma-userflow .skill-tree-wrapper {
-    padding-right: var(--sp-main-padding-x-mobile, 16px);
-  }
   .single-project-page .figma-userflow .skill-tree-container {
-    padding: 20px 24px 48px;
+    padding: 20px clamp(10px, 2.5vw, 16px) 48px;
   }
 }
 
@@ -2499,6 +2868,88 @@
   margin-top: var(--sp-space-md);
 }
 
+/* Light mode — images pleine largeur */
+.figma-light-mode-img-frame {
+  width: 100%;
+  margin-top: var(--sp-space-md);
+  overflow: visible;
+}
+
+.figma-light-mode-zoom-img {
+  width: 100%;
+  max-width: 100%;
+  height: auto;
+  display: block;
+  border-radius: 4px;
+}
+
+.figma-light-mode-extra-stack {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: clamp(12px, 2vw, 20px);
+  margin-top: clamp(8px, 1.5vw, 16px);
+}
+
+/* Scroll Stack (React Bits) — captures mode clair Playdago */
+.single-project-page #light-mode .figma-light-mode-scroll-stack .scroll-stack-inner {
+  padding: clamp(16px, 4vh, 48px) 0 clamp(100px, 22vh, 280px);
+  min-height: 0;
+}
+
+.single-project-page #light-mode .figma-light-mode-scroll-stack-card.scroll-stack-card {
+  height: auto;
+  min-height: 0;
+  margin-top: 0;
+  padding: 0;
+  border-radius: 4px;
+  box-shadow: 0 10px 36px rgba(0, 0, 0, 0.14);
+  overflow: hidden;
+  background: #fff;
+  /* Calque composite dédié : moins de reflow quand les cartes du dessus bougent */
+  isolation: isolate;
+}
+
+.single-project-page #light-mode .figma-light-mode-scroll-stack-card .figma-light-mode-img-frame {
+  margin-top: 0;
+}
+
+.single-project-page #light-mode .figma-light-mode-extra-img {
+  margin-top: 0;
+}
+
+/* Items du stack sous maine : pas de double marge haute (gap du stack) */
+.figma-light-mode-img-frame--stack-item {
+  margin-top: 0;
+}
+
+.single-project-page #light-mode.figma-light-mode-section {
+  overflow: visible;
+  position: relative;
+  z-index: 2;
+}
+
+/* Regroupe logo + section #light-mode : un seul « bloc » dans le gap du main (logo vraiment au-dessus, pas dans <section>) */
+.figma-light-mode-group {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
+  gap: clamp(20px, 3.2vw, 36px);
+  padding-top: clamp(48px, 7vw, 72px);
+  padding-bottom: 0;
+  box-sizing: border-box;
+}
+
+.single-project-page .figma-light-mode-group .figma-light-mode-h1-logo {
+  width: clamp(188px, 42vw, 308px);
+  height: auto;
+  display: block;
+  margin: clamp(12px, 2vw, 24px) auto;
+  flex-shrink: 0;
+  color: #005a73;
+}
+
 /* Mes autres projets (Figma node 117-135 : laptop mockups + carousel) */
 .figma-autres-projets-section {
   display: flex;
@@ -2506,8 +2957,8 @@
   align-items: flex-start;
   align-self: stretch;
   gap: clamp(16px, 2vw + 12px, 24px);
-  padding-left: var(--sp-padding-x-fluid);
-  padding-right: var(--sp-padding-x-fluid);
+  padding-left: 0;
+  padding-right: 0;
   box-sizing: border-box;
   transition: padding 0.2s ease, gap 0.2s ease;
 }
@@ -2515,21 +2966,23 @@
 .figma-autres-projets-carousel-wrapper {
   position: relative;
   width: 100%;
-  overflow: visible;
+  overflow: hidden;
 }
 
 .figma-autres-projets-carousel {
-  overflow: visible;
+  overflow: hidden;
   width: 100%;
 }
 
 .figma-autres-projets-carousel .swiper-slide {
   max-width: 100%;
   box-sizing: border-box;
+  flex-shrink: 0;
 }
 
 .figma-autres-projets-carousel .swiper-wrapper {
   align-items: flex-start;
+  box-sizing: border-box;
 }
 
 .figma-autres-projets-carousel .swiper-pagination {
@@ -3506,8 +3959,8 @@
 .single-project-page .case-studie-section {
   width: 100%;
   margin: 32px 0;
-  padding-left: 24px;
-  padding-right: 24px;
+  padding-left: 0;
+  padding-right: 0;
 }
 
 .single-project-page .case-studie-section .section-card {
@@ -3606,11 +4059,6 @@
 }
 
 @media (max-width: 768px) {
-  .single-project-page .case-studie-section {
-    padding-left: 16px;
-    padding-right: 16px;
-  }
-  
   .single-project-page .case-studie-section .section-card {
     padding: 24px;
   }
@@ -4287,21 +4735,8 @@
 
 .single-project-page .project-section.design-system-section {
   width: 100%;
-  padding-left: 24px;
-  padding-right: 24px;
-}
-
-.single-project-page .project-section {
-  padding-left: 24px;
-  padding-right: 24px;
-}
-
-@media (max-width: 768px) {
-  .single-project-page .project-section.design-system-section,
-  .single-project-page .project-section {
-    padding-left: 16px;
-    padding-right: 16px;
-  }
+  padding-left: 0;
+  padding-right: 0;
 }
 
 .design-system-section .color-palette-section {
@@ -4709,16 +5144,6 @@
     gap: 32px;
   }
   
-  .single-project-page .project-section.components-section {
-    padding-left: 16px;
-    padding-right: 16px;
-  }
-  
-  .single-project-page .project-section {
-    padding-left: 16px;
-    padding-right: 16px;
-  }
-  
   .components-grid {
     flex-direction: column;
     gap: 24px;
@@ -4772,8 +5197,8 @@
   .single-project-page .main-single-project {
     padding-top: var(--sp-main-padding-y-mobile);
     padding-bottom: var(--sp-main-padding-bottom);
-    padding-left: var(--sp-main-padding-x-mobile);
-    padding-right: var(--sp-main-padding-x-mobile);
+    padding-left: var(--sp-main-padding-x-mobile-compact);
+    padding-right: var(--sp-main-padding-x-mobile-compact);
     gap: 40px;
   }
   
@@ -5014,8 +5439,9 @@
   background-color: #666666 !important;
 }
 
-/* Bouton Contact fixe en bas d'écran (visible au scroll) – même style que close/arrows cover */
+/* Bouton Contact fixe — masqué */
 .single-project-contact-fab-wrap {
+  display: none !important;
   position: fixed;
   bottom: 24px;
   left: 50%;

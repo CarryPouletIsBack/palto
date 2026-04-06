@@ -17,6 +17,9 @@ export default defineConfig({
     },
   },
   server: {
+    port: 5173,
+    /** Ouvre le navigateur sur l’URL réelle (important si 5173 est déjà pris : Vite passe à 5174, 5175…). */
+    open: true,
     host: true, // Permet l'accès depuis le réseau local (téléphone, etc.)
     watch: {
       usePolling: true, // Nécessaire sur Windows pour que les modifs soient détectées sans redémarrer
