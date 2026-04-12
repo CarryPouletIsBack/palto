@@ -237,7 +237,7 @@ export const projectsDataNew: { [key: string]: ProjectData } = {
     badges: ['UX/UI', '2025', 'SaaS', 'Application'],
     
     // 2. Résumé / Introduction (aligné Figma 49-229, adapté Playdago)
-    summary: 'PlayDaGo a été créé pour répondre à une demande spécifique : comment organiser et concevoir des ateliers ludiques (cartes, dés, matching) à distance.\n\nLe défi n\u2019était pas seulement de digitaliser l\'ensemble du processus, mais de retranscrire le côté\u00A0sensoriel\u00A0des ateliers en\u00A0présentiel. de la création du groupe jusqu\'au suivi des résultats après l\'atelier.',
+    summary: 'PlayDaGo a été créé pour répondre à une demande spécifique, comment organiser et concevoir des ateliers ludiques (cartes, dés, matching) à distance.\n\nLe défi n\u2019était pas seulement de digitaliser l\'ensemble du processus, mais de retranscrire le côté\u00A0sensoriel\u00A0des ateliers en\u00A0présentiel. De la création du groupe jusqu\'au suivi des résultats après l\'atelier.',
 
     // Contexte du projet (Figma)
     objectifs: [
@@ -251,7 +251,7 @@ export const projectsDataNew: { [key: string]: ProjectData } = {
     // 3. Contexte & Problématique
     context: {
       title: 'Contexte & Problématique',
-      content: 'PlayDaGo a été créé pour répondre à une demande spécifique : comment organiser et concevoir des ateliers ludiques (cartes, dés, matching) à distance.\n\nLe défi n\u2019était pas seulement de digitaliser l\'ensemble du processus, mais de retranscrire le côté\u00A0sensoriel\u00A0des ateliers en\u00A0présentiel. de la création du groupe jusqu\'au suivi des résultats après l\'atelier.'
+      content: 'PlayDaGo a été créé pour répondre à une demande spécifique, comment organiser et concevoir des ateliers ludiques (cartes, dés, matching) à distance.\n\nLe défi n\u2019était pas seulement de digitaliser l\'ensemble du processus, mais de retranscrire le côté\u00A0sensoriel\u00A0des ateliers en\u00A0présentiel. De la création du groupe jusqu\'au suivi des résultats après l\'atelier.'
     },
 
     // 4. Problématique / Solution
@@ -490,7 +490,7 @@ Grille 4pt : Une structure à la fois dense et aérée, essentielle pour organis
     translations: {
       en: {
         subtitle: 'Active pedagogy application',
-        summary: 'Playdago is an internal management and piloting tool designed for an active pedagogy professional. The project stems from a clear need: to centralize data currently scattered across multiple platforms (client base, training, orders, newsletter, reminders, events), in order to obtain a reliable overview, reduce mental load and improve activity tracking. The goal was not to replace existing tools (emailing, e-commerce, etc.), but to create a central interface for reading, tracking and reminders, capable of linking all key information around the same client.',
+        summary: 'PlayDaGo was created to address a specific need, how to organize and design playful workshops (cards, dice, matching) remotely.\n\nThe challenge was not only to digitize the entire process, but to convey the sensory side of in-person workshops. From group creation through to follow-up on results after the workshop.',
         objectifs: [
           'Improve real-time interaction: Offer a fluid live experience for trainers and learners.',
           'Maintain engagement: Reproduce in-person game mechanics without the complexity of cognitively heavy tools.',
