@@ -372,6 +372,12 @@ function formatEurAmount(value: number): string {
   }).format(value);
 }
 
+function formatShortId(value: string): string {
+  const v = value.trim();
+  if (v.length <= 14) return v;
+  return `${v.slice(0, 8)}…${v.slice(-4)}`;
+}
+
 type OrgProfileDemoReview = {
   id: string
   authorKey: string
@@ -2216,7 +2222,7 @@ const Dashboard = ({
                           <tbody>
                             {displayedCourseRows.map((course) => (
                               <tr key={course.id}>
-                                <td>{course.id}</td>
+                                <td title={course.id}>{formatShortId(course.id)}</td>
                                 <td>{course.date}</td>
                                 <td>{course.heure}</td>
                                 <td>{course.client}</td>

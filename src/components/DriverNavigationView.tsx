@@ -508,26 +508,22 @@ export default function DriverNavigationView({ courseId, onClose }: Props) {
   return (
     <div className="driver-navigation-page">
       <header className="driver-navigation-header">
-        <button type="button" className="driver-navigation-back" onClick={onClose}>
-          <ArrowLeft size={18} aria-hidden />
-          Dashboard
+        <button
+          type="button"
+          className="driver-navigation-back"
+          disabled={phase === 'recap'}
+          onClick={requestFinish}
+          title="Voir le recap puis cloturer la course"
+          aria-label="Terminer la course"
+        >
+          <CheckCircle size={18} aria-hidden />
+          Terminer
         </button>
         <div className="driver-navigation-headlines">
           <h1>{snapshot.client}</h1>
           <p title={subtitle}>{subtitle}</p>
         </div>
         <div className="driver-navigation-actions">
-          <button
-            type="button"
-            className="driver-nav-finish-btn"
-            disabled={phase === 'recap'}
-            onClick={requestFinish}
-            title="Voir le recap puis cloturer la course"
-            aria-label="Terminer la course"
-          >
-            <CheckCircle size={16} aria-hidden />
-            <span>Terminer</span>
-          </button>
           <button
             type="button"
             className="driver-nav-recenter-btn"
