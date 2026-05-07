@@ -70,7 +70,7 @@ async function searchWithPhoton(
         lat: String(lat),
       }
     })
-    .filter((v): v is { display_name?: string; lon?: string; lat?: string } => v !== null)
+    .filter((v): v is { display_name: string; lon: string; lat: string } => v !== null)
 }
 
 async function reverseWithPhoton(
