@@ -1,6 +1,6 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node'
 import { z } from 'zod'
-import { getVerifiedDashboardEmail } from '../lib/chauffeurAuth'
+import { getVerifiedDashboardEmail } from '../lib/chauffeurAuth.js'
 
 const MemberSchema = z.object({
   id: z.string(),

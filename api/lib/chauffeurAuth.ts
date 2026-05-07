@@ -1,5 +1,5 @@
 import type { VercelRequest } from '@vercel/node'
-import { getSupabaseAdmin } from './supabaseAdmin'
+import { getSupabaseAdmin } from './supabaseAdmin.js'
 
 /** Valide le token dashboard (base64 email:timestamp) contre DASHBOARD_EMAIL. */
 export async function getVerifiedDashboardEmail(req: VercelRequest): Promise<string | null> {

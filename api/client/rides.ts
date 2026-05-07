@@ -1,6 +1,6 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node'
 import { z } from 'zod'
-import { getSupabaseAdmin } from '../lib/supabaseAdmin'
+import { getSupabaseAdmin } from '../lib/supabaseAdmin.js'
 
 const QuerySchema = z.object({
   email: z.string().email(),

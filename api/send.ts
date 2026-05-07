@@ -56,7 +56,7 @@ export default async function handler(
       from: process.env.RESEND_FROM ?? 'Palto <onboarding@resend.dev>',
       to: [toEmail],
       subject: `Nouveau message de ${name}${company && String(company).trim() ? ` (${String(company).trim()})` : ''}`,
-      reply_to: email,
+      replyTo: email,
       text: textBody,
     });
 

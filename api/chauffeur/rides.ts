@@ -1,7 +1,7 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node'
-import { getSupabaseAdmin } from '../lib/supabaseAdmin'
-import { getChauffeurDriverExternalKey, getVerifiedDashboardEmail } from '../lib/chauffeurAuth'
-import { sameDriverExternalKey } from '../lib/driverIdentity'
+import { getSupabaseAdmin } from '../lib/supabaseAdmin.js'
+import { getChauffeurDriverExternalKey, getVerifiedDashboardEmail } from '../lib/chauffeurAuth.js'
+import { sameDriverExternalKey } from '../lib/driverIdentity.js'
 
 type CourseRow = {
   id: string

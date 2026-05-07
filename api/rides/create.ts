@@ -1,8 +1,8 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node'
 import { z } from 'zod'
 import { randomBytes } from 'crypto'
-import { getSupabaseAdmin } from '../lib/supabaseAdmin'
-import { resolveRequestedDriverKeyForInsert } from '../lib/driverIdentity'
+import { getSupabaseAdmin } from '../lib/supabaseAdmin.js'
+import { resolveRequestedDriverKeyForInsert } from '../lib/driverIdentity.js'
 
 const BodySchema = z
   .object({
