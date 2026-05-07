@@ -5,7 +5,11 @@ import {
   PALTO_CLIENT_SESSION_CHANGED_EVENT,
 } from '../services/authService';
 import { getUpcomingScheduledRidesForHomeBanner } from '../constants/clientScheduledRidesHome';
-import { getClientLiveMeetRideModel } from '../constants/clientLiveMeetRide';
+import {
+  clearClientLiveMeetRideModel,
+  getClientLiveMeetRideModel,
+  saveClientLiveMeetRideModel,
+} from '../constants/clientLiveMeetRide';
 import { clientRidesApiEnabled, fetchClientRides } from '../services/clientRidesApi';
 import { simplifyAddressDisplay } from '../services/addressDisplay';
 import type { ClientTopbarUpcomingRide } from '../components/DashboardHomeTopbar'
@@ -16,6 +20,7 @@ import type { ClientTopbarUpcomingRide } from '../components/DashboardHomeTopbar
 export function useClientHomeTopbarRides(language: 'fr' | 'en') {
   const [tick, setTick] = useState(0);
   const [apiUpcomingRide, setApiUpcomingRide] = useState<ClientTopbarUpcomingRide | null>(null);
+  const [apiLiveMeetActive, setApiLiveMeetActive] = useState(false);
 
   const formatRideStart = useCallback(
     (iso: string) => {
@@ -52,34 +57,73 @@ export function useClientHomeTopbarRides(language: 'fr' | 'en') {
   useEffect(() => {
     if (!clientRidesApiEnabled()) {
       setApiUpcomingRide(null);
+      setApiLiveMeetActive(false);
+      clearClientLiveMeetRideModel();
       return () => {};
     }
     let cancelled = false;
     const user = getCurrentClientUser();
     if (!user?.email || !isClientAuthenticated()) {
       setApiUpcomingRide(null);
+      setApiLiveMeetActive(false);
+      clearClientLiveMeetRideModel();
       return () => {
         cancelled = true;
       };
     }
-    void fetchClientRides(user.email, 'upcoming')
-      .then((items) => {
+    void Promise.all([fetchClientRides(user.email, 'upcoming'), fetchClientRides(user.email, 'all')])
+      .then(([upcomingItems, allItems]) => {
         if (cancelled) return;
-        const first = items[0];
+        const first = upcomingItems[0];
         if (!first) {
           setApiUpcomingRide(null);
-          return;
+        } else {
+          const iso = `${first.scheduledDate}T${first.scheduledTime}`;
+          setApiUpcomingRide({
+            departShort: simplifyAddressDisplay(first.pickupAddress),
+            arriveShort: simplifyAddressDisplay(first.dropoffAddress),
+            startsAtIso: iso,
+            startsLabel: formatRideStart(iso),
+          });
         }
-        const iso = `${first.scheduledDate}T${first.scheduledTime}`;
-        setApiUpcomingRide({
-          departShort: simplifyAddressDisplay(first.pickupAddress),
-          arriveShort: simplifyAddressDisplay(first.dropoffAddress),
-          startsAtIso: iso,
-          startsLabel: formatRideStart(iso),
-        });
+        const inProgress = allItems.find((item) => item.status === 'in_progress');
+        if (
+          inProgress &&
+          typeof inProgress.pickupLng === 'number' &&
+          typeof inProgress.pickupLat === 'number'
+        ) {
+          const pickup = {
+            lng: inProgress.pickupLng,
+            lat: inProgress.pickupLat,
+          };
+          saveClientLiveMeetRideModel({
+            pickupLabel: simplifyAddressDisplay(inProgress.pickupAddress),
+            route: `${simplifyAddressDisplay(inProgress.pickupAddress)} → ${simplifyAddressDisplay(
+              inProgress.dropoffAddress
+            )}`,
+            departTime: inProgress.scheduledTime.slice(0, 5),
+            driverName: 'Chauffeur Palto',
+            vehicleLabel: 'Moto',
+            vehicleColor: '',
+            licensePlate: '',
+            meetPickupCoords: pickup,
+            meetDriverCoordsInitial: {
+              lng: pickup.lng - 0.0035,
+              lat: pickup.lat + 0.0022,
+            },
+          });
+          setApiLiveMeetActive(true);
+        } else {
+          clearClientLiveMeetRideModel();
+          setApiLiveMeetActive(false);
+        }
       })
       .catch(() => {
-        if (!cancelled) setApiUpcomingRide(null);
+        if (!cancelled) {
+          setApiUpcomingRide(null);
+          setApiLiveMeetActive(false);
+          clearClientLiveMeetRideModel();
+        }
       });
     return () => {
       cancelled = true;
@@ -102,8 +146,9 @@ export function useClientHomeTopbarRides(language: 'fr' | 'en') {
 
   const clientLiveMeetActive = useMemo(() => {
     if (!isClientAuthenticated()) return false;
+    if (apiLiveMeetActive) return true;
     return getClientLiveMeetRideModel() != null;
-  }, [tick]);
+  }, [tick, apiLiveMeetActive]);
 
   return { clientUpcomingRide, clientLiveMeetActive };
 }

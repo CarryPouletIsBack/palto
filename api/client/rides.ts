@@ -17,6 +17,10 @@ type RideRow = {
   scheduled_time: string
   amount_eur: number
   distance_km: number | null
+  pickup_lng: number | null
+  pickup_lat: number | null
+  dropoff_lng: number | null
+  dropoff_lat: number | null
   created_at: string
 }
 
@@ -81,7 +85,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
   let query = supabase
     .from('courses')
-    .select('id,status,pickup_address,dropoff_address,scheduled_date,scheduled_time,amount_eur,distance_km,created_at')
+    .select(
+      'id,status,pickup_address,dropoff_address,scheduled_date,scheduled_time,amount_eur,distance_km,pickup_lng,pickup_lat,dropoff_lng,dropoff_lat,created_at'
+    )
     .in('client_id', clientIds)
     .order('scheduled_date', { ascending: false })
     .order('scheduled_time', { ascending: false })
@@ -110,6 +116,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     scheduledTime: row.scheduled_time,
     amountEur: row.amount_eur,
     distanceKm: row.distance_km,
+    pickupLng: row.pickup_lng,
+    pickupLat: row.pickup_lat,
+    dropoffLng: row.dropoff_lng,
+    dropoffLat: row.dropoff_lat,
     createdAt: row.created_at,
   }))
 

@@ -11,6 +11,10 @@ export type ClientRideItem = {
   scheduledTime: string
   amountEur: number
   distanceKm: number | null
+  pickupLng?: number | null
+  pickupLat?: number | null
+  dropoffLng?: number | null
+  dropoffLat?: number | null
   createdAt: string
 }
 
