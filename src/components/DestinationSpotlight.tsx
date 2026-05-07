@@ -246,6 +246,7 @@ export function DestinationSpotlight({
           <div className="dashboard-main single-project-go-topbar-wrap__main">
             <DashboardHomeTopbar
               onOpenClientAccountAuth={onOpenClientAccountAuth}
+              onOpenClientAccount={onOpenClientAccount}
               onNavigateHome={onNavigateHome}
             />
             <DashboardHomeRidesBanner

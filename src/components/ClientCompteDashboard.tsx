@@ -1334,28 +1334,44 @@ export default function ClientCompteDashboard({ onBack, onOpenClientLiveMeet }: 
                     </span>
                     <span>{t('clientAccount.navCourses')}</span>
                   </h3>
-                  <ul className="client-compte-overview-rides-list" aria-label={t('clientAccount.coursesRecapTitle')}>
-                    {overviewRecentRides.map((ride) => (
-                      <li
-                        key={ride.id}
-                        className="client-compte-overview-rides-list__item"
-                        role="button"
-                        tabIndex={0}
-                        onClick={() => goNav('courses')}
-                        onKeyDown={(e) => {
-                          if (e.key === 'Enter' || e.key === ' ') {
-                            e.preventDefault();
-                            goNav('courses');
-                          }
+                  {overviewRecentRides.length > 0 ? (
+                    <ul className="client-compte-overview-rides-list" aria-label={t('clientAccount.coursesRecapTitle')}>
+                      {overviewRecentRides.map((ride) => (
+                        <li
+                          key={ride.id}
+                          className="client-compte-overview-rides-list__item"
+                          role="button"
+                          tabIndex={0}
+                          onClick={() => goNav('courses')}
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter' || e.key === ' ') {
+                              e.preventDefault();
+                              goNav('courses');
+                            }
+                          }}
+                        >
+                          <span className="client-compte-overview-rides-list__route">{ride.route}</span>
+                          <span className="client-compte-overview-rides-list__meta">
+                            {demoRideDateLabel(ride, language)} · {demoRideStatusLabel(ride, language)}
+                          </span>
+                        </li>
+                      ))}
+                    </ul>
+                  ) : (
+                    <div className="client-compte-overview-empty-state">
+                      <p className="dashboard-field-hint">{t('clientAccount.coursesEmptyHint')}</p>
+                      <button
+                        type="button"
+                        className="client-compte-overview-empty-cta"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleGoPage();
                         }}
                       >
-                        <span className="client-compte-overview-rides-list__route">{ride.route}</span>
-                        <span className="client-compte-overview-rides-list__meta">
-                          {demoRideDateLabel(ride, language)} · {demoRideStatusLabel(ride, language)}
-                        </span>
-                      </li>
-                    ))}
-                  </ul>
+                        {t('clientAccount.bookRide')}
+                      </button>
+                    </div>
+                  )}
                 </article>
 
                 <article

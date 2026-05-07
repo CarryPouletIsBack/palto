@@ -14,6 +14,7 @@ interface ProjectProps {
   onProjectScrollCombinedChange?: (combinedPx: number) => void;
   coverFullscreenActive?: boolean;
   onOpenClientAccountAuth?: (mode: 'login' | 'signup') => void;
+  onOpenClientAccount?: () => void;
   onNavigateHome?: () => void;
   onOpenClientLiveMeet?: () => void;
 }
@@ -36,6 +37,7 @@ const Project = ({
   onProjectScrollCombinedChange,
   coverFullscreenActive = false,
   onOpenClientAccountAuth,
+  onOpenClientAccount,
   onNavigateHome,
   onOpenClientLiveMeet,
 }: ProjectProps) => {
@@ -100,6 +102,7 @@ const Project = ({
       onProjectScrollCombinedChange={onProjectScrollCombinedChange}
       coverFullscreenActive={coverFullscreenActive}
       onOpenClientAccountAuth={onOpenClientAccountAuth}
+      onOpenClientAccount={onOpenClientAccount}
       onNavigateHome={onNavigateHome}
       onOpenClientLiveMeet={onOpenClientLiveMeet}
     />

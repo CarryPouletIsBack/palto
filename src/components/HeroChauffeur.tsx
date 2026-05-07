@@ -29,6 +29,7 @@ const LANDING_FEATURES = [
 export function HeroChauffeur({
   onPageChange,
   onOpenClientAccountAuth,
+  onOpenClientAccount,
   onNavigateHome,
   onOpenChauffeurAuth,
 }: HeroChauffeurProps) {
@@ -63,6 +64,7 @@ export function HeroChauffeur({
           <div className="dashboard-main">
             <DashboardHomeTopbar
               onOpenClientAccountAuth={onOpenChauffeurAuth ?? onOpenClientAccountAuth}
+              onOpenClientAccount={onOpenClientAccount}
               onNavigateHome={onNavigateHome}
             />
 

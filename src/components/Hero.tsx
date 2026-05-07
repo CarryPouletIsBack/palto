@@ -129,6 +129,7 @@ const Hero = ({
           <div className="dashboard-main">
             <DashboardHomeTopbar
               onOpenClientAccountAuth={onOpenClientAccountAuth}
+              onOpenClientAccount={onOpenClientAccount}
               onNavigateHome={onNavigateHome}
             />
             <DashboardHomeRidesBanner

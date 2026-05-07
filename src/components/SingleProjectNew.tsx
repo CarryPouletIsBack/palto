@@ -260,6 +260,7 @@ interface SingleProjectProps {
   onProjectScrollCombinedChange?: (combinedPx: number) => void;
   coverFullscreenActive?: boolean;
   onOpenClientAccountAuth?: (mode: 'login' | 'signup') => void;
+  onOpenClientAccount?: () => void;
   onNavigateHome?: () => void;
   /** Passager : vue « chauffeur sur place » (bandeau sous la topbar). */
   onOpenClientLiveMeet?: () => void;
@@ -275,6 +276,7 @@ const SingleProjectNew: FC<SingleProjectProps> = ({
   onProjectScrollCombinedChange,
   coverFullscreenActive = false,
   onOpenClientAccountAuth,
+  onOpenClientAccount,
   onNavigateHome,
   onOpenClientLiveMeet,
 }) => {
@@ -1988,6 +1990,7 @@ const SingleProjectNew: FC<SingleProjectProps> = ({
           <div className="dashboard-main single-project-go-topbar-wrap__main">
             <DashboardHomeTopbar
               onOpenClientAccountAuth={onOpenClientAccountAuth}
+              onOpenClientAccount={onOpenClientAccount}
               onNavigateHome={onNavigateHome}
             />
             <DashboardHomeRidesBanner

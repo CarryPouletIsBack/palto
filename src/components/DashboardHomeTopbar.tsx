@@ -1,5 +1,16 @@
+import { useEffect, useMemo, useState } from 'react'
+import { User } from 'lucide-react'
 import { useLanguage } from '../contexts/LanguageContext'
 import { trackEvent } from '../services/googleAnalyticsTracking'
+import { loadClientAccountSnapshot } from '../constants/clientAccountStorage'
+import {
+  getCurrentClientUser,
+  getCurrentUser,
+  isAuthenticated,
+  isClientAuthenticated,
+  PALTO_CLIENT_SESSION_CHANGED_EVENT,
+  type User as AuthUser,
+} from '../services/authService'
 import LanguageSwitcher from './LanguageSwitcher'
 import './Dashboard.css'
 import './Dashboard.app-theme.css'
@@ -13,6 +24,7 @@ export type ClientTopbarUpcomingRide = {
 
 export interface DashboardHomeTopbarProps {
   onOpenClientAccountAuth?: (mode: 'login' | 'signup') => void
+  onOpenClientAccount?: () => void
   /** Clic sur « Palto » : retour accueil (ferme /go si besoin). */
   onNavigateHome?: () => void
 }
@@ -20,9 +32,57 @@ export interface DashboardHomeTopbarProps {
 /** Barre d’accueil (Palto + langue + connexion) — réutilisée sur l’accueil et la page Go. */
 export function DashboardHomeTopbar({
   onOpenClientAccountAuth,
+  onOpenClientAccount,
   onNavigateHome,
 }: DashboardHomeTopbarProps) {
   const { t } = useLanguage()
+  const [authTick, setAuthTick] = useState(0)
+
+  useEffect(() => {
+    const refresh = () => setAuthTick((n) => n + 1)
+    window.addEventListener(PALTO_CLIENT_SESSION_CHANGED_EVENT, refresh)
+    window.addEventListener('storage', refresh)
+    return () => {
+      window.removeEventListener(PALTO_CLIENT_SESSION_CHANGED_EVENT, refresh)
+      window.removeEventListener('storage', refresh)
+    }
+  }, [])
+
+  const session = useMemo(() => {
+    const clientLogged = isClientAuthenticated()
+    const chauffeurLogged = isAuthenticated()
+    const clientUser = clientLogged ? getCurrentClientUser() : null
+    const chauffeurUser = chauffeurLogged ? getCurrentUser() : null
+    return {
+      clientLogged,
+      chauffeurLogged,
+      user: clientUser ?? chauffeurUser,
+    }
+  }, [authTick])
+
+  const accountDisplayName = useMemo(() => {
+    const pretty = (value: string) => value.slice(0, 1).toUpperCase() + value.slice(1).toLowerCase()
+    const inferFromEmail = (emailRaw: string) => {
+      const local = emailRaw.split('@')[0] ?? ''
+      const chunks = local
+        .split(/[._-]+/)
+        .map((part) => part.trim())
+        .filter(Boolean)
+      if (chunks.length === 0) return emailRaw
+      if (chunks.length === 1) return pretty(chunks[0])
+      return `${pretty(chunks[0])} ${pretty(chunks.slice(1).join(' '))}`
+    }
+
+    const clientProfile = session.clientLogged ? loadClientAccountSnapshot() : null
+    const fullClientName = `${clientProfile?.prenom?.trim() ?? ''} ${clientProfile?.nom?.trim() ?? ''}`.trim()
+    if (fullClientName) return fullClientName
+
+    const user = session.user as AuthUser | null
+    if (user?.displayName?.trim()) return user.displayName.trim()
+    if (user?.email?.trim()) return inferFromEmail(user.email.trim())
+    return ''
+  }, [session.clientLogged, session.user])
+
   const titleEl =
     onNavigateHome != null ? (
       <button
@@ -47,7 +107,21 @@ export function DashboardHomeTopbar({
         <div className="dashboard-topbar-right">
           <div className="dashboard-home-topbar-right-cluster">
             <LanguageSwitcher />
-            {onOpenClientAccountAuth ? (
+            {accountDisplayName && onOpenClientAccount ? (
+              <button
+                type="button"
+                className="dashboard-avatar dashboard-avatar--topbar"
+                onClick={onOpenClientAccount}
+                title="Ouvrir le compte"
+              >
+                <span className="dashboard-avatar-icon" aria-hidden>
+                  <User size={18} />
+                </span>
+                <span className="dashboard-avatar-meta">
+                  <strong>{accountDisplayName}</strong>
+                </span>
+              </button>
+            ) : onOpenClientAccountAuth ? (
               <div className="hero-topbar-auth" role="group" aria-label={t('hero.topbarAuthAria')}>
                 <button
                   type="button"

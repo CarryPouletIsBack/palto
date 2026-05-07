@@ -934,6 +934,7 @@ function App() {
             onProjectScrollCombinedChange={setProjectScrollCombined}
             coverFullscreenActive={coverFullscreenActive}
             onOpenClientAccountAuth={handleOpenClientAccountAuth}
+            onOpenClientAccount={handleOpenClientAccount}
             onNavigateHome={navigateToPaltoHomeRoot}
             onOpenClientLiveMeet={handleOpenClientMeetDriver}
           />
