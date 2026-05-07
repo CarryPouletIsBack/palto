@@ -108,19 +108,17 @@ export function DashboardHomeTopbar({
           <div className="dashboard-home-topbar-right-cluster">
             <LanguageSwitcher />
             {accountDisplayName && onOpenClientAccount ? (
-              <button
-                type="button"
-                className="dashboard-avatar dashboard-avatar--topbar"
-                onClick={onOpenClientAccount}
-                title="Ouvrir le compte"
-              >
-                <span className="dashboard-avatar-icon" aria-hidden>
-                  <User size={18} />
-                </span>
-                <span className="dashboard-avatar-meta">
-                  <strong>{accountDisplayName}</strong>
-                </span>
-              </button>
+              <div className="client-compte-topbar-menu-anchor">
+                <button
+                  type="button"
+                  className="client-compte-topbar-user-btn"
+                  onClick={onOpenClientAccount}
+                  aria-label="Gerer le compte"
+                >
+                  <User size={16} aria-hidden />
+                  <span>{accountDisplayName}</span>
+                </button>
+              </div>
             ) : onOpenClientAccountAuth ? (
               <div className="hero-topbar-auth" role="group" aria-label={t('hero.topbarAuthAria')}>
                 <button
