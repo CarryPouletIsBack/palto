@@ -23,18 +23,11 @@ export interface ClientSavedPlacesSnapshot {
 }
 
 export const DEFAULT_CLIENT_SAVED_PLACES: ClientSavedPlacesSnapshot = {
-  domicile: '3 Allée Dachau 97420 Le Port',
+  domicile: '',
   domicileCoords: null,
-  travail: '15 Route de Montgaillard',
+  travail: '',
   travailCoords: null,
-  extras: [
-    {
-      id: 'preset_airport_roland_garros',
-      label: 'Aéroport',
-      address: 'Aéroport Roland Garros',
-      coords: null,
-    },
-  ],
+  extras: [],
 };
 
 function genPlaceId(): string {

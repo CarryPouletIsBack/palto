@@ -18,11 +18,11 @@ export interface ClientAccountSnapshot {
 }
 
 export const DEFAULT_CLIENT_ACCOUNT: ClientAccountSnapshot = {
-  prenom: 'Marie',
-  nom: 'Durand',
-  email: 'marie.durand@example.com',
-  telephone: '+262 692 12 34 56',
-  ville: 'Saint-Denis',
+  prenom: '',
+  nom: '',
+  email: '',
+  telephone: '',
+  ville: '',
   preferredPayment: 'indifferent',
   profilePhotoUrl: null,
   profilePhotoName: '',

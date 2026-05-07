@@ -38,11 +38,10 @@ function readLocalDashboardCredentials(): { email: string; password: string } | 
 }
 
 function tryLocalLogin(credentials: LoginCredentials): { success: boolean; user?: User; error?: string } {
-  const creds =
-    readLocalDashboardCredentials() ?? {
-      email: 'chauffeur@palto.local',
-      password: 'chauffeur123',
-    }
+  const creds = readLocalDashboardCredentials()
+  if (!creds) {
+    return { success: false, error: 'Configuration de connexion chauffeur absente' }
+  }
   const emailNorm = normalizeChauffeurEmail(credentials.email)
   const primaryNorm = normalizeChauffeurEmail(creds.email)
 
@@ -77,11 +76,8 @@ function tryLocalLogin(credentials: LoginCredentials): { success: boolean; user?
 /** Compte admin chauffeur (env ou démo) — pas soumis au blocage documents self-service. */
 export function isChauffeurPrimaryAccountEmail(email: string | null | undefined): boolean {
   if (!email?.trim()) return false
-  const creds =
-    readLocalDashboardCredentials() ?? {
-      email: 'chauffeur@palto.local',
-      password: '',
-    }
+  const creds = readLocalDashboardCredentials()
+  if (!creds) return false
   return normalizeChauffeurEmail(email) === normalizeChauffeurEmail(creds.email)
 }
 
@@ -90,11 +86,8 @@ export function isChauffeurPrimaryAccountEmail(email: string | null | undefined)
  */
 export function registerChauffeur(payload: RegisterChauffeurPayload): { success: boolean; error?: string } {
   if (typeof window === 'undefined') return { success: false, error: 'UNAVAILABLE' }
-  const primary =
-    readLocalDashboardCredentials() ?? {
-      email: 'chauffeur@palto.local',
-      password: 'chauffeur123',
-    }
+  const primary = readLocalDashboardCredentials()
+  if (!primary) return { success: false, error: 'CONFIG_MISSING' }
   const result = registerChauffeurInRegistry(payload, {
     reservedPrimaryEmailNorm: normalizeChauffeurEmail(primary.email),
   })
@@ -144,8 +137,7 @@ export const login = async (
     })
 
     if (!response.ok) {
-      console.warn('API auth indisponible ou erreur ; vérifiez DASHBOARD_EMAIL / DASHBOARD_PASSWORD côté Vercel.')
-      return tryLocalLogin(credentials)
+      return { success: false, error: 'Erreur de connexion' }
     }
 
     const data = await response.json()
@@ -156,12 +148,10 @@ export const login = async (
 
       return { success: true, user: data.user }
     }
-    const fallback = tryLocalLogin(credentials)
-    if (fallback.success) return fallback
-    return { success: false, error: data.error || fallback.error || 'Erreur de connexion' }
+    return { success: false, error: data.error || 'Erreur de connexion' }
   } catch (error) {
     console.error('Erreur lors de la connexion:', error)
-    return tryLocalLogin(credentials)
+    return { success: false, error: 'Erreur de connexion' }
   }
 }
 
@@ -238,13 +228,9 @@ function readLocalClientDemoCredentials(): { email: string; password: string } |
 }
 
 function tryClientLocalLogin(credentials: LoginCredentials): { success: boolean; user?: User; error?: string } {
-  const creds =
-    readLocalClientDemoCredentials() ?? {
-      email: 'passager@palto.local',
-      password: 'passager123',
-    }
+  const creds = readLocalClientDemoCredentials()
   const emailNorm = normalizeChauffeurEmail(credentials.email)
-  const primaryNorm = normalizeChauffeurEmail(creds.email)
+  const primaryNorm = creds ? normalizeChauffeurEmail(creds.email) : ''
 
   const writeClientSession = (emailForUser: string): { success: true; user: User } => {
     const token = btoa(`client:${emailForUser}:${Date.now()}`)
@@ -258,7 +244,7 @@ function tryClientLocalLogin(credentials: LoginCredentials): { success: boolean;
     return { success: true, user }
   }
 
-  if (emailNorm === primaryNorm) {
+  if (creds && emailNorm === primaryNorm) {
     if (credentials.password === creds.password) {
       return writeClientSession(credentials.email)
     }
@@ -286,12 +272,8 @@ export function registerClient(credentials: LoginCredentials): { success: boolea
     return { success: false, error: 'EMAIL_INVALID' }
   }
 
-  const primary =
-    readLocalClientDemoCredentials() ?? {
-      email: 'passager@palto.local',
-      password: 'passager123',
-    }
-  if (emailNorm === normalizeChauffeurEmail(primary.email)) {
+  const primary = readLocalClientDemoCredentials()
+  if (primary && emailNorm === normalizeChauffeurEmail(primary.email)) {
     return { success: false, error: 'EMAIL_RESERVED' }
   }
 

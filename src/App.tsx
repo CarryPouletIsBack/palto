@@ -24,6 +24,7 @@ import {
 } from './constants/clientAppPreferencesStorage'
 import { trackPageView, trackEvent } from './services/googleAnalyticsTracking'
 import { useLanguage } from './contexts/LanguageContext'
+import { purgeDemoDataOnce } from './services/purgeDemoData'
 import './App.css'
 import { PLACEHOLDER_COVER } from './constants/imagePlaceholders'
 
@@ -68,6 +69,10 @@ function App() {
   const [appFontZoomFactor, setAppFontZoomFactor] = useState(
     () => clampFontScalePercent(loadClientAppPreferences().fontScalePercent) / 100
   )
+
+  useEffect(() => {
+    purgeDemoDataOnce()
+  }, [])
 
   useEffect(() => {
     const onFontScale = (e: Event) => {

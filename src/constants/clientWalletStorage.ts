@@ -7,7 +7,7 @@ export interface ClientWalletSnapshot {
 }
 
 export const DEFAULT_CLIENT_WALLET: ClientWalletSnapshot = {
-  balanceCents: 1250,
+  balanceCents: 0,
 };
 
 export function loadClientWalletSnapshot(): ClientWalletSnapshot {
