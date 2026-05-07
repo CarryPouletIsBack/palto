@@ -15,7 +15,15 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (req.method === 'OPTIONS') return res.status(200).end()
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' })
 
-  const parsed = BodySchema.safeParse(typeof req.body === 'string' ? JSON.parse(req.body) : req.body)
+  let body: unknown = req.body
+  if (typeof req.body === 'string') {
+    try {
+      body = JSON.parse(req.body)
+    } catch {
+      return res.status(400).json({ success: false, error: 'Payload JSON invalide' })
+    }
+  }
+  const parsed = BodySchema.safeParse(body)
   if (!parsed.success) return res.status(400).json({ success: false, error: 'Payload invalide' })
 
   let supabase
@@ -33,7 +41,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     .eq('role', 'chauffeur')
     .maybeSingle()
 
-  if (error) return res.status(500).json({ success: false, error: 'Lecture compte impossible' })
+  if (error) {
+    console.error('[auth/chauffeur/login] select app_accounts failed', error)
+    return res.status(500).json({ success: false, error: `Lecture compte impossible${error.code ? ` (${error.code})` : ''}` })
+  }
   if (!data) return res.status(401).json({ success: false, error: 'Email incorrect' })
   if (!verifyPassword(parsed.data.password, data.password_hash)) {
     return res.status(401).json({ success: false, error: 'Mot de passe incorrect' })

@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react'
 import { loginClient, registerClient } from '../services/authService'
+import './AuthPage.css'
 
 type Props = {
   onAuthSuccess: () => void
@@ -26,34 +27,40 @@ export default function ClientAuthPage({ onAuthSuccess }: Props) {
   }
 
   return (
-    <section className="dashboard-main" style={{ maxWidth: 520, margin: '40px auto', padding: 24 }}>
-      <h1 style={{ marginBottom: 8 }}>{mode === 'signup' ? 'Creer un compte client' : 'Connexion client'}</h1>
-      <p style={{ opacity: 0.75, marginBottom: 16 }}>Compte client connecte a la base de donnees.</p>
-      <input
-        type="email"
-        value={email}
-        onChange={(e) => setEmail(e.target.value)}
-        placeholder="Email"
-        style={{ width: '100%', marginBottom: 10, padding: 10 }}
-      />
-      <input
-        type="password"
-        value={password}
-        onChange={(e) => setPassword(e.target.value)}
-        placeholder="Mot de passe"
-        style={{ width: '100%', marginBottom: 10, padding: 10 }}
-      />
-      {error ? <p style={{ color: '#b3261e', marginBottom: 10 }}>{error}</p> : null}
-      <button type="button" onClick={submit} disabled={loading} style={{ padding: '10px 14px' }}>
-        {loading ? 'Chargement...' : mode === 'signup' ? "S'inscrire" : 'Se connecter'}
-      </button>
-      <button
-        type="button"
-        onClick={() => setMode((m) => (m === 'signup' ? 'login' : 'signup'))}
-        style={{ marginLeft: 12, padding: '10px 14px' }}
-      >
-        {mode === 'signup' ? 'J ai deja un compte' : 'Creer un compte'}
-      </button>
+    <section className="auth-page-shell">
+      <div className="auth-page-card">
+        <h1 className="auth-page-title">{mode === 'signup' ? 'Creer un compte client' : 'Connexion client'}</h1>
+        <p className="auth-page-subtitle">Compte client connecte a la base de donnees.</p>
+        <div className="auth-page-grid">
+          <input
+            className="auth-page-input"
+            type="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            placeholder="Email"
+          />
+          <input
+            className="auth-page-input"
+            type="password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            placeholder="Mot de passe"
+          />
+          {error ? <p className="auth-page-error">{error}</p> : null}
+          <div className="auth-page-actions">
+            <button className="auth-page-btn" type="button" onClick={submit} disabled={loading}>
+              {loading ? 'Chargement...' : mode === 'signup' ? "S'inscrire" : 'Se connecter'}
+            </button>
+            <button
+              className="auth-page-btn auth-page-btn--ghost"
+              type="button"
+              onClick={() => setMode((m) => (m === 'signup' ? 'login' : 'signup'))}
+            >
+              {mode === 'signup' ? 'J ai deja un compte' : 'Creer un compte'}
+            </button>
+          </div>
+        </div>
+      </div>
     </section>
   )
 }

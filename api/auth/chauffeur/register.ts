@@ -18,7 +18,15 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (req.method === 'OPTIONS') return res.status(200).end()
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' })
 
-  const parsed = BodySchema.safeParse(typeof req.body === 'string' ? JSON.parse(req.body) : req.body)
+  let body: unknown = req.body
+  if (typeof req.body === 'string') {
+    try {
+      body = JSON.parse(req.body)
+    } catch {
+      return res.status(400).json({ success: false, error: 'Payload JSON invalide' })
+    }
+  }
+  const parsed = BodySchema.safeParse(body)
   if (!parsed.success) return res.status(400).json({ success: false, error: 'Payload invalide' })
 
   let supabase
@@ -45,7 +53,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
   if (error || !data) {
     if (error?.code === '23505') return res.status(409).json({ success: false, error: 'EMAIL_EXISTS' })
-    return res.status(500).json({ success: false, error: 'Creation compte impossible' })
+    console.error('[auth/chauffeur/register] insert app_accounts failed', error)
+    return res.status(500).json({
+      success: false,
+      error: `Creation compte impossible${error?.code ? ` (${error.code})` : ''}`,
+    })
   }
 
   const token = await createAccountSession(supabase, { accountId: data.id, email: data.email, role: 'chauffeur' })
