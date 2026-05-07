@@ -1439,7 +1439,7 @@ export default function ClientCompteDashboard({ onBack, onOpenClientLiveMeet }: 
                   role="button"
                   tabIndex={0}
                   onClick={() => {
-                    if (onOpenClientLiveMeet) {
+                    if (onOpenClientLiveMeet && clientLiveMeetActive) {
                       trackEvent('click', 'client_account', 'overview_live_meet');
                       onOpenClientLiveMeet();
                       return;
@@ -1449,7 +1449,7 @@ export default function ClientCompteDashboard({ onBack, onOpenClientLiveMeet }: 
                   onKeyDown={(e) => {
                     if (e.key !== 'Enter' && e.key !== ' ') return;
                     e.preventDefault();
-                    if (onOpenClientLiveMeet) {
+                    if (onOpenClientLiveMeet && clientLiveMeetActive) {
                       trackEvent('click', 'client_account', 'overview_live_meet');
                       onOpenClientLiveMeet();
                       return;
