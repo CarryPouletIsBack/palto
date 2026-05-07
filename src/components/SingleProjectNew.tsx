@@ -50,6 +50,8 @@ import { REUNION_ISLAND_BBOX_GEOCODE } from '../constants/reunionIsland';
 import { haversineDistanceKm, type GeoPoint } from '../services/distanceGeo';
 import { consumeGoPrefill } from '../constants/goPrefillStorage';
 import { loadClientSavedPlaces } from '../constants/clientSavedPlacesStorage';
+import { loadClientAccountSnapshot } from '../constants/clientAccountStorage';
+import { getCurrentClientUser, isClientAuthenticated } from '../services/authService';
 import {
   CHAUFFEUR_RIDE_SETTINGS_KEY,
   loadChauffeurRideSettingsSnapshot,
@@ -1152,6 +1154,18 @@ const SingleProjectNew: FC<SingleProjectProps> = ({
   const [checkoutError, setCheckoutError] = useState<string | null>(null);
   const [checkoutSuccessMessage, setCheckoutSuccessMessage] = useState<string | null>(null);
   const [checkoutSubmitting, setCheckoutSubmitting] = useState(false);
+  useEffect(() => {
+    if (!isClientAuthenticated()) return;
+    const sessionUser = getCurrentClientUser();
+    const snapshot = loadClientAccountSnapshot();
+    const fullName = `${snapshot.prenom || ''} ${snapshot.nom || ''}`.trim();
+    if (sessionUser?.email?.trim()) {
+      setCheckoutCustomerEmail((prev) => (prev.trim() ? prev : sessionUser.email.trim()));
+    }
+    if (fullName) {
+      setCheckoutCustomerName((prev) => (prev.trim() ? prev : fullName));
+    }
+  }, []);
   const closeRecapPopup = useCallback(() => {
     setIsRecapPopupOpen(false);
   }, []);

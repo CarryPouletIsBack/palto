@@ -20,6 +20,10 @@ type RideRow = {
   created_at: string
 }
 
+type ClientRow = {
+  id: string
+}
+
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   res.setHeader('Access-Control-Allow-Origin', '*')
   res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS')
@@ -58,12 +62,27 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   const mm = String(now.getMinutes()).padStart(2, '0')
   const nowTime = `${hh}:${mm}:00`
 
+  const { data: clients, error: clientsError } = await supabase
+    .from('clients')
+    .select('id')
+    .eq('email', emailNorm)
+
+  if (clientsError) {
+    console.error('[client/rides] clients lookup', clientsError)
+    res.status(500).json({ error: 'Lecture impossible' })
+    return
+  }
+
+  const clientIds = ((clients ?? []) as ClientRow[]).map((c) => c.id).filter(Boolean)
+  if (clientIds.length === 0) {
+    res.status(200).json({ items: [] })
+    return
+  }
+
   let query = supabase
     .from('courses')
-    .select(
-      'id,status,pickup_address,dropoff_address,scheduled_date,scheduled_time,amount_eur,distance_km,created_at,clients!inner(email)'
-    )
-    .eq('clients.email', emailNorm)
+    .select('id,status,pickup_address,dropoff_address,scheduled_date,scheduled_time,amount_eur,distance_km,created_at')
+    .in('client_id', clientIds)
     .order('scheduled_date', { ascending: false })
     .order('scheduled_time', { ascending: false })
     .limit(limit)

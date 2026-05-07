@@ -30,7 +30,11 @@ export function useStatsApi(): boolean {
 }
 
 export function useClientRidesApi(): boolean {
-  return isEnabled(import.meta.env.VITE_USE_CLIENT_RIDES_API as string | undefined)
+  const raw = import.meta.env.VITE_USE_CLIENT_RIDES_API as string | undefined
+  if (typeof raw !== 'string') return true
+  const v = raw.trim().toLowerCase()
+  if (v === '0' || v === 'false' || v === 'no' || v === 'off') return false
+  return true
 }
 
 export function usePricingApi(): boolean {

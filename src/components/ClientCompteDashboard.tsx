@@ -85,7 +85,13 @@ import {
   loadChauffeurOrg,
 } from '../constants/chauffeurOrganizationStorage';
 import { loadChauffeurRegistry, normalizeChauffeurEmail } from '../constants/chauffeurRegistrationStorage';
-import { getCurrentClientUser, isChauffeurPrimaryAccountEmail } from '../services/authService';
+import {
+  getCurrentClientUser,
+  isChauffeurPrimaryAccountEmail,
+  isClientAuthenticated,
+  PALTO_CLIENT_SESSION_CHANGED_EVENT,
+} from '../services/authService';
+import { clientRidesApiEnabled, fetchClientRides, type ClientRideItem } from '../services/clientRidesApi';
 
 type ClientPlaceMapTarget =
   | { kind: 'domicile' }
@@ -267,15 +273,76 @@ export default function ClientCompteDashboard({ onBack, onOpenClientLiveMeet }: 
   const [confirmPwd, setConfirmPwd] = useState('');
   const [pwdError, setPwdError] = useState<string | null>(null);
   const [selectedRideId, setSelectedRideId] = useState<string | null>(null);
+  const [clientRides, setClientRides] = useState<ClientRideItem[]>([]);
+  const [ridesSyncTick, setRidesSyncTick] = useState(0);
   const [orgSyncTick, setOrgSyncTick] = useState(0);
+  const ridesForUi = useMemo<DemoRide[]>(() => {
+    return clientRides.map((ride) => {
+      const iso = `${ride.scheduledDate}T${ride.scheduledTime}`;
+      const dt = new Date(iso);
+      const dateFr = Number.isNaN(dt.getTime())
+        ? `${ride.scheduledDate} ${ride.scheduledTime.slice(0, 5)}`
+        : dt.toLocaleString('fr-FR', {
+            day: '2-digit',
+            month: '2-digit',
+            year: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit',
+          });
+      const dateEn = Number.isNaN(dt.getTime())
+        ? `${ride.scheduledDate} ${ride.scheduledTime.slice(0, 5)}`
+        : dt.toLocaleString('en-GB', {
+            day: '2-digit',
+            month: '2-digit',
+            year: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit',
+          });
+      const statusMapFr: Record<string, string> = {
+        pending: 'En attente',
+        accepted: 'Acceptee',
+        in_progress: 'En cours',
+        completed: 'Terminee',
+        cancelled: 'Annulee',
+      };
+      const statusMapEn: Record<string, string> = {
+        pending: 'Pending',
+        accepted: 'Accepted',
+        in_progress: 'In progress',
+        completed: 'Completed',
+        cancelled: 'Cancelled',
+      };
+      return {
+        id: ride.id,
+        route: `${ride.pickupAddress} -> ${ride.dropoffAddress}`,
+        date: dateFr,
+        dateEn,
+        status: statusMapFr[ride.status] ?? ride.status,
+        statusEn: statusMapEn[ride.status] ?? ride.status,
+        pickupLabel: ride.pickupAddress,
+        dropoffLabel: ride.dropoffAddress,
+        departTime: ride.scheduledTime.slice(0, 5),
+        arriveTime: '',
+        durationMin: 0,
+        distanceKm: Number(ride.distanceKm ?? 0),
+        priceEur: Number(ride.amountEur ?? 0),
+        driverName: '—',
+        vehicleLabel: '—',
+        paymentMethod: 'Carte',
+        paymentMethodEn: 'Card',
+        reference: ride.id,
+        flow: null,
+      };
+    });
+  }, [clientRides]);
   const selectedRide = useMemo(
-    () => DEMO_RIDES.find((r) => r.id === selectedRideId) ?? null,
-    [selectedRideId]
+    () => ridesForUi.find((r) => r.id === selectedRideId) ?? null,
+    [selectedRideId, ridesForUi]
   );
   const recentRidePrices = useMemo(() => {
-    return DEMO_RIDES.filter((r) => r.priceEur > 0).slice(0, 3);
-  }, []);
-  const overviewRecentRides = useMemo(() => DEMO_RIDES.slice(0, 6), []);
+    return ridesForUi.filter((r) => r.priceEur > 0).slice(0, 3);
+  }, [ridesForUi]);
+  const overviewRecentRides = useMemo(() => ridesForUi.slice(0, 6), [ridesForUi]);
   const overviewMapBgUrl = '/images/2948124.jpg';
 
   const [profile, setProfile] = useState<ClientAccountSnapshot>(() => loadClientAccountSnapshot());
@@ -337,6 +404,47 @@ export default function ClientCompteDashboard({ onBack, onOpenClientLiveMeet }: 
     document.addEventListener('mousedown', onDocMouseDown);
     return () => document.removeEventListener('mousedown', onDocMouseDown);
   }, [accountModalOpen, createRideMenuOpen, accountSectionsMenuOpen]);
+
+  useEffect(() => {
+    const bump = () => setRidesSyncTick((n) => n + 1);
+    const onStorage = (e: StorageEvent) => {
+      if (e.key === null || e.key === 'palto:client_token' || e.key === 'palto:client_auth') bump();
+    };
+    window.addEventListener('focus', bump);
+    document.addEventListener('visibilitychange', bump);
+    window.addEventListener('storage', onStorage);
+    window.addEventListener(PALTO_CLIENT_SESSION_CHANGED_EVENT, bump as EventListener);
+    return () => {
+      window.removeEventListener('focus', bump);
+      document.removeEventListener('visibilitychange', bump);
+      window.removeEventListener('storage', onStorage);
+      window.removeEventListener(PALTO_CLIENT_SESSION_CHANGED_EVENT, bump as EventListener);
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!clientRidesApiEnabled()) {
+      setClientRides([]);
+      return;
+    }
+    const user = getCurrentClientUser();
+    if (!user?.email || !isClientAuthenticated()) {
+      setClientRides([]);
+      return;
+    }
+    let cancelled = false;
+    void fetchClientRides(user.email, 'all')
+      .then((items) => {
+        if (!cancelled) setClientRides(items);
+      })
+      .catch((e) => {
+        console.warn('[ClientCompteDashboard] rides api unavailable', e);
+        if (!cancelled) setClientRides([]);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [ridesSyncTick]);
 
   useEffect(() => {
     const snap = loadClientAccountSnapshot();
@@ -2106,7 +2214,7 @@ export default function ClientCompteDashboard({ onBack, onOpenClientLiveMeet }: 
                     {t('clientAccount.recentDemo')}
                   </p>
                   <ul className="client-compte-ride-list">
-                    {DEMO_RIDES.map((r) => (
+                    {ridesForUi.map((r) => (
                       <li key={r.id}>
                         <button
                           type="button"

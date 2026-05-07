@@ -66,7 +66,14 @@ type CourseRow = {
   completed_at: string | null
   cancelled_at: string | null
   created_at: string
-  clients: { full_name: string; email: string | null; phone: string } | null
+  clients?: { full_name: string; email: string | null; phone: string } | null
+}
+
+type ClientLite = {
+  id: string
+  full_name: string
+  email: string | null
+  phone: string
 }
 
 declare global {
@@ -118,12 +125,31 @@ async function handleRidesGet(res: VercelResponse, driverKey: string) {
   const supabase = getSupabaseAdmin()
   const { data, error } = await supabase
     .from('courses')
-    .select(`id, external_code, client_id, scheduled_date, scheduled_time, pickup_address, dropoff_address, status, amount_eur, distance_km, booking_kind, requested_driver_external_key, assigned_driver_external_key, accepted_at, started_at, completed_at, cancelled_at, created_at, clients ( full_name, email, phone )`)
+    .select(
+      'id, external_code, client_id, scheduled_date, scheduled_time, pickup_address, dropoff_address, status, amount_eur, distance_km, booking_kind, requested_driver_external_key, assigned_driver_external_key, accepted_at, started_at, completed_at, cancelled_at, created_at'
+    )
     .order('created_at', { ascending: false })
     .limit(200)
   if (error) return res.status(500).json({ error: 'Lecture impossible' })
   const rows = (data ?? []) as CourseRow[]
-  const rides = rows.filter((r) => visibleForDriver(r, driverKey))
+  const ridesBase = rows.filter((r) => visibleForDriver(r, driverKey))
+  const clientIds = Array.from(
+    new Set(ridesBase.map((r) => r.client_id).filter((id): id is string => Boolean(id)))
+  )
+  let clientMap = new Map<string, ClientLite>()
+  if (clientIds.length > 0) {
+    const { data: clientsData, error: clientsError } = await supabase
+      .from('clients')
+      .select('id, full_name, email, phone')
+      .in('id', clientIds)
+    if (!clientsError) {
+      clientMap = new Map(((clientsData ?? []) as ClientLite[]).map((c) => [c.id, c]))
+    }
+  }
+  const rides = ridesBase.map((row) => ({
+    ...row,
+    clients: row.client_id ? clientMap.get(row.client_id) ?? null : null,
+  }))
   return res.status(200).json({ rides })
 }
 
