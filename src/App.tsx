@@ -67,6 +67,7 @@ function App() {
   const [error, setError] = useState<Error | null>(null)
   const [isAuthChecked, setIsAuthChecked] = useState(false)
   const [isLoggedIn, setIsLoggedIn] = useState(false)
+  const [authUiTick, setAuthUiTick] = useState(0)
 
   const [appFontZoomFactor, setAppFontZoomFactor] = useState(
     () => clampFontScalePercent(loadClientAppPreferences().fontScalePercent) / 100
@@ -761,7 +762,7 @@ function App() {
               />
             )}
             {currentPage === 'client-compte' && (
-              isClientAuthenticated() ? (
+              (authUiTick >= 0 && isClientAuthenticated()) ? (
                 <ClientCompteDashboard
                   onBack={() => {
                     setCurrentPage('accueil')
@@ -775,6 +776,7 @@ function App() {
                     const prefix = language === 'en' ? '/en' : '/fr'
                     window.history.pushState({}, '', `${prefix}/compte`)
                     setCurrentPage('client-compte')
+                    setAuthUiTick((n) => n + 1)
                   }}
                 />
               )
@@ -790,7 +792,7 @@ function App() {
               />
             )}
             {currentPage === 'dashboard' && (
-              isAuthenticated() ? (
+              (authUiTick >= 0 && isAuthenticated()) ? (
                 <Dashboard
                   onOpenActiveCourseNavigation={openDriverNavigation}
                   onNavigatePublicHome={navigateToPaltoHomeRoot}
@@ -802,6 +804,7 @@ function App() {
                     const prefix = language === 'en' ? '/en' : '/fr'
                     window.history.pushState({}, '', `${prefix}/dashboard?dashboardView=user`)
                     setCurrentPage('dashboard')
+                    setAuthUiTick((n) => n + 1)
                   }}
                 />
               )
