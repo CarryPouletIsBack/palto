@@ -1,5 +1,6 @@
 import type { BookingKindUi, CourseRowState, CourseStatut } from '../types/chauffeurCoursePlanning'
 import { apiBaseUrl, useChauffeurRidesPersist } from '../constants/featureFlags'
+import { simplifyAddressDisplay } from './addressDisplay'
 
 const API_BASE_URL = apiBaseUrl()
 const AUTH_TOKEN_KEY = 'dashboard_token'
@@ -72,8 +73,8 @@ function mapRide(row: ApiRide): CourseRowState {
     date: row.scheduled_date,
     heure: toHeure(row.scheduled_time),
     client: row.clients?.full_name?.trim() || 'Client',
-    depart: row.pickup_address,
-    arrivee: row.dropoff_address,
+    depart: simplifyAddressDisplay(row.pickup_address),
+    arrivee: simplifyAddressDisplay(row.dropoff_address),
     km,
     statut: mapStatus(row.status),
     montant: row.amount_eur,

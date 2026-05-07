@@ -85,6 +85,7 @@ import {
   loadChauffeurOrg,
 } from '../constants/chauffeurOrganizationStorage';
 import { loadChauffeurRegistry, normalizeChauffeurEmail } from '../constants/chauffeurRegistrationStorage';
+import { simplifyAddressDisplay } from '../services/addressDisplay';
 import {
   getCurrentClientUser,
   isChauffeurPrimaryAccountEmail,
@@ -314,13 +315,13 @@ export default function ClientCompteDashboard({ onBack, onOpenClientLiveMeet }: 
       };
       return {
         id: ride.id,
-        route: `${ride.pickupAddress} -> ${ride.dropoffAddress}`,
+        route: `${simplifyAddressDisplay(ride.pickupAddress)} -> ${simplifyAddressDisplay(ride.dropoffAddress)}`,
         date: dateFr,
         dateEn,
         status: statusMapFr[ride.status] ?? ride.status,
         statusEn: statusMapEn[ride.status] ?? ride.status,
-        pickupLabel: ride.pickupAddress,
-        dropoffLabel: ride.dropoffAddress,
+        pickupLabel: simplifyAddressDisplay(ride.pickupAddress),
+        dropoffLabel: simplifyAddressDisplay(ride.dropoffAddress),
         departTime: ride.scheduledTime.slice(0, 5),
         arriveTime: '',
         durationMin: 0,

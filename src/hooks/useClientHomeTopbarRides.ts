@@ -7,6 +7,7 @@ import {
 import { getUpcomingScheduledRidesForHomeBanner } from '../constants/clientScheduledRidesHome';
 import { getClientLiveMeetRideModel } from '../constants/clientLiveMeetRide';
 import { clientRidesApiEnabled, fetchClientRides } from '../services/clientRidesApi';
+import { simplifyAddressDisplay } from '../services/addressDisplay';
 import type { ClientTopbarUpcomingRide } from '../components/DashboardHomeTopbar'
 
 /**
@@ -71,8 +72,8 @@ export function useClientHomeTopbarRides(language: 'fr' | 'en') {
         }
         const iso = `${first.scheduledDate}T${first.scheduledTime}`;
         setApiUpcomingRide({
-          departShort: first.pickupAddress,
-          arriveShort: first.dropoffAddress,
+          departShort: simplifyAddressDisplay(first.pickupAddress),
+          arriveShort: simplifyAddressDisplay(first.dropoffAddress),
           startsAtIso: iso,
           startsLabel: formatRideStart(iso),
         });
