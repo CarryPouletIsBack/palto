@@ -1,4 +1,6 @@
 /** Résultat du géocodage forward (OpenStreetMap). */
+import { apiBaseUrl } from '../constants/featureFlags'
+
 export type GeocodeCoordinates = {
   longitude: number
   latitude: number
@@ -36,7 +38,8 @@ export async function geocodeForward(
         params.set('bounded', '1')
       }
     }
-    const url = `https://nominatim.openstreetmap.org/search?${params.toString()}`
+    params.set('mode', 'search')
+    const url = `${apiBaseUrl()}/geocode?${params.toString()}`
     const res = await fetch(url)
     if (!res.ok) return null
 
@@ -104,7 +107,8 @@ export async function geocodeForwardSuggestions(
         params.set('bounded', '1')
       }
     }
-    const url = `https://nominatim.openstreetmap.org/search?${params.toString()}`
+    params.set('mode', 'search')
+    const url = `${apiBaseUrl()}/geocode?${params.toString()}`
     const res = await fetch(url)
     if (!res.ok) return []
     const data = (await res.json()) as Array<{ display_name?: string; lon?: string; lat?: string }>
@@ -140,7 +144,8 @@ export async function geocodeReverse(
     format: 'jsonv2',
     'accept-language': options?.language ?? 'fr',
   })
-  const url = `https://nominatim.openstreetmap.org/reverse?${params.toString()}`
+  params.set('mode', 'reverse')
+  const url = `${apiBaseUrl()}/geocode?${params.toString()}`
   const res = await fetch(url)
   if (!res.ok) return null
 
