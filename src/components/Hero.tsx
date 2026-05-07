@@ -8,7 +8,6 @@ import './Dashboard.css'
 import './Dashboard.app-theme.css'
 import './Hero.css'
 import { PLACEHOLDER_COVER } from '../constants/imagePlaceholders'
-import { DEFAULT_USER_ORIGIN_LABEL } from '../constants/defaultUserOrigin'
 import { POPULAR_DESTINATIONS, type PopularDestination } from '../data/popularDestinations'
 import { saveGoPrefill } from '../constants/goPrefillStorage'
 import { geocodeForwardSuggestions, type GeocodeSuggestion } from '../services/mapboxGeocoding'
@@ -55,7 +54,7 @@ const Hero = ({
 
   const handleVoirLesPrix = useCallback(() => {
     saveGoPrefill({
-      pickup: pickupDraft.trim() || DEFAULT_USER_ORIGIN_LABEL,
+      pickup: pickupDraft.trim(),
       destination: destinationDraft.trim(),
       timing: pickupTiming,
       datetime: '',

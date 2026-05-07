@@ -754,7 +754,8 @@ const SingleProjectNew: FC<SingleProjectProps> = ({
       },
       () => {
         setPickupGeocodeLoading(false);
-        setPickupGeocodeError('Autorisation de localisation refusée.');
+        // Non bloquant : l'utilisateur peut continuer à saisir son adresse manuellement.
+        setPickupGeocodeError(null);
       },
       { enableHighAccuracy: true, timeout: 10000, maximumAge: 30000 }
     );
@@ -762,16 +763,9 @@ const SingleProjectNew: FC<SingleProjectProps> = ({
 
   const onPickupLocationFocus = useCallback(() => {
     setPickupSuggestionOpen(true);
-    if (!pickupAutoGeolocAsked && !paltoPickupLocation.trim() && !lastConfirmedPickupText?.trim()) {
-      setPickupAutoGeolocAsked(true);
-      requestBrowserPickupLocation();
-    }
-  }, [
-    pickupAutoGeolocAsked,
-    paltoPickupLocation,
-    lastConfirmedPickupText,
-    requestBrowserPickupLocation,
-  ]);
+    // Ne pas déclencher la géoloc automatiquement au focus : action explicite uniquement.
+    if (!pickupAutoGeolocAsked) setPickupAutoGeolocAsked(true);
+  }, [pickupAutoGeolocAsked]);
 
   const onPickupLocationBlur = useCallback((e: FocusEvent<HTMLInputElement>) => {
     const next = e.relatedTarget as HTMLElement | null;
@@ -2625,7 +2619,7 @@ const SingleProjectNew: FC<SingleProjectProps> = ({
                     }
                     onClick={handleRecapModalConfirmOrder}
                   >
-                    Commandez la course
+                    {paltoPickupTiming === 'later' ? 'Finaliser la reservation' : 'Commandez la course'}
                   </Button>
                 </div>
               </div>
@@ -2741,7 +2735,11 @@ const SingleProjectNew: FC<SingleProjectProps> = ({
                     }
                     onClick={() => void handleCheckoutConfirm()}
                   >
-                    {checkoutSubmitting ? 'Enregistrement…' : 'Confirmer la commande'}
+                    {checkoutSubmitting
+                      ? 'Enregistrement…'
+                      : paltoPickupTiming === 'later'
+                        ? 'Finaliser la reservation'
+                        : 'Confirmer la commande'}
                   </Button>
                 </div>
               </div>

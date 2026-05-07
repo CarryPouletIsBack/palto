@@ -6,7 +6,6 @@ import { DashboardHomeTopbar } from './DashboardHomeTopbar'
 import { DashboardHomeRidesBanner } from './DashboardHomeRidesBanner'
 import { useClientHomeTopbarRides } from '../hooks/useClientHomeTopbarRides'
 import { getDestinationById, type FlightRouteBannerData, type PopularDestination } from '../data/popularDestinations'
-import { DEFAULT_USER_ORIGIN_LABEL } from '../constants/defaultUserOrigin'
 import { saveGoPrefill } from '../constants/goPrefillStorage'
 import { PLACEHOLDER_COVER } from '../constants/imagePlaceholders'
 import BlurText from './BlurText'
@@ -213,7 +212,7 @@ export function DestinationSpotlight({
   const handleBook = () => {
     trackEvent('click', 'destination_spotlight_cta', destination.id)
     saveGoPrefill({
-      pickup: DEFAULT_USER_ORIGIN_LABEL,
+      pickup: '',
       destination: destination.geocodeQuery,
       timing: 'now',
       datetime: '',
