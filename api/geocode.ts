@@ -1,6 +1,15 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node'
 import { z } from 'zod'
 
+// left,top,right,bottom (Nominatim viewbox format)
+const REUNION_VIEWBOX = '55.18,-20.85,55.92,-21.39'
+const REUNION_BOUNDS = {
+  minLon: 55.18,
+  maxLon: 55.92,
+  minLat: -21.39,
+  maxLat: -20.85,
+}
+
 const SearchQuerySchema = z.object({
   mode: z.literal('search'),
   q: z.string().min(1),
@@ -96,6 +105,18 @@ function toSafeViewbox(raw: string | undefined): string | null {
   return value
 }
 
+function isInsideReunion(lonRaw: string | number | undefined, latRaw: string | number | undefined): boolean {
+  const lon = typeof lonRaw === 'number' ? lonRaw : Number.parseFloat(String(lonRaw ?? ''))
+  const lat = typeof latRaw === 'number' ? latRaw : Number.parseFloat(String(latRaw ?? ''))
+  if (!Number.isFinite(lon) || !Number.isFinite(lat)) return false
+  return (
+    lon >= REUNION_BOUNDS.minLon &&
+    lon <= REUNION_BOUNDS.maxLon &&
+    lat >= REUNION_BOUNDS.minLat &&
+    lat <= REUNION_BOUNDS.maxLat
+  )
+}
+
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   res.setHeader('Access-Control-Allow-Origin', '*')
   res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS')
@@ -120,11 +141,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         'accept-language': language,
         addressdetails,
       })
-      const safeViewbox = toSafeViewbox(parsed.data.viewbox)
-      if (bounded === '1' && safeViewbox) {
-        params.set('viewbox', safeViewbox)
-        params.set('bounded', '1')
-      }
+      const safeViewbox = toSafeViewbox(parsed.data.viewbox) ?? REUNION_VIEWBOX
+      params.set('viewbox', safeViewbox)
+      params.set('bounded', '1')
       params.set('email', 'contact@palto.fr')
       const upstream = await fetch(`https://nominatim.openstreetmap.org/search?${params.toString()}`, {
         headers: nominatimHeaders(),
@@ -132,10 +151,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       if (!upstream.ok) {
         console.warn('[geocode] upstream search non-ok', upstream.status)
         const fallback = await searchWithPhoton(q, language, limit)
-        return res.status(200).json(fallback)
+        return res.status(200).json(fallback.filter((row) => isInsideReunion(row.lon, row.lat)))
       }
-      const payload = await upstream.json()
-      return res.status(200).json(payload)
+      const payload = (await upstream.json()) as Array<{ display_name?: string; lon?: string; lat?: string }>
+      return res.status(200).json(payload.filter((row) => isInsideReunion(row.lon, row.lat)))
     }
 
     if (mode === 'reverse') {
@@ -153,12 +172,25 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       const upstream = await fetch(`https://nominatim.openstreetmap.org/reverse?${params.toString()}`, {
         headers: nominatimHeaders(),
       })
+      const reverseFallback = async () => {
+        const fallbackReverse = await reverseWithPhoton(lon, lat, language)
+        if (fallbackReverse?.display_name?.trim()) return fallbackReverse
+        const fallbackSearch = await searchWithPhoton(`${lat},${lon}`, language, 1)
+        const first = fallbackSearch[0]
+        return { display_name: first?.display_name ?? '' }
+      }
       if (!upstream.ok) {
         console.warn('[geocode] upstream reverse non-ok', upstream.status)
-        const fallback = await reverseWithPhoton(lon, lat, language)
-        return res.status(200).json(fallback ?? { display_name: '' })
+        if (!isInsideReunion(lon, lat)) return res.status(200).json({ display_name: '' })
+        const fallback = await reverseFallback()
+        return res.status(200).json(fallback)
       }
-      const payload = await upstream.json()
+      if (!isInsideReunion(lon, lat)) return res.status(200).json({ display_name: '' })
+      const payload = (await upstream.json()) as { display_name?: string }
+      if (!payload.display_name?.trim()) {
+        const fallback = await reverseFallback()
+        return res.status(200).json(fallback)
+      }
       return res.status(200).json(payload)
     }
 

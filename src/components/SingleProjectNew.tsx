@@ -734,7 +734,9 @@ const SingleProjectNew: FC<SingleProjectProps> = ({
           }
           const label =
             (await geocodeReverse(snapped.longitude, snapped.latitude, mapboxToken, { language })) ??
-            `${snapped.latitude.toFixed(5)}, ${snapped.longitude.toFixed(5)}`;
+            (language === 'en'
+              ? 'Pickup selected on the map'
+              : 'Départ sélectionné sur la carte');
           setPaltoPickupLocation(label);
           setPickupResolvedPoint(snapped);
           setLastConfirmedPickupText(label);
@@ -1098,8 +1100,10 @@ const SingleProjectNew: FC<SingleProjectProps> = ({
       const snapped = await snapLngLatToMapboxDriving(mapboxToken, longitude, latitude, { searchRadiusMeters: 75 });
       if (!snapped) return;
       const placeName =
-        (await geocodeReverse(snapped.longitude, snapped.latitude, mapboxToken, { language: 'fr' })) ??
-        `${snapped.latitude.toFixed(4)}, ${snapped.longitude.toFixed(4)}`;
+        (await geocodeReverse(snapped.longitude, snapped.latitude, mapboxToken, { language })) ??
+        (language === 'en'
+          ? 'Address selected on the map'
+          : 'Adresse sélectionnée sur la carte');
       const shouldPickPickupFirst = pickupResolvedPoint === null || !lastConfirmedPickupText?.trim();
       if (shouldPickPickupFirst) {
         // Premier clic carte: définir le point de départ utilisateur.
@@ -1134,7 +1138,7 @@ const SingleProjectNew: FC<SingleProjectProps> = ({
     } catch {
       // ignore network/snap errors
     }
-  }, [mapboxToken, pickupResolvedPoint, lastConfirmedPickupText]);
+  }, [language, mapboxToken, pickupResolvedPoint, lastConfirmedPickupText]);
   const [isClosing, setIsClosing] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
   const [isDesktopViewport, setIsDesktopViewport] = useState(
