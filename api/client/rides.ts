@@ -65,7 +65,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   const { data: clients, error: clientsError } = await supabase
     .from('clients')
     .select('id')
-    .eq('email', emailNorm)
+    .ilike('email', emailNorm)
 
   if (clientsError) {
     console.error('[client/rides] clients lookup', clientsError)

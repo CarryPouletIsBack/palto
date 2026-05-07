@@ -89,28 +89,46 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     return res.status(400).json({ error: 'scheduledTime invalide (attendu HH:MM ou HH:MM:SS)' })
   }
 
+  const emailNorm = b.clientEmail.trim().toLowerCase()
   const phone = (b.clientPhone?.trim() || '+262000000000').slice(0, 40)
   const fullName = (b.clientFullName?.trim() || 'Client').slice(0, 200) || 'Client'
 
-  const { data: clientRow, error: clientErr } = await supabase
+  const { data: existingClients, error: existingClientErr } = await supabase
     .from('clients')
-    .insert({
-      full_name: fullName,
-      phone,
-      email: b.clientEmail.trim(),
-    })
     .select('id')
-    .single()
+    .ilike('email', emailNorm)
+    .order('created_at', { ascending: false })
+    .limit(1)
 
-  if (clientErr || !clientRow) {
-    console.error('[rides/create] clients insert', clientErr)
-    return res.status(500).json({ error: 'Impossible d enregistrer le client' })
+  if (existingClientErr) {
+    console.error('[rides/create] clients lookup', existingClientErr)
+    return res.status(500).json({ error: 'Impossible de verifier le client' })
+  }
+
+  let clientId = (existingClients?.[0] as { id: string } | undefined)?.id ?? null
+
+  if (!clientId) {
+    const { data: clientRow, error: clientErr } = await supabase
+      .from('clients')
+      .insert({
+        full_name: fullName,
+        phone,
+        email: emailNorm,
+      })
+      .select('id')
+      .single()
+
+    if (clientErr || !clientRow) {
+      console.error('[rides/create] clients insert', clientErr)
+      return res.status(500).json({ error: 'Impossible d enregistrer le client' })
+    }
+    clientId = clientRow.id
   }
 
   const code = externalCode()
   const insertPayload = {
     external_code: code,
-    client_id: clientRow.id,
+    client_id: clientId,
     scheduled_date: b.scheduledDate,
     scheduled_time: scheduledTime,
     pickup_address: b.pickupAddress.trim(),

@@ -2388,6 +2388,24 @@ const SingleProjectNew: FC<SingleProjectProps> = ({
                   Pas de choix de chauffeur : les chauffeurs disponibles pourront accepter la course jusqu a la date
                   prevue.
                 </p>
+                <div className="palto-ride-drivers-actions" style={{ marginTop: 12 }}>
+                  <Button
+                    variant="primary"
+                    type="button"
+                    className="palto-ride-search-btn"
+                    disabled={!paltoPickupDateTime.trim()}
+                    onClick={() => {
+                      if (!paltoPickupDateTime.trim()) return;
+                      if (isDesktopViewport) {
+                        setIsRecapPopupOpen(true);
+                        return;
+                      }
+                      setIsCheckoutPopupOpen(true);
+                    }}
+                  >
+                    Finaliser la reservation
+                  </Button>
+                </div>
               </section>
             </div>
           ) : null}
