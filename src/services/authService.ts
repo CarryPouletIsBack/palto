@@ -19,6 +19,11 @@ export interface User {
   username?: string
 }
 
+function isDbSessionToken(token: string | null): token is string {
+  if (!token) return false
+  return /^[a-f0-9]{64}$/i.test(token.trim())
+}
+
 function normalizeEmail(email: string): string {
   return email.trim().toLowerCase()
 }
@@ -70,13 +75,17 @@ export const isAuthenticated = (): boolean => {
     const token = localStorage.getItem(DASHBOARD_AUTH_TOKEN_KEY)
     const authData = localStorage.getItem(AUTH_STORAGE_KEY)
 
-    if (!token || !authData) {
+    if (!isDbSessionToken(token) || !authData) {
+      localStorage.removeItem(DASHBOARD_AUTH_TOKEN_KEY)
+      localStorage.removeItem(AUTH_STORAGE_KEY)
       return false
     }
 
     const user = JSON.parse(authData)
-    return !!(user && token && user.email)
+    return !!(user && user.email)
   } catch {
+    localStorage.removeItem(DASHBOARD_AUTH_TOKEN_KEY)
+    localStorage.removeItem(AUTH_STORAGE_KEY)
     return false
   }
 }
@@ -100,7 +109,7 @@ export const logout = (): void => {
 export function getDashboardAuthorizationHeader(): string | null {
   if (typeof window === 'undefined') return null
   const token = localStorage.getItem(DASHBOARD_AUTH_TOKEN_KEY)
-  if (!token) return null
+  if (!isDbSessionToken(token)) return null
   return `Bearer ${token}`
 }
 
@@ -155,10 +164,16 @@ export const isClientAuthenticated = (): boolean => {
   try {
     const token = localStorage.getItem(CLIENT_AUTH_TOKEN_KEY)
     const authData = localStorage.getItem(CLIENT_AUTH_STORAGE_KEY)
-    if (!token || !authData) return false
+    if (!isDbSessionToken(token) || !authData) {
+      localStorage.removeItem(CLIENT_AUTH_TOKEN_KEY)
+      localStorage.removeItem(CLIENT_AUTH_STORAGE_KEY)
+      return false
+    }
     const user = JSON.parse(authData)
-    return !!(user && token && user.email)
+    return !!(user && user.email)
   } catch {
+    localStorage.removeItem(CLIENT_AUTH_TOKEN_KEY)
+    localStorage.removeItem(CLIENT_AUTH_STORAGE_KEY)
     return false
   }
 }

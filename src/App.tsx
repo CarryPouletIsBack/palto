@@ -795,7 +795,11 @@ function App() {
               )
             )}
             {currentPage === 'dashboard-navigation' && navigationCourseId && (
-              <DriverNavigationView courseId={navigationCourseId} onClose={closeDriverNavigation} />
+              isAuthenticated() ? (
+                <DriverNavigationView courseId={navigationCourseId} onClose={closeDriverNavigation} />
+              ) : (
+                <ChauffeurAuthPage onAuthSuccess={() => setCurrentPage('dashboard')} />
+              )
             )}
           </>
         )}
