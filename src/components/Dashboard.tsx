@@ -1421,6 +1421,59 @@ const Dashboard = ({
     [onOpenActiveCourseNavigation, persistRides, coursesBlockedByCompliance]
   );
 
+  const resumeCourseById = useCallback(
+    (courseId: string) => {
+      const current = courseRows.find((c) => c.id === courseId && c.statut === 'En cours');
+      if (!current) return;
+      const startedAt = current.startedAt ?? Date.now();
+      const snap: ChauffeurNavCourseSnapshot = {
+        id: current.id,
+        depart: current.depart,
+        arrivee: current.arrivee,
+        client: current.client,
+        km: current.km,
+        date: current.date,
+        heure: current.heure,
+        montantPrevuEuros: current.montant,
+        modePaiement: current.modePaiement ?? 'carte',
+        startedAt,
+        pickupLng: current.pickupLng,
+        pickupLat: current.pickupLat,
+        dropoffLng: current.dropoffLng,
+        dropoffLat: current.dropoffLat,
+      };
+      try {
+        sessionStorage.setItem(CHAUFFEUR_NAV_COURSE_STORAGE_KEY, JSON.stringify(snap));
+      } catch {
+        /* ignore quota / private mode */
+      }
+      queueMicrotask(() => {
+        onOpenActiveCourseNavigation?.(courseId);
+      });
+    },
+    [courseRows, onOpenActiveCourseNavigation]
+  );
+
+  const completeCourseById = useCallback(
+    async (courseId: string) => {
+      const current = courseRows.find((c) => c.id === courseId);
+      if (!current || current.statut !== 'En cours') return;
+      if (persistRides) {
+        try {
+          await postChauffeurRideAction(courseId, 'complete');
+          await refreshRides();
+        } catch (err) {
+          console.error(err);
+        }
+        return;
+      }
+      setCourseRows((prev) =>
+        prev.map((course) => (course.id === courseId ? { ...course, statut: 'Terminee' } : course))
+      );
+    },
+    [courseRows, persistRides, refreshRides]
+  );
+
   const topbarLaunchCourse = useMemo(() => {
     const accepted = courseRows.filter((c) => c.statut === 'Acceptee');
     accepted.sort((a, b) => a.date.localeCompare(b.date) || a.heure.localeCompare(b.heure));
@@ -4138,15 +4191,37 @@ const Dashboard = ({
                           <button
                             type="button"
                             className="start-ride"
-                            disabled={coursesBlockedByCompliance || slot.statut !== 'Acceptee'}
-                            title="Signale au systeme que vous demarrez reellement la course (comme sur Uber)."
+                            disabled={coursesBlockedByCompliance || (slot.statut !== 'Acceptee' && slot.statut !== 'En cours')}
+                            title={
+                              slot.statut === 'En cours'
+                                ? 'Rouvrir la navigation de la course en cours.'
+                                : 'Signale au systeme que vous demarrez reellement la course (comme sur Uber).'
+                            }
                             onClick={() => {
                               if (coursesBlockedByCompliance) return;
-                              if (slot.statut !== 'Acceptee') return;
-                              void launchCourseById(slot.id);
+                              if (slot.statut === 'Acceptee') {
+                                void launchCourseById(slot.id);
+                                return;
+                              }
+                              if (slot.statut === 'En cours') {
+                                resumeCourseById(slot.id);
+                              }
                             }}
                           >
-                            Lancer la course
+                            {slot.statut === 'En cours' ? 'Reprendre' : 'Lancer la course'}
+                          </button>
+                          <button
+                            type="button"
+                            className="accept"
+                            disabled={coursesBlockedByCompliance || slot.statut !== 'En cours'}
+                            title="Terminer la course en cours."
+                            onClick={() => {
+                              if (coursesBlockedByCompliance) return;
+                              if (slot.statut !== 'En cours') return;
+                              void completeCourseById(slot.id);
+                            }}
+                          >
+                            Terminer
                           </button>
                           <button
                             type="button"
