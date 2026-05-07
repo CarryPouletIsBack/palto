@@ -284,6 +284,13 @@ body.accueil-page .dashboard-container--home-accueil .dashboard-main {
   cursor: pointer;
 }
 
+.client-compte-topbar-user-btn__avatar {
+  width: 18px;
+  height: 18px;
+  border-radius: 999px;
+  object-fit: cover;
+}
+
 .client-compte-bento-grid {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));

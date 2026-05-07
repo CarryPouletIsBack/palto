@@ -118,7 +118,11 @@ import {
   loadComplianceSnapshot,
   type ChauffeurComplianceSnapshot,
 } from '../constants/chauffeurComplianceStorage';
-import { isChauffeurInSelfServiceRegistry, normalizeChauffeurEmail } from '../constants/chauffeurRegistrationStorage';
+import {
+  isChauffeurInSelfServiceRegistry,
+  loadChauffeurRegistry,
+  normalizeChauffeurEmail,
+} from '../constants/chauffeurRegistrationStorage';
 import {
   loadChauffeurRideSettingsSnapshot,
   saveChauffeurRideSettingsSnapshot,
@@ -543,76 +547,10 @@ const Dashboard = ({
     statut: 'En attente',
   });
   const [courseRows, setCourseRows] = useState<CourseRowState[]>(() => {
-    if (persistRides) return [];
-    const now = new Date();
-    const y = now.getFullYear();
-    const m = now.getMonth();
-    const date = (d: number) => `${y}-${String(m + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
-    const t = Date.now();
-    const monthDaysCount = new Date(y, m + 1, 0).getDate();
-    let firstSundayDay = 1;
-    for (let d = 1; d <= monthDaysCount; d += 1) {
-      if (new Date(y, m, d).getDay() === 0) {
-        firstSundayDay = d;
-        break;
-      }
-    }
-    const sundayDemoDate = date(firstSundayDay);
-    return [
-      {
-        id: 'C-2400',
-        clientId: 'CL-101',
-        date: sundayDemoDate,
-        heure: '00:30',
-        client: 'Marie D.',
-        depart: 'Saint-Denis centre',
-        arrivee: 'Cambaie',
-        km: 4.2,
-        statut: 'En attente',
-        montant: 14.5,
-        modePaiement: 'especes',
-      },
-      { id: 'C-2401', clientId: 'CL-101', date: date(3), heure: '06:45', client: 'Marie D.', depart: 'Saint-Denis', arrivee: 'Aeroport RUN', km: 9.8, statut: 'Terminee', montant: 32 },
-      {
-        id: 'C-2402',
-        clientId: 'CL-102',
-        date: date(8),
-        heure: '08:10',
-        client: 'Lucas P.',
-        depart: 'Le Port',
-        arrivee: 'La Possession',
-        km: 7.3,
-        statut: 'Acceptee',
-        montant: 18.5,
-        modePaiement: 'carte',
-      },
-      {
-        id: 'C-2403',
-        clientId: 'CL-103',
-        date: date(12),
-        heure: '10:30',
-        client: 'Ines R.',
-        depart: 'Saint-Paul',
-        arrivee: 'Saint-Gilles',
-        km: 12.1,
-        statut: 'En cours',
-        montant: 24.75,
-        startedAt: t - 8 * 60 * 1000,
-        routeSnapDeviationKm: 0.22,
-        modePaiement: 'carte',
-      },
-      { id: 'C-2404', clientId: 'CL-104', date: date(12), heure: '14:05', client: 'Ahmed T.', depart: 'Sainte-Marie', arrivee: 'Sainte-Suzanne', km: 8.4, statut: 'Terminee', montant: 20.2 },
-      { id: 'C-2405', clientId: 'CL-105', date: date(20), heure: '19:40', client: 'Julie B.', depart: 'Le Tampon', arrivee: 'Saint-Pierre', km: 11.6, statut: 'Annulee', montant: 0 },
-    ];
+    return [];
   });
 
-  const clientRows = [
-    { id: 'CL-101', nom: 'Marie Dupont', telephone: '+262 692 00 00 01', courses: 14, depense: '386 EUR', note: '4.9' },
-    { id: 'CL-102', nom: 'Lucas Petit', telephone: '+262 692 00 00 02', courses: 6, depense: '124 EUR', note: '4.7' },
-    { id: 'CL-103', nom: 'Ines Robert', telephone: '+262 692 00 00 03', courses: 9, depense: '221 EUR', note: '4.8' },
-    { id: 'CL-104', nom: 'Ahmed Tazi', telephone: '+262 692 00 00 04', courses: 4, depense: '73 EUR', note: '4.6' },
-    { id: 'CL-105', nom: 'Julie Bernard', telephone: '+262 692 00 00 05', courses: 11, depense: '267 EUR', note: '4.9' },
-  ];
+  const clientRows: Array<{ id: string; nom: string; telephone: string; courses: number; depense: string; note: string }> = [];
   const [selectedClientId, setSelectedClientId] = useState(clientRows[0]?.id ?? null);
 
   const refreshRides = useCallback(async () => {
@@ -626,17 +564,17 @@ const Dashboard = ({
   }, [persistRides]);
 
   const [chauffeurProfile, setChauffeurProfile] = useState<ChauffeurProfile>({
-    nom: 'Martin',
-    prenom: 'Anthony',
-    email: 'anthony.martin@palto.re',
-    telephone: '+262 692 12 34 56',
-    ville: 'Le Port',
-    vehicule: 'Yamaha NMAX 125',
-    plaque: 'DF-321-AB',
+    nom: '',
+    prenom: '',
+    email: '',
+    telephone: '',
+    ville: '',
+    vehicule: '',
+    plaque: '',
   });
   const [userProfileDraft, setUserProfileDraft] = useState<ChauffeurProfile>(chauffeurProfile);
   const [chauffeurPayment, setChauffeurPayment] = useState<ChauffeurPayment>({
-    ibanMasked: 'FR76 •••• •••• •••• 9034',
+    ibanMasked: '',
     payoutFrequency: 'Hebdomadaire',
     modePrincipal: 'Carte + espèces',
   });
@@ -646,10 +584,10 @@ const Dashboard = ({
   );
   const [rideSettingsDraft, setRideSettingsDraft] = useState<ChauffeurRideSettings>(chauffeurRideSettings);
   const [chauffeurDocuments, setChauffeurDocuments] = useState<ChauffeurDocument[]>([
-    { key: 'permis', label: 'Permis', expiry: '18/09/2027', status: 'ok' },
-    { key: 'assurance', label: 'Assurance', expiry: '05/06/2026', status: 'soon' },
-    { key: 'carte-grise', label: 'Carte grise', expiry: 'Valide', status: 'ok' },
-    { key: 'controle-technique', label: 'Contrôle technique', expiry: '12/05/2026', status: 'soon' },
+    { key: 'permis', label: 'Permis', expiry: '', status: 'pending' },
+    { key: 'assurance', label: 'Assurance', expiry: '', status: 'pending' },
+    { key: 'carte-grise', label: 'Carte grise', expiry: '', status: 'pending' },
+    { key: 'controle-technique', label: 'Contrôle technique', expiry: '', status: 'pending' },
   ]);
   const [documentUploadDraft, setDocumentUploadDraft] = useState<Record<ChauffeurDocument['key'], string>>({
     permis: '',
@@ -691,18 +629,26 @@ const Dashboard = ({
     const sessionEmail = (user?.email ?? '').trim().toLowerCase();
     if (!sessionEmail) return;
     const inferred = inferProfileFromEmail(sessionEmail);
+    const registryPhone = loadChauffeurRegistry()[normalizeChauffeurEmail(sessionEmail)]?.phoneInternational ?? '';
+    const parsedRegistryPhone = parseStoredPhone(registryPhone);
     setChauffeurProfile((prev) => ({
       ...prev,
       email: prev.email.trim() ? prev.email : sessionEmail,
       prenom: prev.prenom.trim() ? prev.prenom : inferred.prenom,
       nom: prev.nom.trim() ? prev.nom : inferred.nom,
+      telephone: prev.telephone.trim() ? prev.telephone : registryPhone,
     }));
     setUserProfileDraft((prev) => ({
       ...prev,
       email: prev.email.trim() ? prev.email : sessionEmail,
       prenom: prev.prenom.trim() ? prev.prenom : inferred.prenom,
       nom: prev.nom.trim() ? prev.nom : inferred.nom,
+      telephone: prev.telephone.trim() ? prev.telephone : registryPhone,
     }));
+    if (registryPhone.trim()) {
+      setPhoneCountryDraft(parsedRegistryPhone.country);
+      setPhoneNationalDraft(parsedRegistryPhone.nationalNumber);
+    }
   }, []);
 
   useEffect(() => {

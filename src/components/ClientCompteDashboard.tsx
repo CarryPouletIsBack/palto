@@ -310,6 +310,7 @@ export default function ClientCompteDashboard({ onBack, onOpenClientLiveMeet }: 
   const [createRideMenuOpen, setCreateRideMenuOpen] = useState(false);
   const [accountSectionsMenuOpen, setAccountSectionsMenuOpen] = useState(false);
   const accountMenuRef = useRef<HTMLDivElement | null>(null);
+  const topbarPhotoInputRef = useRef<HTMLInputElement | null>(null);
 
   useEffect(() => {
     const onResize = () => {
@@ -785,6 +786,28 @@ export default function ClientCompteDashboard({ onBack, onOpenClientLiveMeet }: 
     }
   }, []);
 
+  const onTopbarPhotoPick = useCallback(async (file: File | undefined | null) => {
+    if (!file) return;
+    try {
+      const dataUrl = await readFileAsDataUrl(file);
+      const next: ClientAccountSnapshot = {
+        ...profile,
+        profilePhotoUrl: dataUrl,
+        profilePhotoName: file.name,
+      };
+      setProfile(next);
+      setDraft(next);
+      setPhotoDraftUrl(dataUrl);
+      setPhotoDraftName(file.name);
+      saveClientAccountSnapshot(next);
+      setAccountModalOpen(false);
+      trackEvent('click', 'client_account', 'topbar_photo_updated');
+      toast.success(isEn ? 'Profile photo updated.' : 'Photo de profil mise à jour.');
+    } catch {
+      toast.error(isEn ? 'Unable to update photo.' : 'Impossible de mettre à jour la photo.');
+    }
+  }, [isEn, profile]);
+
   const handleBackSite = useCallback(() => {
     onBack();
     if (isMobileViewport) setMobileSidebarOpen(false);
@@ -1163,11 +1186,30 @@ export default function ClientCompteDashboard({ onBack, onOpenClientLiveMeet }: 
                         }}
                         aria-label="Gerer le compte"
                       >
-                        <User size={16} aria-hidden />
+                        {profile.profilePhotoUrl ? (
+                          <img
+                            src={profile.profilePhotoUrl}
+                            alt={t('clientAccount.photoAlt')}
+                            className="client-compte-topbar-user-btn__avatar"
+                          />
+                        ) : (
+                          <User size={16} aria-hidden />
+                        )}
                         <span>
                           {profile.prenom} {profile.nom}
                         </span>
                       </button>
+                      <input
+                        ref={topbarPhotoInputRef}
+                        type="file"
+                        accept="image/*"
+                        onChange={(e) => {
+                          const file = e.target.files?.[0];
+                          void onTopbarPhotoPick(file);
+                          e.currentTarget.value = '';
+                        }}
+                        style={{ display: 'none' }}
+                      />
                       {accountModalOpen ? (
                         <div className="client-compte-account-menu" role="menu" aria-label="Menu compte">
                           <div className="client-compte-account-menu__head">
@@ -1177,6 +1219,13 @@ export default function ClientCompteDashboard({ onBack, onOpenClientLiveMeet }: 
                             <span>{profile.email}</span>
                           </div>
                           <div className="client-compte-account-menu__actions">
+                            <button
+                              type="button"
+                              className="client-compte-account-menu__item"
+                              onClick={() => topbarPhotoInputRef.current?.click()}
+                            >
+                              {isEn ? 'Add profile photo' : 'Ajouter une photo de profil'}
+                            </button>
                             <button
                               type="button"
                               className="client-compte-account-menu__item"

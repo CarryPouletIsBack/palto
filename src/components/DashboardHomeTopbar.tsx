@@ -83,6 +83,13 @@ export function DashboardHomeTopbar({
     return ''
   }, [session.clientLogged, session.user])
 
+  const accountPhotoUrl = useMemo(() => {
+    if (!session.clientLogged) return null
+    const clientProfile = loadClientAccountSnapshot()
+    const photo = clientProfile.profilePhotoUrl
+    return typeof photo === 'string' && photo.trim() ? photo : null
+  }, [session.clientLogged, authTick])
+
   const titleEl =
     onNavigateHome != null ? (
       <button
@@ -115,7 +122,11 @@ export function DashboardHomeTopbar({
                   onClick={onOpenClientAccount}
                   aria-label="Gerer le compte"
                 >
-                  <User size={16} aria-hidden />
+                  {accountPhotoUrl ? (
+                    <img src={accountPhotoUrl} alt={t('clientAccount.photoAlt')} className="client-compte-topbar-user-btn__avatar" />
+                  ) : (
+                    <User size={16} aria-hidden />
+                  )}
                   <span>{accountDisplayName}</span>
                 </button>
               </div>

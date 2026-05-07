@@ -518,6 +518,13 @@
   justify-content: flex-end;
 }
 
+.client-compte-topbar-user-btn__avatar {
+  width: 18px;
+  height: 18px;
+  border-radius: 999px;
+  object-fit: cover;
+}
+
 /* Bandeau courses sous la topbar d’accueil / page destination (pas le compte). */
 .dashboard-home-rides-banner {
   position: relative;
