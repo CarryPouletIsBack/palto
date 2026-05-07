@@ -1198,16 +1198,6 @@ const Dashboard = ({
         courseId: c.id,
       }));
 
-    const upcoming = courseRows
-      .filter((c) => c.statut === 'En attente' || c.statut === 'Acceptee')
-      .slice(0, 3)
-      .map((c) => ({
-        id: `upcoming-${c.id}`,
-        kind: 'upcoming' as const,
-        title: `Course a venir · ${c.heure}`,
-        description: `${c.client} · ${c.depart} -> ${c.arrivee}`,
-      }));
-
     const systemHint = {
       id: 'system-hint-1',
       kind: 'system' as const,
@@ -1219,7 +1209,7 @@ const Dashboard = ({
         })} · classement par distance active`,
     };
 
-    return [...inboxRows, ...pendingDemands, ...upcoming, systemHint];
+    return [...inboxRows, ...pendingDemands, systemHint];
   }, [courseRows, chauffeurProfile.email, inboxTick, t]);
 
   const planningYear = planningMonth.getFullYear();

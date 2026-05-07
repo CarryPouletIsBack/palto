@@ -35,7 +35,7 @@ import CardSwap, { Card } from './CardSwap';
 import MagicBento from './MagicBento';
 import PaltoH1HandwritingLogo from './PaltoH1HandwritingLogo';
 import ScrollStack, { ScrollStackItem } from './ScrollStack';
-import { DEFAULT_USER_ORIGIN, DEFAULT_USER_ORIGIN_LABEL } from '../constants/defaultUserOrigin';
+import { DEFAULT_USER_ORIGIN } from '../constants/defaultUserOrigin';
 import HomeMapboxBackground from './HomeMapboxBackground';
 import { isLngLatInsideReunionIsland } from '../constants/reunionIsland';
 import { snapLngLatToMapboxDriving } from '../services/mapboxSnapToRoad';
@@ -68,6 +68,25 @@ const PICKUP_AUTOCOMPLETE_DEBOUNCE_MS = 120;
 type GeocodeSnappedResult =
   | { ok: true; snapped: GeoPoint; queryUsed: string }
   | { ok: false; error: string };
+
+function simplifyRideAddress(raw: string): string {
+  const input = raw.trim();
+  if (!input) return '';
+  const parts = input
+    .split(',')
+    .map((p) => p.trim())
+    .filter(Boolean);
+  if (parts.length === 0) return input;
+  const cpPart = parts.find((p) => /\b97\d{3}\b/.test(p)) ?? '';
+  const cityPart =
+    parts.find((p) => /\bsaint\b|\ble\s+\w+|\bla\s+\w+|port|tampon|possession|etang|saline/i.test(p)) ??
+    (parts.length > 1 ? parts[1] : '');
+  const streetPart = parts[0];
+  const cp = (cpPart.match(/\b97\d{3}\b/) ?? [])[0] ?? '';
+  const city = cityPart.replace(/\b97\d{3}\b/g, '').replace(/\bla reunion\b/gi, '').trim();
+  const compact = [streetPart, city, cp].filter(Boolean).join(', ');
+  return compact || input;
+}
 
 async function geocodePickupForRide(
   rawQuery: string,
@@ -436,10 +455,10 @@ const SingleProjectNew: FC<SingleProjectProps> = ({
     const prefill = consumeGoPrefill();
     if (!prefill) return;
     if (prefill.pickup.trim()) {
-      setPaltoPickupLocation(prefill.pickup.trim());
+      setPaltoPickupLocation(simplifyRideAddress(prefill.pickup.trim()));
     }
     if (prefill.destination.trim()) {
-      setPaltoRideDestination(prefill.destination.trim());
+      setPaltoRideDestination(simplifyRideAddress(prefill.destination.trim()));
     }
     if (prefill.timing === 'now' || prefill.timing === 'later') {
       setPaltoPickupTiming(prefill.timing);
@@ -519,9 +538,9 @@ const SingleProjectNew: FC<SingleProjectProps> = ({
         setLastConfirmedDestinationText(null);
         return;
       }
-      setPaltoPickupLocation(pickupRes.queryUsed);
+      setPaltoPickupLocation(simplifyRideAddress(pickupRes.queryUsed));
       setPickupResolvedPoint(pickupRes.snapped);
-      setLastConfirmedPickupText(pickupRes.queryUsed);
+      setLastConfirmedPickupText(simplifyRideAddress(pickupRes.queryUsed));
 
       const destRes = await geocodeDestinationForRide(paltoRideDestination, mapboxToken);
       if (!destRes.ok) {
@@ -535,7 +554,7 @@ const SingleProjectNew: FC<SingleProjectProps> = ({
       setPaltoRecapCoordsText(
         `${destRes.snapped.latitude.toFixed(4)}, ${destRes.snapped.longitude.toFixed(4)}`
       );
-      setLastConfirmedDestinationText(destRes.queryUsed);
+      setLastConfirmedDestinationText(simplifyRideAddress(destRes.queryUsed));
       setChauffeursSearchOk(true);
       setPaltoRideSelectedDriverId(null);
     } catch {
@@ -651,7 +670,7 @@ const SingleProjectNew: FC<SingleProjectProps> = ({
 
   const applyPickupFromSuggestion = useCallback(
     async (suggestion: GeocodeSuggestion) => {
-      setPaltoPickupLocation(suggestion.label);
+      setPaltoPickupLocation(simplifyRideAddress(suggestion.label));
       setPickupSuggestionOpen(false);
       setPickupGeocodeLoading(true);
       setPickupGeocodeError(null);
@@ -666,7 +685,7 @@ const SingleProjectNew: FC<SingleProjectProps> = ({
           return;
         }
         setPickupResolvedPoint(snapped);
-        setLastConfirmedPickupText(suggestion.label.trim());
+        setLastConfirmedPickupText(simplifyRideAddress(suggestion.label));
         setPaltoRideSelectedDriverId(null);
         setChauffeursSearchOk(false);
       } catch {
@@ -682,7 +701,7 @@ const SingleProjectNew: FC<SingleProjectProps> = ({
 
   const applyDestinationFromSuggestion = useCallback(
     async (suggestion: GeocodeSuggestion) => {
-      setPaltoRideDestination(suggestion.label);
+      setPaltoRideDestination(simplifyRideAddress(suggestion.label));
       setDestinationSuggestionOpen(false);
       setDestinationSnapLoading(true);
       setDestinationSearchError(null);
@@ -698,7 +717,7 @@ const SingleProjectNew: FC<SingleProjectProps> = ({
         }
         setPaltoMapSelectedDestination(snapped);
         setPaltoRecapCoordsText(`${snapped.latitude.toFixed(4)}, ${snapped.longitude.toFixed(4)}`);
-        setLastConfirmedDestinationText(suggestion.label.trim());
+        setLastConfirmedDestinationText(simplifyRideAddress(suggestion.label));
         setChauffeursSearchOk(false);
         setPaltoRideSelectedDriverId(null);
       } catch {
@@ -739,9 +758,9 @@ const SingleProjectNew: FC<SingleProjectProps> = ({
             (language === 'en'
               ? 'Pickup selected on the map'
               : 'Départ sélectionné sur la carte');
-          setPaltoPickupLocation(label);
+          setPaltoPickupLocation(simplifyRideAddress(label));
           setPickupResolvedPoint(snapped);
-          setLastConfirmedPickupText(label);
+          setLastConfirmedPickupText(simplifyRideAddress(label));
           setPaltoRideSelectedDriverId(null);
           setChauffeursSearchOk(false);
         } catch {
@@ -818,7 +837,7 @@ const SingleProjectNew: FC<SingleProjectProps> = ({
       for (const place of savedPlacesChoices) {
         items.push({
           id: `saved-${place.id}`,
-          label: `${place.label} · ${place.address}`,
+          label: `${place.label} · ${simplifyRideAddress(place.address)}`,
           action: () => {
             void submitPickupLocationSearch(place.address);
           },
@@ -860,10 +879,10 @@ const SingleProjectNew: FC<SingleProjectProps> = ({
           setDestinationSearchError(res.error);
           return;
         }
-        setPaltoRideDestination(res.queryUsed);
+        setPaltoRideDestination(simplifyRideAddress(res.queryUsed));
         setPaltoMapSelectedDestination(res.snapped);
         setPaltoRecapCoordsText(`${res.snapped.latitude.toFixed(4)}, ${res.snapped.longitude.toFixed(4)}`);
-        setLastConfirmedDestinationText(res.queryUsed);
+        setLastConfirmedDestinationText(simplifyRideAddress(res.queryUsed));
         setChauffeursSearchOk(false);
         setPaltoRideSelectedDriverId(null);
       } catch {
@@ -883,7 +902,7 @@ const SingleProjectNew: FC<SingleProjectProps> = ({
       for (const place of savedPlacesChoices) {
         items.push({
           id: `dest-saved-${place.id}`,
-          label: `${place.label} · ${place.address}`,
+          label: `${place.label} · ${simplifyRideAddress(place.address)}`,
           action: () => {
             void applyDestinationFromQueryString(place.address);
           },
@@ -1103,9 +1122,9 @@ const SingleProjectNew: FC<SingleProjectProps> = ({
       const shouldPickPickupFirst = pickupResolvedPoint === null || !lastConfirmedPickupText?.trim();
       if (shouldPickPickupFirst) {
         // Premier clic carte: définir le point de départ utilisateur.
-        setPaltoPickupLocation(placeName);
+        setPaltoPickupLocation(simplifyRideAddress(placeName));
         setPickupResolvedPoint(snapped);
-        setLastConfirmedPickupText(placeName.trim());
+        setLastConfirmedPickupText(simplifyRideAddress(placeName));
         setPickupGeocodeError(null);
         // Un clic de départ invalide l'itinéraire en cours: le prochain clic servira pour la destination.
         setPaltoMapSelectedDestination(null);
@@ -1117,8 +1136,8 @@ const SingleProjectNew: FC<SingleProjectProps> = ({
       } else {
         setPaltoMapSelectedDestination(snapped);
         setPaltoRecapCoordsText(`${snapped.latitude.toFixed(4)}, ${snapped.longitude.toFixed(4)}`);
-        setPaltoRideDestination(placeName);
-        setLastConfirmedDestinationText(placeName.trim());
+        setPaltoRideDestination(simplifyRideAddress(placeName));
+        setLastConfirmedDestinationText(simplifyRideAddress(placeName));
       }
       const now = new Date();
       setPaltoRecapPickupText(
@@ -1258,8 +1277,8 @@ const SingleProjectNew: FC<SingleProjectProps> = ({
         bookingKind,
         scheduledDate: schedule.scheduledDate,
         scheduledTime: schedule.scheduledTime,
-        pickupAddress: lastConfirmedPickupText.trim(),
-        dropoffAddress: lastConfirmedDestinationText.trim(),
+        pickupAddress: simplifyRideAddress(lastConfirmedPickupText),
+        dropoffAddress: simplifyRideAddress(lastConfirmedDestinationText),
         amountEur,
         distanceKm: paltoRouteDistanceKm,
         clientFullName: customerName || null,
@@ -2124,7 +2143,7 @@ const SingleProjectNew: FC<SingleProjectProps> = ({
                                   void applyPickupFromSuggestion(s);
                                 }}
                               >
-                                {s.label}
+                                {simplifyRideAddress(s.label)}
                               </button>
                             ))}
                           </div>
@@ -2213,7 +2232,7 @@ const SingleProjectNew: FC<SingleProjectProps> = ({
                                   void applyDestinationFromSuggestion(s);
                                 }}
                               >
-                                {s.label}
+                                {simplifyRideAddress(s.label)}
                               </button>
                             ))}
                           </div>
