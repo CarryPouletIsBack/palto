@@ -16,7 +16,7 @@ export type ChauffeurStatsApiPayload = {
 export async function fetchChauffeurStatsFromApi(): Promise<ChauffeurStatsApiPayload> {
   const auth = getDashboardAuthorizationHeader()
   if (!auth) throw new Error('Token dashboard absent')
-  const res = await fetch(`${API_BASE_URL}/chauffeur/stats`, {
+  const res = await fetch(`${API_BASE_URL}/chauffeur?resource=stats`, {
     method: 'GET',
     headers: { Authorization: auth },
   })

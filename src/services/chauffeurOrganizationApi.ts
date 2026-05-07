@@ -11,7 +11,7 @@ export function organizationApiEnabled(): boolean {
 export async function fetchChauffeurOrganizationFromApi(): Promise<ChauffeurOrgSnapshot | null> {
   const auth = getDashboardAuthorizationHeader()
   if (!auth) throw new Error('Token dashboard absent')
-  const res = await fetch(`${API_BASE_URL}/chauffeur/organization`, {
+  const res = await fetch(`${API_BASE_URL}/chauffeur?resource=organization`, {
     method: 'GET',
     headers: { Authorization: auth },
   })
@@ -26,7 +26,7 @@ export async function fetchChauffeurOrganizationFromApi(): Promise<ChauffeurOrgS
 export async function saveChauffeurOrganizationToApi(organization: ChauffeurOrgSnapshot | null): Promise<void> {
   const auth = getDashboardAuthorizationHeader()
   if (!auth) throw new Error('Token dashboard absent')
-  const res = await fetch(`${API_BASE_URL}/chauffeur/organization`, {
+  const res = await fetch(`${API_BASE_URL}/chauffeur?resource=organization`, {
     method: 'PUT',
     headers: {
       Authorization: auth,

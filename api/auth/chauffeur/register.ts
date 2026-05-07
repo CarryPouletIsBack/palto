@@ -1,7 +1,7 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node'
 import { z } from 'zod'
-import { getSupabaseAdmin } from '../../lib/supabaseAdmin.js'
-import { createAccountSession, hashPassword, normalizeEmail } from '../../lib/accountAuth.js'
+import { getSupabaseAdmin } from '../../../server/lib/supabaseAdmin.js'
+import { createAccountSession, hashPassword, normalizeEmail } from '../../../server/lib/accountAuth.js'
 
 const BodySchema = z.object({
   email: z.string().email().max(320),

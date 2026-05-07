@@ -81,7 +81,7 @@ function mapRide(row: ApiRide): CourseRowState {
 }
 
 export async function fetchChauffeurRidesFromApi(): Promise<CourseRowState[]> {
-  const res = await fetch(`${API_BASE_URL}/chauffeur/rides`, {
+  const res = await fetch(`${API_BASE_URL}/chauffeur?resource=rides`, {
     method: 'GET',
     headers: {
       ...authHeaders(),
@@ -98,7 +98,7 @@ export async function postChauffeurRideAction(
   courseId: string,
   action: 'accept' | 'start' | 'complete' | 'cancel'
 ): Promise<void> {
-  const res = await fetch(`${API_BASE_URL}/chauffeur/rides-action`, {
+  const res = await fetch(`${API_BASE_URL}/chauffeur?resource=rides-action`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',

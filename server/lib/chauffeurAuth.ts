@@ -1,14 +1,12 @@
 import type { VercelRequest } from '@vercel/node'
 import { getSupabaseAdmin } from './supabaseAdmin.js'
 
-/** Valide le token dashboard (base64 email:timestamp) contre DASHBOARD_EMAIL. */
 export async function getVerifiedDashboardEmail(req: VercelRequest): Promise<string | null> {
   const raw = req.headers.authorization
   if (!raw?.toLowerCase().startsWith('bearer ')) return null
   const token = raw.slice(7).trim()
   if (!token) return null
 
-  // Compat legacy : token local base64(email:timestamp) adosse a DASHBOARD_EMAIL
   const expected = process.env.DASHBOARD_EMAIL?.trim()
   if (expected) {
     try {
@@ -20,7 +18,6 @@ export async function getVerifiedDashboardEmail(req: VercelRequest): Promise<str
     }
   }
 
-  // Nouveau mode prod : session stockee en BDD
   try {
     const supabase = getSupabaseAdmin()
     const { data, error } = await supabase
