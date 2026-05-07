@@ -21,8 +21,6 @@ import DashboardStats, {
   type ChauffeurHeatmapStatsForView,
 } from './DashboardStats';
 import {
-  isValidFrenchPlate,
-  lookupVehicleByPlate,
   normalizeFrenchPlate,
 } from '../services/vehiclePlate';
 import {
@@ -1190,7 +1188,7 @@ const Dashboard = ({
       }));
 
     const now = new Date();
-    const pendingDemands = displayedCourseRows
+    const pendingDemands = courseRows
       .filter((c) => c.statut === 'En attente')
       .slice(0, 2)
       .map((c) => ({
@@ -1201,7 +1199,7 @@ const Dashboard = ({
         courseId: c.id,
       }));
 
-    const upcoming = displayedCourseRows
+    const upcoming = courseRows
       .filter((c) => c.statut === 'En attente' || c.statut === 'Acceptee')
       .slice(0, 3)
       .map((c) => ({
@@ -1223,7 +1221,7 @@ const Dashboard = ({
     };
 
     return [...inboxRows, ...pendingDemands, ...upcoming, systemHint];
-  }, [displayedCourseRows, chauffeurProfile.email, inboxTick, t]);
+  }, [courseRows, chauffeurProfile.email, inboxTick, t]);
 
   const planningYear = planningMonth.getFullYear();
   const planningMonthIndex = planningMonth.getMonth();
@@ -1543,10 +1541,6 @@ const Dashboard = ({
 
   const saveUserProfileEdit = useCallback(() => {
     const normalizedPlate = normalizeFrenchPlate(userProfileDraft.plaque);
-    if (!isValidFrenchPlate(normalizedPlate)) {
-      setPlateError("Format invalide. Exemple attendu : AA-123-BB.");
-      return;
-    }
 
     const normalizedNationalPhone = normalizeNationalPhone(phoneCountryDraft, phoneNationalDraft);
     if (!isValidNationalPhone(phoneCountryDraft, normalizedNationalPhone)) {
@@ -1583,41 +1577,12 @@ const Dashboard = ({
     vehiclePhotoDraftUrl,
   ]);
 
-  const handlePlateBlurLookup = useCallback(async () => {
+  const handlePlateBlurLookup = useCallback(() => {
     const normalizedPlate = normalizeFrenchPlate(userProfileDraft.plaque);
     setUserProfileDraft((prev) => ({ ...prev, plaque: normalizedPlate }));
-
-    if (!normalizedPlate) {
-      setPlateError(null);
-      setPlateLookupHint(null);
-      return;
-    }
-
-    if (!isValidFrenchPlate(normalizedPlate)) {
-      setPlateError("Format invalide. Exemple attendu : AA-123-BB.");
-      setPlateLookupHint(null);
-      return;
-    }
-
     setPlateError(null);
-    setIsPlateLookupLoading(true);
-    try {
-      const result = await lookupVehicleByPlate(normalizedPlate);
-      if (!result) {
-        setPlateLookupHint('Aucune donnée trouvée pour cette plaque.');
-        return;
-      }
-
-      if (result.vehicleLabel) {
-        setUserProfileDraft((prev) => ({ ...prev, vehicule: prev.vehicule || result.vehicleLabel || '' }));
-        setPlateLookupHint(`Véhicule reconnu (${result.source}).`);
-        return;
-      }
-
-      setPlateLookupHint('Plaque valide. Connecteur API prêt, source non branchée.');
-    } finally {
-      setIsPlateLookupLoading(false);
-    }
+    setPlateLookupHint(null);
+    setIsPlateLookupLoading(false);
   }, [userProfileDraft.plaque]);
 
   const cancelPaymentEdit = useCallback(() => {
