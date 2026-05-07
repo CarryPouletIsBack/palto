@@ -27,6 +27,66 @@ function nominatimHeaders() {
   }
 }
 
+async function searchWithPhoton(
+  q: string,
+  language: 'fr' | 'en',
+  limit: number
+): Promise<Array<{ display_name?: string; lon?: string; lat?: string }>> {
+  const params = new URLSearchParams({
+    q,
+    lang: language,
+    limit: String(limit),
+  })
+  const upstream = await fetch(`https://photon.komoot.io/api/?${params.toString()}`, {
+    headers: { Accept: 'application/json' },
+  })
+  if (!upstream.ok) return []
+  const payload = (await upstream.json()) as {
+    features?: Array<{
+      geometry?: { coordinates?: [number, number] }
+      properties?: { name?: string; city?: string; country?: string }
+    }>
+  }
+  return (payload.features ?? [])
+    .map((f) => {
+      const coords = f.geometry?.coordinates
+      const lon = coords?.[0]
+      const lat = coords?.[1]
+      if (!Number.isFinite(lon) || !Number.isFinite(lat)) return null
+      const p = f.properties ?? {}
+      const label = [p.name, p.city, p.country].filter(Boolean).join(', ')
+      return {
+        display_name: label || `${lat}, ${lon}`,
+        lon: String(lon),
+        lat: String(lat),
+      }
+    })
+    .filter((v): v is { display_name?: string; lon?: string; lat?: string } => v !== null)
+}
+
+async function reverseWithPhoton(
+  lon: string,
+  lat: string,
+  language: 'fr' | 'en'
+): Promise<{ display_name?: string } | null> {
+  const params = new URLSearchParams({
+    lon,
+    lat,
+    lang: language,
+  })
+  const upstream = await fetch(`https://photon.komoot.io/reverse?${params.toString()}`, {
+    headers: { Accept: 'application/json' },
+  })
+  if (!upstream.ok) return null
+  const payload = (await upstream.json()) as {
+    features?: Array<{ properties?: { name?: string; city?: string; country?: string } }>
+  }
+  const first = payload.features?.[0]?.properties
+  if (!first) return null
+  const label = [first.name, first.city, first.country].filter(Boolean).join(', ')
+  return { display_name: label || '' }
+}
+
 function toSafeViewbox(raw: string | undefined): string | null {
   if (!raw) return null
   const value = raw.trim()
@@ -65,13 +125,14 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         params.set('viewbox', safeViewbox)
         params.set('bounded', '1')
       }
+      params.set('email', 'contact@palto.fr')
       const upstream = await fetch(`https://nominatim.openstreetmap.org/search?${params.toString()}`, {
         headers: nominatimHeaders(),
       })
       if (!upstream.ok) {
         console.warn('[geocode] upstream search non-ok', upstream.status)
-        // Ne pas casser l'UI avec un 502: on renvoie une liste vide.
-        return res.status(200).json([])
+        const fallback = await searchWithPhoton(q, language, limit)
+        return res.status(200).json(fallback)
       }
       const payload = await upstream.json()
       return res.status(200).json(payload)
@@ -87,14 +148,15 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         lat,
         format: 'jsonv2',
         'accept-language': language,
+        email: 'contact@palto.fr',
       })
       const upstream = await fetch(`https://nominatim.openstreetmap.org/reverse?${params.toString()}`, {
         headers: nominatimHeaders(),
       })
       if (!upstream.ok) {
         console.warn('[geocode] upstream reverse non-ok', upstream.status)
-        // Fallback non bloquant côté client.
-        return res.status(200).json({ display_name: '' })
+        const fallback = await reverseWithPhoton(lon, lat, language)
+        return res.status(200).json(fallback ?? { display_name: '' })
       }
       const payload = await upstream.json()
       return res.status(200).json(payload)
