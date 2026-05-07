@@ -49,6 +49,7 @@ import {
 import { REUNION_ISLAND_BBOX_GEOCODE } from '../constants/reunionIsland';
 import { haversineDistanceKm, type GeoPoint } from '../services/distanceGeo';
 import { consumeGoPrefill } from '../constants/goPrefillStorage';
+import { loadClientSavedPlaces } from '../constants/clientSavedPlacesStorage';
 import {
   CHAUFFEUR_RIDE_SETTINGS_KEY,
   loadChauffeurRideSettingsSnapshot,
@@ -62,10 +63,6 @@ const PICKUP_DRIVER_SEARCH_RADIUS_KM = 20;
 const DEFAULT_BASE_FARE_EUR = 4;
 const DEFAULT_PRICE_PER_KM_EUR = 1.35;
 const PICKUP_AUTOCOMPLETE_DEBOUNCE_MS = 220;
-const PICKUP_SAVED_LOCATIONS: string[] = [DEFAULT_USER_ORIGIN_LABEL];
-/** Même libellés que le départ pour la pré-sélection destination (sans géoloc). */
-const DESTINATION_SAVED_LOCATIONS = PICKUP_SAVED_LOCATIONS;
-
 type GeocodeSnappedResult =
   | { ok: true; snapped: GeoPoint; queryUsed: string }
   | { ok: false; error: string };
@@ -375,6 +372,7 @@ const SingleProjectNew: FC<SingleProjectProps> = ({
   const [destinationAddressSuggestions, setDestinationAddressSuggestions] = useState<GeocodeSuggestion[]>([]);
   const [destinationSuggestionLoading, setDestinationSuggestionLoading] = useState(false);
   const [destinationSnapLoading, setDestinationSnapLoading] = useState(false);
+  const [pickupAutoGeolocAsked, setPickupAutoGeolocAsked] = useState(false);
   const destinationAutocompleteTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const showDriversColumn =
     paltoPickupTiming === 'now' &&
@@ -735,7 +733,7 @@ const SingleProjectNew: FC<SingleProjectProps> = ({
             return;
           }
           const label =
-            (await geocodeReverse(snapped.longitude, snapped.latitude, mapboxToken, { language: 'fr' })) ??
+            (await geocodeReverse(snapped.longitude, snapped.latitude, mapboxToken, { language })) ??
             `${snapped.latitude.toFixed(5)}, ${snapped.longitude.toFixed(5)}`;
           setPaltoPickupLocation(label);
           setPickupResolvedPoint(snapped);
@@ -756,11 +754,20 @@ const SingleProjectNew: FC<SingleProjectProps> = ({
       },
       { enableHighAccuracy: true, timeout: 10000, maximumAge: 30000 }
     );
-  }, [mapboxToken]);
+  }, [language, mapboxToken]);
 
   const onPickupLocationFocus = useCallback(() => {
     setPickupSuggestionOpen(true);
-  }, []);
+    if (!pickupAutoGeolocAsked && !paltoPickupLocation.trim() && !lastConfirmedPickupText?.trim()) {
+      setPickupAutoGeolocAsked(true);
+      requestBrowserPickupLocation();
+    }
+  }, [
+    pickupAutoGeolocAsked,
+    paltoPickupLocation,
+    lastConfirmedPickupText,
+    requestBrowserPickupLocation,
+  ]);
 
   const onPickupLocationBlur = useCallback((e: FocusEvent<HTMLInputElement>) => {
     const next = e.relatedTarget as HTMLElement | null;
@@ -778,24 +785,54 @@ const SingleProjectNew: FC<SingleProjectProps> = ({
     setDestinationSuggestionOpen(false);
   }, []);
 
+  const savedPlacesChoices = useMemo(() => {
+    const snapshot = loadClientSavedPlaces();
+    const entries: Array<{ id: string; label: string; address: string }> = [];
+    if (snapshot.domicile.trim()) {
+      entries.push({ id: 'home', label: 'Domicile', address: snapshot.domicile.trim() });
+    }
+    if (snapshot.travail.trim()) {
+      entries.push({ id: 'work', label: 'Travail', address: snapshot.travail.trim() });
+    }
+    for (const extra of snapshot.extras) {
+      const address = extra.address.trim();
+      if (!address) continue;
+      entries.push({
+        id: `extra-${extra.id}`,
+        label: extra.label.trim() ? extra.label.trim() : 'Favori',
+        address,
+      });
+    }
+    return entries;
+  }, []);
+
   const pickupStaticSuggestions = useMemo(() => {
     const items: Array<{ id: string; label: string; action: () => void }> = [
       {
-        id: 'saved-locations',
-        label: 'Lieux enregistrés',
-        action: () => {
-          const firstSaved = PICKUP_SAVED_LOCATIONS[0];
-          void submitPickupLocationSearch(firstSaved);
-        },
-      },
-      {
         id: 'ask-geolocation',
-        label: 'Autorisez l’accès à ma localisation…',
+        label: 'Utiliser ma position actuelle',
         action: () => {
           requestBrowserPickupLocation();
         },
       },
     ];
+    if (savedPlacesChoices.length > 0) {
+      for (const place of savedPlacesChoices) {
+        items.push({
+          id: `saved-${place.id}`,
+          label: `${place.label} · ${place.address}`,
+          action: () => {
+            void submitPickupLocationSearch(place.address);
+          },
+        });
+      }
+    } else {
+      items.push({
+        id: 'saved-empty',
+        label: 'Aucun lieu enregistré pour le moment',
+        action: () => {},
+      });
+    }
     if (lastConfirmedPickupText && lastConfirmedPickupText.trim()) {
       items.push({
         id: 'last-location',
@@ -812,7 +849,7 @@ const SingleProjectNew: FC<SingleProjectProps> = ({
       });
     }
     return items;
-  }, [lastConfirmedPickupText, requestBrowserPickupLocation, submitPickupLocationSearch]);
+  }, [lastConfirmedPickupText, requestBrowserPickupLocation, savedPlacesChoices, submitPickupLocationSearch]);
 
   const applyDestinationFromQueryString = useCallback(
     async (query: string) => {
@@ -843,15 +880,24 @@ const SingleProjectNew: FC<SingleProjectProps> = ({
   );
 
   const destinationStaticSuggestions = useMemo(() => {
-    const items: Array<{ id: string; label: string; action: () => void }> = [
-      {
-        id: 'dest-saved-locations',
-        label: 'Lieux enregistrés',
-        action: () => {
-          void applyDestinationFromQueryString(DESTINATION_SAVED_LOCATIONS[0]);
-        },
-      },
-    ];
+    const items: Array<{ id: string; label: string; action: () => void }> = [];
+    if (savedPlacesChoices.length > 0) {
+      for (const place of savedPlacesChoices) {
+        items.push({
+          id: `dest-saved-${place.id}`,
+          label: `${place.label} · ${place.address}`,
+          action: () => {
+            void applyDestinationFromQueryString(place.address);
+          },
+        });
+      }
+    } else {
+      items.push({
+        id: 'dest-saved-empty',
+        label: 'Aucun lieu enregistré pour le moment',
+        action: () => {},
+      });
+    }
     if (lastConfirmedDestinationText && lastConfirmedDestinationText.trim()) {
       items.push({
         id: 'dest-last',
@@ -868,7 +914,7 @@ const SingleProjectNew: FC<SingleProjectProps> = ({
       });
     }
     return items;
-  }, [lastConfirmedDestinationText, applyDestinationFromQueryString]);
+  }, [lastConfirmedDestinationText, applyDestinationFromQueryString, savedPlacesChoices]);
 
   const nowForDateTimeLocal = useCallback(() => {
     const now = new Date();
