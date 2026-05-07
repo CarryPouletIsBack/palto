@@ -191,6 +191,14 @@ type ChauffeurDocument = {
   uploadedFileName?: string;
 };
 
+type DashboardAlertItem = {
+  id: string;
+  kind: 'org_invite' | 'demand' | 'upcoming' | 'system';
+  title: string;
+  description: string;
+  courseId?: string;
+};
+
 function inferProfileFromEmail(emailRaw: string): Pick<ChauffeurProfile, 'prenom' | 'nom'> {
   const localPart = emailRaw.split('@')[0] ?? '';
   const chunks = localPart
@@ -1167,7 +1175,7 @@ const Dashboard = ({
     if (clientRatingFilter === 'medium') return Number(client.note) >= 4.6 && Number(client.note) < 4.8;
     return Number(client.note) < 4.6;
   });
-  const alertItems = useMemo(() => {
+  const alertItems = useMemo<DashboardAlertItem[]>(() => {
     const me = chauffeurProfile.email.trim().toLowerCase();
     const inboxRows = loadChauffeurInbox()
       .filter((n) => n.targetEmail.trim().toLowerCase() === me)
@@ -1182,27 +1190,30 @@ const Dashboard = ({
       }));
 
     const now = new Date();
+    const pendingDemands = displayedCourseRows
+      .filter((c) => c.statut === 'En attente')
+      .slice(0, 2)
+      .map((c) => ({
+        id: `demand-${c.id}`,
+        kind: 'demand' as const,
+        title: 'Nouvelle demande client',
+        description: `${c.depart} -> ${c.arrivee} · ${c.heure}`,
+        courseId: c.id,
+      }));
+
     const upcoming = displayedCourseRows
       .filter((c) => c.statut === 'En attente' || c.statut === 'Acceptee')
       .slice(0, 3)
       .map((c) => ({
         id: `upcoming-${c.id}`,
-        kind: 'upcoming',
+        kind: 'upcoming' as const,
         title: `Course a venir · ${c.heure}`,
         description: `${c.client} · ${c.depart} -> ${c.arrivee}`,
       }));
 
-    const freshDemand = {
-      id: 'new-demand-1',
-      kind: 'demand',
-      title: 'Nouvelle demande client',
-      description:
-        'Destination: Saint-Gilles-les-Bains · 4 chauffeurs a proximite proposes',
-    };
-
     const systemHint = {
       id: 'system-hint-1',
-      kind: 'system',
+      kind: 'system' as const,
       title: 'Mise a jour proximite',
       description:
         `Derniere synchro a ${now.toLocaleTimeString('fr-FR', {
@@ -1211,7 +1222,7 @@ const Dashboard = ({
         })} · classement par distance active`,
     };
 
-    return [...inboxRows, freshDemand, ...upcoming, systemHint];
+    return [...inboxRows, ...pendingDemands, ...upcoming, systemHint];
   }, [displayedCourseRows, chauffeurProfile.email, inboxTick, t]);
 
   const planningYear = planningMonth.getFullYear();
@@ -1306,6 +1317,31 @@ const Dashboard = ({
     }
     return !complianceFullySatisfied(loadComplianceSnapshot(norm));
   }, [complianceUiTick, useComplianceApi, complianceApiSnapshot]);
+
+  const handleDemandAlertAction = useCallback(
+    async (courseId: string, action: 'accept' | 'decline') => {
+      if (coursesBlockedByCompliance) return;
+      const target = courseRows.find((c) => c.id === courseId);
+      if (!target || target.statut !== 'En attente') return;
+
+      if (persistRides) {
+        try {
+          await postChauffeurRideAction(courseId, action === 'accept' ? 'accept' : 'cancel');
+          await refreshRides();
+        } catch (err) {
+          console.error(err);
+        }
+        return;
+      }
+
+      setCourseRows((prev) =>
+        prev.map((course) =>
+          course.id === courseId ? { ...course, statut: action === 'accept' ? 'Acceptee' : 'Annulee' } : course
+        )
+      );
+    },
+    [courseRows, coursesBlockedByCompliance, persistRides, refreshRides]
+  );
 
   const launchCourseById = useCallback(
     async (courseId: string) => {
@@ -1440,10 +1476,10 @@ const Dashboard = ({
       totalCourses: courseRows.length,
       acceptanceRate,
       cancellationRate,
-      rating: 4.92,
-      onlineHoursWeek: 36,
+      rating: 0,
+      onlineHoursWeek: 0,
       totalIncome,
-      lastPayout: '1 125 EUR · vendredi',
+      lastPayout: '—',
     };
   }, [courseRows]);
 
@@ -1451,6 +1487,12 @@ const Dashboard = ({
     () => (useStatsApi && apiChauffeurStats ? apiChauffeurStats : localChauffeurActivityStats),
     [useStatsApi, apiChauffeurStats, localChauffeurActivityStats]
   );
+
+  const totalDistanceKm = useMemo(() => {
+    return courseRows
+      .filter((course) => course.statut !== 'Annulee')
+      .reduce((sum, course) => sum + Math.max(0, Number(course.km) || 0), 0);
+  }, [courseRows]);
 
   const overviewFocusCourses = useMemo(() => {
     return [...courseRows]
@@ -2077,7 +2119,7 @@ const Dashboard = ({
                           </div>
                           <div className="dashboard-metric-row">
                             <span>Kilometres parcourus</span>
-                            <strong>2 980 km</strong>
+                            <strong>{totalDistanceKm.toFixed(1)} km</strong>
                           </div>
                           <div className="dashboard-metric-row">
                             <span>Revenus estimes</span>
@@ -2095,7 +2137,29 @@ const Dashboard = ({
                       <article className="dashboard-panel">
                         <div className="dashboard-alert-list">
                           {alertItems.slice(0, 5).map((alert) => (
-                            <div key={alert.id} className="dashboard-alert-item">
+                            <div
+                              key={alert.id}
+                              className="dashboard-alert-item"
+                              role={alert.kind === 'demand' ? 'button' : undefined}
+                              tabIndex={alert.kind === 'demand' ? 0 : undefined}
+                              onClick={
+                                alert.kind === 'demand'
+                                  ? () => {
+                                      setAlertsOpen(true);
+                                    }
+                                  : undefined
+                              }
+                              onKeyDown={
+                                alert.kind === 'demand'
+                                  ? (e) => {
+                                      if (e.key === 'Enter' || e.key === ' ') {
+                                        e.preventDefault();
+                                        setAlertsOpen(true);
+                                      }
+                                    }
+                                  : undefined
+                              }
+                            >
                               <span
                                 className={`alert-dot ${
                                   alert.kind === 'org_invite'
@@ -4396,6 +4460,30 @@ const Dashboard = ({
                     <article key={alert.id} className={`topbar-alert-item ${alert.kind}`}>
                       <strong>{alert.title}</strong>
                       <p>{alert.description}</p>
+                      {alert.kind === 'demand' && alert.courseId ? (
+                        <div className="planning-modal-actions" style={{ marginTop: 10 }}>
+                          <button
+                            type="button"
+                            className="accept"
+                            disabled={coursesBlockedByCompliance}
+                            onClick={() => {
+                              void handleDemandAlertAction(alert.courseId, 'accept');
+                            }}
+                          >
+                            Accepter
+                          </button>
+                          <button
+                            type="button"
+                            className="decline"
+                            disabled={coursesBlockedByCompliance}
+                            onClick={() => {
+                              void handleDemandAlertAction(alert.courseId, 'decline');
+                            }}
+                          >
+                            Refuser
+                          </button>
+                        </div>
+                      ) : null}
                     </article>
                   ))}
                 </div>
