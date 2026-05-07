@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useMemo, useState, type FormEvent } from 'react'
 import { login, registerChauffeur } from '../services/authService'
 import './AuthPage.css'
 
@@ -41,12 +41,17 @@ export default function ChauffeurAuthPage({ onAuthSuccess }: Props) {
     onAuthSuccess()
   }
 
+  const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
+    e.preventDefault()
+    void submit()
+  }
+
   return (
     <section className="auth-page-shell">
       <div className="auth-page-card">
         <h1 className="auth-page-title">{mode === 'signup' ? 'Creer un compte chauffeur' : 'Connexion chauffeur'}</h1>
         <p className="auth-page-subtitle">Compte chauffeur connecte a la base de donnees.</p>
-        <div className="auth-page-grid">
+        <form className="auth-page-grid" onSubmit={handleSubmit}>
           <input
             className="auth-page-input"
             type="email"
@@ -88,7 +93,7 @@ export default function ChauffeurAuthPage({ onAuthSuccess }: Props) {
           ) : null}
           {error ? <p className="auth-page-error">{error}</p> : null}
           <div className="auth-page-actions">
-            <button className="auth-page-btn" type="button" onClick={submit} disabled={loading}>
+            <button className="auth-page-btn" type="submit" disabled={loading}>
               {loading ? 'Chargement...' : mode === 'signup' ? "S'inscrire" : 'Se connecter'}
             </button>
             <button
@@ -99,7 +104,7 @@ export default function ChauffeurAuthPage({ onAuthSuccess }: Props) {
               {mode === 'signup' ? 'J ai deja un compte' : 'Creer un compte'}
             </button>
           </div>
-        </div>
+        </form>
       </div>
     </section>
   )

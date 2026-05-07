@@ -10,7 +10,11 @@ export function apiBaseUrl(): string {
 }
 
 export function useChauffeurRidesPersist(): boolean {
-  return isEnabled(import.meta.env.VITE_CHAUFFEUR_RIDES_PERSIST as string | undefined)
+  const raw = import.meta.env.VITE_CHAUFFEUR_RIDES_PERSIST as string | undefined
+  if (typeof raw !== 'string') return true
+  const v = raw.trim().toLowerCase()
+  if (v === '0' || v === 'false' || v === 'no' || v === 'off') return false
+  return true
 }
 
 export function useOrgApi(): boolean {
