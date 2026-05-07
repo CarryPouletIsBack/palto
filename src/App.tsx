@@ -770,7 +770,13 @@ function App() {
                   onOpenClientLiveMeet={handleOpenClientMeetDriver}
                 />
               ) : (
-                <ClientAuthPage onAuthSuccess={() => setCurrentPage('client-compte')} />
+                <ClientAuthPage
+                  onAuthSuccess={() => {
+                    const prefix = language === 'en' ? '/en' : '/fr'
+                    window.history.pushState({}, '', `${prefix}/compte`)
+                    setCurrentPage('client-compte')
+                  }}
+                />
               )
             )}
             {currentPage === 'client-meet-driver' && (
@@ -791,7 +797,13 @@ function App() {
                   onNavigateDriverHome={navigateToChauffeurHomeRoot}
                 />
               ) : (
-                <ChauffeurAuthPage onAuthSuccess={() => setCurrentPage('dashboard')} />
+                <ChauffeurAuthPage
+                  onAuthSuccess={() => {
+                    const prefix = language === 'en' ? '/en' : '/fr'
+                    window.history.pushState({}, '', `${prefix}/dashboard?dashboardView=user`)
+                    setCurrentPage('dashboard')
+                  }}
+                />
               )
             )}
             {currentPage === 'dashboard-navigation' && navigationCourseId && (

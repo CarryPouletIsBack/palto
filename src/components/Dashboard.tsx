@@ -187,6 +187,18 @@ type ChauffeurDocument = {
   uploadedFileName?: string;
 };
 
+function inferProfileFromEmail(emailRaw: string): Pick<ChauffeurProfile, 'prenom' | 'nom'> {
+  const localPart = emailRaw.split('@')[0] ?? '';
+  const chunks = localPart
+    .split(/[._-]+/)
+    .map((part) => part.trim())
+    .filter(Boolean);
+  const pretty = (value: string) => value.slice(0, 1).toUpperCase() + value.slice(1).toLowerCase();
+  if (chunks.length === 0) return { prenom: '', nom: '' };
+  if (chunks.length === 1) return { prenom: pretty(chunks[0]), nom: '' };
+  return { prenom: pretty(chunks[0]), nom: pretty(chunks.slice(1).join(' ')) };
+}
+
 async function readFileAsDataUrl(file: File): Promise<string> {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
@@ -673,6 +685,25 @@ const Dashboard = ({
   const useOrgApi = organizationApiEnabled();
   const useComplianceApi = complianceApiEnabled();
   const useStatsApi = statsApiEnabled();
+
+  useEffect(() => {
+    const user = getCurrentUser();
+    const sessionEmail = (user?.email ?? '').trim().toLowerCase();
+    if (!sessionEmail) return;
+    const inferred = inferProfileFromEmail(sessionEmail);
+    setChauffeurProfile((prev) => ({
+      ...prev,
+      email: prev.email.trim() ? prev.email : sessionEmail,
+      prenom: prev.prenom.trim() ? prev.prenom : inferred.prenom,
+      nom: prev.nom.trim() ? prev.nom : inferred.nom,
+    }));
+    setUserProfileDraft((prev) => ({
+      ...prev,
+      email: prev.email.trim() ? prev.email : sessionEmail,
+      prenom: prev.prenom.trim() ? prev.prenom : inferred.prenom,
+      nom: prev.nom.trim() ? prev.nom : inferred.nom,
+    }));
+  }, []);
 
   useEffect(() => {
     saveChauffeurOrg(chauffeurOrg);

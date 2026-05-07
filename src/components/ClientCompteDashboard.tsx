@@ -84,7 +84,7 @@ import {
   loadChauffeurOrg,
 } from '../constants/chauffeurOrganizationStorage';
 import { loadChauffeurRegistry, normalizeChauffeurEmail } from '../constants/chauffeurRegistrationStorage';
-import { isChauffeurPrimaryAccountEmail } from '../services/authService';
+import { getCurrentClientUser, isChauffeurPrimaryAccountEmail } from '../services/authService';
 
 type ClientPlaceMapTarget =
   | { kind: 'domicile' }
@@ -208,6 +208,18 @@ function readCompteNavFromPath(): ClientAccountNavId {
   return 'overview';
 }
 
+function inferClientIdentityFromEmail(email: string): { prenom: string; nom: string } {
+  const localPart = email.split('@')[0] ?? '';
+  const chunks = localPart
+    .split(/[._-]+/)
+    .map((part) => part.trim())
+    .filter(Boolean);
+  const pretty = (value: string) => value.slice(0, 1).toUpperCase() + value.slice(1).toLowerCase();
+  if (chunks.length === 0) return { prenom: '', nom: '' };
+  if (chunks.length === 1) return { prenom: pretty(chunks[0]), nom: '' };
+  return { prenom: pretty(chunks[0]), nom: pretty(chunks.slice(1).join(' ')) };
+}
+
 export default function ClientCompteDashboard({ onBack, onOpenClientLiveMeet }: ClientCompteDashboardProps) {
   const { t, language, setLanguage } = useLanguage();
   const isEn = language === 'en';
@@ -326,13 +338,27 @@ export default function ClientCompteDashboard({ onBack, onOpenClientLiveMeet }: 
 
   useEffect(() => {
     const snap = loadClientAccountSnapshot();
-    setProfile(snap);
-    setDraft(snap);
-    const parsed = parseStoredPhone(snap.telephone);
+    const sessionUser = getCurrentClientUser();
+    const sessionEmail = (sessionUser?.email ?? '').trim().toLowerCase();
+    const needsEmailHydration = !snap.email.trim() && sessionEmail.length > 0;
+    const needsNameHydration = !snap.prenom.trim() && !snap.nom.trim() && sessionEmail.length > 0;
+    const inferred = inferClientIdentityFromEmail(sessionEmail);
+    const hydrated = {
+      ...snap,
+      email: needsEmailHydration ? sessionEmail : snap.email,
+      prenom: needsNameHydration ? inferred.prenom : snap.prenom,
+      nom: needsNameHydration ? inferred.nom : snap.nom,
+    };
+    if (needsEmailHydration || needsNameHydration) {
+      saveClientAccountSnapshot(hydrated);
+    }
+    setProfile(hydrated);
+    setDraft(hydrated);
+    const parsed = parseStoredPhone(hydrated.telephone);
     setPhoneCountryDraft(parsed.country);
     setPhoneNationalDraft(parsed.nationalNumber);
-    setPhotoDraftUrl(snap.profilePhotoUrl ?? null);
-    setPhotoDraftName(snap.profilePhotoName ?? '');
+    setPhotoDraftUrl(hydrated.profilePhotoUrl ?? null);
+    setPhotoDraftName(hydrated.profilePhotoName ?? '');
   }, []);
 
   useEffect(() => {
