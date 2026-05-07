@@ -1123,12 +1123,11 @@ const Dashboard = ({
 
   useEffect(() => {
     if (!persistRides || !isAuthenticated()) return;
-    if (activeView !== 'planning' && activeView !== 'courses' && activeView !== 'overview') return;
     const t = window.setInterval(() => {
       void refreshRides();
     }, 25000);
     return () => clearInterval(t);
-  }, [persistRides, activeView, refreshRides]);
+  }, [persistRides, refreshRides]);
 
   useEffect(() => {
     if (!useStatsApi || !isAuthenticated()) {
