@@ -27,6 +27,7 @@ import {
   Phone,
   Mail,
 } from 'lucide-react';
+import { toast } from 'sonner';
 import { useLanguage } from '../contexts/LanguageContext';
 import LanguageSwitcher from './LanguageSwitcher';
 import { trackEvent } from '../services/googleAnalyticsTracking';
@@ -725,8 +726,10 @@ export default function ClientCompteDashboard({ onBack, onOpenClientLiveMeet }: 
       e.preventDefault();
       saveClientSavedPlaces(placesDraft);
       trackEvent('click', 'client_account', 'places_save');
+      toast.success(isEn ? 'Saved places updated.' : 'Lieux enregistrés avec succès.');
+      goNav('overview');
     },
-    [placesDraft]
+    [goNav, isEn, placesDraft]
   );
 
   const applyMapPickResult = useCallback((r: ClientCompteMapPickResult, target: ClientPlaceMapTarget) => {

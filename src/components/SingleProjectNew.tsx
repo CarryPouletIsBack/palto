@@ -36,7 +36,6 @@ import MagicBento from './MagicBento';
 import PaltoH1HandwritingLogo from './PaltoH1HandwritingLogo';
 import ScrollStack, { ScrollStackItem } from './ScrollStack';
 import { DEFAULT_USER_ORIGIN, DEFAULT_USER_ORIGIN_LABEL } from '../constants/defaultUserOrigin';
-import { getNearbyDriversMock } from '../data/nearbyDrivers';
 import HomeMapboxBackground from './HomeMapboxBackground';
 import { isLngLatInsideReunionIsland } from '../constants/reunionIsland';
 import { snapLngLatToMapboxDriving } from '../services/mapboxSnapToRoad';
@@ -342,18 +341,11 @@ const SingleProjectNew: FC<SingleProjectProps> = ({
     }
     return hour >= 20 || hour < 6;
   }, [paltoPickupTiming, paltoPickupDateTime]);
-  const allNearbyDrivers = useMemo(
-    () =>
-      getNearbyDriversMock({
-        origin: effectiveRideOrigin,
-        radiusKm: effectiveDriverSearchRadiusKm,
-      }),
-    [effectiveRideOrigin, effectiveDriverSearchRadiusKm]
-  );
+  // Prod: aucun fallback demo, en attendant le branchement API réel.
+  const allNearbyDrivers = useMemo(() => [], []);
 
   const pickupFilteredDrivers = useMemo(() => {
     if (!pickupResolvedPoint) return [];
-    // Garde-fou: même en mock, on force strictement le rayon.
     return allNearbyDrivers.filter(
       (d) =>
         haversineDistanceKm(pickupResolvedPoint, { latitude: d.latitude, longitude: d.longitude }) <=
