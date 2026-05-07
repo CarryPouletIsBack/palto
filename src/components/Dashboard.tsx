@@ -189,6 +189,35 @@ type ChauffeurDocument = {
   uploadedFileName?: string;
 };
 
+const CHAUFFEUR_PROFILE_STORAGE_KEY = 'palto:chauffeur_profile_v1';
+
+function loadStoredChauffeurProfiles(): Record<string, ChauffeurProfile> {
+  if (typeof window === 'undefined') return {};
+  try {
+    const raw = localStorage.getItem(CHAUFFEUR_PROFILE_STORAGE_KEY);
+    if (!raw) return {};
+    const parsed = JSON.parse(raw) as unknown;
+    if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) return {};
+    return parsed as Record<string, ChauffeurProfile>;
+  } catch {
+    return {};
+  }
+}
+
+function loadStoredChauffeurProfile(emailNorm: string): ChauffeurProfile | null {
+  if (!emailNorm) return null;
+  return loadStoredChauffeurProfiles()[emailNorm] ?? null;
+}
+
+function persistStoredChauffeurProfile(profile: ChauffeurProfile): void {
+  if (typeof window === 'undefined') return;
+  const emailNorm = normalizeChauffeurEmail(profile.email);
+  if (!emailNorm) return;
+  const allProfiles = loadStoredChauffeurProfiles();
+  allProfiles[emailNorm] = profile;
+  localStorage.setItem(CHAUFFEUR_PROFILE_STORAGE_KEY, JSON.stringify(allProfiles));
+}
+
 type DashboardAlertItem = {
   id: string;
   kind: 'org_invite' | 'demand' | 'upcoming' | 'system';
@@ -575,14 +604,23 @@ const Dashboard = ({
     }
   }, [persistRides]);
 
-  const [chauffeurProfile, setChauffeurProfile] = useState<ChauffeurProfile>({
-    nom: '',
-    prenom: '',
-    email: '',
-    telephone: '',
-    ville: '',
-    vehicule: '',
-    plaque: '',
+  const [chauffeurProfile, setChauffeurProfile] = useState<ChauffeurProfile>(() => {
+    const currentUserEmail = getCurrentUser()?.email?.trim() ?? '';
+    const emailNorm = normalizeChauffeurEmail(currentUserEmail);
+    const storedProfile = loadStoredChauffeurProfile(emailNorm);
+    if (storedProfile) return storedProfile;
+
+    const inferred = inferProfileFromEmail(emailNorm);
+    const registryPhone = loadChauffeurRegistry()[emailNorm]?.phoneInternational ?? '';
+    return {
+      nom: inferred.nom,
+      prenom: inferred.prenom,
+      email: currentUserEmail,
+      telephone: registryPhone,
+      ville: '',
+      vehicule: '',
+      plaque: '',
+    };
   });
   const [userProfileDraft, setUserProfileDraft] = useState<ChauffeurProfile>(chauffeurProfile);
   const [chauffeurPayment, setChauffeurPayment] = useState<ChauffeurPayment>({
@@ -1605,22 +1643,28 @@ const Dashboard = ({
           ? 'Numéro invalide (France): 9 chiffres attendus après +33.'
           : 'Numéro invalide (Réunion): format attendu type 69xxxxxxx ou 26xxxxxxx après +262.'
       );
+      toast.error('Numéro invalide', { description: 'Corrige le téléphone avant enregistrement.' });
       return;
     }
 
-    setPlateError(null);
-    setPhoneError(null);
-    setChauffeurProfile({
+    const nextProfile: ChauffeurProfile = {
       ...userProfileDraft,
       plaque: normalizedPlate,
       telephone: buildInternationalPhone(phoneCountryDraft, normalizedNationalPhone),
-    });
+    };
+
+    setPlateError(null);
+    setPhoneError(null);
+    setChauffeurProfile(nextProfile);
+    setUserProfileDraft(nextProfile);
+    persistStoredChauffeurProfile(nextProfile);
     setProfilePhotoUrl(profilePhotoDraftUrl);
     setOrganizationPhotoUrl(organizationPhotoDraftUrl);
     setVehiclePhotoUrl(vehiclePhotoDraftUrl);
     setProfilePhotoName(profilePhotoDraftName);
     setOrganizationPhotoName(organizationPhotoDraftName);
     setVehiclePhotoName(vehiclePhotoDraftName);
+    toast.success('Profil chauffeur enregistré');
   }, [
     organizationPhotoDraftName,
     organizationPhotoDraftUrl,

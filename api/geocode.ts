@@ -117,6 +117,135 @@ function isInsideReunion(lonRaw: string | number | undefined, latRaw: string | n
   )
 }
 
+/** Codes postaux DROM (dont 974xx La Réunion) pour filtrer la BAN. */
+const RE_FR_OVERSEAS_POSTCODE = /\b(97[0-8]\d{3}|98\d{3})\b/
+
+function extractOverseasPostcode(q: string): string | null {
+  const m = q.match(RE_FR_OVERSEAS_POSTCODE)
+  return m ? m[1] : null
+}
+
+/** Centre approximatif La Réunion — tri par proximité côté API adresse. */
+const REUNION_BIAS_LON = '55.536384'
+const REUNION_BIAS_LAT = '-21.115141'
+
+type GeocodeSearchRow = { display_name: string; lon: string; lat: string }
+
+function haversineMeters(lon1: number, lat1: number, lon2: number, lat2: number): number {
+  const R = 6371000
+  const toRad = (d: number) => (d * Math.PI) / 180
+  const dLat = toRad(lat2 - lat1)
+  const dLon = toRad(lon2 - lon1)
+  const a =
+    Math.sin(dLat / 2) ** 2 +
+    Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLon / 2) ** 2
+  return 2 * R * Math.asin(Math.min(1, Math.sqrt(a)))
+}
+
+/**
+ * Base Adresse Nationale — meilleure précision numéro + voie (France / DROM dont 974).
+ * https://adresse.data.gouv.fr/api-doc/adresse
+ */
+async function searchWithBan(q: string, maxNeeded: number): Promise<GeocodeSearchRow[]> {
+  const trimmed = q.trim()
+  if (!trimmed) return []
+  const postcode = extractOverseasPostcode(trimmed)
+  const params = new URLSearchParams({
+    q: trimmed,
+    limit: String(Math.min(20, Math.max(maxNeeded * 3, 8))),
+    autocomplete: '1',
+    lon: REUNION_BIAS_LON,
+    lat: REUNION_BIAS_LAT,
+  })
+  if (postcode) params.set('postcode', postcode)
+
+  let upstream: Response
+  try {
+    upstream = await fetch(`https://api-adresse.data.gouv.fr/search/?${params.toString()}`, {
+      headers: {
+        Accept: 'application/json',
+        'User-Agent': 'palto/1.0 (https://palto-six.vercel.app)',
+      },
+    })
+  } catch {
+    return []
+  }
+  if (!upstream.ok) return []
+
+  const payload = (await upstream.json()) as {
+    features?: Array<{
+      geometry?: { coordinates?: [number, number] }
+      properties?: { label?: string; score?: number }
+    }>
+  }
+
+  const scored: Array<GeocodeSearchRow & { _score: number }> = []
+  for (const f of payload.features ?? []) {
+    const coords = f.geometry?.coordinates
+    const label = typeof f.properties?.label === 'string' ? f.properties.label.trim() : ''
+    if (!coords || coords.length < 2 || !label) continue
+    const [lon, lat] = coords
+    if (!isInsideReunion(lon, lat)) continue
+    scored.push({
+      display_name: label,
+      lon: String(lon),
+      lat: String(lat),
+      _score: typeof f.properties?.score === 'number' ? f.properties.score : 0,
+    })
+  }
+  scored.sort((a, b) => b._score - a._score)
+  return scored.map(({ display_name, lon, lat }) => ({ display_name, lon, lat })).slice(0, maxNeeded)
+}
+
+function mergeBanAndNominatim(ban: GeocodeSearchRow[], nomi: GeocodeSearchRow[], limit: number): GeocodeSearchRow[] {
+  const out: GeocodeSearchRow[] = []
+  const seen = new Set<string>()
+
+  for (const row of ban) {
+    if (out.length >= limit) break
+    const key = `${row.lon}|${row.lat}|${row.display_name.toLowerCase()}`
+    if (seen.has(key)) continue
+    seen.add(key)
+    out.push(row)
+  }
+
+  for (const row of nomi) {
+    if (out.length >= limit) break
+    const lon = Number.parseFloat(row.lon)
+    const lat = Number.parseFloat(row.lat)
+    if (!Number.isFinite(lon) || !Number.isFinite(lat)) continue
+    const key = `${row.lon}|${row.lat}|${row.display_name.toLowerCase()}`
+    if (seen.has(key)) continue
+    const near = out.some((b) => haversineMeters(lon, lat, Number.parseFloat(b.lon), Number.parseFloat(b.lat)) < 35)
+    if (near) continue
+    seen.add(key)
+    out.push(row)
+  }
+  return out
+}
+
+async function reverseWithBan(lon: string, lat: string): Promise<string | null> {
+  try {
+    const res = await fetch(
+      `https://api-adresse.data.gouv.fr/reverse/?lon=${encodeURIComponent(lon)}&lat=${encodeURIComponent(lat)}`,
+      {
+        headers: {
+          Accept: 'application/json',
+          'User-Agent': 'palto/1.0 (https://palto-six.vercel.app)',
+        },
+      }
+    )
+    if (!res.ok) return null
+    const payload = (await res.json()) as {
+      features?: Array<{ properties?: { label?: string } }>
+    }
+    const label = payload.features?.[0]?.properties?.label
+    return typeof label === 'string' && label.trim() ? label.trim() : null
+  } catch {
+    return null
+  }
+}
+
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   res.setHeader('Access-Control-Allow-Origin', '*')
   res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS')
@@ -133,28 +262,66 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       const parsed = SearchQuerySchema.safeParse(req.query)
       if (!parsed.success) return res.status(400).json({ error: 'Query invalide' })
 
-      const { q, language = 'fr', limit = 5, bounded = '0', addressdetails = '0' } = parsed.data
+      const { q, language = 'fr', limit = 5, addressdetails = '0' } = parsed.data
+      const cap = Math.min(limit, 10)
+
+      const banRows = await searchWithBan(q, cap)
+
+      const safeViewbox = toSafeViewbox(parsed.data.viewbox) ?? REUNION_VIEWBOX
+      const useBounded = parsed.data.bounded !== '0'
+
       const params = new URLSearchParams({
         q,
         format: 'jsonv2',
-        limit: String(limit),
+        limit: String(Math.min(10, cap * 2)),
         'accept-language': language,
         addressdetails,
+        email: 'contact@palto.fr',
       })
-      const safeViewbox = toSafeViewbox(parsed.data.viewbox) ?? REUNION_VIEWBOX
-      params.set('viewbox', safeViewbox)
-      params.set('bounded', '1')
-      params.set('email', 'contact@palto.fr')
+      if (useBounded) {
+        params.set('viewbox', safeViewbox)
+        params.set('bounded', '1')
+      } else {
+        params.set('countrycodes', 'fr')
+      }
+
+      let nomiRows: GeocodeSearchRow[] = []
       const upstream = await fetch(`https://nominatim.openstreetmap.org/search?${params.toString()}`, {
         headers: nominatimHeaders(),
       })
-      if (!upstream.ok) {
+      if (upstream.ok) {
+        const payload = (await upstream.json()) as Array<{ display_name?: string; lon?: string; lat?: string }>
+        nomiRows = payload
+          .filter(
+            (row) =>
+              row.display_name?.trim() &&
+              row.lon &&
+              row.lat &&
+              isInsideReunion(row.lon, row.lat)
+          )
+          .map((row) => ({
+            display_name: row.display_name!.trim(),
+            lon: row.lon!,
+            lat: row.lat!,
+          }))
+      } else {
         console.warn('[geocode] upstream search non-ok', upstream.status)
-        const fallback = await searchWithPhoton(q, language, limit)
-        return res.status(200).json(fallback.filter((row) => isInsideReunion(row.lon, row.lat)))
       }
-      const payload = (await upstream.json()) as Array<{ display_name?: string; lon?: string; lat?: string }>
-      return res.status(200).json(payload.filter((row) => isInsideReunion(row.lon, row.lat)))
+
+      let merged = mergeBanAndNominatim(banRows, nomiRows, cap)
+
+      if (merged.length === 0) {
+        const fallback = await searchWithPhoton(q, language, cap)
+        merged = fallback
+          .filter((row) => isInsideReunion(row.lon, row.lat) && row.display_name)
+          .map((row) => ({
+            display_name: row.display_name!.trim(),
+            lon: String(row.lon),
+            lat: String(row.lat),
+          }))
+      }
+
+      return res.status(200).json(merged)
     }
 
     if (mode === 'reverse') {
@@ -162,6 +329,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       if (!parsed.success) return res.status(400).json({ error: 'Query invalide' })
 
       const { lon, lat, language = 'fr' } = parsed.data
+      if (!isInsideReunion(lon, lat)) return res.status(200).json({ display_name: '' })
+
+      const banLabel = await reverseWithBan(lon, lat)
+      if (banLabel) return res.status(200).json({ display_name: banLabel })
+
       const params = new URLSearchParams({
         lon,
         lat,
@@ -181,11 +353,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       }
       if (!upstream.ok) {
         console.warn('[geocode] upstream reverse non-ok', upstream.status)
-        if (!isInsideReunion(lon, lat)) return res.status(200).json({ display_name: '' })
         const fallback = await reverseFallback()
         return res.status(200).json(fallback)
       }
-      if (!isInsideReunion(lon, lat)) return res.status(200).json({ display_name: '' })
       const payload = (await upstream.json()) as { display_name?: string }
       if (!payload.display_name?.trim()) {
         const fallback = await reverseFallback()

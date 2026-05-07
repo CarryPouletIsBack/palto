@@ -12,6 +12,21 @@ export type GeocodeSuggestion = {
   latitude: number
 }
 
+function extractPostalCode(value: string): string | null {
+  const m = value.match(/\b(\d{5})\b/)
+  return m?.[1] ?? null
+}
+
+function tokenize(value: string): string[] {
+  return value
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .split(/[^a-z0-9]+/)
+    .map((t) => t.trim())
+    .filter(Boolean)
+}
+
 /**
  * Résout une adresse ou un lieu en coordonnées via Nominatim (OpenStreetMap).
  */
@@ -53,8 +68,8 @@ export async function geocodeForward(
 
   const qWithReunion = /reunion|réunion/i.test(trimmed) ? trimmed : `${trimmed}, La Reunion`
   const attempts: Array<[string, boolean]> = [
-    [qWithReunion, true],
     [trimmed, true],
+    [qWithReunion, true],
     [qWithReunion, false],
     [trimmed, false],
   ]
@@ -80,6 +95,8 @@ export async function geocodeForwardSuggestions(
 ): Promise<GeocodeSuggestion[]> {
   const trimmed = query.trim()
   if (!trimmed) return []
+  const queryTokens = tokenize(trimmed)
+  const queryPostalCode = extractPostalCode(trimmed)
 
   const parse = (data: Array<{ display_name?: string; lon?: string; lat?: string }>): GeocodeSuggestion[] =>
     data
@@ -117,16 +134,43 @@ export async function geocodeForwardSuggestions(
 
   const qWithReunion = /reunion|réunion/i.test(trimmed) ? trimmed : `${trimmed}, La Reunion`
   const tries: Array<[string, boolean]> = [
-    [qWithReunion, true],
     [trimmed, true],
-    [qWithReunion, false],
+    [qWithReunion, true],
     [trimmed, false],
+    [qWithReunion, false],
   ]
+
+  const merged = new Map<string, GeocodeSuggestion>()
   for (const [q, bounded] of tries) {
     const out = await fetchList(q, bounded)
-    if (out.length > 0) return out
+    for (const item of out) {
+      const key = `${item.label.toLowerCase()}|${item.longitude.toFixed(6)}|${item.latitude.toFixed(6)}`
+      if (!merged.has(key)) merged.set(key, item)
+    }
   }
-  return []
+
+  if (merged.size === 0) return []
+
+  const scoreSuggestion = (s: GeocodeSuggestion): number => {
+    const labelNorm = s.label.toLowerCase()
+    const labelTokens = tokenize(s.label)
+    let score = 0
+    if (queryPostalCode) {
+      const labelPostalCode = extractPostalCode(s.label)
+      if (labelPostalCode === queryPostalCode) score += 100
+      else score -= 20
+    }
+    for (const tok of queryTokens) {
+      if (labelTokens.includes(tok)) score += 6
+      else if (labelNorm.includes(tok)) score += 2
+      else score -= 1
+    }
+    return score
+  }
+
+  return [...merged.values()]
+    .sort((a, b) => scoreSuggestion(b) - scoreSuggestion(a))
+    .slice(0, options?.limit ?? 5)
 }
 
 /**
