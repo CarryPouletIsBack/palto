@@ -1,3 +1,5 @@
+import { simplifyAddressDisplay } from '../services/addressDisplay';
+
 /** Données vue « chauffeur sur place » (démo) — hors récap « Mes courses ». */
 export type ClientLiveMeetRideModel = {
   pickupLabel: string;
@@ -21,7 +23,14 @@ export function getClientLiveMeetRideModel(): ClientLiveMeetRideModel | null {
     const parsed = JSON.parse(raw) as ClientLiveMeetRideModel;
     if (!parsed?.pickupLabel || !parsed?.route || !parsed?.departTime) return null;
     if (!parsed?.meetPickupCoords || !parsed?.meetDriverCoordsInitial) return null;
-    return parsed;
+    return {
+      ...parsed,
+      pickupLabel: simplifyAddressDisplay(parsed.pickupLabel),
+      route: parsed.route
+        .split('→')
+        .map((part) => simplifyAddressDisplay(part))
+        .join(' → '),
+    };
   } catch {
     return null;
   }

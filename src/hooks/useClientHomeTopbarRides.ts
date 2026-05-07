@@ -137,8 +137,8 @@ export function useClientHomeTopbarRides(language: 'fr' | 'en') {
     const r = list[0];
     if (!r) return null;
     return {
-      departShort: r.departShort,
-      arriveShort: r.arriveShort,
+      departShort: simplifyAddressDisplay(r.departShort),
+      arriveShort: simplifyAddressDisplay(r.arriveShort),
       startsAtIso: r.startsAtIso,
       startsLabel: formatRideStart(r.startsAtIso),
     };
