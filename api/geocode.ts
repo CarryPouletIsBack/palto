@@ -21,6 +21,7 @@ const ReverseQuerySchema = z.object({
 function nominatimHeaders() {
   return {
     Accept: 'application/json',
+    'Accept-Language': 'fr,en;q=0.8',
     // Nominatim demande un user-agent explicite pour identifier l'application.
     'User-Agent': 'palto/1.0 (https://palto-six.vercel.app)',
   }
@@ -67,7 +68,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       const upstream = await fetch(`https://nominatim.openstreetmap.org/search?${params.toString()}`, {
         headers: nominatimHeaders(),
       })
-      if (!upstream.ok) return res.status(502).json({ error: 'Geocoding upstream error' })
+      if (!upstream.ok) {
+        console.warn('[geocode] upstream search non-ok', upstream.status)
+        // Ne pas casser l'UI avec un 502: on renvoie une liste vide.
+        return res.status(200).json([])
+      }
       const payload = await upstream.json()
       return res.status(200).json(payload)
     }
@@ -86,7 +91,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       const upstream = await fetch(`https://nominatim.openstreetmap.org/reverse?${params.toString()}`, {
         headers: nominatimHeaders(),
       })
-      if (!upstream.ok) return res.status(502).json({ error: 'Reverse geocoding upstream error' })
+      if (!upstream.ok) {
+        console.warn('[geocode] upstream reverse non-ok', upstream.status)
+        // Fallback non bloquant côté client.
+        return res.status(200).json({ display_name: '' })
+      }
       const payload = await upstream.json()
       return res.status(200).json(payload)
     }
