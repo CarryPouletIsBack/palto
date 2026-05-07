@@ -62,7 +62,7 @@ import { useClientHomeTopbarRides } from '../hooks/useClientHomeTopbarRides';
 const PICKUP_DRIVER_SEARCH_RADIUS_KM = 20;
 const DEFAULT_BASE_FARE_EUR = 4;
 const DEFAULT_PRICE_PER_KM_EUR = 1.35;
-const PICKUP_AUTOCOMPLETE_DEBOUNCE_MS = 220;
+const PICKUP_AUTOCOMPLETE_DEBOUNCE_MS = 120;
 type GeocodeSnappedResult =
   | { ok: true; snapped: GeoPoint; queryUsed: string }
   | { ok: false; error: string };
@@ -960,7 +960,7 @@ const SingleProjectNew: FC<SingleProjectProps> = ({
     }
     if (!pickupSuggestionOpen) return;
     const q = paltoPickupLocation.trim();
-    if (!mapboxToken || q.length < 3) {
+    if (!mapboxToken || q.length < 2) {
       setPickupAddressSuggestions([]);
       setPickupSuggestionLoading(false);
       return;
@@ -998,7 +998,7 @@ const SingleProjectNew: FC<SingleProjectProps> = ({
     }
     if (!destinationSuggestionOpen) return;
     const q = paltoRideDestination.trim();
-    if (!mapboxToken || q.length < 3) {
+    if (!mapboxToken || q.length < 2) {
       setDestinationAddressSuggestions([]);
       setDestinationSuggestionLoading(false);
       return;
@@ -1264,9 +1264,11 @@ const SingleProjectNew: FC<SingleProjectProps> = ({
         bookingKind === 'instant' && paltoSelectedDriver
           ? paltoSelectedDriver.name
           : 'un chauffeur disponible';
-      setCheckoutSuccessMessage(
-        `Commande enregistree (${result.externalCode}). Chauffeur : ${driverLabel}. Suivi : ${email}.`
-      );
+      const successMessage =
+        bookingKind === 'scheduled'
+          ? `Demande prise en compte (${result.externalCode}). Un chauffeur l'acceptera prochainement. Suivi : ${email}.`
+          : `Commande enregistree (${result.externalCode}). Chauffeur : ${driverLabel}. Suivi : ${email}.`
+      setCheckoutSuccessMessage(successMessage);
     } catch (e) {
       setCheckoutError(e instanceof Error ? e.message : 'Enregistrement impossible. Reessayez.');
     } finally {
@@ -2087,12 +2089,10 @@ const SingleProjectNew: FC<SingleProjectProps> = ({
                 ) : null}
                 {pickupSuggestionOpen ? (
                   <div className="palto-pickup-suggestions" role="listbox" aria-label="Suggestions localisation">
-                    {paltoPickupLocation.trim().length >= 3 ? (
+                    {paltoPickupLocation.trim().length >= 2 ? (
                       <>
                         <p className="palto-pickup-suggestions__title">Suggestions d’adresse</p>
-                        {pickupSuggestionLoading ? (
-                          <p className="palto-pickup-suggestions__hint">Recherche en cours…</p>
-                        ) : pickupAddressSuggestions.length > 0 ? (
+                        {pickupAddressSuggestions.length > 0 ? (
                           <div className="palto-pickup-suggestions__list">
                             {pickupAddressSuggestions.map((s) => (
                               <button
@@ -2110,8 +2110,13 @@ const SingleProjectNew: FC<SingleProjectProps> = ({
                             ))}
                           </div>
                         ) : (
-                          <p className="palto-pickup-suggestions__hint">Aucune adresse trouvée.</p>
+                          <p className="palto-pickup-suggestions__hint">
+                            {pickupSuggestionLoading ? 'Recherche en cours…' : 'Aucune adresse trouvée.'}
+                          </p>
                         )}
+                        {pickupSuggestionLoading && pickupAddressSuggestions.length > 0 ? (
+                          <p className="palto-pickup-suggestions__hint">Affinage des suggestions…</p>
+                        ) : null}
                       </>
                     ) : (
                       <>
@@ -2173,12 +2178,10 @@ const SingleProjectNew: FC<SingleProjectProps> = ({
                 ) : null}
                 {destinationSuggestionOpen ? (
                   <div className="palto-pickup-suggestions" role="listbox" aria-label="Suggestions destination">
-                    {paltoRideDestination.trim().length >= 3 ? (
+                    {paltoRideDestination.trim().length >= 2 ? (
                       <>
                         <p className="palto-pickup-suggestions__title">Suggestions d’adresse</p>
-                        {destinationSuggestionLoading ? (
-                          <p className="palto-pickup-suggestions__hint">Recherche en cours…</p>
-                        ) : destinationAddressSuggestions.length > 0 ? (
+                        {destinationAddressSuggestions.length > 0 ? (
                           <div className="palto-pickup-suggestions__list">
                             {destinationAddressSuggestions.map((s) => (
                               <button
@@ -2196,8 +2199,13 @@ const SingleProjectNew: FC<SingleProjectProps> = ({
                             ))}
                           </div>
                         ) : (
-                          <p className="palto-pickup-suggestions__hint">Aucune adresse trouvée.</p>
+                          <p className="palto-pickup-suggestions__hint">
+                            {destinationSuggestionLoading ? 'Recherche en cours…' : 'Aucune adresse trouvée.'}
+                          </p>
                         )}
+                        {destinationSuggestionLoading && destinationAddressSuggestions.length > 0 ? (
+                          <p className="palto-pickup-suggestions__hint">Affinage des suggestions…</p>
+                        ) : null}
                       </>
                     ) : (
                       <>
