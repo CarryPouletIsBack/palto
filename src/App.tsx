@@ -9,6 +9,8 @@ import ProjectCoverCarousel from './components/ProjectCoverCarousel'
 import Dashboard from './components/Dashboard'
 import ClientCompteDashboard from './components/ClientCompteDashboard'
 import ClientMeetDriverPage from './components/ClientMeetDriverPage'
+import ClientAuthPage from './components/ClientAuthPage'
+import ChauffeurAuthPage from './components/ChauffeurAuthPage'
 import DriverNavigationView from './components/DriverNavigationView'
 import ErrorPage from './components/ErrorPage'
 import Contact from './components/Contact'
@@ -16,7 +18,7 @@ import Menu from './components/Menu'
 import { DestinationSpotlight } from './components/DestinationSpotlight'
 import { getDestinationById, type PopularDestination } from './data/popularDestinations'
 import { Toaster } from 'sonner'
-import { isAuthenticated } from './services/authService'
+import { isAuthenticated, isClientAuthenticated } from './services/authService'
 import {
   FONT_SCALE_CHANGED_EVENT,
   clampFontScalePercent,
@@ -759,13 +761,17 @@ function App() {
               />
             )}
             {currentPage === 'client-compte' && (
-              <ClientCompteDashboard
-                onBack={() => {
-                  setCurrentPage('accueil')
-                  window.history.pushState({}, '', getPathFromPage('accueil'))
-                }}
-                onOpenClientLiveMeet={handleOpenClientMeetDriver}
-              />
+              isClientAuthenticated() ? (
+                <ClientCompteDashboard
+                  onBack={() => {
+                    setCurrentPage('accueil')
+                    window.history.pushState({}, '', getPathFromPage('accueil'))
+                  }}
+                  onOpenClientLiveMeet={handleOpenClientMeetDriver}
+                />
+              ) : (
+                <ClientAuthPage onAuthSuccess={() => setCurrentPage('client-compte')} />
+              )
             )}
             {currentPage === 'client-meet-driver' && (
               <ClientMeetDriverPage
@@ -778,11 +784,15 @@ function App() {
               />
             )}
             {currentPage === 'dashboard' && (
-              <Dashboard
-                onOpenActiveCourseNavigation={openDriverNavigation}
-                onNavigatePublicHome={navigateToPaltoHomeRoot}
-                onNavigateDriverHome={navigateToChauffeurHomeRoot}
-              />
+              isAuthenticated() ? (
+                <Dashboard
+                  onOpenActiveCourseNavigation={openDriverNavigation}
+                  onNavigatePublicHome={navigateToPaltoHomeRoot}
+                  onNavigateDriverHome={navigateToChauffeurHomeRoot}
+                />
+              ) : (
+                <ChauffeurAuthPage onAuthSuccess={() => setCurrentPage('dashboard')} />
+              )
             )}
             {currentPage === 'dashboard-navigation' && navigationCourseId && (
               <DriverNavigationView courseId={navigationCourseId} onClose={closeDriverNavigation} />

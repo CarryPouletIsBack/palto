@@ -58,7 +58,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     return
   }
 
-  const dashboardEmail = getVerifiedDashboardEmail(req)
+  const dashboardEmail = await getVerifiedDashboardEmail(req)
   if (!dashboardEmail) {
     res.status(401).json({ error: 'Non autorise' })
     return

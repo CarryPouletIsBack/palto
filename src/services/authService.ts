@@ -1,15 +1,5 @@
-// Service d'authentification
-// Utilise une API route Vercel pour la vérification du mot de passe
-
-import {
-  loadChauffeurRegistry,
-  normalizeChauffeurEmail,
-  registerChauffeurInRegistry,
-  verifyChauffeurRegistrationPassword,
-  type RegisterChauffeurPayload,
-} from '../constants/chauffeurRegistrationStorage'
-import { initComplianceForNewChauffeur } from '../constants/chauffeurComplianceStorage'
 import { apiBaseUrl } from '../constants/featureFlags'
+import type { RegisterChauffeurPayload } from '../constants/chauffeurRegistrationStorage'
 
 const AUTH_STORAGE_KEY = 'dashboard_auth'
 export const DASHBOARD_AUTH_TOKEN_KEY = 'dashboard_token'
@@ -29,72 +19,48 @@ export interface User {
   username?: string
 }
 
-/** Identifiants dashboard : uniquement variables d’environnement (jamais de secrets dans le code). */
-function readLocalDashboardCredentials(): { email: string; password: string } | null {
-  const email = (import.meta.env.VITE_DASHBOARD_EMAIL as string | undefined)?.trim()
-  const password = (import.meta.env.VITE_DASHBOARD_PASSWORD as string | undefined)?.trim()
-  if (!email || !password) return null
-  return { email, password }
+function normalizeEmail(email: string): string {
+  return email.trim().toLowerCase()
 }
 
-function tryLocalLogin(credentials: LoginCredentials): { success: boolean; user?: User; error?: string } {
-  const creds = readLocalDashboardCredentials()
-  if (!creds) {
-    return { success: false, error: 'Configuration de connexion chauffeur absente' }
-  }
-  const emailNorm = normalizeChauffeurEmail(credentials.email)
-  const primaryNorm = normalizeChauffeurEmail(creds.email)
-
-  const writeSession = (emailForUser: string): { success: true; user: User } => {
-    const token = btoa(`${emailForUser}:${Date.now()}`)
-    const user: User = {
-      email: emailForUser.trim(),
-      displayName: emailForUser.split('@')[0]?.trim() || 'Chauffeur',
+async function postAuth<TPayload extends Record<string, unknown>>(
+  endpoint: string,
+  payload: TPayload
+): Promise<{ success: boolean; token?: string; user?: User; error?: string }> {
+  try {
+    const response = await fetch(`${API_BASE_URL}${endpoint}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    })
+    const data = (await response.json().catch(() => null)) as
+      | { success?: boolean; token?: string; user?: User; error?: string }
+      | null
+    if (!response.ok) {
+      return { success: false, error: data?.error || 'Erreur serveur' }
     }
-    localStorage.setItem(DASHBOARD_AUTH_TOKEN_KEY, token)
-    localStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(user))
-    return { success: true, user }
-  }
-
-  if (emailNorm === primaryNorm) {
-    if (credentials.password === creds.password) {
-      return writeSession(credentials.email)
+    if (!data?.success || !data.token || !data.user) {
+      return { success: false, error: data?.error || 'Reponse serveur invalide' }
     }
-    return { success: false, error: 'Mot de passe incorrect' }
+    return { success: true, token: data.token, user: data.user }
+  } catch (error) {
+    console.error('[authService] requete auth echouee', error)
+    return { success: false, error: 'Service indisponible' }
   }
-
-  if (verifyChauffeurRegistrationPassword(emailNorm, credentials.password)) {
-    return writeSession(credentials.email)
-  }
-  if (loadChauffeurRegistry()[emailNorm]) {
-    return { success: false, error: 'Mot de passe incorrect' }
-  }
-
-  return { success: false, error: 'Email incorrect' }
 }
 
-/** Compte admin chauffeur (env ou démo) — pas soumis au blocage documents self-service. */
 export function isChauffeurPrimaryAccountEmail(email: string | null | undefined): boolean {
   if (!email?.trim()) return false
-  const creds = readLocalDashboardCredentials()
-  if (!creds) return false
-  return normalizeChauffeurEmail(email) === normalizeChauffeurEmail(creds.email)
+  const user = getCurrentUser()
+  return normalizeEmail(user?.email ?? '') === normalizeEmail(email)
 }
 
-/**
- * Inscription chauffeur locale (téléphone, véhicule, équipement livraison) + initialisation des documents à fournir.
- */
-export function registerChauffeur(payload: RegisterChauffeurPayload): { success: boolean; error?: string } {
-  if (typeof window === 'undefined') return { success: false, error: 'UNAVAILABLE' }
-  const primary = readLocalDashboardCredentials()
-  if (!primary) return { success: false, error: 'CONFIG_MISSING' }
-  const result = registerChauffeurInRegistry(payload, {
-    reservedPrimaryEmailNorm: normalizeChauffeurEmail(primary.email),
-  })
-  if (result.success) {
-    initComplianceForNewChauffeur(normalizeChauffeurEmail(payload.email))
-  }
-  return result
+export async function registerChauffeur(payload: RegisterChauffeurPayload): Promise<{ success: boolean; error?: string }> {
+  const result = await postAuth('/auth/chauffeur/register', payload as unknown as Record<string, unknown>)
+  if (!result.success || !result.token || !result.user) return { success: false, error: result.error }
+  localStorage.setItem(DASHBOARD_AUTH_TOKEN_KEY, result.token)
+  localStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(result.user))
+  return { success: true }
 }
 
 export const isAuthenticated = (): boolean => {
@@ -118,41 +84,11 @@ export const isAuthenticated = (): boolean => {
 export const login = async (
   credentials: LoginCredentials
 ): Promise<{ success: boolean; user?: User; error?: string }> => {
-  const isDevelopment =
-    import.meta.env.DEV ||
-    window.location.hostname === 'localhost' ||
-    window.location.hostname === '127.0.0.1'
-
-  if (isDevelopment) {
-    return tryLocalLogin(credentials)
-  }
-
-  try {
-    const response = await fetch(`${API_BASE_URL}/auth/login`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(credentials),
-    })
-
-    if (!response.ok) {
-      return { success: false, error: 'Erreur de connexion' }
-    }
-
-    const data = await response.json()
-
-    if (data.success && data.user && data.token) {
-      localStorage.setItem(DASHBOARD_AUTH_TOKEN_KEY, data.token)
-      localStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(data.user))
-
-      return { success: true, user: data.user }
-    }
-    return { success: false, error: data.error || 'Erreur de connexion' }
-  } catch (error) {
-    console.error('Erreur lors de la connexion:', error)
-    return { success: false, error: 'Erreur de connexion' }
-  }
+  const result = await postAuth('/auth/chauffeur/login', credentials)
+  if (!result.success || !result.token || !result.user) return { success: false, error: result.error }
+  localStorage.setItem(DASHBOARD_AUTH_TOKEN_KEY, result.token)
+  localStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(result.user))
+  return { success: true, user: result.user }
 }
 
 export const logout = (): void => {
@@ -186,8 +122,6 @@ export const getCurrentUser = (): User | null => {
 
 const CLIENT_AUTH_STORAGE_KEY = 'palto:client_auth'
 export const CLIENT_AUTH_TOKEN_KEY = 'palto:client_token'
-const CLIENT_REGISTERED_ACCOUNTS_KEY = 'palto:client_registered_v1'
-
 /** Émis après connexion / déconnexion passager (écouter sur `window` pour rafraîchir l’UI). */
 export const PALTO_CLIENT_SESSION_CHANGED_EVENT = 'palto:client-session-changed'
 
@@ -196,98 +130,24 @@ function notifyClientSessionChanged(): void {
   window.dispatchEvent(new CustomEvent(PALTO_CLIENT_SESSION_CHANGED_EVENT))
 }
 
-function loadClientRegisteredPasswordByEmail(): Record<string, string> {
-  if (typeof window === 'undefined') return {}
-  try {
-    const raw = localStorage.getItem(CLIENT_REGISTERED_ACCOUNTS_KEY)
-    if (!raw) return {}
-    const parsed = JSON.parse(raw) as unknown
-    if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) return {}
-    const out: Record<string, string> = {}
-    for (const [k, v] of Object.entries(parsed as Record<string, unknown>)) {
-      if (typeof k === 'string' && typeof v === 'string') out[normalizeChauffeurEmail(k)] = v
-    }
-    return out
-  } catch {
-    return {}
-  }
-}
-
-function persistClientRegisteredAccount(emailNorm: string, password: string): void {
-  const map = loadClientRegisteredPasswordByEmail()
-  map[emailNorm] = password
-  localStorage.setItem(CLIENT_REGISTERED_ACCOUNTS_KEY, JSON.stringify(map))
-}
-
-/** Compte démo / env pour le passager (distinct du chauffeur). */
-function readLocalClientDemoCredentials(): { email: string; password: string } | null {
-  const email = (import.meta.env.VITE_CLIENT_ACCOUNT_EMAIL as string | undefined)?.trim()
-  const password = (import.meta.env.VITE_CLIENT_ACCOUNT_PASSWORD as string | undefined)?.trim()
-  if (!email || !password) return null
-  return { email, password }
-}
-
-function tryClientLocalLogin(credentials: LoginCredentials): { success: boolean; user?: User; error?: string } {
-  const creds = readLocalClientDemoCredentials()
-  const emailNorm = normalizeChauffeurEmail(credentials.email)
-  const primaryNorm = creds ? normalizeChauffeurEmail(creds.email) : ''
-
-  const writeClientSession = (emailForUser: string): { success: true; user: User } => {
-    const token = btoa(`client:${emailForUser}:${Date.now()}`)
-    const user: User = {
-      email: emailForUser.trim(),
-      displayName: emailForUser.split('@')[0]?.trim() || 'Passager',
-    }
-    localStorage.setItem(CLIENT_AUTH_TOKEN_KEY, token)
-    localStorage.setItem(CLIENT_AUTH_STORAGE_KEY, JSON.stringify(user))
-    notifyClientSessionChanged()
-    return { success: true, user }
-  }
-
-  if (creds && emailNorm === primaryNorm) {
-    if (credentials.password === creds.password) {
-      return writeClientSession(credentials.email)
-    }
-    return { success: false, error: 'Mot de passe incorrect' }
-  }
-
-  const regPw = loadClientRegisteredPasswordByEmail()[emailNorm]
-  if (regPw) {
-    if (regPw === credentials.password) {
-      return writeClientSession(credentials.email)
-    }
-    return { success: false, error: 'Mot de passe incorrect' }
-  }
-
-  return { success: false, error: 'Email incorrect' }
-}
-
-export function registerClient(credentials: LoginCredentials): { success: boolean; error?: string } {
-  if (typeof window === 'undefined') return { success: false, error: 'UNAVAILABLE' }
-  const emailNorm = normalizeChauffeurEmail(credentials.email)
-  const password = credentials.password
-  if (!emailNorm || !password) return { success: false, error: 'MISSING' }
-  if (password.length < 6) return { success: false, error: 'PASSWORD_SHORT' }
-  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(emailNorm)) {
-    return { success: false, error: 'EMAIL_INVALID' }
-  }
-
-  const primary = readLocalClientDemoCredentials()
-  if (primary && emailNorm === normalizeChauffeurEmail(primary.email)) {
-    return { success: false, error: 'EMAIL_RESERVED' }
-  }
-
-  const map = loadClientRegisteredPasswordByEmail()
-  if (map[emailNorm]) return { success: false, error: 'EMAIL_EXISTS' }
-
-  persistClientRegisteredAccount(emailNorm, password)
+export async function registerClient(credentials: LoginCredentials): Promise<{ success: boolean; error?: string }> {
+  const result = await postAuth('/auth/client/register', credentials)
+  if (!result.success || !result.token || !result.user) return { success: false, error: result.error }
+  localStorage.setItem(CLIENT_AUTH_TOKEN_KEY, result.token)
+  localStorage.setItem(CLIENT_AUTH_STORAGE_KEY, JSON.stringify(result.user))
+  notifyClientSessionChanged()
   return { success: true }
 }
 
 export async function loginClient(
   credentials: LoginCredentials
 ): Promise<{ success: boolean; user?: User; error?: string }> {
-  return Promise.resolve(tryClientLocalLogin(credentials))
+  const result = await postAuth('/auth/client/login', credentials)
+  if (!result.success || !result.token || !result.user) return { success: false, error: result.error }
+  localStorage.setItem(CLIENT_AUTH_TOKEN_KEY, result.token)
+  localStorage.setItem(CLIENT_AUTH_STORAGE_KEY, JSON.stringify(result.user))
+  notifyClientSessionChanged()
+  return { success: true, user: result.user }
 }
 
 export const isClientAuthenticated = (): boolean => {
