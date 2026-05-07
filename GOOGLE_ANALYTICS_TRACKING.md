@@ -65,7 +65,7 @@ Le service `googleAnalyticsTracking.ts` fournit les fonctions suivantes :
 
 Le tracking des pages vues est automatiquement configuré dans `App.tsx`. Chaque changement de page est tracké avec :
 - Le chemin de la page (`/${currentPage}`)
-- Le titre de la page (ex: "Accueil - Anthony Merault")
+- Le titre de la page (ex: "Accueil - Palto")
 
 ### Tracking manuel d'événements
 
@@ -81,7 +81,7 @@ trackEvent('click', 'button', 'Contact Button')
 trackSearch('projet design', 5)
 
 // Exemple : tracker un téléchargement
-trackDownload('portfolio.pdf', 'pdf')
+trackDownload('palto-guide.pdf', 'pdf')
 ```
 
 ## 📈 Vérification

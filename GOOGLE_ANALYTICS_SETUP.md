@@ -15,7 +15,7 @@ Ce guide vous explique comment configurer l'authentification OAuth2 pour utilise
 1. Allez sur [Google Cloud Console](https://console.cloud.google.com/)
 2. Cliquez sur le sélecteur de projet en haut
 3. Cliquez sur **"Nouveau projet"**
-4. Donnez un nom à votre projet (ex: "Portfolio Analytics")
+4. Donnez un nom à votre projet (ex: « Palto Analytics »)
 5. Cliquez sur **"Créer"**
 
 ### 2. Activer l'API Google Analytics Data API
@@ -37,7 +37,7 @@ Ce guide vous explique comment configurer l'authentification OAuth2 pour utilise
    - Cliquez sur **"Save and Continue"** pour chaque étape
 4. Créez l'OAuth client ID :
    - **Application type** : **"Web application"**
-   - **Name** : "Portfolio Dashboard" (ou un nom de votre choix)
+   - **Name** : « Palto Dashboard » (ou un nom de votre choix)
    - **Authorized JavaScript origins** :
      - Pour le développement local : `http://localhost:5173` (ou le port de Vite)
      - Pour la production : `https://votre-domaine.com`

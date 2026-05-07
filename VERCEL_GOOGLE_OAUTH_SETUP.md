@@ -16,7 +16,7 @@ Vos identifiants sont sauvegardés dans `GOOGLE_OAUTH_CREDENTIALS.txt` (fichier 
 ### Étape 1 : Accéder aux Environment Variables
 
 1. Allez sur [Vercel Dashboard](https://vercel.com/dashboard)
-2. Sélectionnez votre projet `portfolio-react-anthony`
+2. Sélectionnez votre projet `votre-projet-vercel`
 3. Allez dans **Settings** → **Environment Variables**
 
 ### Étape 2 : Ajouter les variables pour le client React (avec VITE_)
@@ -30,7 +30,7 @@ Ces variables sont utilisées par le code React côté client.
 
 **Variable 2 :**
 - **Key** : `VITE_GOOGLE_REDIRECT_URI`
-- **Value** : `https://portfolio-react-anthony-git-279166-carrypouletisbacks-projects.vercel.app/api/google-auth/callback`
+- **Value** : `https://nom-du-projet.vercel.app/api/google-auth/callback`
 - **Environments** : ✅ Production, ✅ Preview, ✅ Development
 
 ### Étape 3 : Ajouter les variables pour les API routes (sans VITE_)
@@ -49,7 +49,7 @@ Ces variables sont utilisées par les endpoints API Vercel côté serveur.
 
 **Variable 3 :**
 - **Key** : `GOOGLE_REDIRECT_URI`
-- **Value** : `https://portfolio-react-anthony-git-279166-carrypouletisbacks-projects.vercel.app/api/google-auth/callback`
+- **Value** : `https://nom-du-projet.vercel.app/api/google-auth/callback`
 - **Environments** : ✅ Production, ✅ Preview, ✅ Development
 
 ### Étape 4 : Sauvegarder et redéployer
@@ -106,7 +106,7 @@ GOOGLE_REDIRECT_URI=http://localhost:5173/api/google-auth/callback
 
 1. Vérifiez que l'URI de redirection dans Google Cloud Console correspond exactement à celle dans Vercel
 2. Les URIs sont sensibles à la casse et aux trailing slashes
-3. Pour Vercel : `https://portfolio-react-anthony-git-279166-carrypouletisbacks-projects.vercel.app/api/google-auth/callback`
+3. Pour Vercel : `https://nom-du-projet.vercel.app/api/google-auth/callback`
 4. Pour local : `http://localhost:5173/api/google-auth/callback`
 
 ---

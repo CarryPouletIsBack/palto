@@ -17,12 +17,54 @@
   flex-direction: column;
 }
 
-/* Utilitaires */
+/* Colonne racine : le zoom « taille du texte » est sur .app-page-font-zoom (pas #root) pour Chrome. */
 .container {
   max-width: none;
   margin: 0;
   padding: 0;
   width: 100%;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Au-dessus d’éventuels utilitaires Tailwind `.container` (max-width par breakpoint). */
+#root > .container {
+  max-width: none !important;
+  width: 100% !important;
+  margin-left: 0 !important;
+  margin-right: 0 !important;
+}
+
+/* Contenu pages sous le header : flex + min-height 0 pour que overflow-y (dashboard, compte) reste scrollable. */
+.app-page-font-zoom {
+  flex: 1 1 auto;
+  min-height: 0;
+  min-width: 0;
+  width: 100%;
+  max-width: none;
+  display: flex;
+  flex-direction: column;
+  box-sizing: border-box;
+}
+
+.app-page-font-zoom > .page.active {
+  flex: 1 1 auto;
+  min-height: 0;
+  min-width: 0;
+}
+
+.app-page-font-zoom > .hero-accueil-root {
+  flex: 1 1 auto;
+  min-height: min-content;
+  min-width: 0;
+}
+
+.app-page-font-zoom > .destination-spotlight {
+  flex: 1 1 auto;
+  min-height: min-content;
+  min-width: 0;
+  align-self: stretch;
 }
 
 /* Overlay search bar : plein écran, au-dessus du contenu mais DERRIÈRE la search bar active.
@@ -57,7 +99,12 @@
   z-index: 0;
 }
 
-/* Fond pour le menu - géré par body.menu-active et GridPattern */
+/* Dashboard: neutralise complètement le portal overlay pour éviter tout blocage de clics. */
+.search-overlay-root.search-overlay-root-disabled {
+  display: none;
+}
+
+/* Fond pour le menu (piloté par body.menu-active). */
 .container.menu-active {
   background: transparent;
 }
@@ -83,7 +130,7 @@
   }
 }
 
-/* Image de couverture au-dessus de la page SingleProject - styles gérés dans ProjectCoverCarousel.css */
+/* Image de couverture au-dessus de la page Go — styles dans ProjectCoverCarousel.css */
 
 /* Responsive utilities */
 @media (max-width: 768px) {

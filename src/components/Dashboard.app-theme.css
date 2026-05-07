@@ -1,0 +1,705 @@
+/**
+ * Thème sombre — pont avec `html[data-app-theme="dark"]` (variables dans app-theme.css).
+ * Le shell Dashboard / compte client utilisait des couleurs en dur (#…) : sans ce fichier,
+ * le fond body changeait mais la barre latérale et la zone principale restaient « clair ».
+ */
+
+html[data-app-theme='dark'] .dashboard-container {
+  color: var(--app-text-primary);
+}
+
+html[data-app-theme='dark'] .dashboard-sidebar {
+  background: var(--app-bg-alt);
+  border-right-color: var(--app-border-subtle);
+}
+
+html[data-app-theme='dark'] .dashboard-org-sidebar {
+  background: var(--app-bg-alt);
+  border-right-color: var(--app-border-subtle);
+}
+
+html[data-app-theme='dark'] .dashboard-org-sidebar-title,
+html[data-app-theme='dark'] .dashboard-org-sidebar-icon {
+  color: var(--app-text-primary);
+}
+
+html[data-app-theme='dark'] button.dashboard-org-sidebar-brand--home:hover {
+  background: rgba(255, 255, 255, 0.06);
+}
+
+html[data-app-theme='dark'] .dashboard-org-nav-item {
+  color: var(--app-text-muted);
+}
+
+html[data-app-theme='dark'] .dashboard-org-nav-item:hover {
+  background: rgba(255, 255, 255, 0.06);
+  color: var(--app-text-primary);
+}
+
+html[data-app-theme='dark'] .dashboard-org-nav-item.active {
+  background: rgba(255, 255, 255, 0.1);
+  color: var(--app-text-primary);
+  border-color: var(--app-border-subtle);
+}
+
+html[data-app-theme='dark'] .dashboard-org-profile-hero {
+  background: transparent;
+}
+
+html[data-app-theme='dark'] .dashboard-org-profile-reviews-carousel__dot {
+  background: rgba(148, 163, 184, 0.35);
+}
+
+html[data-app-theme='dark'] .dashboard-org-profile-reviews-carousel__dot.is-active {
+  background: var(--app-text-primary);
+}
+
+html[data-app-theme='dark'] .dashboard-org-profile-cover {
+  background: rgba(15, 23, 42, 0.6);
+}
+
+html[data-app-theme='dark'] .dashboard-org-profile-cover-scrim {
+  background: linear-gradient(
+    to bottom,
+    rgba(0, 0, 0, 0) 0%,
+    rgba(0, 0, 0, 0.06) 22%,
+    rgba(0, 0, 0, 0.18) 42%,
+    rgba(0, 0, 0, 0.38) 56%,
+    rgba(0, 0, 0, 0.42) 66%,
+    rgba(0, 0, 0, 0.28) 80%,
+    rgba(0, 0, 0, 0.12) 92%,
+    rgba(0, 0, 0, 0.05) 100%
+  );
+}
+
+html[data-app-theme='dark'] .dashboard-org-profile-hero-bar .dashboard-org-profile-logo {
+  border-color: rgba(255, 255, 255, 0.88);
+  background: rgba(15, 23, 42, 0.35);
+  box-shadow: none;
+}
+
+html[data-app-theme='dark'] .dashboard-org-profile-hero-bar h3.client-compte-section-title.dashboard-org-profile-name {
+  color: #ffffff;
+}
+
+html[data-app-theme='dark'] .dashboard-org-profile-hero-bar .dashboard-org-profile-base {
+  color: rgba(255, 255, 255, 0.92);
+}
+
+html[data-app-theme='dark'] .dashboard-org-profile-facts .client-compte-section-title,
+html[data-app-theme='dark'] .dashboard-org-profile-reviews .client-compte-section-title {
+  color: var(--app-text-primary);
+}
+
+html[data-app-theme='dark'] .dashboard-org-profile-review-card {
+  background: var(--app-bg-alt);
+  border-color: var(--app-border-subtle);
+}
+
+html[data-app-theme='dark'] .dashboard-org-profile-review-author {
+  color: var(--app-text-primary);
+}
+
+html[data-app-theme='dark'] .dashboard-org-profile-review-body {
+  color: var(--app-text-muted);
+}
+
+html[data-app-theme='dark'] .dashboard-org-profile-review-date {
+  color: var(--app-text-muted);
+}
+
+html[data-app-theme='dark'] .dashboard-org-profile-star--off {
+  color: rgba(148, 163, 184, 0.45);
+}
+
+html[data-app-theme='dark'] .dashboard-logo-title,
+html[data-app-theme='dark'] .nav-label {
+  color: var(--app-text-primary);
+}
+
+html[data-app-theme='dark'] .dashboard-logo-brand:hover {
+  background: rgba(255, 255, 255, 0.06);
+}
+
+html[data-app-theme='dark'] .dashboard-logo-brand--active {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+html[data-app-theme='dark'] .dashboard-nav-item {
+  color: var(--app-text-muted);
+}
+
+html[data-app-theme='dark'] .dashboard-nav-item:hover {
+  background: rgba(255, 255, 255, 0.06);
+  color: var(--app-text-primary);
+}
+
+html[data-app-theme='dark'] .dashboard-nav-item.active {
+  background: rgba(255, 255, 255, 0.1);
+  color: var(--app-text-primary);
+  border-color: var(--app-border-subtle);
+}
+
+html[data-app-theme='dark'] .dashboard-avatar {
+  background: rgba(255, 255, 255, 0.06);
+  border-color: var(--app-border-subtle);
+  color: var(--app-text-primary);
+}
+
+html[data-app-theme='dark'] .dashboard-avatar:hover {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.25);
+}
+
+html[data-app-theme='dark'] .dashboard-avatar.active {
+  background: rgba(255, 255, 255, 0.12);
+  color: var(--app-text-primary);
+  border-color: var(--app-border-subtle);
+}
+
+html[data-app-theme='dark'] .dashboard-avatar.active .dashboard-avatar-icon {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: var(--app-border-subtle);
+}
+
+html[data-app-theme='dark'] .dashboard-avatar.active .dashboard-avatar-meta strong,
+html[data-app-theme='dark'] .dashboard-avatar-meta strong {
+  color: var(--app-text-primary);
+}
+
+html[data-app-theme='dark'] .dashboard-avatar-icon {
+  background: rgba(255, 255, 255, 0.06);
+  border-color: var(--app-border-subtle);
+  color: var(--app-text-primary);
+}
+
+html[data-app-theme='dark'] .dashboard-main {
+  background: var(--app-bg-page);
+}
+
+html[data-app-theme='dark'] .dashboard-chauffeur-main-title {
+  color: var(--app-text-primary, #f1f5f9);
+}
+
+html[data-app-theme='dark'] .dashboard-chauffeur-main-subtitle {
+  color: var(--app-text-muted, #94a3b8);
+}
+
+html[data-app-theme='dark'] .dashboard-topbar {
+  background: var(--app-bg-alt);
+  border: none;
+  border-bottom: 1px solid var(--app-border-subtle);
+}
+
+@media (min-width: 769px) {
+  html[data-app-theme='dark'] .dashboard-container--chauffeur .dashboard-sidebar,
+  html[data-app-theme='dark'] .dashboard-container--chauffeur .dashboard-main,
+  html[data-app-theme='dark'] .dashboard-container--chauffeur .dashboard-topbar {
+    border-color: var(--app-border-subtle);
+  }
+
+  html[data-app-theme='dark'] .dashboard-container--chauffeur .dashboard-sidebar {
+    box-shadow: none;
+  }
+}
+
+html[data-app-theme='dark'] .dashboard-container--home-accueil .dashboard-topbar {
+  box-shadow: 0 1px 0 rgba(0, 0, 0, 0.35);
+}
+
+html[data-app-theme='dark'] .hero-topbar-auth-link {
+  color: var(--app-text-primary, #f1f5f9);
+}
+
+html[data-app-theme='dark'] .hero-topbar-auth-link:hover {
+  background: rgba(255, 255, 255, 0.08);
+}
+
+html[data-app-theme='dark'] .hero-topbar-auth-sep {
+  color: var(--app-text-muted, #94a3b8);
+}
+
+html[data-app-theme='dark'] .topbar-ride-strip {
+  color: var(--app-text-muted);
+}
+
+html[data-app-theme='dark'] .topbar-ride-ico {
+  color: var(--app-text-muted);
+}
+
+html[data-app-theme='dark'] .topbar-ride-meta {
+  color: var(--app-text-muted);
+}
+
+html[data-app-theme='dark'] .topbar-launch-ride-btn {
+  background: #e2e8f0;
+  color: #0f172a;
+}
+
+html[data-app-theme='dark'] .topbar-launch-ride-btn:hover {
+  background: #f1f5f9;
+}
+
+html[data-app-theme='dark'] .topbar-icon-btn {
+  background: rgba(255, 255, 255, 0.06);
+  border-color: var(--app-border-subtle);
+  color: var(--app-text-primary);
+}
+
+html[data-app-theme='dark'] .topbar-alerts-dropdown {
+  background: var(--app-bg-alt);
+  border-color: var(--app-border-subtle);
+  box-shadow: 0 18px 40px rgba(0, 0, 0, 0.45);
+}
+
+html[data-app-theme='dark'] .dashboard-sidebar-extension {
+  background: var(--app-bg-alt);
+  border-color: var(--app-border-subtle);
+}
+
+html[data-app-theme='dark'] .dashboard-sidebar-extension-head {
+  border-bottom-color: var(--app-border-subtle);
+}
+
+html[data-app-theme='dark'] .dashboard-sidebar-extension-head h4 {
+  color: var(--app-text-primary);
+}
+
+html[data-app-theme='dark'] .dashboard-sidebar-extension-head button {
+  background: rgba(255, 255, 255, 0.06);
+  border-color: var(--app-border-subtle);
+  color: var(--app-text-primary);
+}
+
+html[data-app-theme='dark'] .topbar-alerts-head h4,
+html[data-app-theme='dark'] .topbar-alert-item strong {
+  color: var(--app-text-primary);
+}
+
+html[data-app-theme='dark'] .topbar-alerts-head button {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: var(--app-border-subtle);
+  color: var(--app-text-primary);
+}
+
+html[data-app-theme='dark'] .topbar-alert-item {
+  border-color: var(--app-border-subtle);
+}
+
+html[data-app-theme='dark'] .topbar-alert-item p {
+  color: var(--app-text-muted);
+}
+
+html[data-app-theme='dark'] .topbar-alert-item.upcoming {
+  background: rgba(37, 99, 235, 0.2);
+  border-color: rgba(96, 165, 250, 0.45);
+}
+
+html[data-app-theme='dark'] .topbar-alert-item.demand {
+  background: rgba(6, 182, 212, 0.15);
+  border-color: rgba(34, 211, 238, 0.35);
+}
+
+html[data-app-theme='dark'] .topbar-alert-item.system {
+  background: rgba(255, 255, 255, 0.05);
+  border-color: var(--app-border-subtle);
+}
+
+html[data-app-theme='dark'] .topbar-more-item {
+  color: var(--app-text-primary);
+}
+
+html[data-app-theme='dark'] .topbar-more-item:hover {
+  background: rgba(255, 255, 255, 0.08);
+}
+
+html[data-app-theme='dark'] .dashboard-bug-modal-lead {
+  color: var(--app-text-muted);
+}
+
+html[data-app-theme='dark'] .dashboard-bug-field {
+  color: var(--app-text-muted);
+}
+
+html[data-app-theme='dark'] .dashboard-bug-sentiment-btn {
+  background: rgba(255, 255, 255, 0.06);
+  border-color: var(--app-border-subtle);
+  color: var(--app-text-primary);
+}
+
+html[data-app-theme='dark'] .dashboard-bug-sentiment-btn:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+html[data-app-theme='dark'] .dashboard-bug-sentiment-btn--active {
+  background: rgba(99, 102, 241, 0.28);
+  border-color: rgba(165, 180, 252, 0.55);
+  color: var(--app-text-primary);
+}
+
+html[data-app-theme='dark'] .dashboard-bug-textarea {
+  background: rgba(0, 0, 0, 0.2);
+  border-color: var(--app-border-subtle);
+  color: var(--app-text-primary);
+}
+
+html[data-app-theme='dark'] .dashboard-search {
+  background: var(--app-bg-alt);
+  border-color: var(--app-border-subtle);
+}
+
+html[data-app-theme='dark'] .dashboard-search-input {
+  color: var(--app-text-primary);
+}
+
+html[data-app-theme='dark'] .dashboard-search-input::placeholder {
+  color: var(--app-text-muted);
+}
+
+html[data-app-theme='dark'] .dashboard-search-icon {
+  color: var(--app-text-muted);
+}
+
+html[data-app-theme='dark'] .dashboard-search:focus-within {
+  border-color: rgba(255, 255, 255, 0.28);
+}
+
+html[data-app-theme='dark'] .dashboard-filters-bar select,
+html[data-app-theme='dark'] .dashboard-filters-bar button {
+  background: rgba(255, 255, 255, 0.06);
+  border-color: var(--app-border-subtle);
+  color: var(--app-text-primary);
+}
+
+html[data-app-theme='dark'] .dashboard-overview-mini-card,
+html[data-app-theme='dark'] .dashboard-panel,
+html[data-app-theme='dark'] .dashboard-heatmap-card,
+html[data-app-theme='dark'] .dashboard-recent-item,
+html[data-app-theme='dark'] .dashboard-user-card,
+html[data-app-theme='dark'] .dashboard-table-shell,
+html[data-app-theme='dark'] .dashboard-overview-link-inline {
+  background: var(--app-bg-alt);
+  border-color: var(--app-border-subtle);
+}
+
+html[data-app-theme='dark'] .dashboard-overview-mini-card:hover {
+  border-color: rgba(255, 255, 255, 0.22);
+}
+
+html[data-app-theme='dark'] .dashboard-overview-mini-card strong,
+html[data-app-theme='dark'] .dashboard-heatmap-cell span,
+html[data-app-theme='dark'] .dashboard-section-title h3,
+html[data-app-theme='dark'] .dashboard-recent-item strong,
+html[data-app-theme='dark'] .dashboard-metric-row strong,
+html[data-app-theme='dark'] .dashboard-user-card-head h4,
+html[data-app-theme='dark'] .dashboard-user-grid p {
+  color: var(--app-text-primary);
+}
+
+html[data-app-theme='dark'] .dashboard-overview-mini-card span,
+html[data-app-theme='dark'] .dashboard-overview-mini-card small,
+html[data-app-theme='dark'] .dashboard-metric-row,
+html[data-app-theme='dark'] .dashboard-alert-item p,
+html[data-app-theme='dark'] .dashboard-recent-item p,
+html[data-app-theme='dark'] .dashboard-heatmap-label,
+html[data-app-theme='dark'] .dashboard-heatmap-footnote,
+html[data-app-theme='dark'] .dashboard-section-title-inline span,
+html[data-app-theme='dark'] .dashboard-user-card-head p,
+html[data-app-theme='dark'] .dashboard-user-grid strong {
+  color: var(--app-text-muted);
+}
+
+html[data-app-theme='dark'] .dashboard-heatmap-cell {
+  border-color: rgba(255, 255, 255, 0.12);
+}
+
+html[data-app-theme='dark'] .dashboard-user-edit-btn,
+html[data-app-theme='dark'] .dashboard-user-cancel-btn {
+  background: rgba(255, 255, 255, 0.06);
+  border-color: var(--app-border-subtle);
+  color: var(--app-text-primary);
+}
+
+html[data-app-theme='dark'] .dashboard-user-save-btn {
+  background: #f1f5f9;
+  border-color: #f1f5f9;
+  color: #0f172a;
+}
+
+html[data-app-theme='dark'] .dashboard-user-avatar-lg {
+  background: rgba(255, 255, 255, 0.06);
+  border-color: var(--app-border-subtle);
+  color: var(--app-text-primary);
+}
+
+html[data-app-theme='dark'] .dashboard-user-avatar-edit-btn {
+  background: var(--app-bg-alt);
+  border-color: var(--app-border-subtle);
+  color: var(--app-text-primary);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.35);
+}
+
+html[data-app-theme='dark'] .dashboard-user-edit-grid label,
+html[data-app-theme='dark'] .dashboard-payment-edit-grid label {
+  color: var(--app-text-muted);
+}
+
+html[data-app-theme='dark'] .dashboard-user-edit-grid input,
+html[data-app-theme='dark'] .dashboard-user-edit-grid select,
+html[data-app-theme='dark'] .dashboard-payment-edit-grid input,
+html[data-app-theme='dark'] .dashboard-payment-edit-grid select {
+  background: rgba(255, 255, 255, 0.06);
+  border-color: var(--app-border-subtle);
+  color: var(--app-text-primary);
+}
+
+html[data-app-theme='dark'] .dashboard-field-hint {
+  color: var(--app-text-muted);
+}
+
+html[data-app-theme='dark'] .dashboard-user-edit-readonly {
+  background: rgba(255, 255, 255, 0.05);
+  border-color: var(--app-border-subtle);
+}
+
+html[data-app-theme='dark'] .dashboard-user-edit-readonly p {
+  color: var(--app-text-primary);
+}
+
+html[data-app-theme='dark'] .dashboard-user-subcard {
+  background: rgba(255, 255, 255, 0.05);
+  border-color: var(--app-border-subtle);
+}
+
+html[data-app-theme='dark'] .dashboard-user-subcard h4 {
+  color: var(--app-text-primary);
+}
+
+html[data-app-theme='dark'] .dashboard-doc-row strong {
+  color: var(--app-text-primary);
+}
+
+html[data-app-theme='dark'] .dashboard-doc-row p {
+  color: var(--app-text-muted);
+}
+
+html[data-app-theme='dark'] .dashboard-doc-upload-btn {
+  background: rgba(255, 255, 255, 0.06);
+  border-color: var(--app-border-subtle);
+  color: var(--app-text-primary);
+}
+
+html[data-app-theme='dark'] .dashboard-doc-submit-btn:disabled {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: var(--app-border-subtle);
+  color: var(--app-text-muted);
+}
+
+html[data-app-theme='dark'] .dashboard-user-kpis p {
+  color: var(--app-text-primary);
+}
+
+html[data-app-theme='dark'] .dashboard-table thead th {
+  background: rgba(255, 255, 255, 0.06);
+  color: var(--app-text-muted);
+  border-bottom-color: var(--app-border-subtle);
+}
+
+html[data-app-theme='dark'] .dashboard-table tbody td {
+  color: var(--app-text-primary);
+  border-bottom-color: rgba(255, 255, 255, 0.08);
+}
+
+html[data-app-theme='dark'] .dashboard-row-active {
+  background: rgba(37, 99, 235, 0.18);
+}
+
+html[data-app-theme='dark'] .dashboard-user-media-card {
+  background: rgba(255, 255, 255, 0.05);
+  border-color: var(--app-border-subtle);
+}
+
+html[data-app-theme='dark'] .dashboard-user-media-card strong {
+  color: var(--app-text-muted);
+}
+
+html[data-app-theme='dark'] .dashboard-user-media-preview {
+  background: rgba(255, 255, 255, 0.04);
+  border-color: var(--app-border-subtle);
+  color: var(--app-text-muted);
+}
+
+html[data-app-theme='dark'] .dashboard-user-media-upload {
+  background: rgba(255, 255, 255, 0.06);
+  border-color: var(--app-border-subtle);
+  color: var(--app-text-primary);
+}
+
+html[data-app-theme='dark'] .dashboard-user-media-card p {
+  color: var(--app-text-muted);
+}
+
+html[data-app-theme='dark'] .dashboard-modal {
+  background: var(--app-bg-alt);
+  color: var(--app-text-primary);
+}
+
+html[data-app-theme='dark'] .dashboard-modal h2 {
+  color: var(--app-text-primary);
+}
+
+html[data-app-theme='dark'] .project-card {
+  background: var(--app-bg-alt);
+  border-color: var(--app-border-subtle);
+}
+
+html[data-app-theme='dark'] .project-card-title {
+  color: var(--app-text-primary);
+}
+
+html[data-app-theme='dark'] .project-card-meta {
+  color: var(--app-text-muted);
+}
+
+html[data-app-theme='dark'] .action-btn {
+  background: rgba(255, 255, 255, 0.06);
+  border-color: var(--app-border-subtle);
+  color: var(--app-text-primary);
+}
+
+html[data-app-theme='dark'] .action-btn:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+/* —— Compte client (ClientCompteDashboard.css) —— */
+
+html[data-app-theme='dark'] .dashboard-container--client-compte .dashboard-client-main-title,
+html[data-app-theme='dark'] .dashboard-container--home-accueil .dashboard-client-main-title,
+html[data-app-theme='dark'] .dashboard-container--home-accueil .dashboard-topbar button.dashboard-client-main-title {
+  color: var(--app-text-primary);
+}
+
+html[data-app-theme='dark'] .client-compte-section-title,
+html[data-app-theme='dark'] .client-compte-ride-detail-title,
+html[data-app-theme='dark'] .client-compte-wallet-balance {
+  color: var(--app-text-primary);
+}
+
+html[data-app-theme='dark'] .client-compte-masked-pwd,
+html[data-app-theme='dark'] .client-compte-ride-row-meta,
+html[data-app-theme='dark'] .client-compte-ride-detail-grid dt {
+  color: var(--app-text-muted);
+}
+
+html[data-app-theme='dark'] .client-compte-ride-detail-grid dd,
+html[data-app-theme='dark'] .client-compte-help-faq dt {
+  color: var(--app-text-primary);
+}
+
+html[data-app-theme='dark'] .client-compte-help-faq dd {
+  color: var(--app-text-muted);
+}
+
+html[data-app-theme='dark'] .client-compte-oauth-row {
+  border-bottom-color: var(--app-border-subtle);
+}
+
+html[data-app-theme='dark'] .client-compte-ride-list > li,
+html[data-app-theme='dark'] .client-compte-ride-detail,
+html[data-app-theme='dark'] .client-compte-wallet-movement-row {
+  border-color: var(--app-border-subtle);
+}
+
+html[data-app-theme='dark'] .client-compte-ride-row:hover {
+  background: rgba(255, 255, 255, 0.06);
+}
+
+html[data-app-theme='dark'] .client-compte-ride-row--selected {
+  background: rgba(37, 99, 235, 0.22);
+  box-shadow: inset 3px 0 0 #60a5fa;
+}
+
+html[data-app-theme='dark'] .dashboard-title {
+  color: var(--app-text-primary);
+}
+
+html[data-app-theme='dark'] .dashboard-service-card {
+  background: var(--app-bg-alt);
+  border-color: var(--app-border-subtle);
+}
+
+html[data-app-theme='dark'] .dashboard-service-card h3 {
+  color: var(--app-text-primary);
+}
+
+html[data-app-theme='dark'] .dashboard-service-card p {
+  color: var(--app-text-muted);
+}
+
+html[data-app-theme='dark'] .planning-month-nav button {
+  background: rgba(255, 255, 255, 0.06);
+  border-color: var(--app-border-subtle);
+  color: var(--app-text-primary);
+}
+
+html[data-app-theme='dark'] .planning-month-nav span {
+  color: var(--app-text-primary);
+}
+
+html[data-app-theme='dark'] .planning-calendar-shell,
+html[data-app-theme='dark'] .planning-modal {
+  background: var(--app-bg-alt);
+  border-color: var(--app-border-subtle);
+}
+
+html[data-app-theme='dark'] .planning-weekdays {
+  background: rgba(255, 255, 255, 0.06);
+  border-bottom-color: var(--app-border-subtle);
+}
+
+html[data-app-theme='dark'] .planning-weekdays div {
+  color: var(--app-text-muted);
+}
+
+html[data-app-theme='dark'] .planning-cell {
+  border-color: rgba(255, 255, 255, 0.08);
+}
+
+html[data-app-theme='dark'] .planning-cell.filled {
+  background: var(--app-bg-alt);
+}
+
+html[data-app-theme='dark'] .planning-day-number {
+  color: var(--app-text-primary);
+}
+
+html[data-app-theme='dark'] .planning-modal-head h3 {
+  color: var(--app-text-primary);
+}
+
+/* Mobile : règles @media du shell (Dashboard.css) avec fond blanc forcé — à réaligner en sombre */
+@media (max-width: 768px) {
+  html[data-app-theme='dark'] .dashboard-sidebar {
+    background: var(--app-bg-alt);
+    border-color: var(--app-border-subtle);
+    box-shadow: 0 16px 34px rgba(0, 0, 0, 0.45);
+  }
+
+  html[data-app-theme='dark'] .dashboard-mobile-bottombar {
+    background: var(--app-bg-alt);
+    border-color: var(--app-border-subtle);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
+  }
+
+  html[data-app-theme='dark'] .dashboard-mobile-search-btn {
+    color: var(--app-text-muted);
+  }
+
+  html[data-app-theme='dark'] .dashboard-mobile-divider {
+    background: var(--app-border-subtle);
+  }
+
+  html[data-app-theme='dark'] .dashboard-mobile-menu-btn {
+    color: var(--app-text-primary);
+  }
+}

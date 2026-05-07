@@ -1,19 +1,25 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useMemo } from 'react'
 import { motion } from 'framer-motion'
 import { useLanguage } from '../contexts/LanguageContext'
-import { trackSearch } from '../services/googleAnalyticsTracking'
+import { trackSearch, trackEvent } from '../services/googleAnalyticsTracking'
 import Button from './Button'
 import MagicBento from './MagicBento'
 import './MobileSearchBar.css'
 import { getProjectByTitle, type MenuItem, type MenuCategory } from '../services/projectService'
 import { getAllProjects as getAllProjectsFromService } from '../services/projectService'
 import { menuCategories as staticMenuCategories } from '../data/menuCategories'
+import {
+  POPULAR_DESTINATIONS,
+  SECTOR_DESTINATIONS,
+  filterPopularDestinations,
+  type PopularDestination,
+} from '../data/popularDestinations'
+import { PLACEHOLDER_COVER } from '../constants/imagePlaceholders'
 
-const ENABLED_PROJECT_TITLES = ['Playdago', 'Pedaboard', 'Kaldera']
+const ENABLED_PROJECT_TITLES = ['Go']
 
 interface MobileSearchBarProps {
   onSearchChange?: (searchTerm: string) => void
-  onMenuClick: () => void
   onSearchClick?: () => void
   onPageChange?: (page: string, projectImage?: string, projectCategory?: string) => void
   currentPage?: string
@@ -22,11 +28,9 @@ interface MobileSearchBarProps {
   projectSwipeY?: number
 }
 
-const MobileSearchBar = ({ onSearchChange, onMenuClick, onSearchClick, onPageChange, currentPage, onProjectClose, onContactClick, projectSwipeY = 0 }: MobileSearchBarProps) => {
-  const { t } = useLanguage()
+const MobileSearchBar = ({ onSearchChange, onSearchClick, onPageChange, currentPage, onProjectClose, onContactClick, projectSwipeY = 0 }: MobileSearchBarProps) => {
+  const { t, language } = useLanguage()
   const [searchTerm, setSearchTerm] = useState('')
-  const [placeholderIndex, setPlaceholderIndex] = useState(0)
-  const [placeholderOpacity, setPlaceholderOpacity] = useState(1)
   // Catégories avec tous les projets (Application, Site web, Logo, Motion, Plv)
   const [menuCategories] = useState<MenuCategory[]>(staticMenuCategories)
   const allProjects = staticMenuCategories.flatMap(c => c.projects)
@@ -45,11 +49,7 @@ const MobileSearchBar = ({ onSearchChange, onMenuClick, onSearchClick, onPageCha
   const [showPreviousImage, setShowPreviousImage] = useState(false)
   const [showNextImage, setShowNextImage] = useState(false)
   
-  const placeholders = [
-    t('search.placeholder1'),
-    t('search.placeholder2'),
-    t('search.placeholder3'),
-  ]
+  const destinationPlaceholder = t('search.destinationPlaceholder')
 
   // Fonction pour grouper les résultats par catégorie
   const getGroupedResults = (): Array<{ category: MenuCategory; projects: MenuItem[] }> => {
@@ -97,7 +97,7 @@ const MobileSearchBar = ({ onSearchChange, onMenuClick, onSearchClick, onPageCha
       .filter(group => group.projects.length > 0)
   }
 
-  // Détecter quand on ouvre une page SingleProject pour déclencher l'animation
+  // Détecter quand on ouvre la page Go (/project-Go) pour déclencher l'animation
   useEffect(() => {
     const isOnProjectPage = currentPage?.startsWith('project-')
     if (isOnProjectPage) {
@@ -191,23 +191,6 @@ const MobileSearchBar = ({ onSearchChange, onMenuClick, onSearchClick, onPageCha
   }, [currentPage, menuCategories])
 
 
-  // Placeholder : une seule div, fondu sortant → changement de texte (opacité 0) → fondu entrant. Pas de crossfade = pas de clignotement.
-  const PLACEHOLDER_FADE_MS = 450
-  useEffect(() => {
-    let timeoutId: ReturnType<typeof setTimeout>
-    const interval = setInterval(() => {
-      setPlaceholderOpacity(0)
-      timeoutId = setTimeout(() => {
-        setPlaceholderIndex((prev) => (prev + 1) % placeholders.length)
-        setPlaceholderOpacity(1)
-      }, PLACEHOLDER_FADE_MS)
-    }, 3000)
-    return () => {
-      clearInterval(interval)
-      clearTimeout(timeoutId!)
-    }
-  }, [])
-
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value
     setSearchTerm(value)
@@ -249,8 +232,31 @@ const MobileSearchBar = ({ onSearchChange, onMenuClick, onSearchClick, onPageCha
     }
   }
 
+  const handleDestinationCardClick = (d: PopularDestination, analyticsCategory: 'search_destination' | 'search_sector') => {
+    const query = d.geocodeQuery
+    setSearchTerm(query)
+    setShowResults(false)
+    if (onSearchChange) onSearchChange(query)
+    trackEvent('click', analyticsCategory, d.id)
+  }
+
   const handleResultClick = (project: any) => {
-    if (searchTerm.trim()) trackSearch(searchTerm.trim(), getGroupedResults().reduce((acc, g) => acc + g.projects.length, 0))
+    if (searchTerm.trim()) {
+      const raw = getGroupedResults()
+      const searchBarActive =
+        !(currentPage?.startsWith('project-') || currentPage === 'project') && showResults
+      const visible = raw
+      const popularCount = searchBarActive
+        ? filterPopularDestinations(POPULAR_DESTINATIONS, searchTerm, language).length
+        : 0
+      const sectorCount = searchBarActive
+        ? filterPopularDestinations(SECTOR_DESTINATIONS, searchTerm, language).length
+        : 0
+      trackSearch(
+        searchTerm.trim(),
+        popularCount + sectorCount + visible.reduce((acc, g) => acc + g.projects.length, 0)
+      )
+    }
     setSearchTerm(project.title)
     setShowResults(false)
     if (onSearchChange) {
@@ -259,10 +265,8 @@ const MobileSearchBar = ({ onSearchChange, onMenuClick, onSearchClick, onPageCha
     
     // Navigation spéciale pour les pages de navigation
     if (onPageChange) {
-      if (project.title === 'Home') {
+      if (project.title === 'Home' || project.title === 'About') {
         onPageChange('accueil')
-      } else if (project.title === 'About') {
-        onPageChange('apropos')
       } else {
         // Navigation vers la page single du projet avec les informations du projet
         const projectInfo = getProjectInfo(project.title)
@@ -376,9 +380,27 @@ const MobileSearchBar = ({ onSearchChange, onMenuClick, onSearchClick, onPageCha
 
   const isOnProjectPage = currentPage?.startsWith('project-') || currentPage === 'project'
   const opacity = isOnProjectPage ? Math.max(0, Math.min(1, 1 - (projectSwipeY / screenHeight))) : 1
-  const groupedResults = getGroupedResults()
-  const hasResults = groupedResults.some(group => group.projects.length > 0)
   const isSearchActive = !isOnProjectPage && showResults
+  const visiblePopularDestinations = useMemo(
+    () =>
+      isSearchActive
+        ? filterPopularDestinations(POPULAR_DESTINATIONS, searchTerm, language)
+        : [],
+    [isSearchActive, searchTerm, language]
+  )
+  const visibleSectorDestinations = useMemo(
+    () =>
+      isSearchActive
+        ? filterPopularDestinations(SECTOR_DESTINATIONS, searchTerm, language)
+        : [],
+    [isSearchActive, searchTerm, language]
+  )
+  const rawGroupedResults = getGroupedResults()
+  const groupedResults = isSearchActive ? [] : rawGroupedResults
+  const hasResults =
+    visiblePopularDestinations.length > 0 ||
+    visibleSectorDestinations.length > 0 ||
+    groupedResults.some((group) => group.projects.length > 0)
 
   // Bloquer le scroll du main quand la search bar est active
   useEffect(() => {
@@ -612,13 +634,8 @@ const MobileSearchBar = ({ onSearchChange, onMenuClick, onSearchClick, onPageCha
                     <div
                       className="search-placeholder search-placeholder-single"
                       onClick={handleSearchClick}
-                      style={{
-                        opacity: placeholderOpacity,
-                        transition: `opacity ${PLACEHOLDER_FADE_MS}ms ease-in-out`,
-                        pointerEvents: placeholderOpacity > 0 ? 'auto' : 'none',
-                      }}
                     >
-                      {placeholders[placeholderIndex]}
+                      {destinationPlaceholder}
                     </div>
                   )}
                   <div className="input-wrapper">
@@ -665,6 +682,72 @@ const MobileSearchBar = ({ onSearchChange, onMenuClick, onSearchClick, onPageCha
             {/* Résultats de recherche en dessous de l'input */}
         {showResults && (
           <div className="search-results">
+            {isSearchActive && visiblePopularDestinations.length > 0 && (
+              <div className="search-results-category">
+                <h3 className="search-category-title">{t('search.popularPlacesTitle')}</h3>
+                <div className="search-results-row">
+                  {visiblePopularDestinations.map((d) => (
+                    <div
+                      key={d.id}
+                      className="search-result-item"
+                      onClick={() => handleDestinationCardClick(d, 'search_destination')}
+                    >
+                      <div className="search-result-image">
+                        <img
+                          src={d.imageSrc}
+                          alt={language === 'en' ? d.titleEn : d.titleFr}
+                          loading="lazy"
+                          decoding="async"
+                          onError={(e) => {
+                            e.currentTarget.onerror = null
+                            e.currentTarget.src = PLACEHOLDER_COVER
+                          }}
+                        />
+                      </div>
+                      <div className="search-result-title">
+                        {language === 'en' ? d.titleEn : d.titleFr}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+            {isSearchActive && visibleSectorDestinations.length > 0 && (
+              <div className="search-results-category">
+                <h3 className="search-category-title">{t('search.sectorsTitle')}</h3>
+                <div className="search-results-row">
+                  {visibleSectorDestinations.map((d) => (
+                    <div
+                      key={d.id}
+                      className="search-result-item"
+                      onClick={() => handleDestinationCardClick(d, 'search_sector')}
+                    >
+                      <div className="search-result-image">
+                        {d.imageSrc ? (
+                          <img
+                            src={d.imageSrc}
+                            alt={language === 'en' ? d.titleEn : d.titleFr}
+                            loading="lazy"
+                            decoding="async"
+                            onError={(e) => {
+                              e.currentTarget.onerror = null
+                              e.currentTarget.src = PLACEHOLDER_COVER
+                            }}
+                          />
+                        ) : (
+                          <div className="search-result-placeholder" aria-hidden>
+                            {(language === 'en' ? d.titleEn : d.titleFr).charAt(0)}
+                          </div>
+                        )}
+                      </div>
+                      <div className="search-result-title">
+                        {language === 'en' ? d.titleEn : d.titleFr}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
             {groupedResults.map((group) => (
               <div key={group.category.key} className="search-results-category">
                 <h3 className="search-category-title">{group.category.title}</h3>
@@ -704,23 +787,6 @@ const MobileSearchBar = ({ onSearchChange, onMenuClick, onSearchClick, onPageCha
           </div>
         )}
           </MagicBento>
-          <motion.div
-            initial={{ opacity: 0, scale: 0.8, y: -20 }}
-            animate={{ opacity: 1, scale: 1, y: 0 }}
-            transition={{
-              type: "spring",
-              stiffness: 300,
-              damping: 20,
-              duration: 0.6,
-              delay: 0.05
-            }}
-          >
-            <Button variant="secondary" icon={true} iconSize="medium" onClick={onMenuClick} className="home-button">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <path fillRule="evenodd" clipRule="evenodd" d="M8 2.5C8.55228 2.5 9 2.94772 9 3.5V6.5C9 7.29565 8.68393 8.05871 8.12132 8.62132C7.55871 9.18393 6.79565 9.5 6 9.5H3C2.44772 9.5 2 9.05228 2 8.5C2 7.94772 2.44772 7.5 3 7.5H6C6.26522 7.5 6.51957 7.39464 6.70711 7.20711C6.89464 7.01957 7 6.76522 7 6.5V3.5C7 2.94772 7.44772 2.5 8 2.5ZM16 2.5C16.5523 2.5 17 2.94772 17 3.5V6.5C17 6.76522 17.1054 7.01957 17.2929 7.20711C17.4804 7.39464 17.7348 7.5 18 7.5H21C21.5523 7.5 22 7.94772 22 8.5C22 9.05228 21.5523 9.5 21 9.5H18C17.2044 9.5 16.4413 9.18393 15.8787 8.62132C15.3161 8.05871 15 7.29565 15 6.5V3.5C15 2.94772 15.4477 2.5 16 2.5ZM2 16.5C2 15.9477 2.44772 15.5 3 15.5H6C6.79565 15.5 7.55871 15.8161 8.12132 16.3787C8.68393 16.9413 9 17.7044 9 18.5V21.5C9 22.0523 8.55228 22.5 8 22.5C7.44772 22.5 7 22.0523 7 21.5V18.5C7 18.2348 6.89464 17.9804 6.70711 17.7929C6.51957 17.6054 6.26522 17.5 6 17.5H3C2.44772 17.5 2 17.0523 2 16.5ZM18 17.5C17.7348 17.5 17.4804 17.6054 17.2929 17.7929C17.1054 17.9804 17 18.2348 17 18.5V21.5C17 22.0523 16.5523 22.5 16 22.5C15.4477 22.5 15 22.0523 15 21.5V18.5C15 17.7043 15.3161 16.9413 15.8787 16.3787C16.4413 15.8161 17.2043 15.5 18 15.5H21C21.5523 15.5 22 15.9477 22 16.5C22 17.0523 21.5523 17.5 21 17.5H18Z" fill="white"/>
-        </svg>
-      </Button>
-          </motion.div>
         </>
       )}
       </div>

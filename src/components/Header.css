@@ -13,7 +13,7 @@
 
 .header-content {
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   gap: 12px;
   padding: 0 24px;
   position: relative;
@@ -21,15 +21,19 @@
   animation: headerBounce 700ms cubic-bezier(0.22, 1, 0.36, 1) 120ms both;
   transform-origin: top center;
   z-index: inherit;
+  width: 100%;
+  box-sizing: border-box;
 }
 
-/* Sur mobile, mettre le header en colonne avec la search bar en dessous */
-@media (max-width: 768px) {
-  .header-content {
-    flex-direction: column;
-    align-items: stretch;
-    gap: 16px;
-  }
+/* Header sans barre de recherche : logo aligné à droite (comme avant avec zone search flexible). */
+.header-content--compact {
+  justify-content: flex-end;
+  /* Ne pas capter les clics sur toute la bande : le contenu (ex. sidebar compte) passe sous le header. */
+  pointer-events: none;
+}
+
+.header-content--compact > * {
+  pointer-events: auto;
 }
 
 .header-center {
@@ -41,11 +45,11 @@
   align-items: center;
 }
 
-/* Wrapper pour MobileSearchBar + LanguageSwitcher dans le header */
+/* Wrapper pour MobileSearchBar + LanguageSwitcher dans le header (recherche à gauche) */
 .header-search-wrapper {
   display: flex;
   align-items: center;
-  justify-content: flex-end;
+  justify-content: flex-start;
   flex: 1;
   padding: 0;
   min-width: 0;
@@ -53,7 +57,7 @@
   gap: 12px;
 }
 
-/* Quand search active : le wrapper remplit la cellule grille à droite du logo */
+/* Quand search active : le wrapper remplit la cellule grille à gauche du profil */
 .header:has(.mobile-search-bar.search-active) .header-search-wrapper {
   min-height: 0;
   height: 100%;
@@ -65,21 +69,25 @@
   align-self: flex-start;
 }
 
-/* Sur mobile, la search bar prend toute la largeur et est en dessous */
+/* Sur mobile : recherche à gauche / plein centre du bloc flex, profil à droite (même ligne si possible) */
 @media (max-width: 768px) {
-  .header-search-wrapper {
-    width: 100%;
-    padding: 0;
-    margin-top: 0;
-    order: 2;
-    box-sizing: border-box;
+  .header-content {
+    flex-direction: row;
+    flex-wrap: wrap;
     align-items: center;
-    justify-content: center;
+    gap: 16px;
   }
 
   .header-search-wrapper {
+    flex: 1 1 auto;
+    min-width: 0;
+    width: auto;
+    padding: 0;
+    margin-top: 0;
+    box-sizing: border-box;
+    align-items: center;
+    justify-content: flex-start;
     flex-wrap: wrap;
-    justify-content: center;
   }
 
   .header-search-wrapper .mobile-search-bar {
@@ -87,19 +95,20 @@
     top: auto;
     left: auto;
     right: auto;
-    width: 100%;
+    flex: 1 1 auto;
+    min-width: 0;
+    width: auto;
     max-width: 100%;
-    min-width: 100%;
     padding: 0;
     margin: 0;
     box-sizing: border-box;
     align-items: center;
-    justify-content: center;
+    justify-content: flex-start;
   }
 
   .logo-section {
-    order: 1;
-    width: 100%;
+    flex-shrink: 0;
+    width: auto;
   }
 }
 
@@ -119,23 +128,24 @@
   isolation: auto;
   display: flex;
   align-items: center;
-  justify-content: flex-end;
-  flex: 0 0 auto;
+  justify-content: flex-start;
+  flex: 0 1 auto;
   flex-shrink: 0;
-  margin-left: auto;
+  margin-left: 0;
+  margin-right: 0;
   box-sizing: border-box;
 }
 
-/* Sur mobile, centrer la search bar */
+/* Sur mobile : aligner la search à gauche dans le wrapper */
 @media (max-width: 768px) {
   .header-search-wrapper .mobile-search-bar {
-    justify-content: center;
+    justify-content: flex-start;
     margin-left: 0;
     margin-right: 0;
   }
 }
 
-/* Quand la search bar est active : le header devient une grille, la search bar s’arrête après le logo (Anthony Merault, product…) */
+/* Quand la search bar est active : le header devient une grille plein écran (search + profil) */
 .header:has(.mobile-search-bar.search-active) {
   z-index: 10000;
   position: fixed;
@@ -146,11 +156,11 @@
   pointer-events: auto;
 }
 
-/* Desktop : search active = grille (logo à gauche, search à droite) */
+/* Desktop : search active = grille (search à gauche, profil à droite) */
 @media (min-width: 769px) {
   .header:has(.mobile-search-bar.search-active) .header-content {
     display: grid;
-    grid-template-columns: auto 1fr;
+    grid-template-columns: 1fr auto;
     grid-template-rows: 1fr;
     align-items: stretch;
     width: 100%;
@@ -173,7 +183,7 @@
   }
 }
 
-/* Mobile : search active = colonne (logo au-dessus, search en dessous) */
+/* Mobile : search active = colonne (search en haut, profil en dessous) */
 @media (max-width: 768px) {
   .header:has(.mobile-search-bar.search-active) .header-content {
     display: flex;
@@ -189,6 +199,7 @@
   .header:has(.mobile-search-bar.search-active) .header-content .logo-section {
     padding-left: 16px;
     padding-right: 16px;
+    align-self: flex-end;
     box-sizing: border-box;
   }
 
@@ -229,7 +240,7 @@
   box-sizing: border-box;
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
-  background: rgba(255, 255, 255, 0.1);
+  background: var(--search-a10);
   isolation: auto;
 }
 
@@ -296,10 +307,10 @@
 
 .logo-section {
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   gap: 12px;
-  margin-left: 0px;
-  flex-shrink: 1;
+  margin-left: 0;
+  flex-shrink: 0;
   min-width: 0;
   justify-content: flex-start;
   background: none;
@@ -307,7 +318,7 @@
   padding: 0;
   cursor: pointer;
   position: relative;
-  z-index: 10000;
+  z-index: 2;
 }
 
 /* S'assurer que le logo reste en haut quand la search bar est active */
@@ -317,23 +328,30 @@
   z-index: 10002;
 }
 
-.logo-section .logo-text {
-  text-align: left;
-  min-width: 0;
+.logo-section__chevron {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  color: var(--app-text-primary);
+}
+
+.logo-section__chevron svg {
+  display: block;
 }
 
 .logo {
   position: relative;
-  width: 56px;
-  height: 56px;
+  width: 32px;
+  height: 32px;
   aspect-ratio: 1 / 1;
   border-radius: 50%;
   overflow: hidden;
   flex-shrink: 0;
-  box-shadow: 0 0 0 4px rgba(255, 255, 255, 0.2);
-  background: rgba(255, 255, 255, 0.4);
+  box-shadow: 0 0 0 2px var(--search-a20);
+  background: var(--header-logo-face);
   backdrop-filter: blur(10px);
-  margin-left: 16px;
+  margin-left: 0;
 }
 
 .logo img {
@@ -348,7 +366,7 @@
 }
 
 /* Style spécifique pour le logo SVG (fallback) */
-.logo img[src*="logo.svg"] {
+.logo img[src*="placeholder-logo.svg"] {
   top: 4%;
   left: 9%;
   width: 50%;
@@ -358,38 +376,6 @@
 
 /* removed conditional invert */
 
-.logo-text .logo-name {
-  font-size: 18px;
-  font-weight: 400;
-  margin: 0;
-  color: white;
-  line-height: 1.2;
-  font-family: inherit;
-}
-
-.logo-text h1 {
-  font-size: 18px;
-  font-weight: 400;
-  margin: 0;
-  color: white;
-  line-height: 1.2;
-}
-
-/* Skeleton pour le nom dans le header */
-.logo-text .header-name-skeleton {
-  display: inline-block;
-  margin: 0;
-  vertical-align: baseline;
-  background: linear-gradient(
-    90deg,
-    rgba(255, 255, 255, 0.1) 0%,
-    rgba(255, 255, 255, 0.2) 50%,
-    rgba(255, 255, 255, 0.1) 100%
-  );
-  background-size: 200% 100%;
-  animation: header-skeleton-loading 1.5s ease-in-out infinite;
-}
-
 /* Skeleton pour le logo (photo de profil) */
 .logo .logo-skeleton {
   position: absolute;
@@ -397,27 +383,6 @@
   left: 0;
   width: 100%;
   height: 100%;
-}
-
-@keyframes header-skeleton-loading {
-  0% {
-    background-position: 200% 0;
-  }
-  100% {
-    background-position: -200% 0;
-  }
-}
-
-.logo-text p {
-  font-size: 12px;
-  color: rgba(255, 255, 255, 1);
-  margin: 0;
-  font-family: 'DM Mono', monospace;
-  font-weight: 300;
-  line-height: 1.35;
-  white-space: normal;
-  overflow-wrap: break-word;
-  word-wrap: break-word;
 }
 
 .header-actions {
@@ -430,9 +395,9 @@
 /* Styles de boutons supprimés - utilisent maintenant Button.css */
 
 .search-bar {
-  background: rgba(255, 255, 255, 0.1);
+  background: var(--search-a10);
   backdrop-filter: blur(10px);
-  border: 1px solid rgba(255, 255, 255, 0.2);
+  border: 1px solid var(--search-a20);
   border-radius: 100px;
   padding: 12px 20px;
   display: flex;
@@ -481,7 +446,7 @@
 .header-search .search-input {
   background: none;
   border: none;
-  color: white;
+  color: var(--search-text-100);
   font-size: 14px;
   outline: none;
   flex: 1;
@@ -495,7 +460,7 @@
   top: 50%;
   left: 0;
   transform: translateY(-50%);
-  color: rgba(255, 255, 255, 0.7);
+  color: var(--search-text-70);
   font-size: 14px;
   pointer-events: none;
   z-index: 1;
@@ -519,7 +484,7 @@
   transform: translateY(-50%);
   background: none;
   border: none;
-  color: rgba(255, 255, 255, 0.6);
+  color: var(--search-text-60);
   cursor: pointer;
   padding: 4px;
   border-radius: 50%;
@@ -531,30 +496,30 @@
 }
 
 .header-search .clear-button:hover {
-  color: rgba(255, 255, 255, 0.9);
-  background: rgba(255, 255, 255, 0.1);
+  color: var(--search-text-90);
+  background: var(--search-a10);
 }
 
 .search-bar input {
   background: none;
   border: none;
-  color: white;
+  color: var(--search-text-100);
   font-size: 14px;
   outline: none;
   flex: 1;
 }
 
 .search-bar input::placeholder {
-  color: rgba(255, 255, 255, 0.7);
+  color: var(--search-text-70);
 }
 
 .search-bar:focus-within {
-  background: rgba(255, 255, 255, 0.15);
-  border: 1.5px solid rgba(255, 255, 255, 0.3);
+  background: var(--search-a15);
+  border: 1.5px solid var(--search-a30);
 }
 
 .search-bar:focus-within input {
-  color: white;
+  color: var(--search-text-100);
 }
 
 .search-bar svg {
@@ -573,7 +538,7 @@
 .search-input {
   background: none;
   border: none;
-  color: white;
+  color: var(--search-text-100);
   font-size: 14px;
   outline: none;
   flex: 1;
@@ -586,7 +551,7 @@
   position: absolute;
   top: 0;
   left: 0;
-  color: rgba(255, 255, 255, 0.7);
+  color: var(--search-text-70);
   font-size: 14px;
   pointer-events: none;
   z-index: 1;
@@ -620,7 +585,7 @@
   transform: translateY(-50%);
   background: none;
   border: none;
-  color: rgba(255, 255, 255, 0.6);
+  color: var(--search-text-60);
   cursor: pointer;
   padding: 4px;
   border-radius: 50%;
@@ -632,8 +597,8 @@
 }
 
 .clear-button:hover {
-  color: rgba(255, 255, 255, 0.9);
-  background: rgba(255, 255, 255, 0.1);
+  color: var(--search-text-90);
+  background: var(--search-a10);
 }
 
 .clear-button:active {
@@ -659,11 +624,6 @@
 
   .header-search {
     padding-left: 16px;
-  }
-
-  /* Masquer le bouton menu sur mobile car il est remplacé par celui de la search bar */
-  .header-actions button:last-child {
-    display: none;
   }
 
   .logo {

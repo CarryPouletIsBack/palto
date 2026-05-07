@@ -19,26 +19,3 @@
   }
 }
 
-/* Variante pour la page AboutNew avec fond sombre */
-.apropos-new-page .skeleton {
-  background: linear-gradient(
-    90deg,
-    rgba(255, 255, 255, 0.05) 0%,
-    rgba(255, 255, 255, 0.1) 50%,
-    rgba(255, 255, 255, 0.05) 100%
-  );
-  background-size: 200% 100%;
-  animation: skeleton-loading 1.5s ease-in-out infinite;
-}
-
-/* Variante pour les cartes blanches dans AboutNew */
-.apropos-new-page .intro-column .hero-card.services-card .skeleton {
-  background: linear-gradient(
-    90deg,
-    rgba(0, 0, 0, 0.06) 0%,
-    rgba(0, 0, 0, 0.12) 50%,
-    rgba(0, 0, 0, 0.06) 100%
-  ) !important;
-  background-size: 200% 100% !important;
-  animation: skeleton-loading 1.5s ease-in-out infinite !important;
-}

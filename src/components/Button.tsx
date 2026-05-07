@@ -9,6 +9,7 @@ interface ButtonProps {
   type?: 'button' | 'submit' | 'reset'
   icon?: boolean
   iconSize?: 'small' | 'medium' | 'large'
+  'aria-label'?: string
 }
 
 const Button = ({ 
@@ -18,13 +19,15 @@ const Button = ({
   className = '', 
   type = 'button',
   icon = false,
-  iconSize = 'medium'
+  iconSize = 'medium',
+  'aria-label': ariaLabel,
 }: ButtonProps) => {
   return (
     <button 
       type={type}
       className={`btn btn-${variant} ${icon ? `btn-icon btn-icon-${iconSize}` : ''} ${className}`}
       onClick={onClick}
+      aria-label={ariaLabel}
     >
       {children}
     </button>

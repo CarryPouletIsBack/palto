@@ -1,7 +1,9 @@
 /* ===== Design tokens Figma (Single Project) ===== */
 .single-project-page {
   /* Couleurs */
-  --sp-bg: #fff8f5;
+  --sp-warm-surface: #fff8f5;
+  --sp-card-surface: #ffffff;
+  --sp-bg: var(--sp-warm-surface);
   --sp-text: #1f2937;
   --sp-text-subtle: #374963;
   --sp-border: #b2aaaa;
@@ -9,6 +11,10 @@
   --sp-badge-bg: #fce9cf;
   --sp-badge-border: #f6be6f;
   --sp-badge-text: #f1582a;
+  /* Bordures / surfaces UI course (Go) — lisibles en clair et en sombre via SingleProject.app-theme.css */
+  --sp-edge: rgba(15, 23, 42, 0.14);
+  --sp-edge-medium: rgba(15, 23, 42, 0.2);
+  --sp-edge-dashed: rgba(15, 23, 42, 0.26);
   /* Typographie */
   --sp-font-title: 'Space Grotesk', sans-serif;
   --sp-font-body: 'Inter', sans-serif;
@@ -55,7 +61,7 @@
   left: 0;
   right: 0;
   bottom: 0;
-  background: var(--sp-bg);
+  background: var(--app-bg-page);
   overflow-y: auto !important;
   overflow-x: hidden;
   -webkit-overflow-scrolling: touch;
@@ -144,7 +150,7 @@
 }
 
 
-/* Main : ≥1286px — pas de padding horizontal (pleine largeur dans max-width 1280, Figma 1440) */
+/* Main : pas de padding horizontal sur le main — gouttière sur les blocs concernés (--sp-padding-x-fluid), toutes largeurs. */
 .single-project-page .main-single-project {
   box-sizing: border-box;
   display: flex;
@@ -165,38 +171,19 @@
   padding-right: 0;
   min-height: calc(100vh - 112px);
   transition: padding 0.2s ease, gap 0.2s ease;
+  background: var(--app-bg-page);
 }
 
-/*
- * ≤1285px : gouttière sur tout le main (alignée esprit maquette 1440 : jusqu’à 48px).
- * Les blocs sommaire / intro / équipe / processus n’ajoutent plus leur propre padding (évite le double).
- */
-@media (max-width: 1285px) {
-  .single-project-page .main-single-project {
-    padding-left: clamp(16px, 2.8vw + 18px, 48px);
-    padding-right: clamp(16px, 2.8vw + 18px, 48px);
-  }
-
-  .single-project-page .main-single-project > .table-of-contents-section,
-  .single-project-page .main-single-project > .intro-section,
-  .single-project-page .main-single-project > .team-section,
-  .single-project-page .main-single-project > .processus-cards-section {
-    padding-left: 0;
-    padding-right: 0;
-  }
-}
-
-/* Gouttière horizontale : sommaire, intro, équipe, processus — uniquement grand écran (main sans padding) */
-@media (min-width: 1286px) {
-  .single-project-page .main-single-project > .table-of-contents-section,
-  .single-project-page .main-single-project > .intro-section,
-  .single-project-page .main-single-project > .team-section,
-  .single-project-page .main-single-project > .processus-cards-section {
-    padding-left: var(--sp-padding-x-fluid);
-    padding-right: var(--sp-padding-x-fluid);
-    box-sizing: border-box;
-    width: 100%;
-  }
+/* Gouttière horizontale : sommaire, intro, équipe, processus, Go — même logique que Figma 1440, sans marge sur le main <1286px. */
+.single-project-page .main-single-project > .table-of-contents-section,
+.single-project-page .main-single-project > .intro-section,
+.single-project-page .main-single-project > .team-section,
+.single-project-page .main-single-project > .processus-cards-section,
+.single-project-page .main-single-project > .palto-ride-main {
+  padding-left: var(--sp-padding-x-fluid);
+  padding-right: var(--sp-padding-x-fluid);
+  box-sizing: border-box;
+  width: 100%;
 }
 
 /* Les sections sont des enfants directs : l’espacement vient du gap du main, pas de margin */
@@ -210,20 +197,20 @@
   padding-bottom: 0;
 }
 
-/* Tablette : gap (padding h horizontal géré par max-width: 1285px) */
+/* Tablette : gap */
 @media (max-width: 1024px) {
   .single-project-page .main-single-project {
     gap: 40px;
   }
 }
 
-/* Mobile : 12px gauche/droite sur tout le contenu du main */
+/* Mobile : pas de padding horizontal sur le main (gouttière = --sp-padding-x-fluid sur les blocs listés ci-dessus). */
 @media (max-width: 768px) {
   .single-project-page .main-single-project {
     padding-top: var(--sp-main-padding-y-mobile);
     padding-bottom: var(--sp-main-padding-bottom);
-    padding-left: var(--sp-main-padding-x-mobile-compact);
-    padding-right: var(--sp-main-padding-x-mobile-compact);
+    padding-left: 0;
+    padding-right: 0;
     gap: 40px;
   }
 }
@@ -430,7 +417,7 @@
 }
 
 .process-card {
-  background: #fff8f5;
+  background: var(--sp-warm-surface);
   box-sizing: border-box;
   display: flex;
   flex-direction: column;
@@ -497,7 +484,7 @@
   gap: 24px;
   width: 100%;
   max-width: 100%;
-  background: #fff8f5;
+  background: var(--sp-warm-surface);
   padding: 24px 24px;
   border-radius: 8px;
   border: none;
@@ -568,7 +555,7 @@
   width: 100%;
   max-width: 100%;
   min-width: 0;
-  background: #FFFFFF;
+  background: var(--sp-card-surface);
   border-radius: 12px;
   padding: 16px;
   box-sizing: border-box;
@@ -745,7 +732,7 @@
   flex-direction: column;
   gap: 16px;
   width: 100%;
-  background: #fff8f5;
+  background: var(--sp-warm-surface);
   padding: 24px 0px;
   border-radius: 8px;
   border: none;
@@ -797,7 +784,7 @@
   width: 100%;
   max-width: 100%;
   min-width: 0;
-  background: #FFFFFF;
+  background: var(--sp-card-surface);
   border-radius: 12px;
   padding: 24px;
   box-sizing: border-box;
@@ -1124,7 +1111,7 @@
 .figma-equipe-table {
   width: 100%;
   border-collapse: collapse;
-  background: #fff8f5;
+  background: var(--sp-warm-surface);
   font-family: var(--sp-font-mono);
   font-size: 16px;
   line-height: 24px;
@@ -1608,15 +1595,15 @@
   vertical-align: middle;
 }
 
-/* Playdago — 1re slide Audit (Blue.png) : bas-droite, −15 % ; translate pour la position ; overflow hidden du .figma-audit-slide rogne */
-.figma-audit-slide.figma-audit-slide--playdago-blue {
+/* Palto — 1re slide Audit (Blue.png) : bas-droite, −15 % ; translate pour la position ; overflow hidden du .figma-audit-slide rogne */
+.figma-audit-slide.figma-audit-slide--palto-blue {
   display: flex;
   justify-content: flex-end;
   align-items: flex-end;
   overflow: hidden;
 }
 
-.figma-audit-slide--playdago-blue img {
+.figma-audit-slide--palto-blue img {
   width: 85%;
   max-width: 85%;
   height: 100%;
@@ -1627,26 +1614,26 @@
   position: relative;
 }
 
-/* Playdago — zoom très léger au survol des visuels Audit (PNG dans le cadre) */
-.figma-audit-carousel--playdago .figma-audit-slide img {
+/* Palto — zoom très léger au survol des visuels Audit (PNG dans le cadre) */
+.figma-audit-carousel--palto .figma-audit-slide img {
   transition: transform 0.45s cubic-bezier(0.25, 0.1, 0.25, 1);
 }
 
-.figma-audit-carousel--playdago .figma-audit-slide:hover img {
+.figma-audit-carousel--palto .figma-audit-slide:hover img {
   transform: scale(1.018);
 }
 
-.figma-audit-carousel--playdago .figma-audit-slide--playdago-blue:hover img {
+.figma-audit-carousel--palto .figma-audit-slide--palto-blue:hover img {
   transform: translate(18px, 22px) scale(1.018);
 }
 
 /* Conception & Itération uniquement : 1re slide (même cadre que Blue côté Audit) — PNG centré */
-.figma-audit-carousel--playdago-conception .figma-audit-slide--playdago-blue {
+.figma-audit-carousel--palto-conception .figma-audit-slide--palto-blue {
   justify-content: center;
   align-items: center;
 }
 
-.figma-audit-carousel--playdago-conception .figma-audit-slide--playdago-blue img {
+.figma-audit-carousel--palto-conception .figma-audit-slide--palto-blue img {
   width: 100%;
   max-width: 100%;
   height: 100%;
@@ -1656,24 +1643,24 @@
   transform: none;
 }
 
-.figma-audit-carousel--playdago-conception .figma-audit-slide--playdago-blue:hover img {
+.figma-audit-carousel--palto-conception .figma-audit-slide--palto-blue:hover img {
   transform: scale(1.018);
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .figma-audit-carousel--playdago .figma-audit-slide img {
+  .figma-audit-carousel--palto .figma-audit-slide img {
     transition: none;
   }
 
-  .figma-audit-carousel--playdago .figma-audit-slide:hover img {
+  .figma-audit-carousel--palto .figma-audit-slide:hover img {
     transform: none;
   }
 
-  .figma-audit-carousel--playdago .figma-audit-slide--playdago-blue:hover img {
+  .figma-audit-carousel--palto .figma-audit-slide--palto-blue:hover img {
     transform: translate(18px, 22px);
   }
 
-  .figma-audit-carousel--playdago-conception .figma-audit-slide--playdago-blue:hover img {
+  .figma-audit-carousel--palto-conception .figma-audit-slide--palto-blue:hover img {
     transform: none;
   }
 }
@@ -1711,31 +1698,31 @@
   margin-top: var(--sp-space-lg);
 }
 
-/* Bloc Audit dupliqué (Playdago) sous l’arbre user flow — même contenu que #audit */
-.figma-audit-playdago-duplicate {
+/* Bloc Audit dupliqué (Palto) sous l’arbre user flow — même contenu que #audit */
+.figma-audit-palto-duplicate {
   margin-top: var(--sp-space-xl, 48px);
   padding-top: var(--sp-space-lg, 32px);
   border-top: 1px solid rgba(0, 0, 0, 0.08);
 }
 
-.single-project-page .figma-audit-playdago-duplicate > .figma-subsection-title {
+.single-project-page .figma-audit-palto-duplicate > .figma-subsection-title {
   text-align: left;
   width: 100%;
 }
 
-/* Deuxième bloc Design system Playdago (doublon) */
-.figma-audit-playdago-duplicate--stacked {
+/* Deuxième bloc Design system Palto (doublon) */
+.figma-audit-palto-duplicate--stacked {
   margin-top: var(--sp-space-xl, 48px);
   padding-top: var(--sp-space-lg, 32px);
   border-top: 1px solid rgba(0, 0, 0, 0.08);
 }
 
-.figma-two-cols--playdago-conception-copy .playdago-ds-stacked-body-col {
+.figma-two-cols--palto-conception-copy .palto-ds-stacked-body-col {
   min-width: 0;
 }
 
-.figma-two-cols--playdago-conception-copy .figma-ds-pivot-h3,
-.playdago-ds-stacked-body-col--swap-row .figma-ds-pivot-h3 {
+.figma-two-cols--palto-conception-copy .figma-ds-pivot-h3,
+.palto-ds-stacked-body-col--swap-row .figma-ds-pivot-h3 {
   font-family: var(--sp-font-title);
   font-size: 18px;
   line-height: 24px;
@@ -1744,8 +1731,8 @@
   margin: 0 0 var(--sp-space-sm, 12px);
 }
 
-/* Conception Playdago : texte « Architecture & Chronologie » à gauche, Card Swap à droite */
-.playdago-conception-swap-copy-row {
+/* Conception Palto : texte « Architecture & Chronologie » à gauche, Card Swap à droite */
+.palto-conception-swap-copy-row {
   display: grid;
   grid-template-columns: minmax(240px, 38%) minmax(0, 1fr);
   gap: clamp(24px, 4vw, 48px);
@@ -1757,13 +1744,13 @@
   box-sizing: border-box;
 }
 
-.figma-lead--playdago-conception-stacked {
+.figma-lead--palto-conception-stacked {
   margin-top: 0;
   margin-bottom: 0;
   max-width: 100%;
 }
 
-.playdago-conception-gallery-wrap--swap-copy-row {
+.palto-conception-gallery-wrap--swap-copy-row {
   margin-top: 0;
   min-width: 0;
   box-sizing: border-box;
@@ -1775,7 +1762,7 @@
   overflow-x: clip;
 }
 
-.playdago-conception-gallery-wrap--swap-copy-row .playdago-conception-card-swap-wrap {
+.palto-conception-gallery-wrap--swap-copy-row .palto-conception-card-swap-wrap {
   margin-left: 0;
   margin-right: 0;
   max-width: 100%;
@@ -1785,29 +1772,29 @@
   padding-bottom: clamp(20px, 3vw, 36px);
 }
 
-.playdago-ds-stacked-body-col--swap-row {
+.palto-ds-stacked-body-col--swap-row {
   min-width: 0;
 }
 
 @media (max-width: 900px) {
-  .playdago-conception-swap-copy-row {
+  .palto-conception-swap-copy-row {
     grid-template-columns: 1fr;
     gap: var(--sp-space-lg, 24px);
   }
 }
 
-/* Conception & Itération (Playdago) : concepts + icône règle | image centrale | miniatures verticales */
-.playdago-conception-gallery-wrap {
+/* Conception & Itération (Palto) : concepts + icône règle | image centrale | miniatures verticales */
+.palto-conception-gallery-wrap {
   max-width: 100%;
 }
 
 /* Galerie Concept 1 / 2 masquée (aperçu via Card Swap sous le bloc) */
-.playdago-conception-gallery--hidden {
+.palto-conception-gallery--hidden {
   display: none !important;
 }
 
 /* Card Swap (React Bits) — sous la galerie Conception & Itération */
-.playdago-conception-card-swap-wrap {
+.palto-conception-card-swap-wrap {
   position: relative;
   width: 100%;
   max-width: min(100%, 1120px);
@@ -1825,46 +1812,46 @@
   min-width: 0;
   /* Largeur réelle de la colonne : si < 560px, CardSwap garde height=400 en inline → cadre trop haut ; on corrige via @container */
   container-type: inline-size;
-  container-name: playdago-card-swap;
+  container-name: palto-card-swap;
 }
 
-.playdago-conception-card-swap-wrap > * {
+.palto-conception-card-swap-wrap > * {
   min-width: 0;
   max-width: 100%;
 }
 
 /* Capture entière dans la carte (évite object-cover qui coupe header / bords) */
-.playdago-card-swap-img {
+.palto-card-swap-img {
   display: block;
   object-fit: contain;
   object-position: top center;
 }
 
 /* Colonne plus étroite que 560px : width fluide + height fixe (400) → ratio cassé ; forcer 16:9 sur le viewport CardSwap et les cartes */
-@container playdago-card-swap (max-width: 559px) {
-  .playdago-card-swap-aspect {
+@container palto-card-swap (max-width: 559px) {
+  .palto-card-swap-aspect {
     width: 100% !important;
     max-width: min(100%, 560px);
     height: auto !important;
     aspect-ratio: 16 / 9;
   }
 
-  .playdago-card-swap-aspect > div.absolute {
+  .palto-card-swap-aspect > div.absolute {
     width: 100% !important;
     height: 100% !important;
     box-sizing: border-box;
   }
 }
 
-.playdago-conception-gallery {
-  --playdago-conception-n: 4;
-  --playdago-conception-images-n: 1;
+.palto-conception-gallery {
+  --palto-conception-n: 4;
+  --palto-conception-images-n: 1;
   /* Miniatures carrées : taille fixe (pas de réduction pour « faire tenir ») + scroll si besoin */
-  --playdago-thumb-size: 92px;
-  /* Hauteur latérale = image centrale (JS : --playdago-conception-side-max-h), sinon repli */
-  --playdago-conception-side-max-h: min(72vh, 440px);
+  --palto-thumb-size: 92px;
+  /* Hauteur latérale = image centrale (JS : --palto-conception-side-max-h), sinon repli */
+  --palto-conception-side-max-h: min(72vh, 440px);
   display: grid;
-  grid-template-columns: minmax(80px, 112px) minmax(0, 1fr) var(--playdago-thumb-size);
+  grid-template-columns: minmax(80px, 112px) minmax(0, 1fr) var(--palto-thumb-size);
   grid-template-rows: auto;
   gap: clamp(12px, 2.5vw, 24px);
   align-items: stretch;
@@ -1873,7 +1860,7 @@
   margin: var(--sp-space-md, 24px) auto 0;
 }
 
-.playdago-conception-concept-triggers {
+.palto-conception-concept-triggers {
   position: relative;
   display: flex;
   flex-direction: column;
@@ -1883,8 +1870,8 @@
   padding-right: 0.5rem;
   border-right: 1px solid rgba(0, 0, 0, 0.1);
   box-sizing: border-box;
-  height: var(--playdago-conception-side-max-h);
-  max-height: var(--playdago-conception-side-max-h);
+  height: var(--palto-conception-side-max-h);
+  max-height: var(--palto-conception-side-max-h);
   min-height: 0;
   overflow-x: hidden;
   overflow-y: auto;
@@ -1892,7 +1879,7 @@
 }
 
 /* Ligne cliquable type texte + icône — pas de cadre « bouton » */
-.playdago-conception-concept-item {
+.palto-conception-concept-item {
   margin: 0;
   display: inline-flex;
   flex-direction: row;
@@ -1915,7 +1902,7 @@
   transition: color 0.15s ease, opacity 0.15s ease;
 }
 
-.playdago-conception-concept-item__icon {
+.palto-conception-concept-item__icon {
   display: flex;
   flex-shrink: 0;
   align-items: center;
@@ -1924,43 +1911,43 @@
   opacity: 0.85;
 }
 
-.playdago-conception-concept-item__label {
+.palto-conception-concept-item__label {
   flex: 1;
   min-width: 0;
 }
 
-.playdago-conception-grad-icon {
+.palto-conception-grad-icon {
   display: block;
   width: 18px;
   height: 18px;
   flex-shrink: 0;
 }
 
-.playdago-conception-concept-item:hover {
+.palto-conception-concept-item:hover {
   color: var(--sp-text, #1a1a1a);
 }
 
-.playdago-conception-concept-item:hover .playdago-conception-concept-item__icon {
+.palto-conception-concept-item:hover .palto-conception-concept-item__icon {
   opacity: 1;
 }
 
-.playdago-conception-concept-item:focus-visible {
+.palto-conception-concept-item:focus-visible {
   outline: 2px solid #f1582a;
   outline-offset: 3px;
   border-radius: 2px;
 }
 
-.playdago-conception-concept-item--active {
+.palto-conception-concept-item--active {
   color: var(--sp-text, #1a1a1a);
   font-weight: 600;
 }
 
-.playdago-conception-concept-item--active .playdago-conception-concept-item__icon {
+.palto-conception-concept-item--active .palto-conception-concept-item__icon {
   color: #f1582a;
   opacity: 1;
 }
 
-.playdago-conception-stage {
+.palto-conception-stage {
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1969,7 +1956,7 @@
   align-self: stretch;
 }
 
-.playdago-conception-stage-inner {
+.palto-conception-stage-inner {
   width: 100%;
   max-width: 100%;
   aspect-ratio: 4 / 3;
@@ -1982,7 +1969,7 @@
   justify-content: center;
 }
 
-.playdago-conception-stage-inner img {
+.palto-conception-stage-inner img {
   width: 100%;
   height: 100%;
   object-fit: contain;
@@ -1990,18 +1977,18 @@
 }
 
 /* Colonne carrousel vertical : hauteur max = image centrale ; voile haut/bas discret (visible surtout au scroll) */
-.playdago-conception-thumbs-wrap {
+.palto-conception-thumbs-wrap {
   position: relative;
   align-self: stretch;
   width: 100%;
-  height: var(--playdago-conception-side-max-h);
-  max-height: var(--playdago-conception-side-max-h);
+  height: var(--palto-conception-side-max-h);
+  max-height: var(--palto-conception-side-max-h);
   min-height: 0;
   flex-shrink: 0;
 }
 
-.playdago-conception-thumbs-wrap::before,
-.playdago-conception-thumbs-wrap::after {
+.palto-conception-thumbs-wrap::before,
+.palto-conception-thumbs-wrap::after {
   content: '';
   position: absolute;
   left: 0;
@@ -2014,7 +2001,7 @@
   -webkit-backdrop-filter: blur(11px) saturate(1.05);
 }
 
-.playdago-conception-thumbs-wrap::before {
+.palto-conception-thumbs-wrap::before {
   top: 0;
   background: linear-gradient(
     to bottom,
@@ -2037,7 +2024,7 @@
   );
 }
 
-.playdago-conception-thumbs-wrap::after {
+.palto-conception-thumbs-wrap::after {
   bottom: 0;
   background: linear-gradient(
     to top,
@@ -2060,7 +2047,7 @@
   );
 }
 
-.playdago-conception-thumbs {
+.palto-conception-thumbs {
   position: relative;
   z-index: 0;
   display: flex;
@@ -2071,7 +2058,7 @@
   min-width: 0;
   width: 100%;
   height: 100%;
-  max-height: var(--playdago-conception-side-max-h);
+  max-height: var(--palto-conception-side-max-h);
   overflow-x: hidden;
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
@@ -2111,7 +2098,7 @@
   mask-repeat: no-repeat;
 }
 
-.playdago-conception-thumb {
+.palto-conception-thumb {
   position: relative;
   overflow: hidden;
   border-radius: 6px;
@@ -2120,28 +2107,28 @@
   padding: 0;
   cursor: pointer;
   box-sizing: border-box;
-  flex: 0 0 var(--playdago-thumb-size);
+  flex: 0 0 var(--palto-thumb-size);
   width: 100%;
-  height: var(--playdago-thumb-size);
+  height: var(--palto-thumb-size);
   min-width: 0;
   transition: border-color 0.2s ease, box-shadow 0.2s ease;
 }
 
-.playdago-conception-thumb--active {
+.palto-conception-thumb--active {
   border-color: var(--sp-text);
   box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.06);
 }
 
-.playdago-conception-thumb:hover {
+.palto-conception-thumb:hover {
   border-color: rgba(0, 0, 0, 0.28);
 }
 
-.playdago-conception-thumb:focus-visible {
+.palto-conception-thumb:focus-visible {
   outline: 2px solid #f1582a;
   outline-offset: 2px;
 }
 
-.playdago-conception-thumb img {
+.palto-conception-thumb img {
   width: 100%;
   height: 100%;
   object-fit: cover;
@@ -2151,30 +2138,30 @@
 /* Même disposition : concepts | image | carrousel vertical ; tout se réduit (pas d’empilement) */
 @media (max-width: 720px) {
   /* Scroll horizontal uniquement pour la vraie galerie (concepts | stage | thumbs).
-     Pas pour la variante Card Swap (.playdago-conception-gallery-wrap--swap-copy-row) : galerie masquée → scroll parasite + débordement. */
-  .playdago-conception-gallery-wrap:not(.playdago-conception-gallery-wrap--swap-copy-row) {
+     Pas pour la variante Card Swap (.palto-conception-gallery-wrap--swap-copy-row) : galerie masquée → scroll parasite + débordement. */
+  .palto-conception-gallery-wrap:not(.palto-conception-gallery-wrap--swap-copy-row) {
     overflow-x: auto;
     -webkit-overflow-scrolling: touch;
   }
 
-  .playdago-conception-gallery {
-    --playdago-thumb-size: clamp(48px, 16vw, 92px);
+  .palto-conception-gallery {
+    --palto-thumb-size: clamp(48px, 16vw, 92px);
     gap: clamp(8px, 2.5vw, 18px);
-    grid-template-columns: minmax(52px, 96px) minmax(0, 1fr) var(--playdago-thumb-size);
+    grid-template-columns: minmax(52px, 96px) minmax(0, 1fr) var(--palto-thumb-size);
     margin-top: clamp(12px, 3vw, 24px);
   }
 
-  .playdago-conception-concept-triggers {
+  .palto-conception-concept-triggers {
     padding-right: clamp(4px, 1.5vw, 8px);
   }
 
-  .playdago-conception-thumbs {
+  .palto-conception-thumbs {
     gap: clamp(8px, 2vw, 14px);
   }
 }
 
-/* Segments Carrousel | Palette | Typéchelle (Playdago) */
-.playdago-ds-segment-group {
+/* Segments Carrousel | Palette | Typéchelle (Palto) */
+.palto-ds-segment-group {
   display: inline-flex;
   flex-wrap: wrap;
   gap: 0;
@@ -2185,7 +2172,7 @@
   border: 1px solid rgba(0, 0, 0, 0.08);
 }
 
-.playdago-ds-segment {
+.palto-ds-segment {
   font-family: inherit;
   font-size: 0.875rem;
   font-weight: 600;
@@ -2198,27 +2185,27 @@
   transition: background 0.15s ease, color 0.15s ease;
 }
 
-.playdago-ds-segment:hover {
+.palto-ds-segment:hover {
   background: rgba(0, 0, 0, 0.05);
 }
 
-.playdago-ds-segment--active {
+.palto-ds-segment--active {
   background: #f1582a;
   color: #fff;
   box-shadow: 0 1px 3px rgba(241, 88, 42, 0.35);
 }
 
-.playdago-ds-segment:focus-visible {
+.palto-ds-segment:focus-visible {
   outline: 2px solid #f1582a;
   outline-offset: 2px;
 }
 
-.playdago-ds-tables-wrap {
+.palto-ds-tables-wrap {
   margin-top: var(--sp-space-md, 24px);
 }
 
-/* Design system Playdago — Magic Bento (React Bits), à la place du carrousel Description */
-.playdago-ds-magic-bento-wrap {
+/* Design system Palto — Magic Bento (React Bits), à la place du carrousel Description */
+.palto-ds-magic-bento-wrap {
   margin-top: var(--sp-space-lg, 32px);
   width: 100%;
   max-width: 100%;
@@ -2227,53 +2214,53 @@
 }
 
 /* Tuiles contenu du bento : fond noir (override style inline MagicBento) + tableaux lisibles */
-.playdago-ds-magic-bento-wrap .magic-bento-card--content {
+.palto-ds-magic-bento-wrap .magic-bento-card--content {
   background-color: #000000 !important;
   border-color: rgba(255, 255, 255, 0.14) !important;
 }
 
-.playdago-ds-magic-bento-wrap .magic-bento-card--content .magic-bento-cell--content {
+.palto-ds-magic-bento-wrap .magic-bento-card--content .magic-bento-cell--content {
   color: rgba(255, 255, 255, 0.88);
   container-type: inline-size;
-  container-name: playdago-bento-ts;
+  container-name: palto-bento-ts;
 }
 
-.playdago-ds-magic-bento-wrap .magic-bento-cell--content .figma-palette-table,
-.playdago-ds-magic-bento-wrap .magic-bento-cell--content .figma-typescale-table {
+.palto-ds-magic-bento-wrap .magic-bento-cell--content .figma-palette-table,
+.palto-ds-magic-bento-wrap .magic-bento-cell--content .figma-typescale-table {
   background: #000000;
   color: rgba(255, 255, 255, 0.9);
 }
 
-.playdago-ds-magic-bento-wrap .magic-bento-cell--content .figma-palette-header,
-.playdago-ds-magic-bento-wrap .magic-bento-cell--content .figma-typescale-header {
+.palto-ds-magic-bento-wrap .magic-bento-cell--content .figma-palette-header,
+.palto-ds-magic-bento-wrap .magic-bento-cell--content .figma-typescale-header {
   background: rgba(255, 255, 255, 0.06);
   color: rgba(255, 255, 255, 0.78);
   border-bottom-color: rgba(255, 255, 255, 0.12);
 }
 
-.playdago-ds-magic-bento-wrap .magic-bento-cell--content .figma-palette-row,
-.playdago-ds-magic-bento-wrap .magic-bento-cell--content .figma-typescale-row {
+.palto-ds-magic-bento-wrap .magic-bento-cell--content .figma-palette-row,
+.palto-ds-magic-bento-wrap .magic-bento-cell--content .figma-typescale-row {
   color: rgba(255, 255, 255, 0.88);
   border-bottom-color: rgba(255, 255, 255, 0.1);
 }
 
-.playdago-ds-magic-bento-wrap .magic-bento-cell--content .figma-typescale-role,
-.playdago-ds-magic-bento-wrap .magic-bento-cell--content .figma-typescale-typo,
-.playdago-ds-magic-bento-wrap .magic-bento-cell--content .figma-typescale-size,
-.playdago-ds-magic-bento-wrap .magic-bento-cell--content .figma-typescale-line {
+.palto-ds-magic-bento-wrap .magic-bento-cell--content .figma-typescale-role,
+.palto-ds-magic-bento-wrap .magic-bento-cell--content .figma-typescale-typo,
+.palto-ds-magic-bento-wrap .magic-bento-cell--content .figma-typescale-size,
+.palto-ds-magic-bento-wrap .magic-bento-cell--content .figma-typescale-line {
   color: rgba(255, 255, 255, 0.62);
 }
 
-.playdago-ds-magic-bento-wrap .magic-bento-cell--content .figma-typescale-example {
+.palto-ds-magic-bento-wrap .magic-bento-cell--content .figma-typescale-example {
   color: rgba(255, 255, 255, 0.92) !important;
 }
 
-.playdago-ds-magic-bento-wrap .magic-bento-cell--content .figma-swatch {
+.palto-ds-magic-bento-wrap .magic-bento-cell--content .figma-swatch {
   border-color: rgba(255, 255, 255, 0.22);
 }
 
 /* Tableaux palette / typescale dans les tuiles bento — rétrécissent avec la tuile (pas de min-width fixe) */
-.playdago-ds-magic-bento-wrap .magic-bento-cell--content .playdago-ds-tables {
+.palto-ds-magic-bento-wrap .magic-bento-cell--content .palto-ds-tables {
   background-color: #000000;
   width: 100%;
   max-width: 100%;
@@ -2284,15 +2271,15 @@
 /* Typéchelle pleine largeur hors bento : inchangé (scroll horizontal global du tableau) */
 
 /* Typéchelle dans le bento uniquement : pas de chevauchement — mins en ch, typo + exemple plus larges, gap net */
-.playdago-ds-magic-bento-wrap .magic-bento-cell--content .figma-typescale-table--bento {
+.palto-ds-magic-bento-wrap .magic-bento-cell--content .figma-typescale-table--bento {
   overflow-x: auto;
   overflow-y: visible;
   -webkit-overflow-scrolling: touch;
   margin-top: 0.35rem;
 }
 
-.playdago-ds-magic-bento-wrap .magic-bento-cell--content .figma-typescale-table--bento .figma-typescale-header,
-.playdago-ds-magic-bento-wrap .magic-bento-cell--content .figma-typescale-table--bento .figma-typescale-row {
+.palto-ds-magic-bento-wrap .magic-bento-cell--content .figma-typescale-table--bento .figma-typescale-header,
+.palto-ds-magic-bento-wrap .magic-bento-cell--content .figma-typescale-table--bento .figma-typescale-row {
   display: grid;
   box-sizing: border-box;
   width: 100%;
@@ -2312,26 +2299,26 @@
   padding: clamp(6px, 1.75cqi, 10px) clamp(6px, 2cqi, 12px);
 }
 
-.playdago-ds-magic-bento-wrap .magic-bento-cell--content .figma-typescale-table--bento .figma-typescale-header > span,
-.playdago-ds-magic-bento-wrap .magic-bento-cell--content .figma-typescale-table--bento .figma-typescale-row > span {
+.palto-ds-magic-bento-wrap .magic-bento-cell--content .figma-typescale-table--bento .figma-typescale-header > span,
+.palto-ds-magic-bento-wrap .magic-bento-cell--content .figma-typescale-table--bento .figma-typescale-row > span {
   min-width: 0;
   max-width: 100%;
   box-sizing: border-box;
 }
 
-.playdago-ds-magic-bento-wrap .magic-bento-cell--content .figma-typescale-table--bento .figma-typescale-header span {
+.palto-ds-magic-bento-wrap .magic-bento-cell--content .figma-typescale-table--bento .figma-typescale-header span {
   line-height: 1.25;
   overflow-wrap: break-word;
   hyphens: auto;
 }
 
-.playdago-ds-magic-bento-wrap .magic-bento-cell--content .figma-typescale-table--bento .figma-typescale-role {
+.palto-ds-magic-bento-wrap .magic-bento-cell--content .figma-typescale-table--bento .figma-typescale-role {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
-.playdago-ds-magic-bento-wrap .magic-bento-cell--content .figma-typescale-table--bento .figma-typescale-typo {
+.palto-ds-magic-bento-wrap .magic-bento-cell--content .figma-typescale-table--bento .figma-typescale-typo {
   overflow: hidden;
   display: -webkit-box;
   -webkit-box-orient: vertical;
@@ -2342,14 +2329,14 @@
   line-height: 1.3;
 }
 
-.playdago-ds-magic-bento-wrap .magic-bento-cell--content .figma-typescale-table--bento .figma-typescale-size,
-.playdago-ds-magic-bento-wrap .magic-bento-cell--content .figma-typescale-table--bento .figma-typescale-line {
+.palto-ds-magic-bento-wrap .magic-bento-cell--content .figma-typescale-table--bento .figma-typescale-size,
+.palto-ds-magic-bento-wrap .magic-bento-cell--content .figma-typescale-table--bento .figma-typescale-line {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 
-.playdago-ds-magic-bento-wrap .magic-bento-cell--content .figma-typescale-table--bento .figma-typescale-example {
+.palto-ds-magic-bento-wrap .magic-bento-cell--content .figma-typescale-table--bento .figma-typescale-example {
   overflow: hidden;
   display: -webkit-box;
   -webkit-box-orient: vertical;
@@ -2361,8 +2348,8 @@
 }
 
 /* Palette : colonnes fluides dans la tuile */
-.playdago-ds-magic-bento-wrap .magic-bento-cell--content .figma-palette-header,
-.playdago-ds-magic-bento-wrap .magic-bento-cell--content .figma-palette-row {
+.palto-ds-magic-bento-wrap .magic-bento-cell--content .figma-palette-header,
+.palto-ds-magic-bento-wrap .magic-bento-cell--content .figma-palette-row {
   grid-template-columns: minmax(0, 1fr) minmax(0, 1.2fr) minmax(0, 1.1fr);
   gap: clamp(4px, 0.5vw, 12px);
   padding: clamp(6px, 0.6vw, 12px) clamp(6px, 0.75vw, 16px);
@@ -2370,40 +2357,40 @@
   padding: clamp(6px, 2cqi, 12px) clamp(6px, 2.5cqi, 16px);
 }
 
-.playdago-ds-magic-bento-wrap .magic-bento-cell--content .figma-swatch {
+.palto-ds-magic-bento-wrap .magic-bento-cell--content .figma-swatch {
   min-width: 0;
   font-size: clamp(0.6rem, 0.65vw, 0.875rem);
   font-size: clamp(0.6rem, 2.5cqi, 0.875rem);
 }
 
-.playdago-ds-magic-bento-wrap .magic-bento-cell--content .figma-palette-title,
-.playdago-ds-magic-bento-wrap .magic-bento-cell--content .figma-typescale-title {
+.palto-ds-magic-bento-wrap .magic-bento-cell--content .figma-palette-title,
+.palto-ds-magic-bento-wrap .magic-bento-cell--content .figma-typescale-title {
   font-size: clamp(0.95rem, 1.5vw, 1.1rem);
   line-height: 1.25;
   margin: 0 0 0.25rem;
   color: rgba(255, 255, 255, 0.95);
 }
 
-.playdago-ds-magic-bento-wrap .magic-bento-cell--content .figma-caption {
+.palto-ds-magic-bento-wrap .magic-bento-cell--content .figma-caption {
   font-size: 0.75rem;
   margin-bottom: 0.5rem;
   color: rgba(255, 255, 255, 0.55);
 }
 
-.playdago-ds-magic-bento-wrap .magic-bento-cell--content .figma-palette-header,
-.playdago-ds-magic-bento-wrap .magic-bento-cell--content .figma-palette-row {
+.palto-ds-magic-bento-wrap .magic-bento-cell--content .figma-palette-header,
+.palto-ds-magic-bento-wrap .magic-bento-cell--content .figma-palette-row {
   font-size: 0.7rem;
   gap: 0.35rem;
 }
 
-.playdago-ds-magic-bento-wrap .magic-bento-cell--content .figma-typescale-table--bento .figma-typescale-header,
-.playdago-ds-magic-bento-wrap .magic-bento-cell--content .figma-typescale-table--bento .figma-typescale-row {
+.palto-ds-magic-bento-wrap .magic-bento-cell--content .figma-typescale-table--bento .figma-typescale-header,
+.palto-ds-magic-bento-wrap .magic-bento-cell--content .figma-typescale-table--bento .figma-typescale-row {
   font-size: clamp(0.6rem, 0.7vw, 0.75rem);
   font-size: clamp(0.6rem, 2.2cqi, 0.75rem);
 }
 
-.playdago-ds-tables .figma-palette-title,
-.playdago-ds-tables .figma-typescale-title {
+.palto-ds-tables .figma-palette-title,
+.palto-ds-tables .figma-typescale-title {
   margin-top: 0;
 }
 
@@ -2442,7 +2429,7 @@
   box-sizing: border-box;
 }
 
-/* #userflow-tree : quadrillage comme l’accueil (.hero-bg-grid — Hero.css) ; sur le conteneur pour qu’il défile avec l’arbre */
+/* #userflow-tree : quadrillage léger type grille ; sur le conteneur pour qu’il défile avec l’arbre */
 .single-project-page .figma-userflow .skill-tree-container {
   position: relative;
   padding: 40px clamp(12px, 3vw, 24px) 80px;
@@ -2652,7 +2639,7 @@
   overflow-x: auto;
   -webkit-overflow-scrolling: touch;
   margin-top: var(--sp-space-md);
-  background: #fff8f5;
+  background: var(--sp-warm-surface);
   font-family: var(--sp-font-mono);
   font-size: 16px;
   line-height: 24px;
@@ -2722,7 +2709,7 @@
   width: 100%;
   overflow: hidden;
   margin-top: var(--sp-space-md);
-  background: #fff8f5;
+  background: var(--sp-warm-surface);
   font-family: var(--sp-font-mono);
   font-size: 16px;
   line-height: 24px;
@@ -2891,7 +2878,7 @@
   margin-top: clamp(8px, 1.5vw, 16px);
 }
 
-/* Scroll Stack (React Bits) — captures mode clair Playdago */
+/* Scroll Stack (React Bits) — captures mode clair Palto */
 .single-project-page #light-mode .figma-light-mode-scroll-stack .scroll-stack-inner {
   padding: clamp(16px, 4vh, 48px) 0 clamp(100px, 22vh, 280px);
   min-height: 0;
@@ -3543,7 +3530,7 @@
 }
 
 .single-project-page .components-section .section-card {
-  background: #fff8f5;
+  background: var(--sp-warm-surface);
   width: 100%;
   box-sizing: border-box;
   padding-left: 24px;
@@ -3634,67 +3621,6 @@
   font-size: 12px;
   color: #666666;
   text-align: center;
-}
-
-/* Boutons Pedaboard */
-.pedaboard-btn {
-  border: none;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  font-family: 'Inter', sans-serif;
-  font-size: 14px;
-  font-weight: 500;
-}
-
-.pedaboard-btn:hover {
-  transform: translateY(-2px);
-}
-
-/* Boutons avec icônes (circulaires) */
-.pedaboard-btn-icon {
-  width: 44px;
-  height: 44px;
-  border-radius: 50%;
-}
-
-.pedaboard-btn-icon img {
-  width: 20px;
-  height: 20px;
-}
-
-/* Boutons avec texte (rectangulaires) */
-.pedaboard-btn-text {
-  padding: 12px 20px;
-  border-radius: 22px;
-  min-width: 120px;
-}
-
-.pedaboard-btn-text img {
-  width: 16px;
-  height: 16px;
-}
-
-/* Variantes de couleurs */
-.pedaboard-btn-white {
-  background: #ffffff;
-  color: #007d9f;
-}
-
-.pedaboard-btn-white:hover {
-  background: #f5f5f5;
-}
-
-.pedaboard-btn-orange {
-  background: #f07f00;
-  color: #ffffff;
-}
-
-.pedaboard-btn-orange:hover {
-  background: #e67000;
 }
 
 .section-title {
@@ -3804,7 +3730,7 @@
   font-weight: 800;
 }
 
-/* 1er paragraphe (PlayDaGo...) */
+/* 1er paragraphe (Go...) */
 .intro-text-primary .intro-text {
   font-weight: 800;
 }
@@ -3964,7 +3890,7 @@
 }
 
 .single-project-page .case-studie-section .section-card {
-  background: #fff8f5;
+  background: var(--sp-warm-surface);
   border: 1px solid #b2aaaa;
   border-radius: 12px;
   padding: 32px;
@@ -4728,7 +4654,7 @@
   flex-direction: column;
   gap: 48px;
   width: 100%;
-  background: #fff8f5;
+  background: var(--sp-warm-surface);
   padding: 48px 0px;
   border-radius: 16px;
 }
@@ -5003,7 +4929,7 @@
   flex-direction: column;
   gap: 48px;
   width: 100%;
-  background: #fff8f5;
+  background: var(--sp-warm-surface);
   padding: 48px 32px;
   border-radius: 16px;
 }
@@ -5080,7 +5006,7 @@
 /* Demo Components - styles supprimés - utilisent maintenant Button.css */
 
 .card-demo {
-  background: #fff8f5;
+  background: var(--sp-warm-surface);
   border: 1px solid #b2aaaa;
   border-radius: 8px;
   overflow: hidden;
@@ -5197,8 +5123,8 @@
   .single-project-page .main-single-project {
     padding-top: var(--sp-main-padding-y-mobile);
     padding-bottom: var(--sp-main-padding-bottom);
-    padding-left: var(--sp-main-padding-x-mobile-compact);
-    padding-right: var(--sp-main-padding-x-mobile-compact);
+    padding-left: 0;
+    padding-right: 0;
     gap: 40px;
   }
   
@@ -5480,4 +5406,952 @@
 
 .single-project-contact-fab:active {
   transform: scale(0.98);
+}
+
+/* Palto: cartes course dans le main, empilees */
+.palto-ride-main {
+  width: 100%;
+}
+
+.palto-main-top-map-card {
+  width: 100%;
+  margin-bottom: 10px;
+}
+
+.palto-main-top-map-shell {
+  width: 100%;
+  min-height: 260px;
+  height: 300px;
+  border: 1px solid var(--sp-edge);
+  border-radius: 10px;
+  overflow: hidden;
+  background: var(--sp-warm-surface);
+}
+
+.palto-main-top-map-shell .home-mapbox-bg--embedded {
+  width: 100%;
+  height: 100%;
+  min-height: 100%;
+  border-radius: 10px;
+}
+
+.palto-main-top-map-fallback {
+  width: 100%;
+  min-height: 220px;
+  border: 1px solid var(--sp-edge);
+  border-radius: 10px;
+  background: var(--sp-warm-surface);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--sp-text-subtle);
+  font-size: 14px;
+}
+
+.palto-ride-layout {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.palto-ride-column {
+  width: 100%;
+  min-width: 0;
+}
+
+.palto-ride-card {
+  width: 100%;
+  border: 1px solid var(--sp-edge);
+  border-radius: 10px;
+  background: var(--sp-warm-surface);
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.palto-ride-card--map {
+  border: 1px dashed var(--sp-edge-dashed);
+  border-radius: 10px;
+  background: var(--sp-warm-surface);
+  padding: 16px;
+}
+
+.palto-ride-card--map-live {
+  border: none;
+  background: transparent;
+  padding: 0;
+}
+
+.palto-ride-card--drivers {
+  border: none;
+  background: transparent;
+  max-height: 420px;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.palto-ride-card--drivers .palto-ride-card__title {
+  font-size: clamp(16px, 1.35vw + 12px, 20px);
+  font-weight: 700;
+  letter-spacing: 1.6px;
+  line-height: 1.2;
+}
+
+.palto-ride-card--drivers .palto-ride-card__lead {
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 1.35;
+  letter-spacing: 0.02em;
+}
+
+.palto-ride-card--drivers .palto-ride-card__title {
+  color: var(--sp-text);
+}
+
+.palto-ride-card--drivers .palto-ride-card__lead {
+  color: var(--sp-text-subtle);
+}
+
+.palto-ride-card__title {
+  margin: 0;
+  font-family: 'DM Mono', monospace;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 1.2px;
+  text-transform: uppercase;
+  color: var(--sp-text);
+}
+
+.palto-ride-card__lead {
+  margin: 0;
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 14px;
+  color: var(--sp-text-subtle);
+  line-height: 1.4;
+}
+
+.palto-ride-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.palto-ride-input-row {
+  position: relative;
+  width: 100%;
+}
+
+.palto-ride-field__label {
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--sp-text-subtle);
+}
+
+.palto-ride-input {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 10px 12px;
+  border: 1px solid var(--sp-edge-medium);
+  border-radius: 8px;
+  font-family: 'Inter', sans-serif;
+  font-size: 14px;
+  color: var(--sp-text);
+  background: var(--sp-card-surface);
+}
+
+.palto-ride-input:focus {
+  outline: 2px solid rgba(251, 146, 60, 0.75);
+  outline-offset: 1px;
+}
+
+.palto-ride-input--with-clear {
+  padding-right: 40px;
+}
+
+.palto-ride-input-clear {
+  position: absolute;
+  right: 6px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 28px;
+  height: 28px;
+  margin: 0;
+  padding: 0;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--sp-text-subtle);
+  font-size: 20px;
+  line-height: 1;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: system-ui, sans-serif;
+}
+
+.palto-ride-input-clear:hover {
+  background: var(--sp-surface-alt);
+  color: var(--sp-text);
+}
+
+.palto-ride-input-clear:focus-visible {
+  outline: 2px solid rgba(251, 146, 60, 0.75);
+  outline-offset: 1px;
+}
+
+.palto-pickup-suggestions {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  right: 0;
+  z-index: 40;
+  max-height: 260px;
+  overflow-y: auto;
+  border: 1px solid var(--sp-edge);
+  border-radius: 10px;
+  background: var(--sp-card-surface);
+  box-shadow: 0 10px 22px rgba(0, 0, 0, 0.08);
+  padding: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.palto-pickup-suggestions__title {
+  margin: 0;
+  padding: 2px 4px 0;
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  color: var(--sp-text);
+}
+
+.palto-pickup-suggestions__hint {
+  margin: 0;
+  padding: 6px 8px;
+  font-family: 'Inter', sans-serif;
+  font-size: 12px;
+  color: var(--sp-text-subtle);
+}
+
+.palto-pickup-suggestions__list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.palto-pickup-suggestions__item {
+  border: 1px solid var(--sp-edge);
+  background: var(--sp-surface-alt);
+  color: var(--sp-text);
+  border-radius: 8px;
+  padding: 8px 10px;
+  text-align: left;
+  cursor: pointer;
+  font-family: 'Inter', sans-serif;
+  font-size: 13px;
+  line-height: 1.35;
+}
+
+.palto-pickup-suggestions__item:hover {
+  border-color: rgba(251, 146, 60, 0.5);
+  background: var(--sp-badge-bg);
+}
+
+.palto-ride-field-error {
+  margin: 0;
+  font-family: 'Inter', sans-serif;
+  font-size: 13px;
+  color: #b91c1c;
+  line-height: 1.35;
+}
+
+.palto-ride-field-hint {
+  margin: 0;
+  font-family: 'Inter', sans-serif;
+  font-size: 12px;
+  color: var(--sp-text-subtle);
+  line-height: 1.35;
+}
+
+.palto-ride-drivers-empty {
+  margin: 0;
+  padding: 12px 10px;
+  font-family: 'Inter', sans-serif;
+  font-size: 14px;
+  color: var(--sp-text-subtle);
+  line-height: 1.45;
+  text-align: center;
+  border: 1px dashed var(--sp-edge);
+  border-radius: 10px;
+  background: var(--sp-surface-alt);
+}
+
+.palto-ride-input--readonly {
+  background: var(--sp-surface-alt);
+  color: var(--sp-text-subtle);
+}
+
+/* Contient le datetime-local : largeur min. intrinsèque élevée sur mobile sans ce bloc */
+.palto-ride-datetime-local-wrap {
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+  overflow: hidden;
+}
+
+.palto-ride-input--datetime-local {
+  display: block;
+  min-width: 0;
+  max-width: 100%;
+}
+
+.palto-ride-timing-toggle {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.palto-ride-timing-choice {
+  width: 100%;
+  border: 1px solid var(--sp-edge-medium);
+  border-radius: 8px;
+  background: var(--sp-card-surface);
+  color: var(--sp-text);
+  font-family: 'Inter', sans-serif;
+  font-size: 13px;
+  font-weight: 600;
+  padding: 9px 10px;
+  cursor: pointer;
+}
+
+.palto-ride-timing-choice--active {
+  border-color: rgba(241, 88, 42, 0.7);
+  background: rgba(241, 88, 42, 0.1);
+  color: #c2410c;
+}
+
+.palto-ride-search-btn.btn {
+  width: 100%;
+}
+
+.palto-ride-search-btn.btn.btn-primary {
+  background: #111;
+  color: #fff;
+  border: none;
+  border-radius: 12px;
+  font-weight: 600;
+}
+
+.palto-ride-search-btn.btn.btn-primary:hover {
+  background: #1a1a1a;
+  color: #fff;
+}
+
+.palto-ride-search-btn.btn.btn-primary:focus-visible {
+  outline: 2px solid #f1582a;
+  outline-offset: 2px;
+}
+
+.palto-ride-recap-open-btn {
+  border: 1px dashed var(--sp-edge-dashed);
+  background: transparent;
+  color: var(--sp-text);
+  border-radius: 10px;
+  padding: 10px 12px;
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.palto-ride-drivers-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  flex: 1 1 auto;
+  min-height: 0;
+  max-height: 360px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+  touch-action: pan-y;
+}
+
+.palto-ride-driver-item {
+  width: 100%;
+  border: 1px solid var(--sp-edge);
+  background: var(--sp-surface-alt);
+  border-radius: 8px;
+  padding: 10px 12px;
+  color: var(--sp-text);
+  text-align: left;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  cursor: pointer;
+}
+
+.palto-ride-driver-item:hover {
+  background: var(--sp-warm-surface);
+  border-color: rgba(251, 146, 60, 0.55);
+}
+
+.palto-ride-driver-item--selected {
+  border-color: rgba(22, 101, 52, 0.45);
+  background: rgba(163, 230, 53, 0.22);
+}
+
+.palto-ride-driver-item--selected:hover {
+  border-color: rgba(22, 101, 52, 0.55);
+  background: rgba(163, 230, 53, 0.28);
+}
+
+.palto-ride-driver-item__left {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.palto-ride-driver-item__name {
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 16px;
+  font-weight: 700;
+}
+
+.palto-ride-driver-item__meta {
+  font-family: 'DM Mono', monospace;
+  font-size: 12px;
+  color: var(--sp-text-subtle);
+  opacity: 1;
+}
+
+.palto-ride-driver-item__price {
+  margin-left: auto;
+  white-space: nowrap;
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 18px;
+  font-weight: 800;
+}
+
+.palto-ride-map-shell {
+  width: 100%;
+  min-height: 320px;
+  height: 100%;
+  border: 1px solid var(--sp-edge);
+  border-radius: 8px;
+  overflow: hidden;
+  background: var(--sp-warm-surface);
+}
+
+.palto-ride-map-shell .home-mapbox-bg--embedded {
+  width: 100%;
+  height: 100%;
+  min-height: 320px;
+  border-radius: 8px;
+}
+
+.palto-ride-map-fallback {
+  width: 100%;
+  min-height: 320px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--sp-text-subtle);
+  font-size: 14px;
+}
+
+.palto-ride-recap {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.palto-ride-recap p {
+  margin: 0;
+  font-family: 'DM Mono', monospace;
+  font-size: 12px;
+  line-height: 1.4;
+  color: var(--sp-text-subtle);
+}
+
+.palto-ride-recap__section {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.palto-ride-recap-separator {
+  margin: 0;
+  border: 0;
+  border-top: 1px dashed var(--sp-edge-dashed);
+}
+
+.palto-ride-recap-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.palto-ride-recap-row strong {
+  margin-left: auto;
+  text-align: right;
+  color: var(--sp-text);
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 1.2;
+}
+
+.palto-ride-recap-price-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.palto-ride-recap-price-row strong {
+  margin-left: auto;
+  text-align: right;
+  color: var(--sp-text);
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 20px;
+  font-weight: 800;
+  line-height: 1;
+}
+
+.palto-ride-recap-price-row--total strong {
+  font-size: 22px;
+}
+
+.palto-ride-recap-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 2500;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+}
+
+.palto-ride-recap-modal__backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.38);
+}
+
+.palto-ride-recap-modal__content {
+  position: relative;
+  z-index: 1;
+  width: min(520px, calc(100vw - 32px));
+  max-height: min(80vh, 760px);
+  overflow-y: auto;
+  border: 1px dashed var(--sp-edge-dashed);
+  border-radius: 12px;
+  background: var(--sp-warm-surface);
+  padding: 16px;
+  box-shadow: 0 16px 42px rgba(0, 0, 0, 0.2);
+}
+
+.palto-ride-recap-modal__close {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  z-index: 2;
+  width: 30px;
+  height: 30px;
+  border: none;
+  border-radius: 999px;
+  background: #111;
+  color: #fff;
+  font-size: 18px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+/* Titre et contenu : éviter le chevauchement avec le × (valeurs alignées à droite) */
+.palto-ride-recap-modal__content .palto-ride-card__title {
+  margin: 0 44px 16px 0;
+}
+
+.palto-ride-recap-modal__actions {
+  margin-top: 18px;
+  padding-top: 4px;
+}
+
+.palto-ride-recap-modal__cta {
+  width: 100%;
+}
+
+.palto-checkout {
+  display: grid;
+  gap: 12px;
+}
+
+.palto-checkout__lead {
+  margin: 0;
+  color: var(--sp-text-subtle);
+  font-size: 14px;
+}
+
+.palto-checkout__summary {
+  border: 1px dashed var(--sp-edge-dashed);
+  border-radius: 10px;
+  padding: 10px 12px;
+  background: var(--sp-surface-alt);
+}
+
+.palto-checkout__summary p {
+  margin: 0;
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  font-size: 13px;
+  color: var(--sp-text);
+}
+
+.palto-checkout__summary p + p {
+  margin-top: 8px;
+}
+
+.palto-checkout__field {
+  display: grid;
+  gap: 6px;
+}
+
+.palto-checkout__field > span {
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: var(--sp-text-subtle);
+}
+
+.palto-checkout__payments {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.palto-checkout__payment {
+  border: 1px solid var(--sp-edge-medium);
+  border-radius: 10px;
+  background: var(--sp-card-surface);
+  color: var(--sp-text);
+  min-height: 38px;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.palto-checkout__payment--active {
+  border-color: #ff8c42;
+  background: #fff3eb;
+}
+
+.palto-checkout__error,
+.palto-checkout__success {
+  margin: 0;
+  padding: 8px 10px;
+  border-radius: 8px;
+  font-size: 13px;
+  line-height: 1.35;
+}
+
+.palto-checkout__error {
+  background: #ffe9e9;
+  color: #932121;
+}
+
+.palto-checkout__success {
+  background: #e9f8ee;
+  color: #1b6a32;
+}
+
+@media (min-width: 769px) {
+  .palto-ride-recap__coords {
+    display: none;
+  }
+
+  .single-project-page .swipe-indicator-bar {
+    display: none;
+  }
+}
+
+/* Desktop/tablette avec map dans le main: map plein hauteur device */
+@media (min-width: 997px) {
+  .palto-ride-layout {
+    min-height: calc(100dvh - var(--sp-main-padding-top) - var(--sp-main-padding-bottom));
+  }
+
+  .palto-ride-column--map {
+    min-height: 0;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .palto-ride-column--map .palto-ride-card--map-live {
+    flex: 1 1 auto;
+    min-height: 0;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .palto-ride-column--map .palto-ride-map-shell {
+    flex: 1 1 auto;
+    min-height: 100%;
+    height: 100%;
+  }
+
+  .palto-ride-column--map .palto-ride-map-shell .home-mapbox-bg--embedded {
+    min-height: 100%;
+    height: 100%;
+  }
+}
+
+/*
+ * Go (/go) : le min-height 100dvh sur la grille dépasse le panneau fixe → Mapbox sous le bord (Chrome).
+ * Chaîne flex + min-height:0 pour que la colonne carte reste dans la hauteur dispo.
+ */
+.single-project-page:has(.palto-ride-main) {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.single-project-page:has(.palto-ride-main) .main-single-project {
+  flex: 1 1 auto;
+  min-height: 0 !important;
+  display: flex;
+  flex-direction: column;
+  /* /go: le conteneur ne doit pas hériter du cadre centré global (max-width + margin auto). */
+  max-width: none !important;
+  width: 100% !important;
+  margin: 0 !important;
+  align-self: stretch;
+}
+
+.single-project-page:has(.palto-ride-main) .palto-ride-main {
+  flex: 1 1 auto;
+  min-height: 0;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Barre d’accueil : largeur du main uniquement (évite le dépassement 100vw + marges dans le panneau fixed). */
+.single-project-page .main-single-project > .single-project-go-topbar-wrap {
+  flex: 0 0 auto;
+  /* WebKit (Safari) : min-height:0 + chaîne flex peut effondrer la hauteur du shell (bandeau invisible). */
+  min-height: min-content;
+  min-width: 0;
+  align-self: stretch;
+  width: 100%;
+  max-width: 100%;
+  margin-left: 0;
+  margin-right: 0;
+  box-sizing: border-box;
+  flex-direction: column;
+  overflow: visible !important;
+  position: relative;
+}
+
+.single-project-page .main-single-project > .single-project-go-topbar-wrap .single-project-go-topbar-wrap__main.dashboard-main {
+  /* Ne pas forcer min-height:0 ici : ça surcharge ClientCompteDashboard (min-content) et casse Safari. */
+  min-height: min-content !important;
+  flex: 0 0 auto !important;
+  gap: 0 !important;
+  width: 100%;
+  max-width: 100%;
+  margin-left: 0;
+  margin-right: 0;
+}
+
+/* Page Go : header collé au haut du panneau (padding/gap du main projet + poignée swipe). */
+.single-project-page:has(.single-project-go-topbar-wrap) .main-single-project {
+  padding-top: 0 !important;
+  gap: 0 !important;
+}
+
+/* /go : espace entre la topbar (Palto) et le bloc carte + Mapbox. */
+.single-project-page:has(.single-project-go-topbar-wrap):has(.palto-ride-main) .main-single-project {
+  gap: var(--sp-space-md, 16px) !important;
+}
+
+.single-project-page:has(.single-project-go-topbar-wrap) .swipe-indicator-bar {
+  padding-top: 8px !important;
+  padding-bottom: 8px !important;
+}
+
+.single-project-page .single-project-go-topbar-wrap .dashboard-topbar.dashboard-topbar--home-client {
+  width: 100%;
+  max-width: 100%;
+  margin-left: 0;
+  margin-right: 0;
+}
+
+@media (min-width: 997px) {
+  /*
+   * Ne pas mettre overflow:hidden sur le layout / booking : ça rogne la carte « Commandez une course »
+   * et les panneaux (suggestions). La colonne carte garde overflow hidden pour le cadre Mapbox.
+   */
+  .single-project-page:has(.palto-ride-main) .main-single-project {
+    overflow-x: hidden;
+    overflow-y: visible;
+  }
+
+  .single-project-page:has(.palto-ride-main) .palto-ride-main {
+    overflow-x: hidden;
+    overflow-y: visible;
+  }
+
+  .single-project-page:has(.palto-ride-main) .palto-ride-layout {
+    min-height: 0 !important;
+    flex: 1 1 auto;
+    height: 100%;
+    max-height: 100%;
+    min-width: 0;
+    overflow-x: hidden;
+    overflow-y: visible;
+  }
+
+  .single-project-page:has(.palto-ride-main) .palto-ride-column--map {
+    max-height: 100%;
+    overflow: hidden;
+  }
+
+  .single-project-page:has(.palto-ride-main) .palto-ride-column--map .palto-ride-map-shell {
+    min-height: 0;
+  }
+
+  .single-project-page:has(.palto-ride-main) .palto-ride-column--map .palto-ride-map-shell .home-mapbox-bg--embedded {
+    min-height: 0;
+  }
+
+  .single-project-page:has(.palto-ride-main) .palto-ride-column--booking {
+    min-height: 0;
+    overflow-x: hidden;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+}
+
+@media (max-width: 1366px) and (min-width: 769px) {
+  .single-project-page:has(.palto-ride-main) .palto-ride-layout:not(.palto-ride-layout--no-drivers) {
+    grid-template-rows: minmax(0, auto) minmax(0, 1fr);
+  }
+}
+
+/* Desktop large: même logique accueil (3 colonnes) */
+@media (min-width: 1367px) {
+  .palto-ride-layout {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1.85fr) minmax(0, 1fr);
+    gap: 10px;
+    align-items: stretch;
+  }
+
+  .palto-ride-layout--no-drivers {
+    grid-template-columns: minmax(0, 0.9fr) minmax(0, 2.1fr);
+  }
+}
+
+/* Tablette / desktop intermédiaire: booking + drivers à gauche, map à droite (la map rétrécit, ne passe pas sous la card) */
+@media (max-width: 1366px) and (min-width: 769px) {
+  .palto-ride-layout {
+    display: grid;
+    grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr);
+    grid-template-rows: auto auto;
+    gap: 10px;
+    align-items: stretch;
+  }
+
+  .palto-ride-column--booking {
+    grid-column: 1;
+    grid-row: 1;
+  }
+
+  .palto-ride-column--drivers {
+    grid-column: 1;
+    grid-row: 2;
+  }
+
+  .palto-ride-column--map {
+    grid-column: 2;
+    grid-row: 1 / span 2;
+    min-width: 0;
+  }
+
+  .palto-ride-layout--no-drivers .palto-ride-column--map {
+    grid-column: 2;
+    grid-row: 1;
+  }
+
+  .palto-ride-layout--no-drivers {
+    grid-template-columns: minmax(0, 0.95fr) minmax(0, 1.9fr);
+    grid-template-rows: 1fr;
+  }
+}
+
+/* Mobile: la map reste en cover (ProjectCoverCarousel), pas dans le main */
+@media (max-width: 768px) {
+  /*
+   * /go mobile : masquer uniquement la barre Palto / langue / connexion.
+   * Le bandeau courses (ex. « Rejoindre votre chauffeur ») reste dans .single-project-go-topbar-wrap.
+   */
+  .single-project-page:has(.palto-ride-main)
+    .single-project-go-topbar-wrap
+    .dashboard-topbar.dashboard-topbar--home-client {
+    display: none;
+  }
+
+  .single-project-page:has(.palto-ride-main) .main-single-project {
+    gap: 0 !important;
+  }
+
+  /*
+   * /go mobile : la gouttière globale (--sp-padding-x-fluid, min ~24px) est trop large dans le panneau.
+   * On remplace par un resserrement + encoches (le contenu des cartes garde son padding interne).
+   */
+  .single-project-page:has(.palto-ride-main) .main-single-project > .palto-ride-main {
+    padding-left: max(8px, env(safe-area-inset-left, 0px));
+    padding-right: max(8px, env(safe-area-inset-right, 0px));
+  }
+
+  .single-project-page:has(.palto-ride-main) .palto-ride-field {
+    min-width: 0;
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
+  }
+
+  .single-project-page:has(.palto-ride-main) .palto-ride-datetime-local-wrap .palto-ride-input--datetime-local {
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+  }
+
+  .single-project-page:has(.palto-ride-main) .palto-ride-column--booking {
+    min-width: 0;
+    max-width: 100%;
+  }
+
+  .palto-main-top-map-card {
+    display: none;
+  }
+
+  .palto-ride-column--map {
+    display: none;
+  }
 }

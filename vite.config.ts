@@ -2,6 +2,7 @@ import { defineConfig } from 'vite'
 import path from 'path'
 import tailwindcss from '@tailwindcss/vite'
 import react from '@vitejs/plugin-react'
+import { VitePWA } from 'vite-plugin-pwa'
 
 export default defineConfig({
   plugins: [
@@ -9,11 +10,41 @@ export default defineConfig({
     // Tailwind is not being actively used – do not remove them
     react(),
     tailwindcss(),
+    VitePWA({
+      registerType: 'autoUpdate',
+      /** Manifest déjà servi depuis `public/manifest.json` (icônes, standalone). */
+      manifest: false,
+      includeAssets: ['manifest.json', 'images/placeholder-app-icon.svg', 'images/placeholder-cover.svg'],
+      workbox: {
+        globPatterns: ['**/*.{js,css,html,ico,svg,png,webp,woff2,json,webmanifest}'],
+        /** Bundle principal > 2 Mo ; image OG souvent lourde — hors precache SW. */
+        maximumFileSizeToCacheInBytes: 3 * 1024 * 1024,
+        globIgnores: ['**/og-image.png', '**/og-image.jpg', '**/og-image.webp'],
+        navigateFallback: '/index.html',
+        navigateFallbackDenylist: [/^\/api\//],
+        /** Pas de cache des tuiles cartographiques ici (CGU / volume) : le SW sert surtout le shell JS/CSS pour un 2e chargement instantané. */
+      },
+      devOptions: {
+        enabled: false,
+      },
+    }),
   ],
   resolve: {
     alias: {
       // Alias @ to the src directory
       '@': path.resolve(__dirname, './src'),
+    },
+  },
+  build: {
+    rollupOptions: {
+      output: {
+        manualChunks(id) {
+          if (id.includes('node_modules/maplibre-gl')) return 'maplibre-gl'
+          if (id.includes('node_modules/react-map-gl')) return 'react-map-gl'
+          if (id.includes('node_modules/framer-motion')) return 'framer-motion'
+          if (id.includes('node_modules/@supabase/')) return 'supabase'
+        },
+      },
     },
   },
   server: {

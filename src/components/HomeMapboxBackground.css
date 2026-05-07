@@ -1,0 +1,159 @@
+/* Carte plein écran sous le contenu hero ; interactions gérées par la carte */
+.home-mapbox-bg {
+  position: fixed;
+  inset: 0;
+  width: 100vw;
+  height: 100vh;
+  min-height: 100%;
+  z-index: 0;
+  pointer-events: auto;
+  overflow: hidden;
+}
+
+.home-mapbox-bg__map {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: auto;
+}
+
+/* Contrôles Mapbox au-dessus de la carte */
+.home-mapbox-bg__map .mapboxgl-ctrl-bottom-right,
+.home-mapbox-bg__map .mapboxgl-ctrl-bottom-left,
+.home-mapbox-bg__map .mapboxgl-ctrl-attrib {
+  pointer-events: auto;
+}
+
+.home-mapbox-bg__map .mapboxgl-map {
+  font-family: inherit;
+}
+
+/**
+ * Fond dashboard : remplit le parent `position: relative` (ex. `.dashboard-container`),
+ * sans capter les clics (sauf attribution Mapbox).
+ */
+.home-mapbox-bg--dashboard-backdrop {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  min-height: 100%;
+  z-index: 0;
+  pointer-events: none;
+}
+
+.home-mapbox-bg--dashboard-backdrop .home-mapbox-bg__map {
+  pointer-events: none;
+}
+
+.home-mapbox-bg--dashboard-backdrop .mapboxgl-ctrl-bottom-left {
+  pointer-events: auto;
+}
+
+.home-mapbox-bg--auth-wall {
+  position: fixed;
+  inset: 0;
+  width: 100vw;
+  height: 100vh;
+  min-height: 100%;
+  z-index: 0;
+  pointer-events: none;
+}
+
+.home-mapbox-bg--auth-wall .home-mapbox-bg__map {
+  pointer-events: none;
+}
+
+.home-mapbox-bg--auth-wall .mapboxgl-ctrl-bottom-left {
+  pointer-events: auto;
+}
+
+/* Voile léger neutre : harmonise avec le fond page sans masquer le style Mapbox (streets) */
+/* Pins départ / arrivée (au-dessus de la carte, hors capture des clics carte sauf zone pin) */
+.home-mapbox-pin {
+  width: 22px;
+  height: 22px;
+  border-radius: 50% 50% 50% 0;
+  transform: rotate(-45deg);
+  border: 2px solid rgba(255, 255, 255, 0.95);
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.45);
+  pointer-events: none;
+}
+
+.home-mapbox-pin--user {
+  background: linear-gradient(145deg, #38bdf8, #0284c7);
+}
+
+.home-mapbox-pin--dest {
+  background: linear-gradient(145deg, #fb923c, #ea580c);
+}
+
+.home-mapbox-driver-moto {
+  width: 38px;
+  height: 38px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+  filter: drop-shadow(0 2px 6px rgba(0, 0, 0, 0.5));
+}
+
+.home-mapbox-driver-moto__svg {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+.home-mapbox-bg__tint {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: linear-gradient(
+    180deg,
+    rgba(18, 18, 22, 0.2) 0%,
+    rgba(18, 18, 22, 0.28) 50%,
+    rgba(18, 18, 22, 0.22) 100%
+  );
+}
+
+/* Carte dans une colonne (Hero) : parent .hero-map-embed-shell en flex column → ce bloc remplit la hauteur */
+.home-mapbox-bg--embedded {
+  position: relative;
+  inset: auto;
+  width: 100%;
+  min-width: 0;
+  flex: 1 1 auto;
+  min-height: 0;
+  height: auto;
+  z-index: 1;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+@media (min-width: 701px) {
+  .home-mapbox-bg--embedded {
+    min-height: 280px;
+  }
+}
+
+@media (max-width: 700px) {
+  .home-mapbox-bg--embedded {
+    min-height: 240px;
+    height: 100%;
+  }
+}
+
+.home-mapbox-bg--embedded .home-mapbox-bg__tint {
+  background: linear-gradient(
+    180deg,
+    rgba(18, 18, 22, 0.08) 0%,
+    rgba(18, 18, 22, 0.14) 100%
+  );
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .home-mapbox-bg__map {
+    filter: saturate(0.92);
+  }
+}

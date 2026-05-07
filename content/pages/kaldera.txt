@@ -1,3 +1,0 @@
-Titre: Projet Kaldera - Anthony Merault
-Description: Page projet Kaldera, application web de simulation trail pour visualiser des parcours, préparer les entraînements et simuler des courses. Lien vers le site en ligne : https://trackali.com
-URL: /fr/kaldera ou /en/kaldera

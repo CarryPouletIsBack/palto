@@ -19,7 +19,7 @@ Ajoutez l'origine de votre site (sans le chemin, juste le domaine) :
 
 **Pour Vercel (Production) :**
 ```
-https://portfolio-react-anthony-git-279166-carrypouletisbacks-projects.vercel.app
+https://nom-du-projet.vercel.app
 ```
 
 **Pour le développement local :**
@@ -39,7 +39,7 @@ Ajoutez l'endpoint de callback complet :
 
 **Pour Vercel (Production) :**
 ```
-https://portfolio-react-anthony-git-279166-carrypouletisbacks-projects.vercel.app/api/google-auth/callback
+https://nom-du-projet.vercel.app/api/google-auth/callback
 ```
 
 **Pour le développement local :**
@@ -59,13 +59,13 @@ Pour un environnement de développement et production, ajoutez les deux :
 ### Origines JavaScript autorisées :
 ```
 http://localhost:5173
-https://portfolio-react-anthony-git-279166-carrypouletisbacks-projects.vercel.app
+https://nom-du-projet.vercel.app
 ```
 
 ### URI de redirection autorisés :
 ```
 http://localhost:5173/api/google-auth/callback
-https://portfolio-react-anthony-git-279166-carrypouletisbacks-projects.vercel.app/api/google-auth/callback
+https://nom-du-projet.vercel.app/api/google-auth/callback
 ```
 
 ## 🔍 Vérification
@@ -94,11 +94,11 @@ Après avoir ajouté les URIs :
 
 **Origines JavaScript autorisées :**
 - `http://localhost:5173`
-- `https://portfolio-react-anthony-git-279166-carrypouletisbacks-projects.vercel.app`
+- `https://nom-du-projet.vercel.app`
 
 **URI de redirection autorisés :**
 - `http://localhost:5173/api/google-auth/callback`
-- `https://portfolio-react-anthony-git-279166-carrypouletisbacks-projects.vercel.app/api/google-auth/callback`
+- `https://nom-du-projet.vercel.app/api/google-auth/callback`
 
 ---
 

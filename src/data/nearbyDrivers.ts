@@ -1,0 +1,106 @@
+/**
+ * Chauffeurs à proximité — **mock** pour l’UI (carte + liste page Go).
+ *
+ * **Intégration backend (à faire plus tard sous direction produit)** :
+ * - Remplacer la source mock par un appel API en conservant la même logique d’entrée :
+ *   `{ origin: GeoPoint, radiusKm: number, limit?: number }` (voir {@link NearbyDriversQuery}).
+ * - L’UI (`SingleProjectNew`, filtres, marqueurs) peut alors appeler un service du type
+ *   `getNearbyDrivers()` dans `src/services/` qui délègue au backend avec fallback mock si besoin,
+ *   sans changer les props carte / la structure `NearbyDriver`.
+ *
+ * Fichier actuel : données fictives + génération autour de `origin` dans `radiusKm`.
+ */
+import { DEFAULT_USER_ORIGIN } from '../constants/defaultUserOrigin'
+import type { GeoPoint } from '../services/distanceGeo'
+
+/** Chauffeur fictif pour l’overlay + marqueurs carte. */
+export type NearbyDriver = {
+  id: string
+  name: string
+  moto: string
+  distance: string
+  price: string
+  longitude: number
+  latitude: number
+}
+
+export type NearbyDriversQuery = {
+  origin?: GeoPoint
+  radiusKm?: number
+  limit?: number
+}
+
+type DriverTemplate = {
+  id: string
+  name: string
+  moto: string
+  basePriceEur: number
+  speedKmh: number
+}
+
+const DRIVER_TEMPLATES: DriverTemplate[] = [
+  { id: 'd1', name: 'Karim L.', moto: 'Maxi-scooter', basePriceEur: 8.5, speedKmh: 25 },
+  { id: 'd2', name: 'Sophie R.', moto: 'Scooter', basePriceEur: 9, speedKmh: 22 },
+  { id: 'd3', name: 'Jean-Marc P.', moto: 'Moto', basePriceEur: 7.5, speedKmh: 28 },
+  { id: 'd4', name: 'Nadia T.', moto: 'Scooter', basePriceEur: 8, speedKmh: 23 },
+  { id: 'd5', name: 'Romain C.', moto: 'Maxi-scooter', basePriceEur: 10, speedKmh: 24 },
+  { id: 'd6', name: 'Leila M.', moto: 'Moto', basePriceEur: 7.8, speedKmh: 27 },
+  { id: 'd7', name: 'Damien V.', moto: 'Scooter', basePriceEur: 9.2, speedKmh: 21 },
+  { id: 'd8', name: 'Sarah B.', moto: 'Moto', basePriceEur: 8.3, speedKmh: 26 },
+  { id: 'd9', name: 'Yanis D.', moto: 'Maxi-scooter', basePriceEur: 10.5, speedKmh: 24 },
+]
+
+/**
+ * Génère des chauffeurs mock autour d'une origine donnée.
+ * Scalable: la signature (`origin`, `radiusKm`, `limit`) est alignée avec un futur backend.
+ */
+export function getNearbyDriversMock({
+  origin = DEFAULT_USER_ORIGIN,
+  radiusKm = 20,
+  limit = 9,
+}: NearbyDriversQuery = {}): NearbyDriver[] {
+  const maxDistanceKm = Math.max(1, radiusKm * 0.95)
+  const templates = DRIVER_TEMPLATES.slice(0, Math.max(1, Math.min(limit, DRIVER_TEMPLATES.length)))
+  const seedShift = Math.abs(Math.round((origin.latitude + origin.longitude) * 1000)) % templates.length
+
+  return templates.map((tpl, index) => {
+    const shiftedIndex = (index + seedShift) % templates.length
+    const distanceKm = Math.min(maxDistanceKm, 1 + ((shiftedIndex * 2.3) % maxDistanceKm))
+    const bearingDeg = (37 + shiftedIndex * 53) % 360
+    const pos = moveFrom(origin, distanceKm, bearingDeg)
+    const minutes = Math.max(2, Math.round((distanceKm / tpl.speedKmh) * 60))
+    const price = Math.max(6, tpl.basePriceEur + distanceKm * 1.15)
+    return {
+      id: tpl.id,
+      name: tpl.name,
+      moto: tpl.moto,
+      distance: `${distanceKm.toFixed(1).replace('.', ',')} km · ~${minutes} min`,
+      price: `${Math.round(price)} EUR`,
+      longitude: pos.longitude,
+      latitude: pos.latitude,
+    }
+  })
+}
+
+function moveFrom(origin: GeoPoint, distanceKm: number, bearingDeg: number): GeoPoint {
+  const earthRadiusKm = 6371.0088
+  const bearing = (bearingDeg * Math.PI) / 180
+  const lat1 = (origin.latitude * Math.PI) / 180
+  const lon1 = (origin.longitude * Math.PI) / 180
+  const dByR = distanceKm / earthRadiusKm
+
+  const lat2 = Math.asin(
+    Math.sin(lat1) * Math.cos(dByR) + Math.cos(lat1) * Math.sin(dByR) * Math.cos(bearing)
+  )
+  const lon2 =
+    lon1 +
+    Math.atan2(
+      Math.sin(bearing) * Math.sin(dByR) * Math.cos(lat1),
+      Math.cos(dByR) - Math.sin(lat1) * Math.sin(lat2)
+    )
+
+  return {
+    latitude: (lat2 * 180) / Math.PI,
+    longitude: (lon2 * 180) / Math.PI,
+  }
+}

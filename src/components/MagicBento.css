@@ -58,12 +58,20 @@
   padding-bottom: 16px;
 }
 
-/* Blur renforcé dans MagicBento quand la search bar est active */
+/*
+ * Pas de backdrop-filter sur la search active : au-dessus de Mapbox/WebGL, le blur
+ * se recompose à chaque frame carte → clignotement des vignettes / du panneau.
+ * Le fond opaque est défini dans MobileSearchBar.css (.search-active .search-bar).
+ */
 .mobile-search-bar.search-active .magic-bento.search-bar,
 .mobile-search-bar.search-active .magic-bento.search-bar:focus-within {
   isolation: auto !important;
-  backdrop-filter: blur(60px) saturate(2) brightness(1.2) !important;
-  -webkit-backdrop-filter: blur(60px) saturate(2) brightness(1.2) !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+
+.mobile-search-bar.search-active .magic-bento.search-bar::before {
+  display: none !important;
 }
 
 .header-search-wrapper .mobile-search-bar.search-active .magic-bento.search-bar,

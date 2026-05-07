@@ -1,0 +1,76 @@
+.client-meet-driver-page {
+  box-sizing: border-box;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  min-height: 100%;
+  /* Marges horizontales : priorité au safe-area ; clamp garde un minimum lisible sur très petits écrans */
+  padding-top: max(16px, env(safe-area-inset-top, 0px));
+  padding-bottom: max(32px, env(safe-area-inset-bottom, 0px));
+  padding-left: max(clamp(12px, 4vw, 24px), env(safe-area-inset-left, 0px));
+  padding-right: max(clamp(12px, 4vw, 24px), env(safe-area-inset-right, 0px));
+  background: #f8fafc;
+  overflow-x: clip;
+}
+
+.client-meet-driver-page__inner {
+  max-width: 720px;
+  margin: 0 auto;
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+}
+
+.client-meet-driver-page .client-compte-ride-flow {
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+.client-meet-driver-page .client-compte-ride-flow__driver-map-box {
+  max-width: 100%;
+}
+
+.client-meet-driver-page__back {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0 0 16px;
+  padding: 8px 12px;
+  border-radius: 8px;
+  border: 1px solid #e2e8f0;
+  background: #fff;
+  font: inherit;
+  font-size: 14px;
+  font-weight: 600;
+  color: #334155;
+  cursor: pointer;
+}
+
+.client-meet-driver-page__back:hover {
+  background: #f1f5f9;
+}
+
+.client-meet-driver-page__empty {
+  padding: 24px;
+  border-radius: 12px;
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  font-size: 14px;
+  color: #64748b;
+}
+
+html[data-app-theme='dark'] .client-meet-driver-page {
+  background: var(--app-surface-base, #0f172a);
+}
+
+html[data-app-theme='dark'] .client-meet-driver-page__back {
+  background: var(--app-surface-elevated, #1e293b);
+  border-color: rgba(255, 255, 255, 0.12);
+  color: var(--app-text-primary, #e2e8f0);
+}
+
+html[data-app-theme='dark'] .client-meet-driver-page__empty {
+  background: var(--app-surface-elevated, #1e293b);
+  border-color: rgba(255, 255, 255, 0.12);
+  color: var(--app-text-muted, #94a3b8);
+}

@@ -9,21 +9,48 @@
 /* Désactiver le scroll sur la page d'accueil sur les écrans non mobiles */
 @media (min-width: 769px) {
   .page {
-    overflow-y: hidden !important;
-    overflow-x: hidden !important;
+    overflow-y: auto;
+    overflow-x: hidden;
+  }
+
+  /* Compte/Chauffeur : le scroll doit être celui de la page (barre à droite du viewport). */
+  .page.active:has(.dashboard-container--client-compte),
+  .page.active:has(.dashboard-container--chauffeur),
+  .page.active:has(.dashboard-container--home-accueil) {
+    overflow-y: auto;
+    overflow-x: hidden;
+    max-height: none;
   }
   
   /* Permettre le scroll sur toute la page d'accueil */
-  body.accueil-page .page:not(.single-project-page) {
-    overflow-y: auto !important; /* Permettre le scroll vertical sur toute la page */
-    overflow-x: hidden !important;
+  body.accueil-page :is(.page:not(.single-project-page), .hero-accueil-root) {
+    overflow-y: auto; /* Permettre le scroll vertical sur toute la page */
+    overflow-x: hidden;
     height: auto;
     min-height: 100vh;
   }
-  
-  /* Supprimer le scroll de la colonne droite - le scroll est géré par la page */
-  .hero-right-column {
-    overflow: visible !important;
+
+  body.document-scroll-page .page:not(.single-project-page) {
+    overflow-y: auto;
+    overflow-x: hidden;
+    height: auto;
+    min-height: 0;
+    flex: 1 1 auto;
+  }
+
+  body.document-scroll-page .page:not(.single-project-page):has(.dashboard-container--client-compte),
+  body.document-scroll-page .page:not(.single-project-page):has(.dashboard-container--chauffeur) {
+    overflow-y: hidden;
+    overflow-x: hidden;
+    min-height: 0;
+    flex: 1 1 auto;
+    height: auto;
+    max-height: 100%;
+  }
+
+  /* Scroll géré par la page, pas par le bloc colonnes */
+  .hero-columns-wrap {
+    overflow: visible;
   }
 }
 
@@ -32,8 +59,16 @@
   flex-direction: column;
 }
 
+/* Accueil marketing : racine dédiée (évite la confusion « page active » = onglet SPA). */
+.hero-accueil-root {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
 /* Styles spécifiques à la page d'accueil uniquement - ne pas appliquer aux projets */
-body.accueil-page .page.active:not(.single-project-page) {
+body.accueil-page :is(.page.active:not(.single-project-page), .hero-accueil-root) {
   position: relative;
   width: 100%;
   max-width: 100%;
@@ -43,22 +78,23 @@ body.accueil-page .page.active:not(.single-project-page) {
   overflow: visible; /* Permettre overflow visible pour que les enfants puissent dépasser */
 }
 
-/* Quadrillage en arrière-plan de l'accueil - couvre toute la page (fixe au scroll) */
-.hero-bg-grid {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  width: 100vw;
-  height: 100vh;
-  min-height: 100%;
-  z-index: 0;
-  pointer-events: none;
-  background-image:
-    linear-gradient(rgba(255, 255, 255, 0.08) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(255, 255, 255, 0.08) 1px, transparent 1px);
-  background-size: 40px 40px;
+/* :not(.client-meet-driver-page) — cette page gère ses propres marges dans ClientMeetDriverPage.css */
+body.document-scroll-page .page.active:not(.single-project-page):not(.client-meet-driver-page) {
+  position: relative;
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+  padding-left: 0;
+  padding-right: 0;
+  overflow: visible;
+}
+
+body.document-scroll-page .page.active:not(.single-project-page):has(.dashboard-container--client-compte),
+body.document-scroll-page .page.active:not(.single-project-page):has(.dashboard-container--chauffeur) {
+  overflow: visible;
+  flex: 1 1 auto;
+  min-height: 0;
+  max-height: none;
 }
 
 .main-accueil {
@@ -67,24 +103,80 @@ body.accueil-page .page.active:not(.single-project-page) {
   flex-direction: column;
   align-items: center;
   justify-content: flex-start; /* Commencer en haut pour permettre le scroll */
-  padding: 60px 24px;
+  /* padding: 60px 24px; */
   position: relative;
   z-index: 1;
   width: 100%;
   min-height: calc(100vh - 104px); /* Hauteur minimale pour remplir l'écran */
   margin-top: 100px;
-  overflow: visible !important;
+  overflow: visible;
+}
+
+.hero-accueil-root .main-accueil {
+  /* Hero n’est pas dans `.page.active` : annuler le margin mobile du bloc ≤768px */
+  margin-top: 0;
+  align-items: stretch;
+  width: 100%;
+  min-height: 0;
+  flex: 1 1 auto;
+  padding-left: 0;
+  padding-right: 0;
+}
+
+.hero-accueil-root .main-accueil > .dashboard-container--home-accueil {
+  flex: 0 0 auto;
+  width: 100%;
+  min-width: 0;
+}
+
+.hero-topbar-right-cluster {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+.hero-topbar-auth {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.hero-topbar-auth-sep {
+  color: #94a3b8;
+  font-size: 12px;
+  user-select: none;
+}
+
+.hero-topbar-auth-link {
+  background: none;
+  border: none;
+  padding: 6px 8px;
+  font-family: 'Inter', sans-serif;
+  font-size: 13px;
+  font-weight: 600;
+  color: #0f172a;
+  cursor: pointer;
+  border-radius: 6px;
+}
+
+.hero-topbar-auth-link:hover {
+  background: #f1f5f9;
+  color: #0f172a;
 }
 
 .hero-main {
   display: flex;
+  flex-direction: column;
   gap: 19px;
-  align-items: flex-start; /* Aligner en haut pour permettre le scroll */
+  align-items: stretch;
   width: 100%;
   animation: heroMainBounce 900ms cubic-bezier(0.22, 1, 0.36, 1) 120ms both;
   transform-origin: top center;
   will-change: transform, opacity;
-  overflow: visible !important;
+  overflow: visible;
 }
 
 @keyframes heroMainBounce {
@@ -132,53 +224,180 @@ body.accueil-page .page.active:not(.single-project-page) {
   font-weight: 700;
   font-size: 52px;
   line-height: normal;
-  color: white;
+  color: var(--app-text-hero);
   margin: 0;
   padding: 0;
   width: 100%;
   flex-shrink: 0;
 }
 
-.hero-right-column {
+/* Laisser la carte Mapbox recevoir souris / molette : le contenu hero est « traversant » sauf la zone colonnes (cartes cliquables) */
+body.accueil-page .main-accueil {
+  pointer-events: none;
+}
+
+body.accueil-page .hero-main {
+  pointer-events: none;
+}
+
+/* Accueil réservation (sans carte plein écran) : le contenu doit rester interactif */
+body.accueil-page .hero-main.hero-main--home-booking {
+  pointer-events: auto;
+  position: relative;
+  z-index: 2;
+}
+
+body.accueil-page .hero-columns-wrap {
+  pointer-events: auto;
+}
+
+/* Enveloppe des 3 colonnes (grille à l’intérieur) */
+.hero-columns-wrap {
   flex: 1;
   display: flex;
   flex-direction: column;
-  align-items: flex-end;
+  align-items: stretch;
   min-width: 0;
   height: auto; /* Laisser la hauteur s'adapter au contenu */
   position: relative;
   overflow: visible; /* Permettre la visibilité en haut et en bas */
 }
 
-.hero-right-column-scroll {
+/* Grille : colonne du milieu (chauffeurs) plus large que les deux autres */
+.hero-columns-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.85fr) minmax(0, 1fr);
+  gap: 10px;
+  width: 100%;
+  /* stretch : toutes les colonnes d’une même ligne ont la hauteur du plus haut panneau (tablette / bureau) */
+  align-items: stretch;
+  box-sizing: border-box;
+}
+
+.hero-column--drivers,
+.hero-column--map-hint {
+  opacity: 0.98;
+}
+
+@media (min-width: 1367px) {
+  .hero-columns-grid {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1.85fr) minmax(0, 1fr);
+    grid-template-areas: none;
+  }
+
+  .hero-column--booking,
+  .hero-column--drivers,
+  .hero-column--map-hint {
+    grid-area: auto;
+  }
+}
+
+@media (max-width: 1366px) and (min-width: 997px) {
+  .hero-columns-grid {
+    grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr);
+    grid-template-rows: auto auto;
+    align-items: stretch;
+  }
+
+  .hero-column--booking {
+    grid-column: 1;
+    grid-row: 1;
+  }
+
+  .hero-column--drivers {
+    grid-column: 1;
+    grid-row: 2;
+  }
+
+  .hero-column--map-hint {
+    grid-column: 2;
+    grid-row: 1 / span 2;
+  }
+
+  .hero-column--map-hint .hero-projects-list,
+  .hero-column--map-hint .hero-map-embed-card.hero-card.project-card,
+  .hero-column--map-hint .hero-map-embed-shell {
+    height: 100%;
+    min-height: 100%;
+  }
+
+  /* Evite que la carte chauffeurs puisse être comprimée/masquée par les règles desktop full-height. */
+  .hero-column--drivers .hero-projects-list,
+  .hero-column--drivers .hero-driver-card.hero-card.project-card,
+  .hero-column--drivers .hero-driver-card .project-content {
+    height: auto;
+    min-height: 0;
+  }
+
+  /* Colonne gauche (booking + chauffeurs) scrollable sur viewport plus bas. */
+  .hero-column--booking,
+  .hero-column--drivers {
+    max-height: calc(100dvh - 210px);
+    overflow-y: auto;
+    overscroll-behavior: contain;
+  }
+}
+
+@media (max-width: 996px) {
+  .hero-columns-grid {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1.35fr);
+  }
+
+  /* 3e carte sur toute la largeur en dessous */
+  .hero-column--map-hint {
+    grid-column: 1 / -1;
+  }
+
+  /* Sur devices plus petits, garder la navigation verticale dans les colonnes de gauche. */
+  .hero-column--booking,
+  .hero-column--drivers {
+    max-height: calc(100dvh - 220px);
+    overflow-y: auto;
+    overscroll-behavior: contain;
+  }
+}
+
+@media (max-width: 700px) {
+  .hero-columns-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .hero-column--map-hint {
+    grid-column: auto;
+  }
+}
+
+/* Une colonne scroll (interactive ou miroir) : hauteur = contenu */
+.hero-column {
   display: flex;
   flex-direction: column;
   gap: 8px;
-  align-items: flex-end;
+  align-items: stretch;
   width: 100%;
+  align-self: stretch;
   padding-top: 0;
-  padding-bottom: 127px;
+  padding-bottom: 0;
   margin-top: 0;
   /* Le scroll est géré par la page entière, pas besoin d'overflow ici */
   height: auto;
   min-height: 0;
 }
 
-.hero-right-column-scroll::-webkit-scrollbar {
+.hero-column::-webkit-scrollbar {
   width: 6px;
 }
 
-.hero-right-column-scroll::-webkit-scrollbar-track {
+.hero-column::-webkit-scrollbar-track {
   background: rgba(255, 255, 255, 0.05);
   border-radius: 3px;
 }
 
-.hero-right-column-scroll::-webkit-scrollbar-thumb {
+.hero-column::-webkit-scrollbar-thumb {
   background: rgba(255, 255, 255, 0.2);
   border-radius: 3px;
 }
 
-.hero-right-column-scroll::-webkit-scrollbar-thumb:hover {
+.hero-column::-webkit-scrollbar-thumb:hover {
   background: rgba(255, 255, 255, 0.3);
 }
 
@@ -193,7 +412,8 @@ body.accueil-page .page.active:not(.single-project-page) {
   justify-content: center;
   position: relative;
   flex-shrink: 0;
-  width: var(--hero-card-width, 508px);
+  width: 100%;
+  max-width: 100%;
   color: #222;
   animation: heroMainBounce 800ms cubic-bezier(0.22, 1, 0.36, 1) both;
 }
@@ -232,7 +452,7 @@ body.accueil-page .page.active:not(.single-project-page) {
   justify-content: space-between;
   gap: 16px;
   padding: 12px 16px;
-  width: var(--hero-card-width, 508px);
+  width: 100%;
   max-width: 100%;
   box-sizing: border-box;
 }
@@ -243,7 +463,7 @@ body.accueil-page .page.active:not(.single-project-page) {
   font-family: 'Inter', sans-serif;
   font-size: 14px;
   font-weight: 400;
-  color: #ffffff;
+  color: var(--app-text-primary);
 }
 
 .hero-footer-links {
@@ -257,12 +477,12 @@ body.accueil-page .page.active:not(.single-project-page) {
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #ffffff;
+  color: var(--app-text-primary);
   transition: color 0.2s ease, opacity 0.2s ease;
 }
 
 .hero-footer-links a:hover {
-  color: #ffffff;
+  color: var(--app-text-primary);
   opacity: 0.8;
 }
 
@@ -321,7 +541,7 @@ body.accueil-page .page.active:not(.single-project-page) {
 .hero-card .card-title {
   font-size: 20px;
   color: #1f2937;
-  font-weight: 400 !important;
+  font-weight: 400;
   margin: 0;
 }
 
@@ -333,8 +553,8 @@ body.accueil-page .page.active:not(.single-project-page) {
   /* border: 2px solid #374151; */
   cursor: pointer;
   font-size: 18px;
-  border: none !important;
-  background: none !important;
+  border: none;
+  background: none;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -391,6 +611,665 @@ body.accueil-page .page.active:not(.single-project-page) {
   pointer-events: none;
 }
 
+.nearby-drivers-overlay {
+  pointer-events: auto;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  gap: 8px;
+  padding: 16px;
+  background: transparent;
+}
+
+.hero-driver-card {
+  background: transparent;
+  border: none;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+}
+
+.hero-driver-card .project-content {
+  min-height: 320px;
+  background: transparent;
+  color: #1f2937;
+}
+
+.hero-driver-card .project-image-container {
+  pointer-events: auto;
+  background: transparent;
+  border-radius: 8px;
+}
+
+.hero-driver-card .project-slide .project-image-container {
+  border-radius: 8px;
+}
+
+/* Overlay liste chauffeurs : pas de fond ni bordure (le dégradé .project-overlay est neutralisé ici) */
+.hero-driver-card .project-overlay.nearby-drivers-overlay {
+  background: transparent;
+  border: none;
+  border-radius: 8px;
+  box-sizing: border-box;
+  justify-content: flex-start;
+}
+
+.hero-driver-card .nearby-drivers-overlay__title {
+  color: #1f2937;
+  font-size: clamp(16px, 1.35vw + 12px, 20px);
+  font-weight: 700;
+  letter-spacing: 1.6px;
+  line-height: 1.2;
+}
+
+.hero-driver-card .nearby-drivers-overlay__subtitle {
+  color: #4b5563;
+}
+
+.hero-driver-card .nearby-driver-item {
+  border: 1px solid rgba(0, 0, 0, 0.12);
+  background: #f3f3f5;
+  color: #1f2937;
+}
+
+.hero-driver-card .nearby-driver-item:hover {
+  background: #ececf0;
+  border-color: rgba(251, 146, 60, 0.55);
+}
+
+.hero-driver-card .nearby-driver-item--selected {
+  border-color: rgba(22, 101, 52, 0.45);
+  background: rgba(163, 230, 53, 0.22);
+}
+
+.hero-driver-card .nearby-driver-item--selected:hover {
+  border-color: rgba(22, 101, 52, 0.55);
+  background: rgba(163, 230, 53, 0.28);
+}
+
+.hero-driver-card .nearby-driver-item__name {
+  color: #1f2937;
+}
+
+.hero-driver-card .nearby-driver-item__meta {
+  color: #4b5563;
+  opacity: 1;
+}
+
+/* Colonne 1 — « Commandez une course » (formulaire) */
+/* Pas de bordure sur la carte externe : évite le rendu « bord haut/bas coupé » (double border-radius + fond enfant). */
+.hero-booking-card {
+  border: none;
+  background: transparent;
+  overflow: visible;
+}
+
+/* Remplir toute la largeur de la colonne grille (sinon align-items: flex-start du .hero-card rétrécit le panneau) */
+.hero-booking-card.hero-card.project-card {
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  align-self: stretch;
+  align-items: stretch;
+  justify-content: flex-start;
+  height: auto;
+  /* min-height: 320px; */
+  border: none;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+.hero-booking-panel {
+  width: 100%;
+  min-width: 0;
+  /* min-height: 320px; */
+  box-sizing: border-box;
+  background: #fff8f5;
+  color: #1f2937;
+  border: 1px solid rgba(0, 0, 0, 0.12);
+  border-radius: 10px;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  /* flex: 1 1 auto; */
+}
+
+.hero-booking-panel__title {
+  margin: 0;
+  font-family: 'DM Mono', monospace;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 1.2px;
+  text-transform: uppercase;
+  color: #1f2937;
+}
+
+.hero-booking-panel__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.hero-booking-collapse-btn {
+  border: none;
+  background: transparent;
+  color: #1f2937;
+  border-radius: 8px;
+  width: 28px;
+  height: 28px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-size: 14px;
+  line-height: 1;
+  padding: 0;
+}
+
+.hero-booking-collapse-btn:hover {
+  color: #c2410c;
+  background: transparent;
+}
+
+.hero-booking-collapsed-summary {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 0 2px;
+  min-width: 0;
+}
+
+.hero-booking-collapsed-chip {
+  display: inline-block;
+  min-width: 0;
+  max-width: 100%;
+  font-family: 'Inter', sans-serif;
+  font-size: 13px;
+  line-height: 1.3;
+  color: #374151;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.hero-booking-collapsed-arrow {
+  flex: 0 0 auto;
+  color: #6b7280;
+  font-size: 14px;
+}
+
+.hero-booking-panel__lead {
+  margin: 0;
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 14px;
+  color: #4b5563;
+  line-height: 1.4;
+}
+
+.hero-booking-fields {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.hero-booking-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.hero-booking-field__label {
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 12px;
+  font-weight: 600;
+  color: #374151;
+}
+
+.hero-booking-input {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 10px 12px;
+  border: 1px solid rgba(0, 0, 0, 0.15);
+  border-radius: 8px;
+  font-family: 'Inter', sans-serif;
+  font-size: 14px;
+  color: #111827;
+  background: #fff;
+}
+
+.hero-booking-input:focus {
+  outline: 2px solid rgba(251, 146, 60, 0.75);
+  outline-offset: 1px;
+}
+
+.hero-booking-input--readonly {
+  background: #f3f4f6;
+  color: #4b5563;
+}
+
+.hero-booking-input--error {
+  border-color: #dc2626;
+  background: #fff5f5;
+}
+
+.hero-booking-input--error:focus {
+  outline: 2px solid rgba(220, 38, 38, 0.7);
+}
+
+.hero-booking-field__error {
+  margin: 2px 0 0;
+  font-family: 'Inter', sans-serif;
+  font-size: 12px;
+  line-height: 1.25;
+  color: #b91c1c;
+}
+
+.hero-booking-timing-toggle {
+  display: flex;
+  gap: 8px;
+}
+
+.hero-booking-timing-choice {
+  flex: 1;
+  border: 1px solid rgba(0, 0, 0, 0.15);
+  border-radius: 8px;
+  background: #fff;
+  color: #1f2937;
+  font-family: 'Inter', sans-serif;
+  font-size: 13px;
+  font-weight: 600;
+  padding: 9px 10px;
+  cursor: pointer;
+}
+
+.hero-booking-timing-choice--active {
+  border-color: rgba(241, 88, 42, 0.7);
+  background: rgba(241, 88, 42, 0.1);
+  color: #c2410c;
+}
+
+.hero-booking-panel__hint {
+  margin: 0;
+  font-family: 'DM Mono', monospace;
+  font-size: 11px;
+  color: #6b7280;
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+
+/* Largeur + style dédié « Rechercher » : fond noir, texte blanc, rectangle aux bords arrondis */
+.hero-booking-panel .hero-booking-search-btn.btn {
+  width: 100%;
+  margin-top: 4px;
+  box-sizing: border-box;
+}
+
+.hero-booking-panel .hero-booking-search-btn.btn.btn-primary {
+  background: #111;
+  color: #fff;
+  border: none;
+  border-radius: 12px;
+  font-weight: 600;
+}
+
+.hero-booking-panel .hero-booking-search-btn.btn.btn-primary:hover {
+  background: #1a1a1a;
+  color: #fff;
+}
+
+.hero-booking-panel .hero-booking-search-btn.btn.btn-primary:focus-visible {
+  outline: 2px solid #f1582a;
+  outline-offset: 2px;
+}
+
+/* Colonne 2 — chauffeurs : même logique que la carte (flex, pas de justify center sur la carte) */
+.hero-driver-card.hero-card.project-card {
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  align-self: stretch;
+  align-items: stretch;
+  justify-content: flex-start;
+  height: auto;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  background: transparent;
+  border: none;
+}
+
+/* Colonne 3 — carte Mapbox (pins, trajet, clic) */
+.hero-map-embed-card {
+  border: 1px solid rgba(0, 0, 0, 0.12);
+  background: #fff8f5;
+  overflow: hidden;
+  border-radius: 8px;
+}
+
+.hero-map-embed-card.hero-card.project-card {
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  align-self: stretch;
+  align-items: stretch;
+  /* évite justify-content: center de .hero-card qui empêche l’étirement vertical du panneau carte */
+  justify-content: flex-start;
+  height: auto;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.hero-map-embed-shell {
+  width: 100%;
+  min-width: 0;
+  position: relative;
+  box-sizing: border-box;
+}
+
+.hero-map-embed-toolbar {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  z-index: 4;
+  pointer-events: auto;
+  display: flex;
+  gap: 8px;
+}
+
+.hero-map-3d-toggle {
+  font-family: 'Space Grotesk', 'Inter', sans-serif;
+  font-weight: 600;
+  font-size: 13px;
+  letter-spacing: 0.04em;
+  padding: 8px 14px;
+  border-radius: 8px;
+  border: 1px solid rgba(0, 0, 0, 0.14);
+  background: rgba(255, 248, 245, 0.92);
+  color: #1f2937;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
+  cursor: pointer;
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  transition:
+    background 0.2s ease,
+    border-color 0.2s ease,
+    color 0.2s ease;
+}
+
+.hero-map-3d-toggle:hover {
+  background: #fff;
+  border-color: rgba(241, 88, 42, 0.45);
+}
+
+.hero-map-3d-toggle--active {
+  background: rgba(241, 88, 42, 0.12);
+  border-color: rgba(241, 88, 42, 0.55);
+  color: #c2410c;
+}
+
+.hero-map-3d-toggle:focus-visible {
+  outline: 2px solid #f1582a;
+  outline-offset: 2px;
+}
+
+/* Mobile : hauteur fixe pour la zone carte (ne pas étirer sur toute la page) */
+@media (max-width: 700px) {
+  .hero-map-embed-shell {
+    flex: 0 0 auto;
+    min-height: min(38vh, 400px);
+    height: min(38vh, 400px);
+  }
+}
+
+/*
+ * Tablette & bureau (≥701px) :
+ * - La grille occupe la hauteur restante de .main-accueil (flex + ligne 1fr).
+ * - Colonnes carte / chauffeurs : chaîne flex jusqu’au bas de la cellule grille.
+ */
+@media (min-width: 701px) {
+  .main-accueil .hero-main {
+    flex: 1 1 auto;
+    min-height: 0;
+  }
+
+  .main-accueil .hero-columns-wrap {
+    flex: 1 1 auto;
+    min-height: 0;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .main-accueil .hero-columns-grid {
+    flex: 1 1 auto;
+    min-height: 0;
+    height: 100%;
+  }
+
+  /* 3 colonnes sur une ligne : une seule rangée remplit la hauteur dispo */
+  @media (min-width: 1101px) {
+    .main-accueil .hero-columns-grid {
+      grid-template-rows: 1fr;
+    }
+  }
+
+  /* 2 colonnes + carte dessous : la rangée carte prend le reste jusqu’en bas */
+  @media (max-width: 1100px) {
+    .main-accueil .hero-columns-grid {
+      grid-template-rows: auto 1fr;
+    }
+  }
+
+  .hero-column--drivers {
+    min-height: 0;
+    height: 100%;
+  }
+
+  .hero-column--drivers .hero-projects-list {
+    flex: 1 1 auto;
+    min-height: 0;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    margin-top: 0;
+  }
+
+  .hero-column--drivers .hero-driver-card.hero-card.project-card {
+    flex: 1 1 auto;
+    min-height: 0;
+    height: 100%;
+  }
+
+  .hero-column--drivers .hero-driver-card .project-content {
+    flex: 1 1 auto;
+    min-height: 0;
+    height: 100%;
+  }
+
+  .hero-column--drivers .hero-driver-card .project-slide {
+    flex: 1 1 auto;
+    min-height: 0;
+    height: 100%;
+  }
+
+  /* Fond blanc + liste jusqu’en bas du panneau (conteneur absolu rempli) */
+  .hero-column--drivers .hero-driver-card .project-image-container {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .hero-column--drivers .hero-driver-card .nearby-drivers-overlay {
+    flex: 1 1 auto;
+    min-height: 0;
+    width: 100%;
+    box-sizing: border-box;
+    justify-content: flex-start;
+  }
+
+  .hero-column--map-hint {
+    min-height: 0;
+    height: 100%;
+  }
+
+  .hero-column--map-hint .hero-projects-list {
+    flex: 1 1 auto;
+    min-height: 0;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    margin-top: 0;
+  }
+
+  .hero-column--map-hint .hero-map-embed-card.hero-card.project-card {
+    flex: 1 1 auto;
+    min-height: 0;
+    height: 100%;
+  }
+
+  .hero-column--map-hint .hero-map-embed-shell {
+    flex: 1 1 auto;
+    min-height: 0;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+  }
+}
+
+.hero-map-embed-fallback {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 240px;
+  padding: 16px;
+  font-family: 'Inter', sans-serif;
+  font-size: 14px;
+  color: #6b7280;
+  text-align: center;
+  background: #f3f4f6;
+  border-radius: 8px;
+}
+
+.nearby-drivers-overlay__title {
+  margin: 0;
+  font-family: 'DM Mono', monospace;
+  font-size: 15px;
+  font-weight: 600;
+  line-height: 1.25;
+  letter-spacing: 1.4px;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.9);
+}
+
+.nearby-drivers-overlay__subtitle {
+  margin: 0;
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 1.35;
+  letter-spacing: 0.02em;
+  color: rgba(255, 255, 255, 0.78);
+}
+
+.nearby-drivers-overlay__list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding-right: 2px;
+}
+
+.nearby-drivers-overlay__list::-webkit-scrollbar {
+  width: 6px;
+}
+
+.nearby-drivers-overlay__list::-webkit-scrollbar-thumb {
+  background: rgba(0, 0, 0, 0.25);
+  border-radius: 3px;
+}
+
+.nearby-driver-item {
+  width: 100%;
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  background: rgba(17, 17, 17, 0.45);
+  border-radius: 8px;
+  padding: 10px 12px;
+  color: #fff;
+  text-align: left;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  cursor: pointer;
+  outline: none;
+  min-width: 0;
+}
+
+.nearby-driver-item__left {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+  flex: 1 1 auto;
+}
+
+.nearby-driver-item:hover {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(251, 146, 60, 0.55);
+}
+
+.nearby-driver-item:focus {
+  outline: none;
+}
+
+.nearby-driver-item:focus-visible {
+  outline: 2px solid rgba(251, 146, 60, 0.85);
+  outline-offset: 2px;
+}
+
+.nearby-driver-item--selected {
+  border-color: rgba(163, 230, 53, 0.75);
+  background: rgba(163, 230, 53, 0.12);
+}
+
+.nearby-driver-item--selected:hover {
+  border-color: rgba(163, 230, 53, 0.9);
+  background: rgba(163, 230, 53, 0.16);
+}
+
+.nearby-driver-item__name {
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 16px;
+  font-weight: 700;
+  line-height: 1.2;
+}
+
+.nearby-driver-item__meta {
+  font-family: 'DM Mono', monospace;
+  font-size: 12px;
+  line-height: 1.3;
+  opacity: 0.9;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.nearby-driver-item__price {
+  margin-left: auto;
+  white-space: nowrap;
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 18px;
+  font-weight: 800;
+  line-height: 1;
+  flex: 0 0 auto;
+}
+
 /* Swiper Styles */
 .swiper-container {
   width: 100%;
@@ -419,6 +1298,11 @@ body.accueil-page .page.active:not(.single-project-page) {
 .project-slide:hover {
   transform: scale(1.02);
   opacity: 0.95;
+}
+
+.project-slide.project-slide--nohover:hover {
+  transform: none;
+  opacity: 1;
 }
 
 .project-slide .project-image-container {
@@ -455,23 +1339,23 @@ body.accueil-page .page.active:not(.single-project-page) {
 
 /* Custom pagination bullets */
 .custom-bullet {
-  width: 6px !important;
-  height: 6px !important;
-  background: rgba(255, 255, 255, 0.5) !important;
-  opacity: 1 !important;
-  margin: 0 3px !important;
+  width: 6px;
+  height: 6px;
+  background: rgba(255, 255, 255, 0.5);
+  opacity: 1;
+  margin: 0 3px;
 }
 
 .custom-bullet-active {
-  background: white !important;
-  transform: scale(1.2) !important;
+  background: white;
+  transform: scale(1.2);
 }
 
 /* Liste des 3 projets sous le carousel (même style que les slides du carousel) */
 .hero-projects-list {
   display: flex;
   flex-direction: column;
-  align-items: flex-end;
+  align-items: stretch;
   gap: 12px;
   margin-top: 12px;
   width: 100%;
@@ -491,7 +1375,7 @@ body.accueil-page .page.active:not(.single-project-page) {
     flex: 0.8;
   }
   
-  .hero-right-column {
+  .hero-columns-wrap {
     flex: 1.2;
   }
   
@@ -507,12 +1391,12 @@ body.accueil-page .page.active:not(.single-project-page) {
 /* Mobile pagination */
 @media (max-width: 768px) {
   .custom-bullet {
-    width: 4px !important;
-    height: 4px !important;
+    width: 4px;
+    height: 4px;
   }
   
   .custom-bullet-active {
-    transform: scale(1.2) !important;
+    transform: scale(1.2);
   }
 }
 
@@ -635,15 +1519,35 @@ body.accueil-page .page.active:not(.single-project-page) {
 @media (max-width: 768px) {
   .main-accueil {
     padding: 16px var(--main-padding-x-mobile, 8px);
-    margin-top: 180px !important; /* Augmenter la marge en haut */
+    margin-top: 180px; /* Ancien accueil / pages avec header fixe — pas le Hero marketing */
     min-height: 100vh;
     justify-content: flex-start;
   }
 
+  .hero-accueil-root .main-accueil {
+    margin-top: 0;
+    padding: 0;
+    min-height: 0;
+  }
+
+  /* Footer accueil : bandeau pleine largeur ; le texte reste lisible dans .home-footer__inner */
+  .hero-accueil-root .home-footer {
+    padding-left: env(safe-area-inset-left, 0px);
+    padding-right: env(safe-area-inset-right, 0px);
+    padding-top: clamp(18px, 3vw, 26px);
+    padding-bottom: clamp(22px, 4vw, 36px);
+  }
+
+  .hero-accueil-root .home-footer__inner {
+    width: 100%;
+    max-width: none;
+    box-sizing: border-box;
+    padding-left: max(16px, env(safe-area-inset-left, 0px));
+    padding-right: max(16px, env(safe-area-inset-right, 0px));
+  }
+
   .hero-main {
-    flex-direction: column;
     gap: 32px;
-    align-items: center;
     width: 100%;
   }
 
@@ -663,7 +1567,7 @@ body.accueil-page .page.active:not(.single-project-page) {
     text-align: left;
   }
 
-  .hero-right-column {
+  .hero-columns-wrap {
     width: 100%;
     height: auto;
     align-items: stretch;
@@ -672,7 +1576,8 @@ body.accueil-page .page.active:not(.single-project-page) {
 
   .hero-card,
   .hero-footer {
-    width: var(--hero-card-width, 100%);
+    width: 100%;
+    max-width: 100%;
   }
 
   .project-card {
@@ -685,12 +1590,12 @@ body.accueil-page .page.active:not(.single-project-page) {
   }
 
   body.accueil-page .hero-card.project-card .project-image-container {
-    height: 320px !important;
+    height: 320px;
   }
 
   body.accueil-page .hero-card.project-card .project-image {
-    height: 100% !important;
-    object-fit: cover !important;
+    height: 100%;
+    object-fit: cover;
   }
 
   .service-tags {
@@ -707,7 +1612,12 @@ body.accueil-page .page.active:not(.single-project-page) {
 @media (max-width: 480px) {
   .main-accueil {
     padding: 16px var(--main-padding-x-mobile, 8px);
-    margin-top: 180px !important; /* Augmenter la marge en haut */
+    margin-top: 180px; /* Ancien accueil — pas le Hero marketing */
+  }
+
+  .hero-accueil-root .main-accueil {
+    margin-top: 0;
+    padding: 0;
   }
 
   .hero-main-title {
@@ -734,6 +1644,24 @@ body.accueil-page .page.active:not(.single-project-page) {
     font-size: 11px;
     padding: 2px 4px;
   }
+
+  .hero-booking-panel {
+    padding: 12px;
+    gap: 10px;
+  }
+
+  .hero-booking-fields {
+    gap: 10px;
+  }
+
+  .hero-booking-timing-toggle {
+    gap: 6px;
+  }
+
+  .hero-booking-timing-choice {
+    font-size: 12px;
+    padding: 8px 8px;
+  }
 }
 
 /* Fixer le titre à gauche de la colonne sur les écrans non mobiles */
@@ -756,35 +1684,479 @@ body.accueil-page .page.active:not(.single-project-page) {
     align-self: flex-end; /* Aligner le titre en bas de la colonne gauche */
   }
   
-  /* La colonne de droite suit le scroll de la page */
-  .hero-right-column {
-    overflow: visible !important;
+  /* Les colonnes suivent le scroll de la page */
+  .hero-columns-wrap {
+    overflow: visible;
     height: auto;
     padding-top: 0;
   }
   
   /* Le scroll est géré par la page entière */
-  .hero-right-column-scroll {
-    overflow: visible !important;
+  .hero-column {
+    overflow: visible;
     height: auto;
   }
   
-  /* Style de la scrollbar pour la colonne de droite */
-  .hero-right-column::-webkit-scrollbar {
+  /* Style de la scrollbar pour l’enveloppe colonnes */
+  .hero-columns-wrap::-webkit-scrollbar {
     width: 6px;
   }
   
-  .hero-right-column::-webkit-scrollbar-track {
+  .hero-columns-wrap::-webkit-scrollbar-track {
     background: rgba(255, 255, 255, 0.05);
     border-radius: 3px;
   }
   
-  .hero-right-column::-webkit-scrollbar-thumb {
+  .hero-columns-wrap::-webkit-scrollbar-thumb {
     background: rgba(255, 255, 255, 0.2);
     border-radius: 3px;
   }
   
-  .hero-right-column::-webkit-scrollbar-thumb:hover {
+  .hero-columns-wrap::-webkit-scrollbar-thumb:hover {
     background: rgba(255, 255, 255, 0.3);
+  }
+}
+
+/* ——— Accueil : réservation 2 colonnes (shell Dashboard + tokens app-theme) ——— */
+.hero-main--home-booking {
+  flex: 1 1 auto;
+  min-height: 0;
+  width: 100%;
+  max-width: 1120px;
+  margin: 0 auto;
+  padding: 20px 20px 40px;
+  box-sizing: border-box;
+  font-family: 'Inter', sans-serif;
+}
+
+.hero-home-booking__grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.05fr) minmax(0, 0.95fr);
+  gap: 28px 36px;
+  align-items: start;
+}
+
+.hero-home-booking__col--left {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.hero-home-booking__cityline {
+  margin: 0;
+  font-size: 15px;
+  color: var(--app-text-muted, #475569);
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 6px 10px;
+}
+
+.hero-home-booking__city {
+  font-weight: 600;
+  color: var(--app-text-primary, #0f172a);
+}
+
+.hero-home-booking__fr {
+  color: var(--app-text-muted, #475569);
+}
+
+.hero-home-booking__change-city {
+  margin: 0;
+  padding: 0;
+  border: none;
+  background: none;
+  font: inherit;
+  font-size: 14px;
+  font-weight: 600;
+  color: #2563eb;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  cursor: pointer;
+}
+
+.hero-home-booking__change-city:hover {
+  color: #1d4ed8;
+}
+
+.hero-home-booking__title {
+  margin: 4px 0 0;
+  font-size: clamp(1.45rem, 3.5vw, 2rem);
+  font-weight: 700;
+  line-height: 1.15;
+  color: var(--app-text-primary, #0f172a);
+}
+
+.hero-home-booking__field-grid.dashboard-user-edit-grid {
+  grid-template-columns: 1fr;
+  gap: 12px;
+}
+
+.hero-home-booking__field-grid.dashboard-user-edit-grid label {
+  position: relative;
+}
+
+.hero-home-input-suggestions {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: calc(100% + 6px);
+  z-index: 20;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  max-height: 220px;
+  overflow-y: auto;
+  padding: 6px;
+  border: 1px solid #dbe3ee;
+  border-radius: 10px;
+  background: #ffffff;
+  box-shadow: 0 8px 20px rgba(15, 23, 42, 0.12);
+}
+
+.hero-home-input-suggestion-item {
+  border: none;
+  border-radius: 8px;
+  background: transparent;
+  text-align: left;
+  font-size: 13px;
+  color: #0f172a;
+  padding: 8px 10px;
+  cursor: pointer;
+}
+
+.hero-home-input-suggestion-item:hover {
+  background: #f1f5f9;
+}
+
+.hero-home-booking__field-grid.dashboard-user-edit-grid input,
+.hero-home-booking__field-grid.dashboard-user-edit-grid select {
+  min-height: 44px;
+  height: auto;
+  padding: 10px 12px;
+  font-size: 15px;
+}
+
+.hero-home-booking__submit.add-course-submit {
+  grid-column: auto;
+  align-self: flex-start;
+  margin-top: 4px;
+  min-width: min(100%, 220px);
+  height: 44px;
+  font-size: 15px;
+}
+
+.hero-home-booking__submit.add-course-submit:hover {
+  filter: brightness(1.06);
+}
+
+.hero-home-booking__col--right {
+  padding: 4px 0 0;
+  background: transparent;
+  border: none;
+  box-shadow: none;
+}
+
+.hero-home-suggestions__heading {
+  margin: 0 0 16px;
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: var(--app-text-primary, #0f172a);
+}
+
+.hero-home-suggestions__group + .hero-home-suggestions__group {
+  margin-top: 20px;
+}
+
+.hero-home-suggestions__sub {
+  margin: 0 0 10px;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--app-text-muted, #64748b);
+}
+
+.hero-home-suggestions__row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.hero-home-suggestions__row--popular {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.hero-home-suggestions__row--popular .hero-home-suggestion-card {
+  width: 100%;
+  min-width: 0;
+  max-width: none;
+}
+
+.hero-home-suggestion-card {
+  position: relative;
+  z-index: 1;
+  pointer-events: auto;
+  display: inline-flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 0;
+  padding: 0;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  background: #f8fafc;
+  cursor: pointer;
+  text-align: left;
+  overflow: hidden;
+  color: inherit;
+  transition:
+    background 0.15s ease,
+    border-color 0.15s ease,
+    transform 0.15s ease;
+}
+
+.hero-home-suggestion-card:hover {
+  background: #ffffff;
+  border-color: #cbd5e1;
+  transform: translateY(-1px);
+}
+
+.hero-home-suggestion-card__img {
+  display: block;
+  aspect-ratio: 4 / 3;
+  background: #e2e8f0;
+}
+
+.hero-home-suggestion-card__img img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.hero-home-suggestion-card__title {
+  padding: 8px 10px 10px;
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1.25;
+  color: var(--app-text-primary, #0f172a);
+}
+
+html[data-app-theme='dark'] .hero-home-booking__change-city {
+  color: #93c5fd;
+}
+
+html[data-app-theme='dark'] .hero-home-booking__change-city:hover {
+  color: #bfdbfe;
+}
+
+html[data-app-theme='dark'] .hero-home-suggestion-card {
+  background: rgba(255, 255, 255, 0.05);
+  border-color: var(--app-border-subtle);
+}
+
+html[data-app-theme='dark'] .hero-home-suggestion-card:hover {
+  background: rgba(255, 255, 255, 0.09);
+}
+
+html[data-app-theme='dark'] .hero-home-suggestion-card__img {
+  background: rgba(0, 0, 0, 0.25);
+}
+
+@media (max-width: 900px) {
+  .hero-home-booking__grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 560px) {
+  .hero-home-suggestions__row--popular {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 520px) {
+  .hero-main--home-booking {
+    padding: 16px 14px 32px;
+  }
+}
+
+@media (max-width: 380px) {
+  .hero-home-suggestions__row--popular {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* —— Accueil : bloc chauffeurs (2 colonnes) sous la réservation —— */
+.hero-home-chauffeur {
+  width: 100%;
+  box-sizing: border-box;
+  padding: clamp(8px, 2vw, 12px) 0 clamp(28px, 4vw, 48px);
+}
+
+.hero-home-chauffeur__grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.34fr) minmax(0, 0.86fr);
+  gap: clamp(16px, 3vw, 28px);
+  align-items: stretch;
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+.hero-home-chauffeur__col {
+  box-sizing: border-box;
+  border-radius: 16px;
+  padding: clamp(22px, 3.5vw, 36px);
+  min-width: 0;
+}
+
+.hero-home-chauffeur__col--cta {
+  background: linear-gradient(155deg, #e0f2fe 0%, #dbeafe 45%, #eff6ff 100%);
+  border: 1px solid rgba(15, 23, 42, 0.08);
+  display: flex;
+  flex-direction: column;
+  gap: clamp(18px, 2.5vw, 24px);
+  justify-content: center;
+}
+
+.hero-home-chauffeur__title {
+  margin: 0;
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: clamp(1.35rem, 2.2vw, 1.75rem);
+  font-weight: 700;
+  line-height: 1.25;
+  color: #0f172a;
+}
+
+.hero-home-chauffeur__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.hero-home-chauffeur__btn {
+  font-family: 'Inter', sans-serif;
+  font-size: 0.95rem;
+  font-weight: 600;
+  padding: 12px 20px;
+  border-radius: 10px;
+  cursor: pointer;
+  border: none;
+  transition: background 0.15s ease, color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.hero-home-chauffeur__btn--primary {
+  background: #0f172a;
+  color: #fff;
+  box-shadow: 0 2px 8px rgba(15, 23, 42, 0.2);
+}
+
+.hero-home-chauffeur__btn--primary:hover {
+  background: #1e293b;
+}
+
+.hero-home-chauffeur__btn--secondary {
+  background: #fff;
+  color: #0f172a;
+  border: 1px solid rgba(15, 23, 42, 0.14);
+}
+
+.hero-home-chauffeur__btn--secondary:hover {
+  background: #f8fafc;
+}
+
+.hero-home-chauffeur__col--benefits {
+  background: #ffffff;
+  border: 1px solid rgba(15, 23, 42, 0.1);
+  display: flex;
+  flex-direction: column;
+}
+
+.hero-home-chauffeur__benefits-inner {
+  width: 100%;
+  max-width: min(22.5rem, 100%);
+}
+
+.hero-home-chauffeur__benefits-title {
+  margin: 0 0 16px;
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: clamp(1.15rem, 1.8vw, 1.35rem);
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.hero-home-chauffeur__benefits-rows {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.hero-home-chauffeur__benefit-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.hero-home-chauffeur__benefit-icon {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-top: 2px;
+  color: #0369a1;
+}
+
+.hero-home-chauffeur__benefit-text {
+  margin: 0;
+  color: #334155;
+  font-family: 'Inter', sans-serif;
+  font-size: clamp(0.9rem, 1.4vw, 0.98rem);
+  line-height: 1.55;
+}
+
+html[data-app-theme='dark'] .hero-home-chauffeur__col--cta {
+  background: linear-gradient(155deg, rgba(30, 58, 138, 0.45) 0%, rgba(15, 23, 42, 0.75) 100%);
+  border-color: rgba(255, 255, 255, 0.1);
+}
+
+html[data-app-theme='dark'] .hero-home-chauffeur__title,
+html[data-app-theme='dark'] .hero-home-chauffeur__benefits-title {
+  color: var(--app-text-primary, #f1f5f9);
+}
+
+html[data-app-theme='dark'] .hero-home-chauffeur__btn--primary {
+  background: #f1f5f9;
+  color: #0f172a;
+}
+
+html[data-app-theme='dark'] .hero-home-chauffeur__btn--primary:hover {
+  background: #e2e8f0;
+}
+
+html[data-app-theme='dark'] .hero-home-chauffeur__btn--secondary {
+  background: rgba(255, 255, 255, 0.06);
+  color: var(--app-text-primary, #f1f5f9);
+  border-color: rgba(255, 255, 255, 0.14);
+}
+
+html[data-app-theme='dark'] .hero-home-chauffeur__col--benefits {
+  background: rgba(15, 23, 42, 0.55);
+  border-color: rgba(255, 255, 255, 0.1);
+}
+
+html[data-app-theme='dark'] .hero-home-chauffeur__benefit-icon {
+  color: #7dd3fc;
+}
+
+html[data-app-theme='dark'] .hero-home-chauffeur__benefit-text {
+  color: var(--app-text-muted, #cbd5e1);
+}
+
+@media (max-width: 720px) {
+  .hero-home-chauffeur__grid {
+    grid-template-columns: 1fr;
   }
 }

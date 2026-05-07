@@ -1,6 +1,6 @@
 {
-  "name": "test-cursor-2",
-  "id": "com.anthony.testcursor2",
+  "name": "palto-figma-toolkit",
+  "id": "com.palto.figma-toolkit",
   "api": "1.0.0",
   "main": "code.js",
   "ui": "ui.html",
@@ -9,4 +9,3 @@
     { "command": "open", "name": "Open toolkit" }
   ]
 }
-

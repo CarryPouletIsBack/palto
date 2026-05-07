@@ -1,0 +1,226 @@
+/**
+ * Cover + bandeau vol : largeur du flux (pas de 100vw dans la single — dépassement vs gouttières du main).
+ */
+
+/* Titre + contexte : mêmes gouttières que l’accueil (Hero `.hero-main--home-booking` 20px / 14px ≤520px ; `.main-accueil` `--main-padding-x-mobile` ≤768px). */
+.destination-spotlight .project-top-block > .project-header-section,
+.destination-spotlight .project-top-block > .project-section.context-project-section {
+  box-sizing: border-box;
+  width: 100%;
+  padding-left: 20px;
+  padding-right: 20px;
+}
+
+@media (max-width: 768px) {
+  .destination-spotlight .project-top-block > .project-header-section,
+  .destination-spotlight .project-top-block > .project-section.context-project-section {
+    padding-left: var(--main-padding-x-mobile, 8px);
+    padding-right: var(--main-padding-x-mobile, 8px);
+  }
+}
+
+@media (max-width: 520px) {
+  .destination-spotlight .project-top-block > .project-header-section,
+  .destination-spotlight .project-top-block > .project-section.context-project-section {
+    padding-left: 14px;
+    padding-right: 14px;
+  }
+}
+
+.destination-spotlight .destination-spotlight-cover-bleed {
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  position: relative;
+  left: auto;
+  transform: none;
+  flex-shrink: 0;
+  box-sizing: border-box;
+}
+
+.destination-spotlight .destination-spotlight-cover {
+  width: 100%;
+  margin: 0;
+  border-radius: 0;
+  overflow: hidden;
+  border: none;
+  border-bottom: 1px solid var(--sp-edge, rgba(15, 23, 42, 0.14));
+  background: var(--sp-surface-alt, #eaeae6);
+  box-shadow: none;
+}
+
+.destination-spotlight .destination-spotlight-cover img {
+  width: 100%;
+  height: auto;
+  display: block;
+  vertical-align: middle;
+  object-fit: cover;
+  aspect-ratio: 16 / 9;
+  max-height: min(52vh, 520px);
+}
+
+.destination-spotlight .destination-spotlight-flight-banner {
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  margin: 0 0 var(--sp-space-lg, 24px);
+  padding: var(--sp-space-md, 16px) var(--sp-space-lg, 24px);
+  box-sizing: border-box;
+  /* DS SingleProject : --sp-warm-surface (toile contenu) + --sp-edge ; thème sombre via SingleProject.app-theme.css */
+  background: var(--sp-warm-surface, #fff8f5);
+  border-bottom: 1px solid var(--sp-edge, rgba(15, 23, 42, 0.14));
+}
+
+.destination-spotlight .destination-spotlight-flight-banner__title {
+  font-family: var(--sp-font-mono, 'JetBrains Mono', 'DM Mono', monospace);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--sp-text-subtle, #374963);
+  margin: 0 0 10px;
+}
+
+.destination-spotlight .destination-spotlight-flight-banner__hours {
+  font-family: var(--sp-font-body, 'Inter', sans-serif);
+  font-size: 15px;
+  line-height: 1.5;
+  font-weight: 500;
+  color: var(--sp-text, #1f2937);
+  margin: 0;
+  max-width: 100%;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
+/* Fiche vol « hub → RUN » : une seule ligne (scroll horizontal si besoin). */
+.destination-spotlight .destination-spotlight-flight-route-scroll {
+  max-width: 100%;
+  overflow-x: auto;
+  overflow-y: hidden;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: thin;
+}
+
+.destination-spotlight .destination-spotlight-flight-route {
+  font-variant-numeric: tabular-nums;
+}
+
+.destination-spotlight .destination-spotlight-flight-route--single-line {
+  display: inline-flex;
+  flex-direction: row;
+  flex-wrap: nowrap;
+  align-items: baseline;
+  gap: 0.35em;
+  white-space: nowrap;
+  min-width: min-content;
+  padding-bottom: 2px;
+}
+
+.destination-spotlight .destination-spotlight-flight-route__index {
+  font-family: var(--sp-font-mono, 'JetBrains Mono', 'DM Mono', monospace);
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--sp-text-subtle, #374963);
+  letter-spacing: 0.02em;
+}
+
+.destination-spotlight .destination-spotlight-flight-route__airline {
+  font-family: var(--sp-font-mono, 'JetBrains Mono', 'DM Mono', monospace);
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  color: var(--sp-text, #1f2937);
+}
+
+.destination-spotlight .destination-spotlight-flight-route__flight {
+  font-family: var(--sp-font-mono, 'JetBrains Mono', 'DM Mono', monospace);
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1.2;
+  color: var(--sp-text, #1f2937);
+}
+
+.destination-spotlight .destination-spotlight-flight-route__aircraft {
+  font-family: var(--sp-font-mono, 'JetBrains Mono', 'DM Mono', monospace);
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--sp-text-subtle, #374963);
+}
+
+.destination-spotlight .destination-spotlight-flight-route__city {
+  font-family: var(--sp-font-body, 'Inter', sans-serif);
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 1.2;
+  color: var(--sp-text, #1f2937);
+}
+
+.destination-spotlight .destination-spotlight-flight-route__iata {
+  font-family: var(--sp-font-mono, 'JetBrains Mono', 'DM Mono', monospace);
+  font-size: 14px;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  color: var(--sp-text, #1f2937);
+}
+
+.destination-spotlight .destination-spotlight-flight-route__dash {
+  font-family: var(--sp-font-mono, 'JetBrains Mono', 'DM Mono', monospace);
+  font-size: 15px;
+  font-weight: 500;
+  color: var(--sp-text-subtle, #374963);
+  padding: 0 0.1em;
+}
+
+.destination-spotlight .destination-spotlight-flight-route__dot {
+  font-family: var(--sp-font-body, 'Inter', sans-serif);
+  font-size: 13px;
+  color: var(--sp-text-subtle, #374963);
+}
+
+.destination-spotlight .destination-spotlight-flight-route__footer {
+  font-family: var(--sp-font-body, 'Inter', sans-serif);
+  font-size: 12px;
+  line-height: 1.2;
+  font-weight: 400;
+  color: var(--sp-text-subtle, #374963);
+  white-space: nowrap;
+}
+
+.destination-spotlight-context-grid {
+  grid-template-columns: 1fr;
+}
+
+button.destination-spotlight-cta.project-external-link {
+  appearance: none;
+  border: none;
+  background: none;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  margin-top: 4px;
+}
+
+@media (max-width: 768px) {
+  .destination-spotlight .destination-spotlight-cover img {
+    max-height: 40vh;
+    aspect-ratio: 16 / 10;
+  }
+
+  .destination-spotlight .destination-spotlight-flight-banner {
+    padding-left: var(--sp-space-md, 16px);
+    padding-right: var(--sp-space-md, 16px);
+  }
+
+  .destination-spotlight .destination-spotlight-flight-banner__hours {
+    font-size: 14px;
+  }
+
+  .destination-spotlight .destination-spotlight-flight-route__flight {
+    font-size: 13px;
+  }
+
+  .destination-spotlight .destination-spotlight-flight-route__footer {
+    font-size: 11px;
+  }
+}

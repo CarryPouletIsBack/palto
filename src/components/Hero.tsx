@@ -1,303 +1,344 @@
-import { useState, useEffect } from 'react'
+import { useState, useCallback, useEffect, useRef } from 'react'
 import { useLanguage } from '../contexts/LanguageContext'
 import { trackEvent } from '../services/googleAnalyticsTracking'
-import LanguageSwitcher from './LanguageSwitcher'
+import { DashboardHomeTopbar } from './DashboardHomeTopbar'
+import { DashboardHomeRidesBanner } from './DashboardHomeRidesBanner'
+import { HomeFooter } from './HomeFooter'
+import './Dashboard.css'
+import './Dashboard.app-theme.css'
 import './Hero.css'
-import { getProjectsGroupedByCategory, type MenuItem } from '../services/projectService'
-import { Swiper, SwiperSlide } from 'swiper/react'
-import { Pagination } from 'swiper/modules'
-import 'swiper/css'
-import 'swiper/css/pagination'
+import { PLACEHOLDER_COVER } from '../constants/imagePlaceholders'
+import { DEFAULT_USER_ORIGIN_LABEL } from '../constants/defaultUserOrigin'
+import { POPULAR_DESTINATIONS, type PopularDestination } from '../data/popularDestinations'
+import { saveGoPrefill } from '../constants/goPrefillStorage'
+import { geocodeForwardSuggestions, type GeocodeSuggestion } from '../services/mapboxGeocoding'
+import { REUNION_ISLAND_BBOX_GEOCODE } from '../constants/reunionIsland'
+import { CalendarRange, Car, Wallet } from 'lucide-react'
+import { useClientHomeTopbarRides } from '../hooks/useClientHomeTopbarRides'
 
 interface HeroProps {
   onPageChange: (page: string, projectImage?: string, projectCategory?: string) => void
-  onContactClick?: () => void
+  onOpenClientAccountAuth?: (mode: 'login' | 'signup') => void
+  /** Passager déjà connecté : ouvrir l’espace compte (ex. depuis la topbar). */
+  onOpenClientAccount?: () => void
+  /** Page « chauffeur sur place » (`/compte/course`). */
+  onOpenClientLiveMeet?: () => void
+  onNavigateHome?: () => void
+  onOpenChauffeurAuth?: (mode: 'login' | 'signup') => void
 }
 
-/** Mettre à true pour réafficher le carousel (code conservé) */
-const SHOW_CAROUSEL = false
+const CHAUFFEUR_BENEFITS = [
+  { key: 'chauffeurBenefit1' as const, Icon: CalendarRange },
+  { key: 'chauffeurBenefit2' as const, Icon: Car },
+  { key: 'chauffeurBenefit3' as const, Icon: Wallet },
+]
 
-const Hero = ({ onPageChange, onContactClick }: HeroProps) => {
+const Hero = ({
+  onPageChange,
+  onOpenClientAccountAuth,
+  onOpenClientAccount,
+  onOpenClientLiveMeet,
+  onNavigateHome,
+  onOpenChauffeurAuth,
+}: HeroProps) => {
   const { t, language } = useLanguage()
-  const prefix = language === 'en' ? '/en' : '/fr'
-  const [allProjects, setAllProjects] = useState<MenuItem[]>([])
+  const [pickupDraft, setPickupDraft] = useState('')
+  const [destinationDraft, setDestinationDraft] = useState('')
+  const [pickupTiming, setPickupTiming] = useState<'now' | 'later'>('now')
+  const [pickupSuggestions, setPickupSuggestions] = useState<GeocodeSuggestion[]>([])
+  const [destinationSuggestions, setDestinationSuggestions] = useState<GeocodeSuggestion[]>([])
+  const [pickupOpen, setPickupOpen] = useState(false)
+  const [destinationOpen, setDestinationOpen] = useState(false)
+  const pickupTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const destinationTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const { clientUpcomingRide, clientLiveMeetActive } = useClientHomeTopbarRides(language)
+
+  const handleVoirLesPrix = useCallback(() => {
+    saveGoPrefill({
+      pickup: pickupDraft.trim() || DEFAULT_USER_ORIGIN_LABEL,
+      destination: destinationDraft.trim(),
+      timing: pickupTiming,
+      datetime: '',
+    })
+    trackEvent(
+      'click',
+      'hero_go_prices',
+      `${destinationDraft.trim() ? 'with_dest' : 'empty_dest'}_${pickupTiming}`
+    )
+    onPageChange('project-Go', PLACEHOLDER_COVER, 'Application')
+  }, [destinationDraft, onPageChange, pickupDraft, pickupTiming])
+
+  const destTitle = (d: PopularDestination) => (language === 'en' ? d.titleEn : d.titleFr)
+
+  const handleSuggestionClick = useCallback(
+    (d: PopularDestination) => {
+      onPageChange(`destination-${d.id}`)
+      trackEvent('click', 'hero_home_suggestion', d.id)
+    },
+    [onPageChange]
+  )
 
   useEffect(() => {
-    // Charger les projets depuis localStorage
-    const categories = getProjectsGroupedByCategory()
-    const projects = categories
-      .flatMap(category => category.projects.map(project => ({ ...project, category: category.title })))
-      .slice(0, 4)
-    setAllProjects(projects)
-  }, [])
-
-  // Écouter les changements de localStorage pour mettre à jour les projets
-  useEffect(() => {
-    const handleStorageChange = () => {
-      const categories = getProjectsGroupedByCategory()
-      const projects = categories
-        .flatMap(category => category.projects.map(project => ({ ...project, category: category.title })))
-        .slice(0, 4)
-      setAllProjects(projects)
+    if (!pickupOpen) return
+    if (pickupTimerRef.current) clearTimeout(pickupTimerRef.current)
+    const q = pickupDraft.trim()
+    if (q.length < 3) {
+      setPickupSuggestions([])
+      return
     }
-
-    window.addEventListener('storage', handleStorageChange)
-    // Écouter aussi les événements personnalisés pour les changements dans le même onglet
-    window.addEventListener('projectsUpdated', handleStorageChange)
-
+    pickupTimerRef.current = setTimeout(async () => {
+      pickupTimerRef.current = null
+      const list = await geocodeForwardSuggestions(q, 'osm', {
+        language,
+        bbox: REUNION_ISLAND_BBOX_GEOCODE,
+        limit: 5,
+      })
+      setPickupSuggestions(list)
+    }, 180)
     return () => {
-      window.removeEventListener('storage', handleStorageChange)
-      window.removeEventListener('projectsUpdated', handleStorageChange)
+      if (pickupTimerRef.current) clearTimeout(pickupTimerRef.current)
     }
-  }, [])
+  }, [pickupOpen, pickupDraft, language])
 
-  // Dates inventées pour les 4 projets
-  const projectDates = [
-    '01/01/2025',
-    '15/12/2024', 
-    '10/11/2024',
-    '25/10/2024'
-  ]
+  useEffect(() => {
+    if (!destinationOpen) return
+    if (destinationTimerRef.current) clearTimeout(destinationTimerRef.current)
+    const q = destinationDraft.trim()
+    if (q.length < 3) {
+      setDestinationSuggestions([])
+      return
+    }
+    destinationTimerRef.current = setTimeout(async () => {
+      destinationTimerRef.current = null
+      const list = await geocodeForwardSuggestions(q, 'osm', {
+        language,
+        bbox: REUNION_ISLAND_BBOX_GEOCODE,
+        limit: 5,
+      })
+      setDestinationSuggestions(list)
+    }, 180)
+    return () => {
+      if (destinationTimerRef.current) clearTimeout(destinationTimerRef.current)
+    }
+  }, [destinationOpen, destinationDraft, language])
 
   return (
-    <div className="page active">
-      <div className="hero-bg-grid" aria-hidden />
+    <div className="hero-accueil-root">
       <div className="main-accueil">
-        <div className="hero-main">
-          {/* Colonne de gauche */}
-          <div className="hero-left-column">
-            <div className="hero-title-container">
-              <h1 className="hero-main-title">
-                {t('hero.title')}
-              </h1>
-            </div>
-          </div>
+        <div className="dashboard-container dashboard-container--home-accueil">
+          <div className="dashboard-main">
+            <DashboardHomeTopbar
+              onOpenClientAccountAuth={onOpenClientAccountAuth}
+              onNavigateHome={onNavigateHome}
+            />
+            <DashboardHomeRidesBanner
+              clientUpcomingRide={clientUpcomingRide}
+              clientLiveMeetActive={clientLiveMeetActive}
+              onOpenClientLiveMeet={onOpenClientLiveMeet}
+              analyticsSuffix="home"
+            />
 
-          {/* Colonne de droite */}
-          <div className="hero-right-column">
-            <div className="hero-right-column-scroll">
-              {/* Carte Infos (entièrement cliquable) */}
-              <div
-                className="hero-card info-card"
-                onClick={() => onPageChange('aproposnew')}
-                onKeyDown={(e) => e.key === 'Enter' && onPageChange('aproposnew')}
-                role="button"
-                tabIndex={0}
-                aria-label={t('hero.infos')}
-              >
-                <div className="card-header">
-                  <h2 className="card-title">{t('hero.infos')}</h2>
-                  <div className="card-arrow" aria-hidden>
-                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" className="arrow-icon">
-                      <path d="M5 12H19M19 12L12 5M19 12L12 19" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                    </svg>
-                  </div>
-                </div>
-              </div>
+            <div className="hero-main hero-main--home-booking">
+              <section className="hero-home-booking" aria-labelledby="hero-home-booking-title">
+                <div className="hero-home-booking__grid">
+                  <div className="hero-home-booking__col hero-home-booking__col--left">
+                    <p className="hero-home-booking__cityline">
+                      <span className="hero-home-booking__city">{t('hero.homeCity')}</span>
+                      <span className="hero-home-booking__fr">{t('hero.homeCountrySuffix')}</span>
+                      <button
+                        type="button"
+                        className="hero-home-booking__change-city"
+                        onClick={() => {
+                          setPickupDraft('')
+                          trackEvent('click', 'hero_change_city', 'focus_pickup')
+                        }}
+                      >
+                        {t('hero.homeChangeCity')}
+                      </button>
+                    </p>
+                    <h2 id="hero-home-booking-title" className="hero-home-booking__title">
+                      {t('hero.orderRideTitle')}
+                    </h2>
 
-            {/* Carte Projet Carousel (masqué : SHOW_CAROUSEL = false, code conservé pour réactivation) */}
-            {SHOW_CAROUSEL && (
-              <div className="hero-card project-card">
-                <div className="project-content">
-                  <Swiper
-                    modules={[Pagination]}
-                    spaceBetween={0}
-                    slidesPerView={1}
-                    pagination={{ 
-                      clickable: true,
-                      bulletClass: 'swiper-pagination-bullet custom-bullet',
-                      bulletActiveClass: 'swiper-pagination-bullet-active custom-bullet-active'
-                    }}
-                    className="swiper-container"
-                  >
-                    {allProjects.map((project, index) => (
-                      <SwiperSlide key={index}>
-                        <div 
-                          className="project-slide"
-                          onClick={() => onPageChange(`project-${project.title}`, project.imageSrc, project.category)}
-                          style={{ cursor: 'pointer' }}
+                    <div className="dashboard-user-edit-grid hero-home-booking__field-grid">
+                      <label>
+                        {t('hero.homePickupTimingLabel')}
+                        <select
+                          id="hero-home-pickup-timing"
+                          value={pickupTiming}
+                          onChange={(e) => setPickupTiming(e.target.value === 'later' ? 'later' : 'now')}
                         >
-                          <div className="project-image-container">
-                            <img 
-                              src={project.imageSrc} 
-                              alt={project.title} 
-                              className="project-image"
-                            />
-                            <div className="project-overlay"></div>
+                          <option value="now">{t('hero.homeTimingNow')}</option>
+                          <option value="later">{t('hero.homeTimingLater')}</option>
+                        </select>
+                      </label>
+                      <label>
+                        {t('hero.homePickupLabel')}
+                        <input
+                          id="hero-home-pickup"
+                          type="text"
+                          value={pickupDraft}
+                          onChange={(e) => setPickupDraft(e.target.value)}
+                          onFocus={() => setPickupOpen(true)}
+                          onBlur={(e) => {
+                            const next = e.relatedTarget as HTMLElement | null
+                            if (next?.dataset?.heroPickupSuggest === 'true') return
+                            setPickupOpen(false)
+                          }}
+                          placeholder={t('hero.homePickupPlaceholder')}
+                          autoComplete="street-address"
+                        />
+                        {pickupOpen && pickupSuggestions.length > 0 ? (
+                          <div className="hero-home-input-suggestions">
+                            {pickupSuggestions.map((s) => (
+                              <button
+                                key={`pickup-${s.longitude}-${s.latitude}-${s.label}`}
+                                type="button"
+                                data-hero-pickup-suggest="true"
+                                className="hero-home-input-suggestion-item"
+                                onMouseDown={(e) => e.preventDefault()}
+                                onClick={() => {
+                                  setPickupDraft(s.label)
+                                  setPickupOpen(false)
+                                }}
+                              >
+                                {s.label}
+                              </button>
+                            ))}
                           </div>
-                          <div className="project-info">
-                            <p className="project-category">
-                              {project.category === 'Application' ? t('hero.categoryApplication') :
-                               project.category === 'Application web' ? t('hero.categoryApplicationWeb') :
-                               project.category === 'Site web' ? t('hero.categorySiteWeb') :
-                               project.category === 'Logo' ? t('hero.categoryLogo') :
-                               project.category === 'Motion' ? t('hero.categoryMotion') :
-                               (project.category === 'PLV' || project.category === 'Plv') ? t('hero.categoryPlv') : project.category}
-                            </p>
-                            <h3 className="project-title">{project.title}</h3>
-                            <p className="project-date">{projectDates[index] || '01/01/2025'}</p>
+                        ) : null}
+                      </label>
+                      <label>
+                        {t('hero.homeDestinationLabel')}
+                        <input
+                          id="hero-home-destination"
+                          type="text"
+                          value={destinationDraft}
+                          onChange={(e) => setDestinationDraft(e.target.value)}
+                          onFocus={() => setDestinationOpen(true)}
+                          onBlur={(e) => {
+                            const next = e.relatedTarget as HTMLElement | null
+                            if (next?.dataset?.heroDestinationSuggest === 'true') return
+                            setDestinationOpen(false)
+                          }}
+                          placeholder={t('hero.homeDestinationPlaceholder')}
+                          autoComplete="street-address"
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter') {
+                              e.preventDefault()
+                              handleVoirLesPrix()
+                            }
+                          }}
+                        />
+                        {destinationOpen && destinationSuggestions.length > 0 ? (
+                          <div className="hero-home-input-suggestions">
+                            {destinationSuggestions.map((s) => (
+                              <button
+                                key={`dest-${s.longitude}-${s.latitude}-${s.label}`}
+                                type="button"
+                                data-hero-destination-suggest="true"
+                                className="hero-home-input-suggestion-item"
+                                onMouseDown={(e) => e.preventDefault()}
+                                onClick={() => {
+                                  setDestinationDraft(s.label)
+                                  setDestinationOpen(false)
+                                }}
+                              >
+                                {s.label}
+                              </button>
+                            ))}
                           </div>
-                        </div>
-                      </SwiperSlide>
-                    ))}
-                  </Swiper>
-                </div>
-              </div>
-            )}
+                        ) : null}
+                      </label>
+                    </div>
 
-            {/* Liste des 3 projets : Playdago, Kaldera, Pedaboard (même style que le carousel) */}
-            <div className="hero-projects-list">
-              {[
-                { title: 'Pedaboard', imageSrc: '/images/cover-project-pedaboard.png', category: 'Application web', date: '10/11/2024' },
-                { title: 'Kaldera', imageSrc: '/images/cover-project-kaldera.png', category: 'Site web', date: '15/12/2024' },
-                { title: 'Playdago', imageSrc: '/images/cover-project-playdago.png', category: 'Application', date: '01/01/2025' },
-              ].map((project) => (
-                <div key={project.title} className="hero-card project-card">
-                  <div className="project-content">
-                    <div
-                      className="project-slide"
-                      onClick={() => onPageChange(`project-${project.title}`, project.imageSrc, project.category)}
-                      role="button"
-                      tabIndex={0}
-                      onKeyDown={(e) => e.key === 'Enter' && onPageChange(`project-${project.title}`, project.imageSrc, project.category)}
-                      style={{ cursor: 'pointer' }}
-                    >
-                      <div className="project-image-container">
-                        <img src={project.imageSrc} alt={project.title} className="project-image" />
-                        <div className="project-overlay" />
+                    <button type="button" className="add-course-submit hero-home-booking__submit" onClick={handleVoirLesPrix}>
+                      {t('hero.homeSeePrices')}
+                    </button>
+                  </div>
+
+                  <aside className="hero-home-booking__col hero-home-booking__col--right" aria-label={t('hero.homeSuggestionsTitle')}>
+                    <h3 className="hero-home-suggestions__heading">{t('hero.homeSuggestionsTitle')}</h3>
+
+                    <div className="hero-home-suggestions__group">
+                      <h4 className="hero-home-suggestions__sub">{t('search.popularPlacesTitle')}</h4>
+                      <div className="hero-home-suggestions__row hero-home-suggestions__row--popular">
+                        {POPULAR_DESTINATIONS.map((d) => (
+                          <button
+                            key={d.id}
+                            type="button"
+                            className="hero-home-suggestion-card"
+                            onClick={() => handleSuggestionClick(d)}
+                          >
+                            <span className="hero-home-suggestion-card__img">
+                              {d.imageSrc ? (
+                                <img src={d.imageSrc} alt="" loading="lazy" decoding="async" />
+                              ) : null}
+                            </span>
+                            <span className="hero-home-suggestion-card__title">{destTitle(d)}</span>
+                          </button>
+                        ))}
                       </div>
-                      <div className="project-info">
-                        <p className="project-category">
-                          {project.category === 'Application' ? t('hero.categoryApplication') : project.category === 'Application web' ? t('hero.categoryApplicationWeb') : t('hero.categorySiteWeb')}
-                        </p>
-                        <h3 className="project-title">{project.title}</h3>
-                        <p className="project-date">{project.date}</p>
+                    </div>
+                  </aside>
+                </div>
+              </section>
+
+              <section className="hero-home-chauffeur" aria-labelledby="hero-home-chauffeur-title">
+                <div className="hero-home-chauffeur__grid">
+                  <div className="hero-home-chauffeur__col hero-home-chauffeur__col--cta">
+                    <h2 id="hero-home-chauffeur-title" className="hero-home-chauffeur__title">
+                      {t('hero.chauffeurCtaTitle')}
+                    </h2>
+                    <div className="hero-home-chauffeur__actions" role="group" aria-label={t('hero.chauffeurCtaTitle')}>
+                      <button
+                        type="button"
+                        className="hero-home-chauffeur__btn hero-home-chauffeur__btn--primary"
+                        onClick={() => {
+                          trackEvent('click', 'hero_chauffeur_cta', 'login')
+                          if (onOpenChauffeurAuth) onOpenChauffeurAuth('login')
+                          else onPageChange('dashboard')
+                        }}
+                      >
+                        {t('hero.chauffeurCtaSignIn')}
+                      </button>
+                      <button
+                        type="button"
+                        className="hero-home-chauffeur__btn hero-home-chauffeur__btn--secondary"
+                        onClick={() => {
+                          trackEvent('click', 'hero_chauffeur_cta', 'signup')
+                          if (onOpenChauffeurAuth) onOpenChauffeurAuth('signup')
+                          else onPageChange('dashboard')
+                        }}
+                      >
+                        {t('hero.chauffeurCtaSignUp')}
+                      </button>
+                    </div>
+                  </div>
+                  <div className="hero-home-chauffeur__col hero-home-chauffeur__col--benefits">
+                    <div className="hero-home-chauffeur__benefits-inner">
+                      <h3 className="hero-home-chauffeur__benefits-title">{t('hero.chauffeurBenefitsTitle')}</h3>
+                      <div className="hero-home-chauffeur__benefits-rows" role="list">
+                        {CHAUFFEUR_BENEFITS.map(({ key, Icon }) => (
+                          <div key={key} className="hero-home-chauffeur__benefit-row" role="listitem">
+                            <span className="hero-home-chauffeur__benefit-icon" aria-hidden>
+                              <Icon size={22} strokeWidth={2} />
+                            </span>
+                            <p className="hero-home-chauffeur__benefit-text">{t(`hero.${key}`)}</p>
+                          </div>
+                        ))}
                       </div>
                     </div>
                   </div>
                 </div>
-              ))}
-            </div>
-
-              {/* Liens internes pour SEO et sitelinks Google (Pedaboard, Playdago, Kaldera, À propos, Contact) */}
-              <nav className="hero-seo-links" aria-label={t('hero.seoDiscover')}>
-                <span className="hero-seo-links-title">{t('hero.seoDiscover')}</span>
-                <a
-                  href={`${prefix}/pedaboard`}
-                  className="hero-seo-link"
-                  onClick={(e) => {
-                    e.preventDefault()
-                    onPageChange('project-Pedaboard', '/images/cover-project-pedaboard.png', 'Application web')
-                    trackEvent('click', 'seo_link', 'pedaboard')
-                  }}
-                >
-                  Pedaboard
-                </a>
-                <span className="hero-seo-desc"> — {t('hero.seoPedaboardDesc')}</span>
-                <a
-                  href={`${prefix}/playdago`}
-                  className="hero-seo-link"
-                  onClick={(e) => {
-                    e.preventDefault()
-                    onPageChange('project-Playdago', '/images/cover-project-playdago.png', 'Application')
-                    trackEvent('click', 'seo_link', 'playdago')
-                  }}
-                >
-                  Playdago
-                </a>
-                <span className="hero-seo-desc"> — {t('hero.seoPlaydagoDesc')}</span>
-                <a
-                  href={`${prefix}/kaldera`}
-                  className="hero-seo-link"
-                  onClick={(e) => {
-                    e.preventDefault()
-                    onPageChange('project-Kaldera', '/images/cover-project-kaldera.png', 'Site web')
-                    trackEvent('click', 'seo_link', 'kaldera')
-                  }}
-                >
-                  Kaldera
-                </a>
-                <span className="hero-seo-desc"> — {t('hero.seoKalderaDesc')}</span>
-                <a
-                  href={`${prefix}/about`}
-                  className="hero-seo-link"
-                  onClick={(e) => {
-                    e.preventDefault()
-                    onPageChange('aproposnew')
-                    trackEvent('click', 'seo_link', 'about')
-                  }}
-                >
-                  {t('nav.about')}
-                </a>
-                <span className="hero-seo-desc"> — {t('hero.seoAboutDesc')}</span>
-                <a
-                  href={`${prefix}/about`}
-                  className="hero-seo-link"
-                  onClick={(e) => {
-                    e.preventDefault()
-                    onPageChange('aproposnew')
-                    trackEvent('click', 'seo_link', 'contact')
-                  }}
-                >
-                  {t('nav.contact')}
-                </a>
-                <span className="hero-seo-desc"> — {t('hero.seoContactDesc')}</span>
-              </nav>
-
-              {/* Carte Contact (même style que Infos, juste au-dessus du footer) */}
-              <div
-                className="hero-card info-card"
-                onClick={() => onContactClick?.()}
-                onKeyDown={(e) => e.key === 'Enter' && onContactClick?.()}
-                role="button"
-                tabIndex={0}
-                aria-label={t('nav.contact')}
-              >
-                <div className="card-header">
-                  <h2 className="card-title">{t('nav.contact')}</h2>
-                  <div className="card-arrow" aria-hidden>
-                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" className="arrow-icon">
-                      <path d="M5 12H19M19 12L12 5M19 12L12 19" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                    </svg>
-                  </div>
-                </div>
-              </div>
-
-              {/* Footer : copyright, FR|EN, icônes GitHub/LinkedIn/Figma */}
-              <div className="hero-footer">
-                <p className="hero-footer-copyright">
-                  {t('hero.footer', { year: new Date().getFullYear() })}
-                </p>
-                <LanguageSwitcher />
-                <div className="hero-footer-links">
-                  <a href="https://github.com/CarryPouletIsBack/" target="_blank" rel="noopener noreferrer" aria-label="GitHub" onClick={() => trackEvent('click', 'social', 'github')}>
-                    <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor" aria-hidden>
-                      <path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"/>
-                    </svg>
-                  </a>
-                  <a href="https://www.linkedin.com/in/anthony-merault" target="_blank" rel="noopener noreferrer" aria-label="LinkedIn" onClick={() => trackEvent('click', 'social', 'linkedin')}>
-                    <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor" aria-hidden>
-                      <path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/>
-                    </svg>
-                  </a>
-                  <a href="https://www.figma.com/@TonUi" target="_blank" rel="noopener noreferrer" aria-label="Figma" onClick={() => trackEvent('click', 'social', 'figma')}>
-                    <svg width="24" height="24" viewBox="0 0 54 80" fill="none" aria-hidden>
-                      <path d="M13.3333 80.0002C20.6933 80.0002 26.6667 74.0268 26.6667 66.6668V53.3335H13.3333C5.97333 53.3335 0 59.3068 0 66.6668C0 74.0268 5.97333 80.0002 13.3333 80.0002Z" fill="currentColor"/>
-                      <path d="M0 39.9998C0 32.6398 5.97333 26.6665 13.3333 26.6665H26.6667V53.3332H13.3333C5.97333 53.3332 0 47.3598 0 39.9998Z" fill="currentColor" opacity="0.8"/>
-                      <path d="M0 13.3333C0 5.97333 5.97333 0 13.3333 0H26.6667V26.6667H13.3333C5.97333 26.6667 0 20.6933 0 13.3333Z" fill="currentColor" opacity="0.6"/>
-                      <path d="M26.6667 0H40.0001C47.3601 0 53.3334 5.97333 53.3334 13.3333C53.3334 20.6933 47.3601 26.6667 40.0001 26.6667H26.6667V0Z" fill="currentColor" opacity="0.4"/>
-                      <path d="M53.3334 39.9998C53.3334 47.3598 47.3601 53.3332 40.0001 53.3332C32.6401 53.3332 26.6667 47.3598 26.6667 39.9998C26.6667 32.6398 32.6401 26.6665 40.0001 26.6665C47.3601 26.6665 53.3334 32.6398 53.3334 39.9998Z" fill="currentColor" opacity="0.2"/>
-                    </svg>
-                  </a>
-                </div>
-              </div>
+              </section>
             </div>
           </div>
         </div>
+        <HomeFooter onPageChange={onPageChange} />
       </div>
     </div>
   )
 }
 
 export default Hero
-

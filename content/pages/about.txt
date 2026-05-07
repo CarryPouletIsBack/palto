@@ -1,3 +1,0 @@
-Titre: À propos - Anthony Merault
-Description: Page présentant le parcours, les compétences, les outils et les expériences d'Anthony Merault en tant que Product Designer | Building Complex SaaS & Design Systems. Inclut profil, formation et lien de téléchargement du CV.
-URL: /fr/about ou /en/about

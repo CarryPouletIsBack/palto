@@ -1,0 +1,228 @@
+import { useCallback, useEffect, useMemo, useRef, useState, type FocusEvent } from 'react';
+import type { SavedPlaceCoords } from '../constants/clientSavedPlacesStorage';
+import {
+  POPULAR_DESTINATIONS,
+  SECTOR_DESTINATIONS,
+  filterPopularDestinations,
+  type PopularDestination,
+} from '../data/popularDestinations';
+import {
+  geocodeForward,
+  geocodeForwardSuggestions,
+  geocodeReverse,
+  type GeocodeSuggestion,
+} from '../services/mapboxGeocoding';
+import { snapLngLatToMapboxDriving } from '../services/mapboxSnapToRoad';
+import { REUNION_ISLAND_BBOX_GEOCODE } from '../constants/reunionIsland';
+
+const AUTOCOMPLETE_DEBOUNCE_MS = 220;
+const MIN_QUERY_LEN = 3;
+
+const PROXIMITY_REU: [number, number] = [55.45, -21.15];
+
+export type ClientComptePlaceAddressFieldProps = {
+  inputId: string;
+  value: string;
+  coords: SavedPlaceCoords | null;
+  mapToken: string | undefined;
+  language: 'fr' | 'en';
+  t: (key: string) => string;
+  onUserInput: (next: string) => void;
+  onResolvedPlace: (address: string, coords: SavedPlaceCoords) => void;
+  onMarkOnMap: () => void;
+};
+
+function allPopular(): PopularDestination[] {
+  return [...POPULAR_DESTINATIONS, ...SECTOR_DESTINATIONS];
+}
+
+export default function ClientComptePlaceAddressField({
+  inputId,
+  value,
+  coords,
+  mapToken,
+  language,
+  t,
+  onUserInput,
+  onResolvedPlace,
+  onMarkOnMap,
+}: ClientComptePlaceAddressFieldProps) {
+  const [suggestionOpen, setSuggestionOpen] = useState(false);
+  const [addressSuggestions, setAddressSuggestions] = useState<GeocodeSuggestion[]>([]);
+  const [suggestionLoading, setSuggestionLoading] = useState(false);
+  const [resolvingPick, setResolvingPick] = useState(false);
+  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const filteredPopular = useMemo(
+    () => filterPopularDestinations(allPopular(), value, language).slice(0, 8),
+    [value, language]
+  );
+
+  const resolveFromGeocode = useCallback(
+    async (longitude: number, latitude: number, fallbackLabel: string) => {
+      setResolvingPick(true);
+      try {
+        const snapped = await snapLngLatToMapboxDriving(mapToken, longitude, latitude, { searchRadiusMeters: 75 });
+        if (!snapped) return;
+        const label =
+          (await geocodeReverse(snapped.longitude, snapped.latitude, mapToken, { language })) ?? fallbackLabel;
+        onResolvedPlace(label, { lng: snapped.longitude, lat: snapped.latitude });
+        setSuggestionOpen(false);
+      } finally {
+        setResolvingPick(false);
+      }
+    },
+    [language, mapToken, onResolvedPlace]
+  );
+
+  const applyAddressSuggestion = useCallback(
+    async (s: GeocodeSuggestion) => {
+      await resolveFromGeocode(s.longitude, s.latitude, s.label);
+    },
+    [resolveFromGeocode]
+  );
+
+  const applyPopular = useCallback(
+    async (d: PopularDestination) => {
+      const coordsFwd = await geocodeForward(d.geocodeQuery, mapToken, {
+        language,
+        bbox: REUNION_ISLAND_BBOX_GEOCODE,
+      });
+      if (!coordsFwd) return;
+      await resolveFromGeocode(coordsFwd.longitude, coordsFwd.latitude, d.geocodeQuery);
+    },
+    [language, mapToken, resolveFromGeocode]
+  );
+
+  useEffect(() => {
+    if (timerRef.current) {
+      clearTimeout(timerRef.current);
+      timerRef.current = null;
+    }
+    if (!suggestionOpen) {
+      setAddressSuggestions([]);
+      setSuggestionLoading(false);
+      return;
+    }
+    const q = value.trim();
+    if (q.length < MIN_QUERY_LEN) {
+      setAddressSuggestions([]);
+      setSuggestionLoading(false);
+      return;
+    }
+    timerRef.current = setTimeout(async () => {
+      timerRef.current = null;
+      setSuggestionLoading(true);
+      try {
+        const list = await geocodeForwardSuggestions(q, mapToken, {
+          language,
+          proximity: PROXIMITY_REU,
+          bbox: REUNION_ISLAND_BBOX_GEOCODE,
+          limit: 5,
+        });
+        setAddressSuggestions(list);
+      } catch {
+        setAddressSuggestions([]);
+      } finally {
+        setSuggestionLoading(false);
+      }
+    }, AUTOCOMPLETE_DEBOUNCE_MS);
+
+    return () => {
+      if (timerRef.current) {
+        clearTimeout(timerRef.current);
+        timerRef.current = null;
+      }
+    };
+  }, [suggestionOpen, value, mapToken, language]);
+
+  const onBlur = useCallback((e: FocusEvent<HTMLInputElement>) => {
+    const next = e.relatedTarget as HTMLElement | null;
+    if (next?.dataset?.clientPlaceSuggest === 'true') return;
+    setSuggestionOpen(false);
+  }, []);
+
+  const hasToken = true;
+
+  return (
+    <div className="client-compte-place-field-wrap">
+      <label className="client-compte-place-field" htmlFor={inputId}>
+        <span>{t('clientAccount.placesAddressLabel')}</span>
+        <input
+          id={inputId}
+          type="text"
+          value={value}
+          onChange={(e) => onUserInput(e.target.value)}
+          onFocus={() => setSuggestionOpen(true)}
+          onBlur={onBlur}
+          placeholder={t('clientAccount.placesAddressPlaceholder')}
+          autoComplete="street-address"
+          disabled={resolvingPick}
+        />
+      </label>
+
+      {suggestionOpen && hasToken ? (
+        <div className="client-compte-place-suggestions" role="listbox" aria-label={t('clientAccount.placesSuggestionsAria')}>
+          {filteredPopular.length > 0 ? (
+            <>
+              <p className="client-compte-place-suggestions__title">{t('clientAccount.placesSuggestionsPopular')}</p>
+              <div className="client-compte-place-suggestions__list">
+                {filteredPopular.map((d) => (
+                  <button
+                    key={d.id}
+                    type="button"
+                    data-client-place-suggest="true"
+                    className="client-compte-place-suggestions__item"
+                    onMouseDown={(e) => e.preventDefault()}
+                    onClick={() => void applyPopular(d)}
+                  >
+                    {language === 'en' ? d.titleEn : d.titleFr}
+                  </button>
+                ))}
+              </div>
+            </>
+          ) : null}
+
+          <p className="client-compte-place-suggestions__title">{t('clientAccount.placesSuggestionsAddresses')}</p>
+          {suggestionLoading ? (
+            <p className="client-compte-place-suggestions__hint">{t('clientAccount.placesSuggestionsLoading')}</p>
+          ) : value.trim().length < MIN_QUERY_LEN ? (
+            <p className="client-compte-place-suggestions__hint">{t('clientAccount.placesSuggestionsMinChars')}</p>
+          ) : addressSuggestions.length > 0 ? (
+            <div className="client-compte-place-suggestions__list">
+              {addressSuggestions.map((s, i) => (
+                <button
+                  key={`${s.label}-${i}`}
+                  type="button"
+                  data-client-place-suggest="true"
+                  className="client-compte-place-suggestions__item"
+                  onMouseDown={(e) => e.preventDefault()}
+                  onClick={() => void applyAddressSuggestion(s)}
+                >
+                  {s.label}
+                </button>
+              ))}
+            </div>
+          ) : (
+            <p className="client-compte-place-suggestions__hint">{t('clientAccount.placesSuggestionsEmpty')}</p>
+          )}
+        </div>
+      ) : null}
+
+      <div className="client-compte-place-actions">
+        <button
+          type="button"
+          className="dashboard-user-edit-btn"
+          onClick={onMarkOnMap}
+          disabled={!hasToken || resolvingPick}
+        >
+          {t('clientAccount.placesMarkOnMap')}
+        </button>
+        {coords ? (
+          <span className="dashboard-field-hint client-compte-place-coords-hint">{t('clientAccount.placesCoordsSaved')}</span>
+        ) : null}
+        {!hasToken ? <span className="dashboard-field-hint">{t('clientAccount.placesNoMapToken')}</span> : null}
+      </div>
+    </div>
+  );
+}

@@ -36,10 +36,8 @@ const Menu = ({ onPageChange, searchTerm = '' }: MenuProps) => {
 
   const handleProjectClick = (projectName: string, imageSrc?: string, category?: string) => {
     // Navigation vers les pages spéciales ou projets
-    if (projectName === 'Home') {
+    if (projectName === 'Home' || projectName === 'About') {
       onPageChange('accueil')
-    } else if (projectName === 'About') {
-      onPageChange('apropos')
     } else {
       onPageChange(`project-${projectName}`, imageSrc, category)
     }

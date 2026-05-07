@@ -1,3 +1,0 @@
-Titre: Projet Pedaboard - Anthony Merault
-Description: Page projet détaillant le cas d'étude Pedaboard : contexte, équipe, problématique, solution, processus, audit, design system et intégration. Portfolio Product Designer | Building Complex SaaS & Design Systems.
-URL: /fr/pedaboard ou /en/pedaboard

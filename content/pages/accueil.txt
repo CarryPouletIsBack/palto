@@ -1,3 +1,2 @@
-Titre: Accueil - Anthony Merault, Product Designer | Building Complex SaaS & Design Systems
-Description: Page d'accueil du portfolio d'Anthony Merault. Présentation du designer, phrase d'accroche et accès aux projets (Playdago, Pedaboard, Kaldera) et aux sections À propos et Contact.
-URL: /fr ou /en
+Titre: Accueil — Palto
+Description: Page d'accueil Palto — mobilité à La Réunion : carte, trajets, chauffeurs à proximité, réservation (Go), contact et accès compte.

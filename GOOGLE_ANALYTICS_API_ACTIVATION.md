@@ -110,4 +110,4 @@ Si après avoir activé l'API, vous voyez toujours un message d'erreur concernan
 
 - [Google Analytics Data API Documentation](https://developers.google.com/analytics/devguides/reporting/data/v1)
 - [OAuth2 Setup Guide](./GOOGLE_ANALYTICS_SETUP.md)
-- [Vercel Environment Variables](./VERCEL_ENV_VARS.md)
+- [Guide .env](./.env.example)

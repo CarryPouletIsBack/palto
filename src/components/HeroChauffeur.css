@@ -1,0 +1,712 @@
+/* Accueil chauffeur — présentation type landing produit (réf. cursor.com/home) */
+
+.hero-accueil-root--chauffeur {
+  background: #0a0a0a;
+  color: rgba(255, 255, 255, 0.92);
+}
+
+.hero-accueil-root--chauffeur .main-accueil {
+  background: #0a0a0a;
+}
+
+.hero-accueil-root--chauffeur .dashboard-container--home-chauffeur {
+  background: transparent;
+  max-width: 100%;
+}
+
+.hero-accueil-root--chauffeur .dashboard-container--home-chauffeur .dashboard-main {
+  background: transparent;
+  gap: 0;
+}
+
+/* Topbar : fond opaque (même teinte que la page) pour ne pas laisser le contenu passer au scroll */
+.hero-accueil-root--chauffeur .dashboard-topbar.dashboard-topbar--home-client {
+  background: #0a0a0a;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 0;
+}
+
+/* « Palto » en blanc : priorité sur ClientCompteDashboard.css + thème sombre */
+.hero-accueil-root--chauffeur .dashboard-container--home-accueil .dashboard-client-main-title,
+.hero-accueil-root--chauffeur
+  .dashboard-container--home-accueil
+  .dashboard-topbar
+  button.dashboard-client-main-title {
+  color: #ffffff;
+}
+
+html[data-app-theme='dark'] .hero-accueil-root--chauffeur .dashboard-container--home-accueil .dashboard-client-main-title,
+html[data-app-theme='dark']
+  .hero-accueil-root--chauffeur
+  .dashboard-container--home-accueil
+  .dashboard-topbar
+  button.dashboard-client-main-title {
+  color: #ffffff;
+}
+
+.hero-accueil-root--chauffeur .hero-topbar-auth-link {
+  color: rgba(255, 255, 255, 0.85);
+}
+
+.hero-accueil-root--chauffeur .hero-topbar-auth-sep {
+  color: rgba(255, 255, 255, 0.35);
+}
+
+.hero-accueil-root--chauffeur .language-switcher {
+  color: rgba(255, 255, 255, 0.55);
+}
+
+.hero-accueil-root--chauffeur .language-btn {
+  color: rgba(255, 255, 255, 0.65);
+}
+
+.hero-accueil-root--chauffeur .language-btn.active {
+  color: rgba(255, 255, 255, 0.95);
+}
+
+.hero-accueil-root--chauffeur .language-separator {
+  color: rgba(255, 255, 255, 0.35);
+}
+
+/* --- Contenu landing --- */
+
+.hero-chauffeur-landing {
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.hero-chauffeur-landing__inner {
+  width: 100%;
+  max-width: min(1120px, 100% - 40px);
+  margin: 0 auto;
+  padding: clamp(28px, 5vw, 56px) 0 clamp(48px, 8vw, 88px);
+  box-sizing: border-box;
+}
+
+.hero-chauffeur-landing__hero {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: clamp(20px, 3vw, 28px);
+}
+
+.hero-chauffeur-landing__title {
+  margin: 0;
+  font-family: 'Inter', system-ui, sans-serif;
+  font-weight: 600;
+  font-size: clamp(2rem, 4.2vw, 3.35rem);
+  line-height: 1.15;
+  letter-spacing: -0.03em;
+  max-width: 22ch;
+}
+
+.hero-chauffeur-landing__title-lead {
+  display: block;
+  font-weight: 500;
+  font-size: clamp(1.35rem, 2.6vw, 1.85rem);
+  letter-spacing: -0.025em;
+  color: rgba(255, 255, 255, 0.48);
+  margin-bottom: 0.35em;
+}
+
+.hero-chauffeur-landing__title-accent {
+  display: block;
+  color: #f4f4f5;
+  font-weight: 600;
+}
+
+.hero-chauffeur-landing__sub {
+  margin: 0;
+  max-width: 52ch;
+  font-family: 'Inter', system-ui, sans-serif;
+  font-size: clamp(1rem, 1.35vw, 1.125rem);
+  line-height: 1.55;
+  color: rgba(255, 255, 255, 0.55);
+}
+
+.hero-chauffeur-landing__ctas {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px 20px;
+  margin-top: 4px;
+}
+
+.hero-chauffeur-landing__btn-primary {
+  font-family: 'Inter', system-ui, sans-serif;
+  font-size: 0.9375rem;
+  font-weight: 600;
+  padding: 12px 22px;
+  border-radius: 999px;
+  border: none;
+  cursor: pointer;
+  background: #fafafa;
+  color: #0a0a0a;
+  transition: transform 0.15s ease, background 0.15s ease, box-shadow 0.15s ease;
+}
+
+.hero-chauffeur-landing__btn-primary:hover {
+  background: #ffffff;
+  transform: translateY(-1px);
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.35);
+}
+
+.hero-chauffeur-landing__btn-primary:focus-visible {
+  outline: 2px solid #93c5fd;
+  outline-offset: 3px;
+}
+
+.hero-chauffeur-landing__link {
+  font-family: 'Inter', system-ui, sans-serif;
+  font-size: 0.9375rem;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.72);
+  background: none;
+  border: none;
+  padding: 8px 4px;
+  cursor: pointer;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border-radius: 6px;
+  transition: color 0.15s ease;
+}
+
+.hero-chauffeur-landing__link:hover {
+  color: rgba(255, 255, 255, 0.95);
+}
+
+.hero-chauffeur-landing__link:focus-visible {
+  outline: 2px solid #93c5fd;
+  outline-offset: 2px;
+}
+
+.hero-chauffeur-landing__link-arrow {
+  opacity: 0.75;
+  font-size: 1.05em;
+  line-height: 1;
+}
+
+/* Mock produit */
+.hero-chauffeur-landing__mock-wrap {
+  margin-top: clamp(40px, 7vw, 72px);
+  width: 100%;
+  border-radius: 16px;
+  padding: 1px;
+  background: linear-gradient(
+    135deg,
+    rgba(255, 255, 255, 0.16) 0%,
+    rgba(255, 255, 255, 0.04) 45%,
+    rgba(120, 120, 120, 0.12) 100%
+  );
+  box-shadow:
+    0 0 0 1px rgba(255, 255, 255, 0.06) inset,
+    0 24px 80px rgba(0, 0, 0, 0.55);
+}
+
+.hero-chauffeur-landing__mock {
+  border-radius: 15px;
+  overflow: hidden;
+  background: #111113;
+  min-height: 280px;
+}
+
+.hero-chauffeur-landing__mock-chrome {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 16px;
+  background: rgba(255, 255, 255, 0.04);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.hero-chauffeur-landing__mock-dots {
+  display: flex;
+  gap: 6px;
+}
+
+.hero-chauffeur-landing__mock-dots span {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.12);
+}
+
+.hero-chauffeur-landing__mock-dots span:nth-child(1) {
+  background: #ff5f57;
+  opacity: 0.85;
+}
+.hero-chauffeur-landing__mock-dots span:nth-child(2) {
+  background: #febc2e;
+  opacity: 0.85;
+}
+.hero-chauffeur-landing__mock-dots span:nth-child(3) {
+  background: #28c840;
+  opacity: 0.85;
+}
+
+.hero-chauffeur-landing__mock-title {
+  flex: 1;
+  text-align: center;
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.35);
+  letter-spacing: 0.02em;
+}
+
+.hero-chauffeur-landing__mock-body {
+  display: grid;
+  grid-template-columns: 160px 1fr;
+  min-height: 220px;
+}
+
+@media (max-width: 640px) {
+  .hero-chauffeur-landing__mock-body {
+    grid-template-columns: 1fr;
+  }
+
+  .hero-chauffeur-landing__mock-sidebar {
+    display: none;
+  }
+}
+
+.hero-chauffeur-landing__mock-sidebar {
+  border-right: 1px solid rgba(255, 255, 255, 0.06);
+  padding: 16px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.hero-chauffeur-landing__mock-nav-item {
+  height: 8px;
+  border-radius: 4px;
+  background: rgba(255, 255, 255, 0.06);
+  max-width: 100%;
+}
+
+.hero-chauffeur-landing__mock-nav-item--active {
+  background: rgba(255, 255, 255, 0.14);
+  max-width: 85%;
+}
+
+.hero-chauffeur-landing__mock-main {
+  padding: 20px 20px 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.hero-chauffeur-landing__mock-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 14px 16px;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.hero-chauffeur-landing__mock-row-text {
+  font-size: 0.8125rem;
+  color: rgba(255, 255, 255, 0.78);
+  font-weight: 500;
+}
+
+.hero-chauffeur-landing__mock-pill {
+  font-size: 0.65rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  padding: 4px 8px;
+  border-radius: 6px;
+  background: rgba(34, 197, 94, 0.15);
+  color: #86efac;
+  flex-shrink: 0;
+}
+
+.hero-chauffeur-landing__mock-pill--warn {
+  background: rgba(251, 191, 36, 0.12);
+  color: #fcd34d;
+}
+
+.hero-chauffeur-landing__mock-pill--muted {
+  background: rgba(255, 255, 255, 0.06);
+  color: rgba(255, 255, 255, 0.45);
+}
+
+/* Mise en relation + planning */
+.hero-chauffeur-landing__match {
+  margin-top: clamp(48px, 8vw, 88px);
+  padding-top: clamp(40px, 6vw, 64px);
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.hero-chauffeur-landing__match-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.05fr) minmax(0, 0.95fr);
+  gap: clamp(28px, 5vw, 48px);
+  align-items: start;
+}
+
+@media (max-width: 900px) {
+  .hero-chauffeur-landing__match-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .hero-chauffeur-landing__match-visual {
+    order: -1;
+  }
+}
+
+.hero-chauffeur-landing__match-eyebrow {
+  margin: 0 0 12px;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.42);
+}
+
+.hero-chauffeur-landing__match-title {
+  margin: 0 0 16px;
+  font-family: 'Inter', system-ui, sans-serif;
+  font-size: clamp(1.35rem, 2.4vw, 1.75rem);
+  font-weight: 600;
+  letter-spacing: -0.025em;
+  line-height: 1.25;
+  color: #f4f4f5;
+  max-width: 28ch;
+}
+
+.hero-chauffeur-landing__match-lead {
+  margin: 0 0 22px;
+  font-size: 1rem;
+  line-height: 1.6;
+  color: rgba(255, 255, 255, 0.52);
+  max-width: 52ch;
+}
+
+.hero-chauffeur-landing__match-list {
+  margin: 0 0 28px;
+  padding: 0 0 0 1.15rem;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  font-size: 0.9375rem;
+  line-height: 1.55;
+  color: rgba(255, 255, 255, 0.72);
+  max-width: 52ch;
+}
+
+.hero-chauffeur-landing__match-list li::marker {
+  color: rgba(255, 255, 255, 0.35);
+}
+
+.hero-chauffeur-landing__planning-callout {
+  display: flex;
+  gap: 18px;
+  padding: clamp(18px, 2.5vw, 22px);
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+.hero-chauffeur-landing__planning-callout-icon {
+  flex-shrink: 0;
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(96, 165, 250, 0.12);
+  color: #93c5fd;
+}
+
+.hero-chauffeur-landing__planning-callout-text {
+  min-width: 0;
+}
+
+.hero-chauffeur-landing__planning-badge {
+  display: inline-block;
+  margin-bottom: 8px;
+  font-size: 0.6875rem;
+  font-weight: 700;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  color: rgba(147, 197, 253, 0.95);
+}
+
+.hero-chauffeur-landing__planning-title {
+  margin: 0 0 8px;
+  font-size: 1.0625rem;
+  font-weight: 600;
+  color: #f4f4f5;
+  letter-spacing: -0.02em;
+}
+
+.hero-chauffeur-landing__planning-body {
+  margin: 0;
+  font-size: 0.9375rem;
+  line-height: 1.55;
+  color: rgba(255, 255, 255, 0.52);
+}
+
+.hero-chauffeur-landing__match-visual {
+  position: relative;
+}
+
+.hero-chauffeur-landing__match-visual-card {
+  position: relative;
+  border-radius: 16px;
+  padding: clamp(22px, 3vw, 28px);
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 18px;
+  min-height: 280px;
+  box-sizing: border-box;
+}
+
+.hero-chauffeur-landing__messengers-stack {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.hero-chauffeur-landing__messenger-chip {
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 6px 12px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.hero-chauffeur-landing__messenger-chip--dead {
+  color: rgba(255, 255, 255, 0.35);
+  text-decoration: line-through;
+  text-decoration-color: rgba(248, 113, 113, 0.65);
+  border-color: rgba(255, 255, 255, 0.06);
+  background: rgba(0, 0, 0, 0.2);
+}
+
+.hero-chauffeur-landing__match-visual-arrow {
+  text-align: center;
+  font-size: 1.25rem;
+  color: rgba(255, 255, 255, 0.28);
+  line-height: 1;
+}
+
+.hero-chauffeur-landing__palto-thread {
+  padding: 16px;
+  border-radius: 12px;
+  background: rgba(34, 197, 94, 0.08);
+  border: 1px solid rgba(34, 197, 94, 0.22);
+}
+
+.hero-chauffeur-landing__palto-thread-label {
+  display: block;
+  font-size: 0.8125rem;
+  font-weight: 700;
+  color: #86efac;
+  margin-bottom: 12px;
+  letter-spacing: 0.02em;
+}
+
+.hero-chauffeur-landing__palto-thread-lines {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.hero-chauffeur-landing__palto-thread-lines span {
+  height: 8px;
+  border-radius: 4px;
+  background: rgba(255, 255, 255, 0.1);
+  max-width: 100%;
+}
+
+.hero-chauffeur-landing__palto-thread-lines span:nth-child(2) {
+  max-width: 88%;
+}
+
+.hero-chauffeur-landing__palto-thread-lines span:nth-child(3) {
+  max-width: 72%;
+}
+
+.hero-chauffeur-landing__palto-thread-caption {
+  margin: 0;
+  font-size: 0.75rem;
+  color: rgba(255, 255, 255, 0.45);
+  line-height: 1.4;
+}
+
+.hero-chauffeur-landing__match-visual-icon-wrap {
+  position: absolute;
+  top: 18px;
+  right: 18px;
+  color: rgba(255, 255, 255, 0.15);
+  pointer-events: none;
+}
+
+@media (max-width: 900px) {
+  .hero-chauffeur-landing__match-visual-icon-wrap {
+    display: none;
+  }
+}
+
+/* Bandeau confiance */
+.hero-chauffeur-landing__trusted {
+  margin-top: clamp(56px, 9vw, 96px);
+  padding-top: clamp(32px, 5vw, 48px);
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.hero-chauffeur-landing__trusted-label {
+  margin: 0 0 clamp(20px, 3vw, 28px);
+  font-size: 0.8125rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.38);
+}
+
+.hero-chauffeur-landing__trusted-strip {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px 28px;
+  font-size: 0.9375rem;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.45);
+}
+
+/* Grille fonctionnalités */
+.hero-chauffeur-landing__features {
+  margin-top: clamp(48px, 8vw, 88px);
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: clamp(20px, 3vw, 32px);
+}
+
+@media (max-width: 900px) {
+  .hero-chauffeur-landing__features {
+    grid-template-columns: 1fr;
+  }
+}
+
+.hero-chauffeur-landing__feature {
+  padding: clamp(20px, 3vw, 28px);
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.hero-chauffeur-landing__feature-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 255, 255, 0.06);
+  color: rgba(255, 255, 255, 0.88);
+}
+
+.hero-chauffeur-landing__feature h3 {
+  margin: 0;
+  font-size: 1.0625rem;
+  font-weight: 600;
+  color: #f4f4f5;
+  letter-spacing: -0.02em;
+}
+
+.hero-chauffeur-landing__feature p {
+  margin: 0;
+  font-size: 0.9375rem;
+  line-height: 1.55;
+  color: rgba(255, 255, 255, 0.5);
+}
+
+/* CTA final */
+.hero-chauffeur-landing__closing {
+  margin-top: clamp(56px, 9vw, 100px);
+  padding: clamp(40px, 6vw, 56px) clamp(24px, 4vw, 40px);
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+}
+
+.hero-chauffeur-landing__closing h2 {
+  margin: 0;
+  font-size: clamp(1.5rem, 2.5vw, 1.875rem);
+  font-weight: 600;
+  letter-spacing: -0.03em;
+  color: #fafafa;
+}
+
+.hero-chauffeur-landing__closing p {
+  margin: 0;
+  max-width: 42ch;
+  color: rgba(255, 255, 255, 0.5);
+  font-size: 1rem;
+  line-height: 1.5;
+}
+
+.hero-chauffeur-landing__closing .hero-chauffeur-landing__btn-primary {
+  margin-top: 8px;
+}
+
+/* Footer sur fond sombre */
+.hero-accueil-root--chauffeur .home-footer {
+  background: #050505;
+  border-top-color: rgba(255, 255, 255, 0.08);
+}
+
+.hero-accueil-root--chauffeur .home-footer__link {
+  color: rgba(255, 255, 255, 0.82);
+}
+
+.hero-accueil-root--chauffeur .home-footer__link:hover {
+  background: rgba(255, 255, 255, 0.06);
+  color: #fff;
+}
+
+.hero-accueil-root--chauffeur .home-footer__suggested-heading {
+  color: rgba(255, 255, 255, 0.45);
+}
+
+.hero-accueil-root--chauffeur .home-footer__link--suggested {
+  color: rgba(255, 255, 255, 0.72);
+}
+
+.hero-accueil-root--chauffeur .home-footer__link:hover {
+  color: #7dd3fc;
+}
+
+.hero-accueil-root--chauffeur .home-footer__social a {
+  color: rgba(255, 255, 255, 0.45);
+}
+
+.hero-accueil-root--chauffeur .home-footer__social a:hover {
+  color: rgba(255, 255, 255, 0.9);
+}
+
+.hero-accueil-root--chauffeur .home-footer__copy {
+  color: rgba(255, 255, 255, 0.4);
+}

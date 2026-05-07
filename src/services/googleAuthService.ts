@@ -10,7 +10,6 @@
 
 // ⚠️ IMPORTANT : Remplacez ces valeurs par vos propres identifiants depuis Google Cloud Console
 const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID || '';
-const GOOGLE_CLIENT_SECRET = import.meta.env.VITE_GOOGLE_CLIENT_SECRET || ''; // Ne jamais exposer côté client !
 const REDIRECT_URI = import.meta.env.VITE_GOOGLE_REDIRECT_URI || window.location.origin + '/api/google-auth/callback';
 
 // Scopes nécessaires pour Google Analytics
@@ -21,7 +20,6 @@ const SCOPES = [
 
 // URL d'autorisation Google OAuth2
 const AUTH_URL = 'https://accounts.google.com/o/oauth2/v2/auth';
-const TOKEN_URL = 'https://oauth2.googleapis.com/token';
 
 export interface TokenResponse {
   access_token: string;

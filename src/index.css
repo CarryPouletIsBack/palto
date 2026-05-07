@@ -1,4 +1,4 @@
-/* Styles globaux du portfolio */
+/* Styles globaux Palto */
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&family=Sora:wght@300;400;500;600;700&family=Roboto:wght@100;300;400;500;600;700&display=swap');
 
 /* Polices locales (JetBrains_Mono, Space_Grotesk — dossier Téléchargements) */
@@ -29,18 +29,15 @@
 }
 
 html {
-  background: #509ED8; /* Fond par défaut bleu ciel pour l'accueil */
-}
-
-/* Fond noir pour html sur AboutNew (mobile safe area iOS) */
-html:has(body:has(.apropos-new-page)) {
-  background: #111 !important;
+  background: var(--app-bg-page);
+  /* Synchronisé avec la taille de police (facteur --app-user-font-zoom ; zoom appliqué sous App). */
+  --app-user-font-zoom: 1;
 }
 
 body {
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-  background: #509ED8; /* Bleu ciel pour l'accueil */
-  color: white;
+  background: var(--app-bg-body);
+  color: var(--app-text-primary);
   line-height: 1.6;
   height: 100vh;
   margin: 0;
@@ -50,27 +47,16 @@ body {
   position: relative;
 }
 
-/* Fond noir pour body sur AboutNew (mobile safe area iOS) */
-body:has(.apropos-new-page) {
-  background: #111 !important;
-}
-
-/* Fond noir avec 5% de luminosité et teinte bleue pour le menu */
+/* Fond lorsque le menu est ouvert */
 body.menu-active {
-  background: hsl(210, 10%, 5%) !important;
+  background: var(--app-menu-active-bg);
 }
 
 #root {
   min-height: 100vh;
   display: flex;
   flex-direction: column;
-  color: rgba(255, 255, 255, 1);
-}
-
-/* Fond noir pour AboutNew (mobile safe area) */
-body:has(.apropos-new-page) #root,
-body:has(.apropos-new-page) .container {
-  background: #111 !important;
+  color: var(--app-text-primary);
 }
 
 .app {
@@ -83,15 +69,18 @@ main {
   flex: 1;
 }
 
+/* Shell racine App : pleine largeur (évite bande vide à droite ; ne pas réutiliser le nom « container » comme utilitaire Tailwind). */
 .container {
-  max-width: 1512px;
-  margin: 0 auto;
+  max-width: none;
+  width: 100%;
+  margin: 0;
   padding: 0;
   position: relative;
   min-height: 100vh;
   display: flex;
   flex-direction: column;
   padding-top: 0;
+  box-sizing: border-box;
 }
 
 /* Scrollbar personnalisée - Style cohérent avec les boutons */
@@ -101,31 +90,31 @@ main {
 }
 
 ::-webkit-scrollbar-track {
-  background: rgba(255, 255, 255, 0.05);
+  background: var(--app-scrollbar-track);
   border-radius: 50px;
   backdrop-filter: blur(10px);
 }
 
 ::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.1);
-  border: 1px solid rgba(216, 216, 216, 0.2);
+  background: var(--app-scrollbar-thumb);
+  border: 1px solid var(--app-scrollbar-thumb-border);
   border-radius: 50px;
   backdrop-filter: blur(10px);
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: rgba(255, 255, 255, 0.2);
-  border: 1px solid rgba(216, 216, 216, 0.3);
+  background: var(--app-scrollbar-thumb-hover);
+  border: 1px solid var(--app-scrollbar-thumb-border);
 }
 
 ::-webkit-scrollbar-corner {
-  background: rgba(255, 255, 255, 0.05);
+  background: var(--app-scrollbar-corner);
 }
 
 /* Scrollbar pour Firefox */
 * {
   scrollbar-width: thin;
-  scrollbar-color: rgba(255, 255, 255, 0.1) rgba(255, 255, 255, 0.05);
+  scrollbar-color: var(--app-scrollbar-thumb) var(--app-scrollbar-track);
 }
 
 /* Animations globales */
@@ -192,6 +181,21 @@ h6 {
   body {
     font-size: 14px;
   }
+
+  /*
+   * Champs texte + placeholders : au moins 16px *rendu à l’écran*, quel que soit le réglage
+   * « taille du texte » (--app-user-font-zoom sur html + zoom sur .app-page-font-zoom ou #root).
+   */
+  input:not([type="hidden"]):not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="color"]):not([type="file"]):not([type="button"]):not([type="submit"]):not([type="reset"]):not([type="image"]),
+  textarea,
+  select {
+    font-size: max(16px, calc(16px / var(--app-user-font-zoom, 1)));
+  }
+
+  input::placeholder,
+  textarea::placeholder {
+    font-size: inherit;
+  }
 }
 
 @media (max-width: 480px) {
@@ -203,112 +207,222 @@ h6 {
 /* Désactiver le scroll vertical sur les écrans non mobiles */
 @media (min-width: 769px) {
   body {
-    overflow-y: hidden !important;
-    height: 100vh !important;
-    max-height: 100vh !important;
+    overflow-y: hidden;
+    height: 100vh;
+    max-height: 100vh;
   }
   
   html {
-    overflow-y: hidden !important;
-    height: 100vh !important;
-    max-height: 100vh !important;
+    overflow-y: hidden;
+    height: 100vh;
+    max-height: 100vh;
   }
   
   /* Permettre le scroll sur html pour la page d'accueil (sauf dashboard) */
   html:has(body.accueil-page:not(:has(.dashboard-container))) {
-    overflow-y: auto !important;
-    height: auto !important;
-    max-height: none !important;
+    overflow-y: auto;
+    height: auto;
+    max-height: none;
   }
   
   /* Désactiver le scroll pour le dashboard */
   html:has(body.accueil-page:has(.dashboard-container)) {
-    overflow-y: hidden !important;
-    height: 100vh !important;
-    max-height: 100vh !important;
+    overflow-y: hidden;
+    height: 100vh;
+    max-height: 100vh;
   }
   
   #root {
-    height: 100vh !important;
-    max-height: 100vh !important;
-    overflow: hidden !important;
+    height: 100vh;
+    max-height: 100vh;
+    overflow: hidden;
   }
   
   html:has(body.accueil-page:not(:has(.dashboard-container))) #root {
-    height: auto !important;
-    max-height: none !important;
-    overflow: visible !important;
+    height: auto;
+    max-height: none;
+    overflow: visible;
   }
   
   html:has(body.accueil-page:has(.dashboard-container)) #root {
-    height: 100vh !important;
-    max-height: 100vh !important;
-    overflow: hidden !important;
+    height: 100vh;
+    max-height: 100vh;
+    overflow: hidden;
   }
   
   .app {
-    height: 100vh !important;
-    max-height: 100vh !important;
-    overflow: hidden !important;
+    height: 100vh;
+    max-height: 100vh;
+    overflow: hidden;
   }
   
   html:has(body.accueil-page:not(:has(.dashboard-container))) .app {
-    height: auto !important;
-    max-height: none !important;
-    overflow: visible !important;
+    height: auto;
+    max-height: none;
+    overflow: visible;
   }
   
   html:has(body.accueil-page:has(.dashboard-container)) .app {
-    height: 100vh !important;
-    max-height: 100vh !important;
-    overflow: hidden !important;
+    height: 100vh;
+    max-height: 100vh;
+    overflow: hidden;
   }
   
   .container {
-    height: 100vh !important;
-    max-height: 100vh !important;
-    overflow-x: hidden !important;
-    overflow-y: hidden !important;
+    height: 100vh;
+    max-height: 100vh;
+    overflow-x: hidden;
+    overflow-y: hidden;
   }
   
   /* Permettre le scroll sur toute la page d'accueil (sauf dashboard) */
   body.accueil-page:not(:has(.dashboard-container)) {
-    overflow-y: auto !important; /* Permettre le scroll vertical sur toute la page */
-    height: auto !important;
-    max-height: none !important;
+    overflow-y: auto; /* Permettre le scroll vertical sur toute la page */
+    height: auto;
+    max-height: none;
   }
   
   /* Désactiver le scroll pour le dashboard */
   body.accueil-page:has(.dashboard-container) {
-    overflow-y: hidden !important;
-    height: 100vh !important;
-    max-height: 100vh !important;
+    overflow-y: hidden;
+    height: 100vh;
+    max-height: 100vh;
   }
   
   body.accueil-page:not(:has(.dashboard-container)) .container {
-    overflow-y: auto !important; /* Permettre le scroll vertical */
-    height: auto !important;
-    max-height: none !important;
+    overflow-y: auto; /* Permettre le scroll vertical */
+    height: auto;
+    max-height: none;
     min-height: 100vh;
   }
   
   body.accueil-page:has(.dashboard-container) .container {
-    overflow-y: hidden !important;
-    height: 100vh !important;
-    max-height: 100vh !important;
+    overflow-y: hidden;
+    height: 100vh;
+    max-height: 100vh;
   }
   
   body.accueil-page:not(:has(.dashboard-container)) .main-accueil {
-    height: auto !important;
-    max-height: none !important;
+    height: auto;
+    max-height: none;
     min-height: calc(100vh - 104px);
-    overflow: visible !important;
+    overflow: visible;
   }
   
   body.accueil-page:has(.dashboard-container) .main-accueil {
-    overflow-y: hidden !important;
-    height: 100vh !important;
-    max-height: 100vh !important;
-    min-height: 100vh !important;
+    overflow-y: hidden;
+    height: 100vh;
+    max-height: 100vh;
+    min-height: 100vh;
+  }
+
+  /* Accueil avec shell marketing : scroll document (contenu plus haut que la fenêtre). */
+  html:has(body.accueil-page:has(.dashboard-container--home-accueil)) {
+    overflow-y: auto;
+    height: auto;
+    max-height: none;
+  }
+
+  html:has(body.accueil-page:has(.dashboard-container--home-accueil)) #root {
+    height: auto;
+    max-height: none;
+    overflow: visible;
+  }
+
+  html:has(body.accueil-page:has(.dashboard-container--home-accueil)) .app {
+    height: auto;
+    max-height: none;
+    overflow: visible;
+  }
+
+  body.accueil-page:has(.dashboard-container--home-accueil) {
+    overflow-y: auto;
+    height: auto;
+    max-height: none;
+  }
+
+  body.accueil-page:has(.dashboard-container--home-accueil) .container {
+    overflow-y: auto;
+    height: auto;
+    max-height: none;
+    min-height: 100vh;
+  }
+
+  body.accueil-page:has(.dashboard-container--home-accueil) .main-accueil {
+    height: auto;
+    max-height: none;
+    min-height: calc(100vh - 104px);
+    overflow-y: visible;
+    overflow-x: hidden;
+  }
+
+  /* Compte client, contact, à propos, 404 : scroll document sur desktop. */
+  html:has(body.document-scroll-page) {
+    overflow-y: auto;
+    height: auto;
+    max-height: none;
+  }
+
+  html:has(body.document-scroll-page) #root {
+    height: auto;
+    max-height: none;
+    overflow: visible;
+  }
+
+  html:has(body.document-scroll-page) .app {
+    height: auto;
+    max-height: none;
+    overflow: visible;
+  }
+
+  body.document-scroll-page {
+    overflow-y: auto;
+    height: auto;
+    max-height: none;
+  }
+
+  body.document-scroll-page .container {
+    overflow-y: auto;
+    overflow-x: hidden;
+    height: auto;
+    max-height: none;
+    min-height: 100vh;
+  }
+
+  /* Compte client, dashboard chauffeur, navigation : pas de scroll sur html/body/container — scroll dans .dashboard-main (ou vue plein écran). */
+  html:has(body.document-scroll-page:has(.dashboard-container--client-compte)),
+  html:has(body.document-scroll-page:has(.dashboard-container--chauffeur)),
+  html:has(body.document-scroll-page:has(.driver-navigation-page)) {
+    overflow-y: hidden;
+    height: 100vh;
+    max-height: 100vh;
+  }
+
+  /* overflow visible : évite qu’un ancêtre « coupe » ou déplace le header fixed + zoom #root (Safari). */
+  html:has(body.document-scroll-page:has(.dashboard-container--client-compte)) #root,
+  html:has(body.document-scroll-page:has(.dashboard-container--chauffeur)) #root,
+  html:has(body.document-scroll-page:has(.driver-navigation-page)) #root {
+    height: 100vh;
+    max-height: 100vh;
+    overflow: visible;
+  }
+
+  body.document-scroll-page:has(.dashboard-container--client-compte),
+  body.document-scroll-page:has(.dashboard-container--chauffeur),
+  body.document-scroll-page:has(.driver-navigation-page) {
+    overflow-y: hidden;
+    height: 100vh;
+    max-height: 100vh;
+  }
+
+  body.document-scroll-page:has(.dashboard-container--client-compte) .container,
+  body.document-scroll-page:has(.dashboard-container--chauffeur) .container,
+  body.document-scroll-page:has(.driver-navigation-page) .container {
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+    max-height: 100vh;
+    overflow: hidden;
+    min-height: 0;
   }
 }

@@ -5,7 +5,7 @@ User-agent: *
 Allow: /
 
 # Contenu lisible par les IA / crawlers sans JS :
-# - /projects-content.json (texte des projets en JSON)
+# - /projects-content.json (résumé produit Palto en JSON)
 # - /content-for-crawlers.html (même contenu en HTML)
 
 # Ne pas indexer les zones privées et les API
@@ -16,4 +16,5 @@ Disallow: /en/dashboard
 Disallow: /login
 
 # Sitemap
-Sitemap: https://anthony-merault.fr/sitemap.xml
+# Remplacer par l’URL absolue du site en production (ex. https://palto.example/sitemap.xml)
+Sitemap: https://votre-domaine.re/sitemap.xml

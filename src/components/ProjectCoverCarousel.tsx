@@ -1,9 +1,16 @@
 import { useMemo, useState, useCallback, useEffect } from 'react';
 import { Swiper, SwiperSlide } from 'swiper/react';
 import { Pagination, Autoplay } from 'swiper/modules';
+import type { Feature, LineString } from 'geojson';
 import 'swiper/css';
 import 'swiper/css/pagination';
 import './ProjectCoverCarousel.css';
+import HomeMapboxBackground from './HomeMapboxBackground';
+import { DEFAULT_USER_ORIGIN } from '../constants/defaultUserOrigin';
+import { fetchDrivingRouteFeature } from '../services/mapboxDirections';
+import { snapLngLatToMapboxDriving } from '../services/mapboxSnapToRoad';
+import { isLngLatInsideReunionIsland } from '../constants/reunionIsland';
+import { geocodeReverse } from '../services/mapboxGeocoding';
 
 interface ProjectCoverCarouselProps {
   coverImage: string;
@@ -38,6 +45,11 @@ const ProjectCoverCarousel: React.FC<ProjectCoverCarouselProps> = ({
   hideCloseOnScroll = false,
 }) => {
   const [fullscreenIndex, setFullscreenIndex] = useState(0);
+  const [mapSelectedDestination, setMapSelectedDestination] = useState<{ longitude: number; latitude: number } | null>(null);
+  const [mapRouteFeature, setMapRouteFeature] = useState<Feature<LineString> | null>(null);
+  const [mapDestinationLabel, setMapDestinationLabel] = useState('');
+  const [mapRouteDurationLabel, setMapRouteDurationLabel] = useState('');
+  const [mapRouteTrafficDurationLabel, setMapRouteTrafficDurationLabel] = useState('');
 
   // Dupliquer l'image pour tester le carousel
   const images = useMemo(() => {
@@ -73,64 +85,184 @@ const ProjectCoverCarousel: React.FC<ProjectCoverCarouselProps> = ({
 
   const hasVideoExtension = (src: string) => /\.(mp4|webm|mov|avi|mkv)$/i.test(src);
   const isMpAudioProject = projectName.toLowerCase().includes('mp audio');
+  const isPaltoMapCover = projectName.trim().toLowerCase() === 'go';
+  const mapToken =
+    (import.meta.env.VITE_OPENSTREET_ACCESS_TOKEN as string | undefined)?.trim() || 'osm';
+
+  useEffect(() => {
+    if (!isPaltoMapCover) return;
+    if (!mapToken || !mapSelectedDestination) {
+      setMapRouteFeature(null);
+      setMapRouteDurationLabel('');
+      setMapRouteTrafficDurationLabel('');
+      return;
+    }
+    let cancelled = false;
+    (async () => {
+      try {
+        const feature = await fetchDrivingRouteFeature(mapToken, DEFAULT_USER_ORIGIN, mapSelectedDestination);
+        if (!cancelled) {
+          setMapRouteFeature(feature);
+          const durationSeconds =
+            feature &&
+            feature.properties &&
+            typeof (feature.properties as { durationSeconds?: unknown }).durationSeconds === 'number'
+              ? ((feature.properties as { durationSeconds: number }).durationSeconds)
+              : null;
+          const durationTrafficSeconds =
+            feature &&
+            feature.properties &&
+            typeof (feature.properties as { durationTrafficSeconds?: unknown }).durationTrafficSeconds === 'number'
+              ? ((feature.properties as { durationTrafficSeconds: number }).durationTrafficSeconds)
+              : null;
+          setMapRouteDurationLabel(
+            durationSeconds && Number.isFinite(durationSeconds)
+              ? `~${Math.max(1, Math.round(durationSeconds / 60))} min`
+              : ''
+          );
+          setMapRouteTrafficDurationLabel(
+            durationTrafficSeconds && Number.isFinite(durationTrafficSeconds)
+              ? `~${Math.max(1, Math.round(durationTrafficSeconds / 60))} min`
+              : ''
+          );
+        }
+      } catch {
+        if (!cancelled) {
+          setMapRouteFeature(null);
+          setMapRouteDurationLabel('');
+          setMapRouteTrafficDurationLabel('');
+        }
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [isPaltoMapCover, mapToken, mapSelectedDestination]);
+
+  useEffect(() => {
+    if (!isPaltoMapCover || !mapSelectedDestination || !mapToken) return;
+    let cancelled = false;
+    (async () => {
+      try {
+        const label =
+          (await geocodeReverse(mapSelectedDestination.longitude, mapSelectedDestination.latitude, mapToken, { language: 'fr' })) ??
+          `${mapSelectedDestination.latitude.toFixed(4)}, ${mapSelectedDestination.longitude.toFixed(4)}`;
+        if (!cancelled) setMapDestinationLabel(label);
+      } catch {
+        if (!cancelled) {
+          setMapDestinationLabel(
+            `${mapSelectedDestination.latitude.toFixed(4)}, ${mapSelectedDestination.longitude.toFixed(4)}`
+          );
+        }
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [isPaltoMapCover, mapSelectedDestination, mapToken]);
+
+  useEffect(() => {
+    if (!isPaltoMapCover) return;
+    const detail = {
+      destinationText: mapDestinationLabel,
+      coordsText: mapSelectedDestination
+        ? `${mapSelectedDestination.latitude.toFixed(4)}, ${mapSelectedDestination.longitude.toFixed(4)}`
+        : '',
+      durationText: mapRouteDurationLabel,
+      trafficDurationText: mapRouteTrafficDurationLabel,
+    };
+    window.dispatchEvent(new CustomEvent('palto:cover-map-update', { detail }));
+  }, [
+    isPaltoMapCover,
+    mapDestinationLabel,
+    mapSelectedDestination,
+    mapRouteDurationLabel,
+    mapRouteTrafficDurationLabel,
+  ]);
+
+  const handleMapDestinationPick = useCallback(async (longitude: number, latitude: number) => {
+    if (!mapToken) return;
+    if (!isLngLatInsideReunionIsland(longitude, latitude)) return;
+    try {
+      const snapped = await snapLngLatToMapboxDriving(mapToken, longitude, latitude, { searchRadiusMeters: 75 });
+      if (!snapped) return;
+      setMapSelectedDestination(snapped);
+    } catch {
+      // ignore sur clic invalide/réseau
+    }
+  }, [mapToken]);
 
   return (
     <>
       <div 
-        className={`project-cover-image-above ${coverFullscreenActive ? 'project-cover-fullscreen-expanded' : ''}`}
+        className={`project-cover-image-above ${coverFullscreenActive ? 'project-cover-fullscreen-expanded' : ''} ${isPaltoMapCover ? 'project-cover-image-above--map' : ''}`}
         style={{
           transform: `translateY(${swipeY}px)`,
           transition: swipeY === 0 ? 'transform 0.4s cubic-bezier(0.16, 1, 0.3, 1)' : 'none'
         }}
       >
         {/* Overlay sombre : s'intensifie quand le panneau monte vers le haut */}
-        <div
-          className="project-cover-dark-overlay"
-          style={{
-            opacity: coverLiftProgress * 0.5,
-            transition: 'opacity 0.15s ease-out'
-          }}
-          aria-hidden
-        />
-        <Swiper
-        modules={[Pagination, Autoplay]}
-        pagination={{
-          clickable: true,
-          bulletClass: 'swiper-pagination-bullet-round',
-          bulletActiveClass: 'swiper-pagination-bullet-active-round',
-        }}
-        autoplay={{
-          delay: 5000,
-          disableOnInteraction: false,
-        }}
-        loop={images.length > 1}
-        className="project-cover-swiper"
-      >
-        {images.map((src, index) => {
-          const isVideo = hasVideoExtension(src) || isMpAudioProject;
-          
-          return (
-            <SwiperSlide key={index} className="project-cover-slide">
-              {isVideo ? (
-                <video 
-                  src={src} 
-                  autoPlay 
-                  loop 
-                  muted 
-                  playsInline
-                  className="project-cover-media"
-                />
-              ) : (
-                <img 
-                  src={src} 
-                  alt={`${projectName} - Image ${index + 1}`}
-                  className="project-cover-media"
-                />
-              )}
-            </SwiperSlide>
-          );
-        })}
-      </Swiper>
+        {!isPaltoMapCover ? (
+          <div
+            className="project-cover-dark-overlay"
+            style={{
+              opacity: coverLiftProgress * 0.5,
+              transition: 'opacity 0.15s ease-out'
+            }}
+            aria-hidden
+          />
+        ) : null}
+        {isPaltoMapCover ? (
+          <div className="project-cover-map" aria-label="Carte Go">
+            <HomeMapboxBackground
+              variant="fullscreen"
+              userOrigin={null}
+              selectedDestination={mapSelectedDestination}
+              routeFeature={mapRouteFeature}
+              onMapDestinationPick={handleMapDestinationPick}
+            />
+          </div>
+        ) : (
+          <Swiper
+            modules={[Pagination, Autoplay]}
+            pagination={{
+              clickable: true,
+              bulletClass: 'swiper-pagination-bullet-round',
+              bulletActiveClass: 'swiper-pagination-bullet-active-round',
+            }}
+            autoplay={{
+              delay: 5000,
+              disableOnInteraction: false,
+            }}
+            loop={images.length > 1}
+            className="project-cover-swiper"
+          >
+            {images.map((src, index) => {
+              const isVideo = hasVideoExtension(src) || isMpAudioProject;
+              
+              return (
+                <SwiperSlide key={index} className="project-cover-slide">
+                  {isVideo ? (
+                    <video 
+                      src={src} 
+                      autoPlay 
+                      loop 
+                      muted 
+                      playsInline
+                      className="project-cover-media"
+                    />
+                  ) : (
+                    <img 
+                      src={src} 
+                      alt={`${projectName} - Image ${index + 1}`}
+                      className="project-cover-media"
+                    />
+                  )}
+                </SwiperSlide>
+              );
+            })}
+          </Swiper>
+        )}
       </div>
 
       {/* Icône fullscreen en bas à droite de l'image cover */}
@@ -140,6 +272,7 @@ const ProjectCoverCarousel: React.FC<ProjectCoverCarouselProps> = ({
           className="project-cover-fullscreen-btn"
           onClick={openFullscreen}
           aria-label="Agrandir l'image"
+          style={{ display: isPaltoMapCover ? 'none' : undefined }}
         >
           <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
             <path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3" />

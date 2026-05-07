@@ -7,7 +7,13 @@
   z-index: 1999;
   overflow: hidden;
   transition: height 0.4s cubic-bezier(0.25, 0.1, 0.25, 1);
-  background-color: #509ED8; /* Fond bleu derrière l'image cover */
+  background-color: #0f1419;
+}
+
+/* Cover Go cartographique : toujours plein écran device */
+.project-cover-image-above.project-cover-image-above--map {
+  height: 100vh;
+  height: 100dvh;
 }
 
 /* Quand la page projet glisse vers le bas (fullscreen), la cover prend toute la hauteur */
@@ -191,6 +197,11 @@
   pointer-events: none;
 }
 
+/* Carte cover : aucune couche de voile au-dessus de la carte */
+.project-cover-image-above--map::before {
+  display: none;
+}
+
 .project-cover-swiper {
   width: 100%;
   height: 100%;
@@ -210,6 +221,26 @@
   display: block;
   position: relative;
   z-index: 0;
+}
+
+.project-cover-map {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 0;
+}
+
+.project-cover-map .home-mapbox-bg--embedded {
+  width: 100%;
+  height: 100%;
+  min-height: 100%;
+  min-height: 100dvh;
+  border-radius: 0;
+}
+
+.project-cover-map .home-mapbox-bg__tint {
+  display: none;
 }
 
 /* Dots de pagination ronds — sous l’image du cover */
@@ -417,5 +448,14 @@
   .project-cover-swiper .swiper-pagination-bullet-active-round {
     width: 10px !important;
     height: 10px !important;
+  }
+}
+
+/* Desktop/tablette: pas de cover au-dessus du main */
+@media (min-width: 769px) {
+  .project-cover-image-above,
+  .project-cover-buttons-layer,
+  .project-cover-fullscreen-trigger-layer {
+    display: none !important;
   }
 }

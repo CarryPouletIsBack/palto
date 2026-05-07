@@ -1,34 +1,37 @@
 .language-switcher {
   display: flex;
   align-items: center;
-  gap: 4px;
+  gap: 0;
   flex-shrink: 0;
 }
 
 .language-btn {
   background: none;
   border: none;
-  padding: 6px 10px;
+  padding: 2px 4px;
   font-family: 'Inter', sans-serif;
-  font-size: 14px;
+  font-size: 10px;
   font-weight: 500;
-  color: rgba(255, 255, 255, 0.7);
+  line-height: 1.15;
+  letter-spacing: 0.04em;
+  color: var(--app-lang-muted);
   cursor: pointer;
   transition: color 0.2s ease;
-  border-radius: 4px;
+  border-radius: 3px;
 }
 
 .language-btn:hover {
-  color: rgba(255, 255, 255, 0.9);
+  color: var(--app-lang-hover);
 }
 
 .language-btn.active {
-  color: #ffffff;
+  color: var(--app-lang-active);
   font-weight: 600;
 }
 
 .language-separator {
-  color: rgba(255, 255, 255, 0.4);
-  font-size: 12px;
+  color: var(--app-lang-sep);
+  font-size: 9px;
   user-select: none;
+  padding: 0 1px;
 }

@@ -1,0 +1,157 @@
+/**
+ * Thèmes Palto — source unique des couleurs « shell » (page, header, menu, recherche).
+ *
+ * Défaut : mode clair (`:root`).
+ * Ancien rendu sombre : `<html data-app-theme="dark">` (toutes les variables ci-dessous redéfinies).
+ *
+ * Le dashboard / compte client (Dashboard.css) utilise encore beaucoup de couleurs en dur :
+ * surcharges sous `html[data-app-theme='dark']` dans `src/components/Dashboard.app-theme.css`.
+ * La page projet /go (SingleProject.css) : `src/components/SingleProject.app-theme.css`.
+ */
+
+:root,
+html[data-app-theme='light'] {
+  /* Page */
+  --app-bg-page: #eef2f7;
+  --app-bg-body: #eef2f7;
+  --app-bg-alt: #ffffff;
+  --app-text-primary: #0f172a;
+  --app-text-muted: #475569;
+  --app-text-hero: #0f172a;
+  --app-border-subtle: rgba(15, 23, 42, 0.08);
+
+  /* Menu actif (body) */
+  --app-menu-active-bg: hsl(210, 18%, 96%);
+
+  /* Scrollbars (WebKit + Firefox) */
+  --app-scrollbar-track: rgba(15, 23, 42, 0.06);
+  --app-scrollbar-thumb: rgba(15, 23, 42, 0.22);
+  --app-scrollbar-thumb-hover: rgba(15, 23, 42, 0.38);
+  --app-scrollbar-thumb-border: rgba(15, 23, 42, 0.12);
+  --app-scrollbar-corner: rgba(15, 23, 42, 0.06);
+
+  /* Language switcher */
+  --app-lang-muted: rgba(15, 23, 42, 0.55);
+  --app-lang-hover: rgba(15, 23, 42, 0.88);
+  --app-lang-active: #0f172a;
+  --app-lang-sep: rgba(15, 23, 42, 0.28);
+
+  /* Menu page */
+  --app-menu-section-border: rgba(15, 23, 42, 0.35);
+  --app-menu-row-scrollbar: rgba(15, 23, 42, 0.35);
+
+  /* Recherche (MobileSearchBar) — surfaces type « verre » */
+  --search-bar-active-bg: rgba(15, 23, 42, 0.1);
+  --search-panel-solid-bg: rgba(248, 250, 252, 0.97);
+  --search-a05: rgba(15, 23, 42, 0.04);
+  --search-a10: rgba(15, 23, 42, 0.06);
+  --search-a15: rgba(15, 23, 42, 0.08);
+  --search-a20: rgba(15, 23, 42, 0.1);
+  --search-a25: rgba(15, 23, 42, 0.14);
+  --search-a30: rgba(15, 23, 42, 0.18);
+  --search-a40: rgba(15, 23, 42, 0.26);
+  --search-text-50: rgba(15, 23, 42, 0.45);
+  --search-text-60: rgba(15, 23, 42, 0.55);
+  --search-text-70: rgba(15, 23, 42, 0.62);
+  --search-text-90: rgba(15, 23, 42, 0.9);
+  --search-text-100: #0f172a;
+  --search-caret: #0f172a;
+  --search-bg-90: rgba(255, 255, 255, 0.92);
+  --search-grad-a: rgba(15, 23, 42, 0.06);
+  --search-grad-b: rgba(15, 23, 42, 0.03);
+  --search-inset-top: rgba(255, 255, 255, 0.65);
+  --search-inset-bottom: rgba(15, 23, 42, 0.06);
+  --search-inset-top-strong: rgba(255, 255, 255, 0.85);
+  --search-inset-bottom-strong: rgba(15, 23, 42, 0.1);
+  --search-scrollbar-list: rgba(15, 23, 42, 0.35) transparent;
+  --search-btn-border: rgba(15, 23, 42, 0.14);
+  --search-overlay-scrim: rgba(15, 23, 42, 0.18);
+  --search-inset-gloss-top: rgba(255, 255, 255, 0.92);
+  --search-result-row-hover-bg: rgba(15, 23, 42, 0.08);
+  --header-logo-face: rgba(255, 255, 255, 0.92);
+}
+
+/**
+ * Mode sombre (état précédent du site) — réactiver avec :
+ *   document.documentElement.setAttribute('data-app-theme', 'dark')
+ */
+html[data-app-theme='dark'] {
+  --app-bg-page: #0f1419;
+  --app-bg-body: #0f1419;
+  --app-bg-alt: #111111;
+  --app-text-primary: #ffffff;
+  --app-text-muted: rgba(255, 255, 255, 0.78);
+  --app-text-hero: #ffffff;
+  --app-border-subtle: rgba(255, 255, 255, 0.1);
+
+  --app-menu-active-bg: hsl(210, 10%, 5%);
+
+  --app-scrollbar-track: rgba(255, 255, 255, 0.05);
+  --app-scrollbar-thumb: rgba(255, 255, 255, 0.1);
+  --app-scrollbar-thumb-hover: rgba(255, 255, 255, 0.2);
+  --app-scrollbar-thumb-border: rgba(216, 216, 216, 0.2);
+  --app-scrollbar-corner: rgba(255, 255, 255, 0.05);
+
+  --app-lang-muted: rgba(255, 255, 255, 0.7);
+  --app-lang-hover: rgba(255, 255, 255, 0.9);
+  --app-lang-active: #ffffff;
+  --app-lang-sep: rgba(255, 255, 255, 0.4);
+
+  --app-menu-section-border: #ffffff;
+  --app-menu-row-scrollbar: rgba(255, 255, 255, 0.3);
+
+  --search-bar-active-bg: rgba(255, 255, 255, 0.3);
+  --search-panel-solid-bg: rgba(34, 28, 28, 0.94);
+  --search-a05: rgba(255, 255, 255, 0.05);
+  --search-a10: rgba(255, 255, 255, 0.1);
+  --search-a15: rgba(255, 255, 255, 0.15);
+  --search-a20: rgba(255, 255, 255, 0.2);
+  --search-a25: rgba(255, 255, 255, 0.25);
+  --search-a30: rgba(255, 255, 255, 0.3);
+  --search-a40: rgba(255, 255, 255, 0.4);
+  --search-text-50: rgba(255, 255, 255, 0.5);
+  --search-text-60: rgba(255, 255, 255, 0.6);
+  --search-text-70: rgba(255, 255, 255, 0.7);
+  --search-text-90: rgba(255, 255, 255, 0.9);
+  --search-text-100: #ffffff;
+  --search-caret: rgba(255, 255, 255, 0.95);
+  --search-bg-90: rgba(255, 255, 255, 0.9);
+  --search-grad-a: rgba(255, 255, 255, 0.1);
+  --search-grad-b: rgba(255, 255, 255, 0.05);
+  --search-inset-top: rgba(255, 255, 255, 0.4);
+  --search-inset-bottom: rgba(255, 255, 255, 0.2);
+  --search-inset-top-strong: rgba(255, 255, 255, 0.5);
+  --search-inset-bottom-strong: rgba(255, 255, 255, 0.3);
+  --search-scrollbar-list: rgba(255, 255, 255, 0.3) transparent;
+  --search-btn-border: rgba(216, 216, 216, 0.3);
+  --search-overlay-scrim: rgba(0, 0, 0, 0.2);
+  --search-inset-gloss-top: rgba(255, 255, 255, 0.5);
+  --search-result-row-hover-bg: rgba(255, 255, 255, 0.5);
+  --header-logo-face: rgba(255, 255, 255, 0.4);
+}
+
+/* Mode contraste (accessibilité) */
+html[data-app-theme='contrast'] {
+  --app-bg-page: #ffffff;
+  --app-bg-body: #ffffff;
+  --app-bg-alt: #ffffff;
+  --app-text-primary: #000000;
+  --app-text-muted: #111111;
+  --app-text-hero: #000000;
+  --app-border-subtle: #000000;
+  --app-menu-active-bg: #f3f4f6;
+
+  --app-scrollbar-track: #e5e7eb;
+  --app-scrollbar-thumb: #111827;
+  --app-scrollbar-thumb-hover: #000000;
+  --app-scrollbar-thumb-border: #000000;
+  --app-scrollbar-corner: #e5e7eb;
+
+  --app-lang-muted: #111111;
+  --app-lang-hover: #000000;
+  --app-lang-active: #000000;
+  --app-lang-sep: #000000;
+
+  --app-menu-section-border: #000000;
+  --app-menu-row-scrollbar: #000000;
+}

@@ -1,10 +1,10 @@
-import { type ProjectData } from '../data/projectsNew';
-import { projectsDataNew } from '../data/projectsNew';
+import { type ProjectData, defaultProjectsData } from '../data/projects';
+import { PLACEHOLDER_COVER } from '../constants/imagePlaceholders';
 
-const STORAGE_KEY = 'portfolio_projects';
+const STORAGE_KEY = 'palto_projects';
 /** Incrémenter pour forcer la réutilisation des données du code (ex. nouveaux champs positionnementMatrix, userFlow) */
-const DATA_VERSION = 10;
-const DATA_VERSION_KEY = 'portfolio_projects_version';
+const DATA_VERSION = 13;
+const DATA_VERSION_KEY = 'palto_projects_version';
 
 export interface ProjectWithMeta extends ProjectData {
   id: string;
@@ -26,8 +26,8 @@ export const loadProjects = (): { [key: string]: ProjectWithMeta } => {
     if (stored && storedVersion >= DATA_VERSION) {
       const parsed = JSON.parse(stored);
       const merged: { [key: string]: ProjectWithMeta } = {};
-      Object.keys(projectsDataNew).forEach((key) => {
-        const defaults = projectsDataNew[key];
+      Object.keys(defaultProjectsData).forEach((key) => {
+        const defaults = defaultProjectsData[key];
         const saved = parsed[key];
         merged[key] = {
           ...defaults,
@@ -53,8 +53,8 @@ export const loadProjects = (): { [key: string]: ProjectWithMeta } => {
                 }
               : undefined,
           id: saved?.id ?? key,
-          coverImage: key === 'Pedaboard' ? '/images/cover-project-pedaboard.png' : key === 'Playdago' ? '/images/cover-project-playdago.png' : key === 'Kaldera' ? '/images/cover-project-kaldera.png' : saved?.coverImage ?? `/images/${key.toLowerCase()}-cover.png`,
-          category: saved?.category ?? (key === 'Pedaboard' ? 'applicationWeb' : 'application'),
+          coverImage: saved?.coverImage ?? PLACEHOLDER_COVER,
+          category: saved?.category ?? 'application',
           status: saved?.status ?? 'published',
           lastModified: saved?.lastModified ?? new Date().toISOString(),
           createdAt: saved?.createdAt ?? new Date().toISOString(),
@@ -71,19 +71,12 @@ export const loadProjects = (): { [key: string]: ProjectWithMeta } => {
   
   // Convertir les données par défaut en format avec métadonnées
   const projectsWithMeta: { [key: string]: ProjectWithMeta } = {};
-  Object.keys(projectsDataNew).forEach(key => {
-    const coverImage = key === 'Pedaboard'
-      ? '/images/cover-project-pedaboard.png'
-      : key === 'Playdago'
-        ? '/images/cover-project-playdago.png'
-        : key === 'Kaldera'
-          ? '/images/cover-project-kaldera.png'
-          : `/images/${key.toLowerCase()}-cover.png`;
+  Object.keys(defaultProjectsData).forEach(key => {
     projectsWithMeta[key] = {
-      ...projectsDataNew[key],
+      ...defaultProjectsData[key],
       id: key,
-      coverImage,
-      category: key === 'Pedaboard' ? 'applicationWeb' : 'application',
+      coverImage: PLACEHOLDER_COVER,
+      category: 'application',
       status: 'published',
       lastModified: new Date().toISOString(),
       createdAt: new Date().toISOString(),

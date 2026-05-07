@@ -1,524 +1,267 @@
-import { useState, useEffect } from 'react';
-import { BarChart3, TrendingUp, Users, Eye, MousePointerClick, Loader2, LogIn, LogOut } from 'lucide-react';
+import { useMemo } from 'react';
+import { CheckCircle2, Clock3, Star, Wallet } from 'lucide-react';
 import './DashboardStats.css';
-import { 
-  getBasicStats, 
-  getRealtimeStats, 
-  formatPropertyId,
-  type GoogleAnalyticsConfig 
-} from '../services/googleAnalyticsService';
-import { 
-  getAuthUrl, 
-  isAuthenticated, 
-  saveToken, 
-  logout as authLogout,
-  getAccessToken 
-} from '../services/googleAuthService';
 
-interface DashboardStatsProps {
-  googleAnalyticsId?: string;
+/** Agrégats d’activité chauffeur (courses du planning), sans Google Analytics. */
+export interface ChauffeurActivityStatsForView {
+  completed: number;
+  cancelled: number;
+  inProgress: number;
+  pending: number;
+  totalCourses: number;
+  acceptanceRate: number;
+  cancellationRate: number;
+  totalIncome: number;
+  rating: number;
+  onlineHoursWeek: number;
+  lastPayout: string;
 }
 
-const DashboardStats = ({ googleAnalyticsId }: DashboardStatsProps) => {
-  const [selectedView, setSelectedView] = useState<'overview' | 'realtime'>('overview');
-  const [isConfigured, setIsConfigured] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [authStatus, setAuthStatus] = useState<'checking' | 'authenticated' | 'unauthenticated'>('checking');
-  const [statsData, setStatsData] = useState({
-    visitors: { value: '0', change: '0%' },
-    pageViews: { value: '0', change: '0%' },
-    bounceRate: { value: '0%', change: '0%' },
-    avgSession: { value: '0s', change: '0%' },
-  });
-  const [realtimeData, setRealtimeData] = useState({
-    activeUsers: 0,
-  });
+export interface ChauffeurHeatmapStatsForView {
+  totalWeeks: number;
+  cells: number[][];
+  bestMonth: string;
+  bestDay: string;
+  longestStreak: string;
+  currentStreak: string;
+}
 
-  useEffect(() => {
-    // Vérifier l'état d'authentification
-    const authenticated = isAuthenticated();
-    setAuthStatus(authenticated ? 'authenticated' : 'unauthenticated');
-    
-    // Vérifier si Google Analytics est configuré
-    // ⚠️ IMPORTANT : L'API nécessite un Property ID NUMÉRIQUE (ex: "123456789")
-    // Pas un Measurement ID (ex: "G-MS120551E9")
-    const savedPropertyId = localStorage.getItem('google_analytics_property_id');
-    const oldGAId = localStorage.getItem('google_analytics_id');
-    
-    // Nettoyer l'ancien Measurement ID si présent
-    if (oldGAId && (oldGAId.startsWith('G-') || !/^\d+$/.test(oldGAId))) {
-      localStorage.removeItem('google_analytics_id');
-    }
-    
-    // Property ID numérique configuré
-    const defaultGAId = '383170814'; // Property ID numérique
-    const defaultGTId = 'GT-KDDTXMS'; // ID Google Tag/Measurement (pour le tracking, pas pour l'API)
-    
-    // Utiliser l'ID sauvegardé (uniquement Property ID numérique), celui passé en prop, ou l'ID par défaut
-    // Vérifier que savedPropertyId est bien numérique
-    const validSavedId = savedPropertyId && /^\d+$/.test(savedPropertyId) ? savedPropertyId : null;
-    const gaId = validSavedId || (googleAnalyticsId && /^\d+$/.test(googleAnalyticsId) ? googleAnalyticsId : null) || defaultGAId;
-    
-    if (gaId) {
-      // Sauvegarder l'ID par défaut s'il n'y en a pas d'autre
-      if (!validSavedId && !googleAnalyticsId) {
-        localStorage.setItem('google_analytics_property_id', defaultGAId);
-      }
-      // Sauvegarder aussi l'ID GT si fourni
-      if (defaultGTId) {
-        localStorage.setItem('google_tag_id', defaultGTId);
-      }
-      setIsConfigured(true);
-      
-      // Charger les données si authentifié
-      if (authenticated) {
-        loadGoogleAnalytics(gaId);
-      }
-    }
-    
-    // Vérifier si on revient de l'authentification OAuth
-    const urlParams = new URLSearchParams(window.location.search);
-    const accessToken = urlParams.get('access_token');
-    const expiresIn = urlParams.get('expires_in');
-    const refreshToken = urlParams.get('refresh_token');
-    
-    if (accessToken && expiresIn) {
-      // Décoder le refresh_token si présent (URLSearchParams le décode automatiquement)
-      const decodedRefreshToken = refreshToken ? decodeURIComponent(refreshToken) : undefined;
-      
-      saveToken({
-        access_token: accessToken,
-        expires_in: parseInt(expiresIn, 10),
-        refresh_token: decodedRefreshToken,
-        scope: '',
-        token_type: 'Bearer',
-      });
-      
-      // Nettoyer l'URL immédiatement (garder seulement ?page=dashboard si présent)
-      const currentPath = window.location.pathname;
-      const hasPageParam = window.location.search.includes('page=dashboard');
-      const cleanUrl = hasPageParam ? `${currentPath}?page=dashboard` : currentPath;
-      window.history.replaceState({}, document.title, cleanUrl);
-      
-      // Recharger les données
-      setAuthStatus('authenticated');
-      if (gaId) {
-        loadGoogleAnalytics(gaId);
-      }
-    }
-  }, [googleAnalyticsId]);
+interface DashboardStatsProps {
+  activity: ChauffeurActivityStatsForView;
+  heatmap?: ChauffeurHeatmapStatsForView | null;
+}
 
-  const handleLogin = () => {
-    try {
-      const authUrl = getAuthUrl();
-      window.location.href = authUrl;
-    } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Erreur lors de la génération de l\'URL d\'authentification';
-      setError(errorMessage);
-      console.error('Erreur OAuth2:', err);
-    }
-  };
+function formatEur(value: number): string {
+  return new Intl.NumberFormat('fr-FR', {
+    style: 'currency',
+    currency: 'EUR',
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 2,
+  }).format(value);
+}
 
-  const handleLogout = () => {
-    authLogout();
-    setAuthStatus('unauthenticated');
-    setStatsData({
-      visitors: { value: '0', change: '0%' },
-      pageViews: { value: '0', change: '0%' },
-      bounceRate: { value: '0%', change: '0%' },
-      avgSession: { value: '0s', change: '0%' },
-    });
-  };
+const DashboardStats = ({ activity, heatmap }: DashboardStatsProps) => {
+  const yearlyHeatmap = useMemo(() => {
+    const monthLabels = ['J', 'F', 'M', 'A', 'M', 'J', 'J', 'A', 'S', 'O', 'N', 'D'];
+    const weekdayLabels = ['L', 'M', 'M', 'J', 'V', 'S', 'D'];
+    const totalWeeks = 52;
+    const monthFactors = [0.88, 0.92, 1.02, 0.95, 1.04, 1.1, 1.2, 1.16, 1.06, 1.0, 0.96, 1.12];
+    const weekdayFactors = [0.84, 0.95, 1.0, 1.05, 1.2, 1.12, 0.78];
+    const base = Math.max(1, activity.completed / 90);
 
-  const loadGoogleAnalytics = async (gaId: string) => {
-    // Vérifier si un token d'accès est disponible
-    const accessToken = getAccessToken();
-    
-    if (!accessToken) {
-      setAuthStatus('unauthenticated');
-      return;
-    }
-
-    // Charger les données réelles depuis l'API
-    setIsLoading(true);
-    setError(null);
-
-    try {
-      const config: GoogleAnalyticsConfig = {
-        propertyId: gaId,
-        accessToken: accessToken,
-      };
-
-      if (selectedView === 'overview') {
-        const basicStats = await getBasicStats(config, 30);
-        const formattedStats = {
-          visitors: { 
-            value: basicStats.activeUsers.toLocaleString('fr-FR'), 
-            change: '+0%' // TODO: Calculer le changement par rapport à la période précédente
-          },
-          pageViews: { 
-            value: basicStats.screenPageViews.toLocaleString('fr-FR'), 
-            change: '+0%' 
-          },
-          bounceRate: { 
-            value: `${(basicStats.bounceRate * 100).toFixed(1)}%`, 
-            change: '0%' 
-          },
-          avgSession: { 
-            value: formatDuration(basicStats.averageSessionDuration), 
-            change: '0%' 
-          },
-        };
-        setStatsData(formattedStats);
-      } else {
-        const realtimeStats = await getRealtimeStats(config);
-        setRealtimeData({
-          activeUsers: realtimeStats.activeUsers,
-        });
-      }
-    } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Erreur lors du chargement des données';
-      setError(errorMessage);
-      console.error('Erreur Google Analytics:', err);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  // Formater la durée en secondes en format lisible
-  const formatDuration = (seconds: number): string => {
-    if (seconds < 60) {
-      return `${Math.round(seconds)}s`;
-    }
-    const minutes = Math.floor(seconds / 60);
-    const remainingSeconds = Math.round(seconds % 60);
-    return `${minutes}m ${remainingSeconds}s`;
-  };
-
-  // Charger les données quand la vue change
-  useEffect(() => {
-    const savedPropertyId = localStorage.getItem('google_analytics_property_id');
-    const defaultGAId = '383170814'; // Property ID numérique
-    
-    // Vérifier que googleAnalyticsId est numérique si fourni
-    const validPropId = googleAnalyticsId && /^\d+$/.test(googleAnalyticsId) ? googleAnalyticsId : null;
-    const gaId = validPropId || (savedPropertyId && /^\d+$/.test(savedPropertyId) ? savedPropertyId : defaultGAId);
-    
-    if (isConfigured && gaId) {
-      loadGoogleAnalytics(gaId);
-    }
-  }, [selectedView, isConfigured, googleAnalyticsId]);
-
-  if (!isConfigured) {
-    return (
-      <div className="dashboard-stats-container">
-        <div className="stats-config-prompt">
-          <BarChart3 size={48} className="stats-icon" />
-          <h2>Configurer Google Analytics</h2>
-          <div className="stats-info-box">
-            <p><strong>IDs configurés :</strong></p>
-            <ul className="stats-ids-list">
-              <li><strong>Google Tag Manager :</strong> GTM-MJ9VW6G4</li>
-              <li><strong>Google Analytics Property ID :</strong> 383170814</li>
-              <li><strong>Google Analytics Measurement ID :</strong> G-MS120551E9 (pour le tracking)</li>
-              <li><strong>Google Tag/Measurement :</strong> GT-KDDTXMS</li>
-            </ul>
-            <p>Vos identifiants sont configurés. Les statistiques seront disponibles une fois l'intégration API complète.</p>
-          </div>
-          <div className="stats-config-form">
-            <input
-              type="text"
-              placeholder="123456789 (Property ID numérique uniquement)"
-              className="stats-ga-input"
-              onKeyPress={(e) => {
-                if (e.key === 'Enter') {
-                  const input = e.target as HTMLInputElement;
-                  if (input.value) {
-                    // Vérifier que c'est un Property ID numérique
-                    if (!/^\d+$/.test(input.value)) {
-                      setError('Le Property ID doit être uniquement des chiffres (ex: 123456789). Voir le guide ci-dessous.');
-                      return;
-                    }
-                    localStorage.setItem('google_analytics_property_id', input.value);
-                    setIsConfigured(true);
-                    loadGoogleAnalytics(input.value);
-                  }
-                }
-              }}
-            />
-            <button
-              onClick={(e) => {
-                const input = (e.target as HTMLElement).parentElement?.querySelector('input') as HTMLInputElement;
-                if (input?.value) {
-                  // Vérifier que c'est un Property ID numérique
-                  if (!/^\d+$/.test(input.value)) {
-                    setError('Le Property ID doit être uniquement des chiffres (ex: 123456789). Voir le guide ci-dessous.');
-                    return;
-                  }
-                  localStorage.setItem('google_analytics_property_id', input.value);
-                  setIsConfigured(true);
-                  loadGoogleAnalytics(input.value);
-                }
-              }}
-              className="stats-config-button"
-            >
-              Configurer
-            </button>
-          </div>
-          <div className="stats-help-section">
-            <p className="stats-help-title">⚠️ IMPORTANT : Property ID numérique requis</p>
-            <p className="stats-help-text" style={{ marginBottom: '16px' }}>
-              L'API Google Analytics Data nécessite un <strong>Property ID NUMÉRIQUE</strong> (ex: <code>123456789</code>), 
-              <strong>PAS</strong> un Measurement ID (ex: <code>G-MS120551E9</code>).
-            </p>
-            <p className="stats-help-title">Comment trouver votre Property ID numérique :</p>
-            <ol className="stats-help-list">
-              <li>Connectez-vous à <a href="https://analytics.google.com" target="_blank" rel="noopener noreferrer">Google Analytics</a></li>
-              <li>Allez dans <strong>Administration</strong> (icône d'engrenage) → <strong>Propriété</strong></li>
-              <li>Dans <strong>Informations sur la propriété</strong>, cherchez <strong>ID de propriété</strong></li>
-              <li>C'est un nombre uniquement (ex: <code>123456789</code>)</li>
-              <li>⚠️ <strong>Ne confondez pas</strong> avec l'<strong>ID de mesure</strong> (G-XXXXX) qui est pour le tracking</li>
-            </ol>
-            <p className="stats-help-text" style={{ marginTop: '16px' }}>
-              Voir <a href="https://github.com/CarryPouletIsBack/portfolio-react-anthony/blob/main/GOOGLE_ANALYTICS_PROPERTY_ID.md" target="_blank" rel="noopener noreferrer">le guide complet</a> pour plus d'aide.
-            </p>
-          </div>
-        </div>
-      </div>
+    const monthStarts = monthLabels.map((_, idx) => Math.floor((idx / 12) * totalWeeks));
+    const cells = Array.from({ length: totalWeeks }, (_, weekIdx) =>
+      weekdayLabels.map((_, weekdayIdx) => {
+        const monthIdx = Math.min(11, Math.floor((weekIdx / totalWeeks) * 12));
+        const seed = (weekIdx * 17 + weekdayIdx * 13 + activity.completed) % 7;
+        const noise = 0.78 + seed * 0.08;
+        const value = Math.max(0, Math.round(base * monthFactors[monthIdx] * weekdayFactors[weekdayIdx] * noise));
+        return value;
+      })
     );
-  }
+
+    const flat = cells.flat();
+    const max = Math.max(1, ...flat);
+    const min = Math.min(...flat);
+
+    const colors = ['#eef0f3', '#d8efe5', '#b9e0cf', '#82c8a9', '#4ca780'];
+    const colorFor = (value: number) => {
+      if (value <= min) return colors[0];
+      const ratio = value / max;
+      if (ratio < 0.3) return colors[1];
+      if (ratio < 0.5) return colors[2];
+      if (ratio < 0.75) return colors[3];
+      return colors[4];
+    };
+
+    const monthTotals = cells.map((col) => col.reduce((sum, v) => sum + v, 0));
+    const bestMonthIdx = monthTotals.indexOf(Math.max(...monthTotals));
+    const dayTotals = weekdayLabels.map((_, dayIdx) => cells.reduce((sum, col) => sum + col[dayIdx], 0));
+    const bestDayIdx = dayTotals.indexOf(Math.max(...dayTotals));
+
+    const binary = flat.map((v) => (v > 0 ? 1 : 0));
+    let longest = 0;
+    let current = 0;
+    let run = 0;
+    for (let i = 0; i < binary.length; i += 1) {
+      if (binary[i] === 1) {
+        run += 1;
+        longest = Math.max(longest, run);
+      } else {
+        run = 0;
+      }
+    }
+    for (let i = binary.length - 1; i >= 0; i -= 1) {
+      if (binary[i] === 1) current += 1;
+      else break;
+    }
+
+    const fallback = {
+      monthLabels,
+      monthStarts,
+      totalWeeks,
+      weekdayLabels,
+      cells,
+      colorFor,
+      bestMonth: ['Janvier', 'Fevrier', 'Mars', 'Avril', 'Mai', 'Juin', 'Juillet', 'Aout', 'Septembre', 'Octobre', 'Novembre', 'Decembre'][bestMonthIdx] ?? '—',
+      bestDay: ['Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi', 'Dimanche'][bestDayIdx] ?? '—',
+      longestStreak: `${longest}j`,
+      currentStreak: `${current}j`,
+    };
+    if (!heatmap || !Array.isArray(heatmap.cells) || heatmap.cells.length !== totalWeeks) {
+      return fallback;
+    }
+    return {
+      ...fallback,
+      cells: heatmap.cells,
+      bestMonth: heatmap.bestMonth || fallback.bestMonth,
+      bestDay: heatmap.bestDay || fallback.bestDay,
+      longestStreak: heatmap.longestStreak || fallback.longestStreak,
+      currentStreak: heatmap.currentStreak || fallback.currentStreak,
+    };
+  }, [activity.completed, heatmap]);
+
+  const summary = [
+    {
+      key: 'completed',
+      label: 'Courses terminées',
+      value: `${activity.completed}`,
+      helper: `${activity.totalCourses} au total`,
+      icon: CheckCircle2,
+    },
+    {
+      key: 'revenue',
+      label: 'Revenus',
+      value: formatEur(activity.totalIncome),
+      helper: 'hors annulations',
+      icon: Wallet,
+    },
+    {
+      key: 'online',
+      label: 'En ligne',
+      value: `${activity.onlineHoursWeek} h`,
+      helper: 'sur 7 jours',
+      icon: Clock3,
+    },
+    {
+      key: 'rating',
+      label: 'Note',
+      value: `${activity.rating.toFixed(2)} / 5`,
+      helper: `dernier versement : ${activity.lastPayout}`,
+      icon: Star,
+    },
+  ] as const;
 
   return (
     <div className="dashboard-stats-container">
-      <div className="stats-header">
-        <h2 className="stats-title">Statistiques du site</h2>
-        <div className="stats-header-actions">
-          {authStatus === 'authenticated' ? (
-            <button onClick={handleLogout} className="stats-auth-button logout">
-              <LogOut size={16} /> Déconnexion
-            </button>
-          ) : (
-            <button onClick={handleLogin} className="stats-auth-button login">
-              <LogIn size={16} /> Se connecter à Google Analytics
-            </button>
-          )}
-          <div className="stats-view-toggle">
-            <button
-              className={selectedView === 'overview' ? 'active' : ''}
-              onClick={() => setSelectedView('overview')}
-            >
-              Vue d'ensemble
-            </button>
-            <button
-              className={selectedView === 'realtime' ? 'active' : ''}
-              onClick={() => setSelectedView('realtime')}
-            >
-              Temps réel
-            </button>
-          </div>
-        </div>
+      <div className="stats-header stats-header--minimal">
+        <h2 className="stats-title">Statistiques</h2>
+        <p className="stats-subtitle">Vue rapide et lisible de ton activité chauffeur</p>
       </div>
 
-      {authStatus === 'unauthenticated' && (
-        <div className="stats-auth-prompt">
-          <LogIn size={48} className="stats-auth-icon" />
-          <h3>Authentification requise</h3>
-          <p>Pour afficher vos statistiques Google Analytics, vous devez vous connecter avec votre compte Google.</p>
-          
-          {!import.meta.env.VITE_GOOGLE_CLIENT_ID && (
-            <div className="stats-config-warning">
-              <p><strong>⚠️ Configuration manquante</strong></p>
-              <p>La variable d'environnement <code>VITE_GOOGLE_CLIENT_ID</code> n'est pas définie.</p>
-              
-              {window.location.hostname.includes('vercel.app') || window.location.hostname.includes('vercel') ? (
-                <>
-                  <p><strong>Configuration Vercel (Production) :</strong></p>
-                  <p>Allez dans votre projet Vercel → <strong>Settings</strong> → <strong>Environment Variables</strong> et ajoutez :</p>
-                  <pre className="stats-code-block">
-{`VITE_GOOGLE_CLIENT_ID=votre_client_id_ici
-VITE_GOOGLE_REDIRECT_URI=${window.location.origin}/api/google-auth/callback`}
-                  </pre>
-                  <p>⚠️ <strong>Important</strong> : Utilisez le préfixe <code>VITE_</code> car cette variable est utilisée côté client.</p>
-                </>
-              ) : (
-                <>
-                  <p><strong>Configuration locale (Développement) :</strong></p>
-                  <p>Créez un fichier <code>.env.local</code> à la racine du projet avec :</p>
-                  <pre className="stats-code-block">
-{`VITE_GOOGLE_CLIENT_ID=votre_client_id_ici
-VITE_GOOGLE_REDIRECT_URI=${window.location.origin}/api/google-auth/callback`}
-                  </pre>
-                </>
-              )}
-              
-              <p>Consultez <code>GOOGLE_ANALYTICS_SETUP.md</code> pour plus d'informations.</p>
-            </div>
-          )}
-          
-          <button 
-            onClick={handleLogin} 
-            className="stats-auth-button-large"
-            disabled={!import.meta.env.VITE_GOOGLE_CLIENT_ID}
-          >
-            <LogIn size={20} /> Se connecter à Google Analytics
-          </button>
-          <p className="stats-auth-help">
-            Vous serez redirigé vers Google pour autoriser l'accès à vos données Analytics.
-          </p>
-        </div>
-      )}
+      <div className="stats-kpi-grid">
+        {summary.map((item) => {
+          const Icon = item.icon;
+          return (
+            <article key={item.key} className="stats-kpi-card">
+              <div className="stats-kpi-icon" aria-hidden>
+                <Icon size={18} />
+              </div>
+              <p className="stats-kpi-label">{item.label}</p>
+              <p className="stats-kpi-value">{item.value}</p>
+              <p className="stats-kpi-helper">{item.helper}</p>
+            </article>
+          );
+        })}
+      </div>
 
-      {error && (
-        <div className="stats-error">
-          <p>⚠️ {error}</p>
-          {error.includes('API Google Analytics Data API n\'est pas activée') && (
-            <div className="stats-error-actions">
-              <a 
-                href="https://console.developers.google.com/apis/api/analyticsdata.googleapis.com/overview?project=416597900962" 
-                target="_blank" 
-                rel="noopener noreferrer"
-                className="stats-error-link"
-              >
-                Activer l'API dans Google Cloud Console →
-              </a>
-              <p className="stats-error-help">
-                Voir <a href="https://github.com/CarryPouletIsBack/portfolio-react-anthony/blob/main/GOOGLE_ANALYTICS_API_ACTIVATION.md" target="_blank" rel="noopener noreferrer">le guide d'activation</a> pour plus d'aide.
-              </p>
-            </div>
-          )}
-          {error.includes('authentification OAuth2') && (
-            <div className="stats-error-actions">
-              <button onClick={handleLogin} className="stats-auth-button login">
-                <LogIn size={16} /> Se connecter à Google Analytics
-              </button>
-            </div>
-          )}
-          {!error.includes('API Google Analytics Data API n\'est pas activée') && !error.includes('authentification OAuth2') && (
-            <p className="stats-error-help">
-              Pour utiliser l'API Google Analytics, vous devez configurer l'authentification OAuth2.
-              Le token d'accès doit être stocké dans <code>localStorage</code> avec la clé <code>google_analytics_access_token</code>.
-            </p>
-          )}
+      <section className="stats-heatmap-card" aria-label="Heatmap annuelle activité">
+        <div className="stats-chart-head">
+          <h3>Activité annuelle</h3>
+          <span>style contribution</span>
         </div>
-      )}
-
-      {selectedView === 'realtime' ? (
-        <div className="stats-realtime">
-          <div className="stats-card">
-            <div className="stats-card-icon visitors">
-              <Users size={24} />
+        <div className="stats-heatmap-scroll">
+          <div className="stats-heatmap-grid">
+            <div className="stats-heatmap-months">
+              {Array.from({ length: yearlyHeatmap.totalWeeks }, (_, weekIdx) => {
+                const monthIdx = yearlyHeatmap.monthStarts.indexOf(weekIdx);
+                return (
+                  <span key={`month-slot-${weekIdx}`}>
+                    {monthIdx >= 0 ? yearlyHeatmap.monthLabels[monthIdx] : ''}
+                  </span>
+                );
+              })}
             </div>
-            <div className="stats-card-content">
-              <p className="stats-card-label">Utilisateurs actifs</p>
-              <p className="stats-card-value">
-                {isLoading ? <Loader2 className="animate-spin" size={24} /> : realtimeData.activeUsers.toLocaleString('fr-FR')}
-              </p>
-              <p className="stats-card-change">En temps réel</p>
+            <div className="stats-heatmap-body">
+              <div className="stats-heatmap-days">
+                {yearlyHeatmap.weekdayLabels.map((day, i) => (
+                  <span key={`${day}-${i}`}>{day}</span>
+                ))}
+              </div>
+              <div className="stats-heatmap-cells">
+                {yearlyHeatmap.cells.map((col, monthIdx) => (
+                  <div key={`col-${monthIdx}`} className="stats-heatmap-col">
+                    {col.map((value, dayIdx) => (
+                      <span
+                        key={`cell-${monthIdx}-${dayIdx}`}
+                        className="stats-heatmap-cell"
+                        style={{ background: yearlyHeatmap.colorFor(value) }}
+                        title={`${value} courses`}
+                      />
+                    ))}
+                  </div>
+                ))}
+              </div>
             </div>
           </div>
         </div>
-      ) : (
-        <div className="stats-cards-grid">
-          <div className="stats-card">
-            <div className="stats-card-icon visitors">
-              <Users size={24} />
-            </div>
-            <div className="stats-card-content">
-              <p className="stats-card-label">Visiteurs</p>
-              <p className="stats-card-value">
-                {isLoading ? <Loader2 className="animate-spin" size={24} /> : statsData.visitors.value}
-              </p>
-              <p className="stats-card-change positive">{statsData.visitors.change}</p>
-            </div>
-          </div>
-
-          <div className="stats-card">
-            <div className="stats-card-icon views">
-              <Eye size={24} />
-            </div>
-            <div className="stats-card-content">
-              <p className="stats-card-label">Pages vues</p>
-              <p className="stats-card-value">
-                {isLoading ? <Loader2 className="animate-spin" size={24} /> : statsData.pageViews.value}
-              </p>
-              <p className="stats-card-change positive">{statsData.pageViews.change}</p>
-            </div>
-          </div>
-
-          <div className="stats-card">
-            <div className="stats-card-icon bounce">
-              <TrendingUp size={24} />
-            </div>
-            <div className="stats-card-content">
-              <p className="stats-card-label">Taux de rebond</p>
-              <p className="stats-card-value">
-                {isLoading ? <Loader2 className="animate-spin" size={24} /> : statsData.bounceRate.value}
-              </p>
-              <p className="stats-card-change negative">{statsData.bounceRate.change}</p>
-            </div>
-          </div>
-
-          <div className="stats-card">
-            <div className="stats-card-icon session">
-              <MousePointerClick size={24} />
-            </div>
-            <div className="stats-card-content">
-              <p className="stats-card-label">Durée moyenne</p>
-              <p className="stats-card-value">
-                {isLoading ? <Loader2 className="animate-spin" size={24} /> : statsData.avgSession.value}
-              </p>
-              <p className="stats-card-change positive">{statsData.avgSession.change}</p>
-            </div>
-          </div>
+        <div className="stats-heatmap-meta">
+          <article>
+            <p>Mois le plus actif</p>
+            <strong>{yearlyHeatmap.bestMonth}</strong>
+          </article>
+          <article>
+            <p>Jour le plus actif</p>
+            <strong>{yearlyHeatmap.bestDay}</strong>
+          </article>
+          <article>
+            <p>Plus longue série</p>
+            <strong>{yearlyHeatmap.longestStreak}</strong>
+          </article>
+          <article>
+            <p>Série actuelle</p>
+            <strong>{yearlyHeatmap.currentStreak}</strong>
+          </article>
         </div>
-      )}
+        <div className="stats-heatmap-legend">
+          <span>Moins</span>
+          <div>
+            <i style={{ background: '#eef0f3' }} />
+            <i style={{ background: '#d8efe5' }} />
+            <i style={{ background: '#b9e0cf' }} />
+            <i style={{ background: '#82c8a9' }} />
+            <i style={{ background: '#4ca780' }} />
+          </div>
+          <span>Plus</span>
+        </div>
+      </section>
 
-      {/* Graphique des statistiques - Afficher seulement si pas de données ou erreur */}
-      {(!isLoading && statsData.visitors.value === '0' && authStatus === 'authenticated') ? (
-        <div className="stats-chart-container">
-          <div className="stats-chart-placeholder">
-            <BarChart3 size={48} />
-            <p>Graphique des statistiques</p>
-            <p className="stats-note">
-              Aucune donnée disponible pour les 30 derniers jours. Les statistiques apparaîtront ici une fois que vous aurez du trafic.
-            </p>
-          </div>
-        </div>
-      ) : authStatus !== 'authenticated' ? (
-        <div className="stats-chart-container">
-          <div className="stats-chart-placeholder">
-            <BarChart3 size={48} />
-            <p>Graphique des statistiques</p>
-            <p className="stats-note">
-              Pour afficher les données réelles, configurez l'authentification Google Analytics API.
-            </p>
-          </div>
-        </div>
-      ) : null}
-
-      {/* Informations de configuration - Afficher seulement si pas authentifié */}
-      {authStatus !== 'authenticated' && (
-        <div className="stats-iframe-container">
-          <div className="stats-iframe-placeholder">
-            <BarChart3 size={48} />
-            <p>Intégration Google Analytics</p>
-            <p className="stats-note">
-              <strong>Authentification requise :</strong> Pour afficher les données réelles, vous devez configurer l'authentification OAuth2 avec Google Analytics.
-              <br />
-              <br />
-              <strong>IDs configurés :</strong>
-              <br />
-              • Google Analytics Property ID: {localStorage.getItem('google_analytics_property_id') || '383170814'}
-              <br />
-              • Google Tag: {localStorage.getItem('google_tag_id') || 'GT-KDDTXMS'}
-              <br />
-              <br />
-              <strong>Documentation API :</strong> <a href="https://developers.google.com/analytics/devguides/reporting/data/v1" target="_blank" rel="noopener noreferrer">Google Analytics Data API</a>
-            </p>
-          </div>
-        </div>
-      )}
+      <section className="stats-inline-notes" aria-label="Ratios">
+        <article>
+          <p>Taux d’acceptation</p>
+          <strong>{activity.acceptanceRate}%</strong>
+        </article>
+        <article>
+          <p>Taux d’annulation</p>
+          <strong>{activity.cancellationRate}%</strong>
+        </article>
+        <article>
+          <p>En cours / attente</p>
+          <strong>
+            {activity.inProgress} / {activity.pending}
+          </strong>
+        </article>
+      </section>
     </div>
   );
 };

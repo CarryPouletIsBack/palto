@@ -5,19 +5,23 @@ import {
   useMemo,
   useCallback,
   type FC,
+  type KeyboardEvent,
+  type FocusEvent,
   type MouseEvent,
   type TouchEvent,
   type RefObject,
 } from 'react';
 import { useLanguage } from '../contexts/LanguageContext';
 import { trackEvent } from '../services/googleAnalyticsTracking';
+import { createRideOrder } from '../services/createRideOrder';
 import { motion, useMotionValue } from 'framer-motion';
 import { Swiper, SwiperSlide } from 'swiper/react';
 import { Pagination } from 'swiper/modules';
 import 'swiper/css';
 import 'swiper/css/pagination';
 import './SingleProject.css';
-import { type ProjectData } from '../data/projectsNew';
+import './SingleProject.app-theme.css';
+import { type ProjectData } from '../data/projects';
 import BlurText from './BlurText';
 import DonutChartRace from './DonutChartRace';
 import PositionnementMatrixChart from './PositionnementMatrixChart';
@@ -26,11 +30,90 @@ import { TreeNode } from './flow/FlowTree';
 import type { FlowNodeData } from '../data/flowData';
 import Button from './Button';
 import ContactModal from './ContactModal';
-import { PlaydagoPaletteTable, PlaydagoTypescaleTable } from './PlaydagoDesignSystemTables';
+import { PaltoPaletteTable, PaltoTypescaleTable } from './PaltoDesignSystemTables';
 import CardSwap, { Card } from './CardSwap';
 import MagicBento from './MagicBento';
-import PlaydagoH1HandwritingLogo from './PlaydagoH1HandwritingLogo';
+import PaltoH1HandwritingLogo from './PaltoH1HandwritingLogo';
 import ScrollStack, { ScrollStackItem } from './ScrollStack';
+import { DEFAULT_USER_ORIGIN, DEFAULT_USER_ORIGIN_LABEL } from '../constants/defaultUserOrigin';
+import { getNearbyDriversMock } from '../data/nearbyDrivers';
+import HomeMapboxBackground from './HomeMapboxBackground';
+import { isLngLatInsideReunionIsland } from '../constants/reunionIsland';
+import { snapLngLatToMapboxDriving } from '../services/mapboxSnapToRoad';
+import { fetchDrivingRouteFeature } from '../services/mapboxDirections';
+import {
+  geocodeForward,
+  geocodeForwardSuggestions,
+  geocodeReverse,
+  type GeocodeSuggestion,
+} from '../services/mapboxGeocoding';
+import { REUNION_ISLAND_BBOX_GEOCODE } from '../constants/reunionIsland';
+import { haversineDistanceKm, type GeoPoint } from '../services/distanceGeo';
+import { consumeGoPrefill } from '../constants/goPrefillStorage';
+import {
+  CHAUFFEUR_RIDE_SETTINGS_KEY,
+  loadChauffeurRideSettingsSnapshot,
+} from '../constants/chauffeurRideSettingsStorage';
+import { DashboardHomeTopbar } from './DashboardHomeTopbar';
+import { DashboardHomeRidesBanner } from './DashboardHomeRidesBanner';
+import { useClientHomeTopbarRides } from '../hooks/useClientHomeTopbarRides';
+
+/** Rayon d’affichage des chauffeurs autour du point de départ validé (page Go). */
+const PICKUP_DRIVER_SEARCH_RADIUS_KM = 20;
+const DEFAULT_BASE_FARE_EUR = 4;
+const DEFAULT_PRICE_PER_KM_EUR = 1.35;
+const PICKUP_AUTOCOMPLETE_DEBOUNCE_MS = 220;
+const PICKUP_SAVED_LOCATIONS: string[] = [DEFAULT_USER_ORIGIN_LABEL];
+/** Même libellés que le départ pour la pré-sélection destination (sans géoloc). */
+const DESTINATION_SAVED_LOCATIONS = PICKUP_SAVED_LOCATIONS;
+
+type GeocodeSnappedResult =
+  | { ok: true; snapped: GeoPoint; queryUsed: string }
+  | { ok: false; error: string };
+
+async function geocodePickupForRide(
+  rawQuery: string,
+  mapboxToken: string,
+  language: string
+): Promise<GeocodeSnappedResult> {
+  const q = rawQuery.trim();
+  if (!q) return { ok: false, error: 'Indiquez une adresse de départ.' };
+  const coords = await geocodeForward(q, mapboxToken, {
+    language,
+    proximity: [55.45, -21.15],
+    bbox: REUNION_ISLAND_BBOX_GEOCODE,
+  });
+  if (!coords) {
+    return { ok: false, error: 'Adresse introuvable sur La Réunion.' };
+  }
+  const snapped = await snapLngLatToMapboxDriving(mapboxToken, coords.longitude, coords.latitude, {
+    searchRadiusMeters: 75,
+  });
+  if (!snapped || !isLngLatInsideReunionIsland(snapped.longitude, snapped.latitude)) {
+    return { ok: false, error: 'Point de départ hors zone ou non accessible par la route.' };
+  }
+  return { ok: true, snapped, queryUsed: q };
+}
+
+async function geocodeDestinationForRide(rawQuery: string, mapboxToken: string): Promise<GeocodeSnappedResult> {
+  const q = rawQuery.trim();
+  if (!q) return { ok: false, error: 'Indiquez une destination.' };
+  const coords = await geocodeForward(q, mapboxToken, {
+    language: 'fr',
+    proximity: [55.45, -21.15],
+    bbox: REUNION_ISLAND_BBOX_GEOCODE,
+  });
+  if (!coords) {
+    return { ok: false, error: 'Destination introuvable sur La Réunion.' };
+  }
+  const snapped = await snapLngLatToMapboxDriving(mapboxToken, coords.longitude, coords.latitude, {
+    searchRadiusMeters: 75,
+  });
+  if (!snapped || !isLngLatInsideReunionIsland(snapped.longitude, snapped.latitude)) {
+    return { ok: false, error: 'Destination hors zone ou non accessible par la route.' };
+  }
+  return { ok: true, snapped, queryUsed: q };
+}
 
 /** User flow → arbre : tous les enfants en branches (vertical) → Compte, Contact, Page Tâches, Formation, Laboratoire sur la même colonne après Dashboard */
 function userFlowToFlowData(userFlow: { nodes: { id: string; name?: string; title?: string }[]; links: { from: string; to: string }[] }): FlowNodeData | null {
@@ -56,7 +139,7 @@ function userFlowToFlowData(userFlow: { nodes: { id: string; name?: string; titl
 }
 
 // Constantes en dehors du composant pour éviter les re-créations
-const CLOSE_THRESHOLD = 100;
+const SWIPE_BOTTOM_VISIBLE_MARGIN = 72;
 
 /** Animation d'entrée au scroll pour les sections (comme les titres) */
 const scrollSectionProps = {
@@ -66,127 +149,87 @@ const scrollSectionProps = {
   transition: { duration: 0.4, ease: [0.25, 0.1, 0.25, 1] },
 };
 
-// Import des icônes SVG
-import searchIconBlue from '../assets/4610de4ae01e3b351bbcba9c930287159bbda981.svg'
-import searchIconWhite from '../assets/90ec6f610076fb768a47e2428a1538d04533d860.svg'
-import filterIconBlue from '../assets/bde286e6c3f17f2b7616efd3cb0505db16cb2c80.svg'
-import filterIconWhite from '../assets/d64646fec8e22fb6cc43fff0865f1aed605ce1db.svg'
-import expandIconBlue from '../assets/0663ecdf0b920b6cf763604a0f82d6820aa79455.svg'
-import expandIconWhite from '../assets/fd72e19660aeb34b38d4c1d978e7c4eb2c18625d.svg'
-import penIconBlue from '../assets/263f9c29cac74d7682e3473ce21888bd06efd26b.svg'
-import penIconWhite from '../assets/ad0941a6384370c3132550cf8e7b080872bf8c70.svg'
-import bellIconBlue from '../assets/098befb8181ea6bad4360e3d71f1968d62a269ab.svg'
-import bellIconWhite from '../assets/c5bca19bef4558c083d96fdc742e2d8e9f4a9d4c.svg'
-import dashboardIconBlue from '../assets/a7ca5d8579da186571215f0d46b524b056c90c10.svg'
-import dashboardIconWhite from '../assets/96565d943652d5bf44ea725b8aa77fe03479a74a.svg'
-import clientIconBlue from '../assets/5920fd75dd2c6e76db991a9b942e996b1c710f0e.svg'
-import laboratoireIconBlue from '../assets/4cdaeeb22fdcbf2d5c03c0c40e4bfa84e3124cc1.svg'
-import laboratoireIconWhite from '../assets/43ff308b7a1db138e79250570a476d75f810d253.svg'
-import dashboardIconNewBlue from '../assets/b710cf10aac89b656f43227be944d998471a6343.svg'
-import dashboardIconNewWhite from '../assets/2132bf0ef9c4bc9f146dda1255d5e7d49b16171f.svg'
-import contactIconBlue from '../assets/6319879794d05613192a650b6c2fff239e7a7ad1.svg'
-import contactIconWhite from '../assets/d98522e79f209b17064ab4de482c788242183e6c.svg'
-import formationIconBlue from '../assets/44168eca3dd85916f934d8ab1b7b41967aff31f4.svg'
-import formationIconWhite from '../assets/93d42323f5ac3dc5fadde5c92e8d5135e38d2981.svg'
-import boutiqueIconBlue from '../assets/9dc5c3ec76d7852c81cd48b560b25b52336544c2.svg'
-import boutiqueIconWhite from '../assets/3bea835efaa0ca18d639afff7d53d9069da477c0.svg'
-/** Première slide Audit : Playdago uniquement (Pedaboard / autres gardent l’asset Figma partagé) */
-import auditCarouselBluePlaydago from '../assets/audit/Blue.png';
-/** Slide 2 uniquement du carrousel #audit Playdago (pas le doublon Design system) */
-import auditCarouselMacBookPlaydagoAuditSection from '../assets/audit/MacBook Pro 16_ - 5th Gen - Silver.png';
-/** Slide 3 uniquement du carrousel #audit Playdago (pas le doublon Design system) */
-import auditCarouselHandheldIpadPlaydagoAuditSection from '../assets/audit/Handheld-iPad-2.png';
-/** Slides 2–4 carrousels Playdago (Design system & repli) — dossier « creation atelier » */
-import auditCarouselCreationAtelierLancerDes from '../assets/audit/creation atelier/lancer de des.png';
-import auditCarouselCreationAtelierPersonnalisationDes from '../assets/audit/creation atelier/lancer de des/personnalisation du des.png';
-import auditCarouselCreationAtelierActionPopup from '../assets/audit/creation atelier/lancer de des/popup/action.png';
-/** Design system Playdago — tuiles Magic Bento (exports Figma) */
-import playdagoDsFrame1048 from '../assets/audit/Frame 1048.png';
-import playdagoDsFrame1050 from '../assets/audit/Frame 1050.png';
-import playdagoDsFrame1051 from '../assets/audit/Frame 1051.png';
-import playdagoCardSwapDashboard from '../assets/audit/Dashboard.png';
-import playdagoCardSwapPersonnalisationDes from '../assets/audit/creation atelier/lancer de des/personnalisation du des.png';
-import playdagoCardSwapDistributionCartes from '../assets/audit/concept 2/matching/formateur/Distribution des cartes.png';
-import playdagoLightModeMaine from '../assets/playdago/Dashboard/maine.png';
-import playdagoLightModeSinglePage from '../assets/Atelier/SinglePage.png';
-import playdagoLightModeSetp1 from '../assets/Participant·es/Atelier/Matching/Play/Setp1.png';
-/** Chaque image des dossiers `audit/concept 1/` et `audit/concept 2/` = un trait cliquable sur la graduation (ordre = tri du chemin fichier). */
-const PLAYDAGO_CONCEPTION_CONCEPT_1_GLOB = import.meta.glob<{ default: string }>(
-  '../assets/audit/concept 1/**/*.{png,jpg,jpeg,webp}',
-  { eager: true }
-);
-const PLAYDAGO_CONCEPTION_CONCEPT_2_GLOB = import.meta.glob<{ default: string }>(
-  '../assets/audit/concept 2/**/*.{png,jpg,jpeg,webp}',
-  { eager: true }
-);
+import {
+  PLACEHOLDER_COVER,
+  PLACEHOLDER_MEDIA,
+  PLACEHOLDER_ICON,
+} from '../constants/imagePlaceholders';
 
-function playdagoGlobToSortedSlides(glob: Record<string, { default: string }>): { src: string }[] {
-  return Object.keys(glob)
-    .sort((a, b) => a.localeCompare(b, undefined, { sensitivity: 'base', numeric: true }))
-    .map((path) => ({ src: glob[path].default }));
-}
+/** Icônes user flow : placeholders (anciens SVG Figma retirés). */
+const searchIconBlue = PLACEHOLDER_ICON;
+const searchIconWhite = PLACEHOLDER_ICON;
+const filterIconBlue = PLACEHOLDER_ICON;
+const filterIconWhite = PLACEHOLDER_ICON;
+const expandIconBlue = PLACEHOLDER_ICON;
+const expandIconWhite = PLACEHOLDER_ICON;
+const penIconBlue = PLACEHOLDER_ICON;
+const penIconWhite = PLACEHOLDER_ICON;
+const bellIconBlue = PLACEHOLDER_ICON;
+const bellIconWhite = PLACEHOLDER_ICON;
+const dashboardIconBlue = PLACEHOLDER_ICON;
+const dashboardIconWhite = PLACEHOLDER_ICON;
+const clientIconBlue = PLACEHOLDER_ICON;
+const laboratoireIconBlue = PLACEHOLDER_ICON;
+const laboratoireIconWhite = PLACEHOLDER_ICON;
+const dashboardIconNewBlue = PLACEHOLDER_ICON;
+const dashboardIconNewWhite = PLACEHOLDER_ICON;
+const contactIconBlue = PLACEHOLDER_ICON;
+const contactIconWhite = PLACEHOLDER_ICON;
+const formationIconBlue = PLACEHOLDER_ICON;
+const formationIconWhite = PLACEHOLDER_ICON;
+const boutiqueIconBlue = PLACEHOLDER_ICON;
+const boutiqueIconWhite = PLACEHOLDER_ICON;
 
-/** Conception Playdago : 2 itérations = contenu des dossiers concept 1 & concept 2 (nombre de traits = nombre de fichiers par dossier). */
-const PLAYDAGO_CONCEPTION_CONCEPT_GROUPS: { src: string }[][] = [
-  playdagoGlobToSortedSlides(PLAYDAGO_CONCEPTION_CONCEPT_1_GLOB),
-  playdagoGlobToSortedSlides(PLAYDAGO_CONCEPTION_CONCEPT_2_GLOB),
+const auditCarouselBluePalto = PLACEHOLDER_MEDIA;
+const auditCarouselMacBookPaltoAuditSection = PLACEHOLDER_MEDIA;
+const auditCarouselHandheldIpadPaltoAuditSection = PLACEHOLDER_MEDIA;
+const auditCarouselCreationAtelierLancerDes = PLACEHOLDER_MEDIA;
+const auditCarouselCreationAtelierPersonnalisationDes = PLACEHOLDER_MEDIA;
+const auditCarouselCreationAtelierActionPopup = PLACEHOLDER_MEDIA;
+const paltoDsFrame1048 = PLACEHOLDER_MEDIA;
+const paltoDsFrame1050 = PLACEHOLDER_MEDIA;
+const paltoDsFrame1051 = PLACEHOLDER_MEDIA;
+const paltoCardSwapDashboard = PLACEHOLDER_MEDIA;
+const paltoCardSwapPersonnalisationDes = PLACEHOLDER_MEDIA;
+const paltoCardSwapDistributionCartes = PLACEHOLDER_MEDIA;
+const paltoLightModeMaine = PLACEHOLDER_MEDIA;
+const paltoLightModeSinglePage = PLACEHOLDER_MEDIA;
+const paltoLightModeSetp1 = PLACEHOLDER_MEDIA;
+
+const CONCEPTION_PLACEHOLDER_SLIDES: { src: string }[] = Array.from({ length: 6 }, () => ({
+  src: PLACEHOLDER_MEDIA,
+}));
+
+/** Conception Palto : slides placeholder (anciennes images dossiers concept 1 & 2 retirées). */
+const GO_CONCEPTION_CONCEPT_GROUPS: { src: string }[][] = [
+  CONCEPTION_PLACEHOLDER_SLIDES,
+  CONCEPTION_PLACEHOLDER_SLIDES.map((s) => ({ ...s })),
 ];
 
-/** Card Swap (React Bits) : Dashboard, personnalisation du dé, distribution des cartes */
-const PLAYDAGO_CARD_SWAP_SLIDE_SRCS: string[] = [
-  playdagoCardSwapDashboard,
-  playdagoCardSwapPersonnalisationDes,
-  playdagoCardSwapDistributionCartes,
+const GO_CARD_SWAP_SLIDE_SRCS: string[] = [
+  paltoCardSwapDashboard,
+  paltoCardSwapPersonnalisationDes,
+  paltoCardSwapDistributionCartes,
 ];
 
-/** Base URL pour les assets (public/) – respecte base en prod si défini) */
-const assetBase = (import.meta.env.BASE_URL || '/').replace(/\/$/, '') + '/';
-
-/** Slide 2 Audit par défaut (Pedaboard, Kaldera, etc.) */
-const AUDIT_CAROUSEL_SLIDE_2_DEFAULT_SRC = `${assetBase}single-project/f6437219-c377-476d-820c-a6d2a5f9fabd.png`;
-
-/** Slide 3 du carrousel Audit (Pedaboard, Kaldera — Playdago : creation atelier) */
-const AUDIT_CAROUSEL_SLIDE_3_DEFAULT = {
-  src: `${assetBase}single-project/f6a7cf16-6dd5-4dee-9cb5-9231547be2f4.png`,
-  alt: 'Audit – veille UX/UI 3',
-} as const;
-
-/** Première slide Audit par défaut (ex. Pedaboard, Kaldera) — ne pas confondre avec Playdago */
-const AUDIT_CAROUSEL_FIRST_DEFAULT = {
-  src: `${assetBase}single-project/16399a4e-f4ad-465b-beb3-98b56cc27f6b.png`,
-  alt: 'Audit – veille UX/UI 1',
-} as const;
-
-/** Carrousel Audit : slides 2–3 Playdago surchargées (défauts = assets « creation atelier ») */
+/** Carrousel Audit Go : 4 slides (slides 2–3 paramétrables pour #audit vs autres usages). */
 function buildAuditCarouselImages(
-  title: string,
-  playdagoSecondSlideSrc: string = auditCarouselCreationAtelierLancerDes,
-  playdagoThirdSlideSrc: string = auditCarouselCreationAtelierPersonnalisationDes
+  paltoSecondSlideSrc: string = auditCarouselCreationAtelierLancerDes,
+  paltoThirdSlideSrc: string = auditCarouselCreationAtelierPersonnalisationDes
 ): Array<{ src: string; alt: string }> {
-  const first =
-    title === 'Playdago'
-      ? { src: auditCarouselBluePlaydago, alt: 'Audit – veille UX/UI 1' }
-      : { src: AUDIT_CAROUSEL_FIRST_DEFAULT.src, alt: AUDIT_CAROUSEL_FIRST_DEFAULT.alt };
-  const second =
-    title === 'Playdago'
-      ? { src: playdagoSecondSlideSrc, alt: 'Audit – veille UX/UI 2' }
-      : { src: AUDIT_CAROUSEL_SLIDE_2_DEFAULT_SRC, alt: 'Audit – veille UX/UI 2' };
-  const third =
-    title === 'Playdago'
-      ? { src: playdagoThirdSlideSrc, alt: 'Audit – veille UX/UI 3' }
-      : { src: AUDIT_CAROUSEL_SLIDE_3_DEFAULT.src, alt: AUDIT_CAROUSEL_SLIDE_3_DEFAULT.alt };
-  const fourth =
-    title === 'Playdago'
-      ? { src: auditCarouselCreationAtelierActionPopup, alt: 'Audit – veille UX/UI 4' }
-      : null;
-  return fourth ? [first, second, third, fourth] : [first, second, third];
+  return [
+    { src: auditCarouselBluePalto, alt: 'Audit – veille UX/UI 1' },
+    { src: paltoSecondSlideSrc, alt: 'Audit – veille UX/UI 2' },
+    { src: paltoThirdSlideSrc, alt: 'Audit – veille UX/UI 3' },
+    { src: auditCarouselCreationAtelierActionPopup, alt: 'Audit – veille UX/UI 4' },
+  ];
 }
 
 /** Icône graduation minimaliste (axe + traits) — avant le libellé « Concept n » */
-function PlaydagoConceptionGraduationIcon() {
+function PaltoConceptionGraduationIcon() {
   return (
     <svg
-      className="playdago-conception-grad-icon"
+      className="palto-conception-grad-icon"
       viewBox="0 0 20 20"
       fill="none"
       xmlns="http://www.w3.org/2000/svg"
@@ -216,6 +259,10 @@ interface SingleProjectProps {
   /** Lift + scroll contenu (px) — ex. masquer le bouton fermer sur la cover */
   onProjectScrollCombinedChange?: (combinedPx: number) => void;
   coverFullscreenActive?: boolean;
+  onOpenClientAccountAuth?: (mode: 'login' | 'signup') => void;
+  onNavigateHome?: () => void;
+  /** Passager : vue « chauffeur sur place » (bandeau sous la topbar). */
+  onOpenClientLiveMeet?: () => void;
 }
 
 const SingleProjectNew: FC<SingleProjectProps> = ({
@@ -227,17 +274,993 @@ const SingleProjectNew: FC<SingleProjectProps> = ({
   onLiftProgressChange,
   onProjectScrollCombinedChange,
   coverFullscreenActive = false,
+  onOpenClientAccountAuth,
+  onNavigateHome,
+  onOpenClientLiveMeet,
 }) => {
   const { t, language } = useLanguage();
   const isEn = language === 'en';
+  const isGoProjectPage = projectData.title.trim().toLowerCase() === 'go';
+  const { clientUpcomingRide, clientLiveMeetActive } = useClientHomeTopbarRides(language);
+  const [paltoRideDestination, setPaltoRideDestination] = useState('');
+  const [paltoPickupLocation, setPaltoPickupLocation] = useState('');
+  const [paltoPickupTiming, setPaltoPickupTiming] = useState<'now' | 'later'>('now');
+  const [paltoPickupDateTime, setPaltoPickupDateTime] = useState('');
+  const [paltoRideSelectedDriverId, setPaltoRideSelectedDriverId] = useState<string | null>(null);
+  const [paltoRecapPickupText, setPaltoRecapPickupText] = useState('25/04/2026 19:41:00');
+  const [paltoRecapCoordsText, setPaltoRecapCoordsText] = useState('-20.8989, 55.4677');
+  const [paltoRecapDurationText, setPaltoRecapDurationText] = useState('~31 min');
+  const [paltoRecapTrafficDurationText, setPaltoRecapTrafficDurationText] = useState('~38 min');
+  const mapboxToken =
+    (import.meta.env.VITE_OPENSTREET_ACCESS_TOKEN as string | undefined)?.trim() || 'osm';
+  /** Point de départ après validation (Entrée / Rechercher) + géocodage réussi. */
+  const [pickupResolvedPoint, setPickupResolvedPoint] = useState<GeoPoint | null>(null);
+  const [lastConfirmedPickupText, setLastConfirmedPickupText] = useState<string | null>(null);
+  const [pickupGeocodeLoading, setPickupGeocodeLoading] = useState(false);
+  const [pickupGeocodeError, setPickupGeocodeError] = useState<string | null>(null);
+  const [pickupSuggestionOpen, setPickupSuggestionOpen] = useState(false);
+  const [pickupAddressSuggestions, setPickupAddressSuggestions] = useState<GeocodeSuggestion[]>([]);
+  const [pickupSuggestionLoading, setPickupSuggestionLoading] = useState(false);
+  const effectiveRideOrigin = pickupResolvedPoint ?? DEFAULT_USER_ORIGIN;
+  const pickupAutocompleteTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [chauffeurRideSettings, setChauffeurRideSettings] = useState(() => loadChauffeurRideSettingsSnapshot());
+  useEffect(() => {
+    const onStorage = (event: StorageEvent) => {
+      if (event.key !== CHAUFFEUR_RIDE_SETTINGS_KEY) return;
+      setChauffeurRideSettings(loadChauffeurRideSettingsSnapshot());
+    };
+    window.addEventListener('storage', onStorage);
+    return () => window.removeEventListener('storage', onStorage);
+  }, []);
+  const effectiveBaseFareEur = useMemo(() => {
+    const parsed = Number.parseFloat(chauffeurRideSettings.baseFareEur.replace(',', '.'));
+    return Number.isFinite(parsed) && parsed > 0 ? parsed : DEFAULT_BASE_FARE_EUR;
+  }, [chauffeurRideSettings.baseFareEur]);
+  const effectivePricePerKmEur = useMemo(() => {
+    const parsed = Number.parseFloat(chauffeurRideSettings.pricePerKmEur.replace(',', '.'));
+    return Number.isFinite(parsed) && parsed > 0 ? parsed : DEFAULT_PRICE_PER_KM_EUR;
+  }, [chauffeurRideSettings.pricePerKmEur]);
+  const effectiveNightSurchargeRate = useMemo(() => {
+    const parsed = Number.parseFloat(chauffeurRideSettings.nightSurchargePercent.replace(',', '.'));
+    return Number.isFinite(parsed) && parsed > 0 ? parsed / 100 : 0;
+  }, [chauffeurRideSettings.nightSurchargePercent]);
+  const effectiveDriverSearchRadiusKm = useMemo(() => {
+    const parsed = Number.parseFloat(chauffeurRideSettings.maxPickupKm.replace(',', '.'));
+    return Number.isFinite(parsed) && parsed > 0 ? parsed : PICKUP_DRIVER_SEARCH_RADIUS_KM;
+  }, [chauffeurRideSettings.maxPickupKm]);
+  const effectiveDriverPricingMultiplier = useMemo(() => {
+    const value = chauffeurRideSettings.pricingMultiplierPercent;
+    return Number.isFinite(value) && value > 0 ? value / 100 : 1;
+  }, [chauffeurRideSettings.pricingMultiplierPercent]);
+  const isNightRide = useMemo(() => {
+    let hour = new Date().getHours();
+    if (paltoPickupTiming === 'later' && paltoPickupDateTime.trim()) {
+      const dt = new Date(paltoPickupDateTime);
+      if (!Number.isNaN(dt.getTime())) hour = dt.getHours();
+    }
+    return hour >= 20 || hour < 6;
+  }, [paltoPickupTiming, paltoPickupDateTime]);
+  const allNearbyDrivers = useMemo(
+    () =>
+      getNearbyDriversMock({
+        origin: effectiveRideOrigin,
+        radiusKm: effectiveDriverSearchRadiusKm,
+      }),
+    [effectiveRideOrigin, effectiveDriverSearchRadiusKm]
+  );
+
+  const pickupFilteredDrivers = useMemo(() => {
+    if (!pickupResolvedPoint) return [];
+    // Garde-fou: même en mock, on force strictement le rayon.
+    return allNearbyDrivers.filter(
+      (d) =>
+        haversineDistanceKm(pickupResolvedPoint, { latitude: d.latitude, longitude: d.longitude }) <=
+        effectiveDriverSearchRadiusKm
+    );
+  }, [pickupResolvedPoint, allNearbyDrivers, effectiveDriverSearchRadiusKm]);
+
+  const pickupFlyToTarget = pickupResolvedPoint
+    ? {
+        longitude: pickupResolvedPoint.longitude,
+        latitude: pickupResolvedPoint.latitude,
+        zoom: 15.5,
+      }
+    : null;
+  const [paltoMapSelectedDestination, setPaltoMapSelectedDestination] = useState<{
+    longitude: number
+    latitude: number
+  } | null>(null);
+  const [paltoMapRouteFeature, setPaltoMapRouteFeature] = useState<Feature<LineString> | null>(null);
+  const [paltoRouteDistanceKm, setPaltoRouteDistanceKm] = useState<number | null>(null);
+  const [paltoRouteDeniveleEstimateM, setPaltoRouteDeniveleEstimateM] = useState<number | null>(null);
+  /** Après un « Rechercher » réussi : départ + destination géocodés → affichage des chauffeurs. */
+  const [chauffeursSearchOk, setChauffeursSearchOk] = useState(false);
+  const [lastConfirmedDestinationText, setLastConfirmedDestinationText] = useState<string | null>(null);
+  const [destinationSearchError, setDestinationSearchError] = useState<string | null>(null);
+  const [destinationSuggestionOpen, setDestinationSuggestionOpen] = useState(false);
+  const [destinationAddressSuggestions, setDestinationAddressSuggestions] = useState<GeocodeSuggestion[]>([]);
+  const [destinationSuggestionLoading, setDestinationSuggestionLoading] = useState(false);
+  const [destinationSnapLoading, setDestinationSnapLoading] = useState(false);
+  const destinationAutocompleteTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const showDriversColumn =
+    paltoPickupTiming === 'now' &&
+    chauffeursSearchOk &&
+    pickupResolvedPoint !== null &&
+    paltoMapSelectedDestination !== null;
+  const paltoSelectedDriver = useMemo(
+    () => pickupFilteredDrivers.find((d) => d.id === paltoRideSelectedDriverId) ?? null,
+    [pickupFilteredDrivers, paltoRideSelectedDriverId]
+  );
+  const computeDriverPriceTtc = useCallback(
+    (driver: { moto: string; price: string }) => {
+      const driverCoef = driver.moto.toLowerCase().includes('maxi')
+        ? 1.12
+        : driver.moto.toLowerCase().includes('scooter')
+          ? 1.05
+          : 1.0;
+      const numericPrice = Number.parseFloat(driver.price.replace(',', '.').replace(/[^\d.]/g, ''));
+      const fallbackTtc = Number.isFinite(numericPrice) ? numericPrice : 0;
+
+      const routeKm = paltoRouteDistanceKm ?? null;
+      const deniveleM = paltoRouteDeniveleEstimateM ?? 0;
+      const dynamicTtcRaw =
+        routeKm !== null
+          ? (effectiveBaseFareEur + routeKm * effectivePricePerKmEur + deniveleM * 0.015) *
+            driverCoef *
+            effectiveDriverPricingMultiplier *
+            (1 + (isNightRide ? effectiveNightSurchargeRate : 0))
+          : null;
+      const totalTtc = dynamicTtcRaw !== null ? Math.max(6, dynamicTtcRaw) : fallbackTtc;
+      return Number.isFinite(totalTtc) && totalTtc > 0 ? totalTtc : null;
+    },
+    [
+      paltoRouteDistanceKm,
+      paltoRouteDeniveleEstimateM,
+      effectiveBaseFareEur,
+      effectivePricePerKmEur,
+      effectiveDriverPricingMultiplier,
+      effectiveNightSurchargeRate,
+      isNightRide,
+    ]
+  );
+  const paltoPricing = useMemo(() => {
+    if (!paltoSelectedDriver) return null;
+    const totalTtc = computeDriverPriceTtc(paltoSelectedDriver);
+    if (!Number.isFinite(totalTtc) || totalTtc <= 0) return null;
+    const tvaRate = 0.2;
+    const totalHt = totalTtc / (1 + tvaRate);
+    const totalTva = totalTtc - totalHt;
+    return {
+      ht: totalHt.toFixed(2),
+      tva: totalTva.toFixed(2),
+      ttc: totalTtc.toFixed(2),
+    };
+  }, [paltoSelectedDriver, computeDriverPriceTtc]);
+
+  useEffect(() => {
+    if (!isGoProjectPage) return;
+    const prefill = consumeGoPrefill();
+    if (!prefill) return;
+    if (prefill.pickup.trim()) {
+      setPaltoPickupLocation(prefill.pickup.trim());
+    }
+    if (prefill.destination.trim()) {
+      setPaltoRideDestination(prefill.destination.trim());
+    }
+    if (prefill.timing === 'now' || prefill.timing === 'later') {
+      setPaltoPickupTiming(prefill.timing);
+    }
+    if (prefill.datetime?.trim()) {
+      setPaltoPickupDateTime(prefill.datetime.trim());
+    }
+  }, [isGoProjectPage]);
+
+  const submitPickupLocationSearch = useCallback(async (queryOverride?: string) => {
+    const raw = queryOverride ?? paltoPickupLocation;
+    const qPrep = raw.trim();
+    if (!qPrep) {
+      setPickupGeocodeError('Indiquez une adresse de départ.');
+      setPickupResolvedPoint(null);
+      setLastConfirmedPickupText(null);
+      return;
+    }
+    setPickupGeocodeLoading(true);
+    setPickupGeocodeError(null);
+    try {
+      const res = await geocodePickupForRide(raw, mapboxToken, language);
+      if (!res.ok) {
+        setPickupResolvedPoint(null);
+        setLastConfirmedPickupText(null);
+        setPickupGeocodeError(res.error);
+        return;
+      }
+      if (queryOverride) {
+        setPaltoPickupLocation(res.queryUsed);
+      }
+      setPickupResolvedPoint(res.snapped);
+      setLastConfirmedPickupText(res.queryUsed);
+      setPaltoRideSelectedDriverId(null);
+      setPickupSuggestionOpen(false);
+      setChauffeursSearchOk(false);
+    } catch {
+      setPickupResolvedPoint(null);
+      setLastConfirmedPickupText(null);
+      setPickupGeocodeError('Erreur réseau. Réessayez.');
+    } finally {
+      setPickupGeocodeLoading(false);
+    }
+  }, [paltoPickupLocation, mapboxToken, language]);
+
+  const submitRideSearch = useCallback(async () => {
+    const dq = paltoRideDestination.trim();
+    if (!dq) {
+      setDestinationSearchError('Indiquez une destination.');
+      return;
+    }
+    if (paltoPickupTiming === 'later') {
+      if (!paltoPickupDateTime.trim()) {
+        setPickupGeocodeError('Indiquez la date et l heure de prise en charge.');
+        return;
+      }
+      const dtp = new Date(paltoPickupDateTime);
+      if (Number.isNaN(dtp.getTime())) {
+        setPickupGeocodeError('Date ou heure de prise en charge invalide.');
+        return;
+      }
+    }
+    setPickupGeocodeLoading(true);
+    setPickupGeocodeError(null);
+    setDestinationSearchError(null);
+    setChauffeursSearchOk(false);
+    setPickupSuggestionOpen(false);
+    setDestinationSuggestionOpen(false);
+    setIsRecapPopupOpen(false);
+    try {
+      const pickupRes = await geocodePickupForRide(paltoPickupLocation, mapboxToken, language);
+      if (!pickupRes.ok) {
+        setPickupResolvedPoint(null);
+        setLastConfirmedPickupText(null);
+        setPickupGeocodeError(pickupRes.error);
+        setPaltoMapSelectedDestination(null);
+        setLastConfirmedDestinationText(null);
+        return;
+      }
+      setPaltoPickupLocation(pickupRes.queryUsed);
+      setPickupResolvedPoint(pickupRes.snapped);
+      setLastConfirmedPickupText(pickupRes.queryUsed);
+
+      const destRes = await geocodeDestinationForRide(paltoRideDestination, mapboxToken);
+      if (!destRes.ok) {
+        setPaltoMapSelectedDestination(null);
+        setLastConfirmedDestinationText(null);
+        setDestinationSearchError(destRes.error);
+        setPaltoRideSelectedDriverId(null);
+        return;
+      }
+      setPaltoMapSelectedDestination(destRes.snapped);
+      setPaltoRecapCoordsText(
+        `${destRes.snapped.latitude.toFixed(4)}, ${destRes.snapped.longitude.toFixed(4)}`
+      );
+      setLastConfirmedDestinationText(destRes.queryUsed);
+      setChauffeursSearchOk(true);
+      setPaltoRideSelectedDriverId(null);
+    } catch {
+      setPickupGeocodeError('Erreur réseau. Réessayez.');
+      setChauffeursSearchOk(false);
+    } finally {
+      setPickupGeocodeLoading(false);
+    }
+  }, [
+    paltoPickupLocation,
+    paltoRideDestination,
+    mapboxToken,
+    language,
+    paltoPickupTiming,
+    paltoPickupDateTime,
+  ]);
+
+  const onPickupLocationInputChange = useCallback(
+    (value: string) => {
+      setPaltoPickupLocation(value);
+      const trimmed = value.trim();
+      if (trimmed.length === 0) {
+        setPickupResolvedPoint(null);
+        setLastConfirmedPickupText(null);
+        setPaltoRideSelectedDriverId(null);
+        setPickupGeocodeError(null);
+        setChauffeursSearchOk(false);
+        return;
+      }
+      if (lastConfirmedPickupText !== null && trimmed !== lastConfirmedPickupText) {
+        setPickupResolvedPoint(null);
+        setLastConfirmedPickupText(null);
+        setPaltoRideSelectedDriverId(null);
+        setPickupGeocodeError(null);
+        setChauffeursSearchOk(false);
+      }
+    },
+    [lastConfirmedPickupText]
+  );
+
+  const onDestinationInputChange = useCallback(
+    (value: string) => {
+      setPaltoRideDestination(value);
+      const trimmed = value.trim();
+      if (trimmed.length === 0) {
+        setPaltoMapSelectedDestination(null);
+        setLastConfirmedDestinationText(null);
+        setDestinationSearchError(null);
+        setChauffeursSearchOk(false);
+        setPaltoRideSelectedDriverId(null);
+        return;
+      }
+      if (lastConfirmedDestinationText !== null && trimmed !== lastConfirmedDestinationText) {
+        setPaltoMapSelectedDestination(null);
+        setLastConfirmedDestinationText(null);
+        setChauffeursSearchOk(false);
+        setDestinationSearchError(null);
+        setPaltoRideSelectedDriverId(null);
+      }
+    },
+    [lastConfirmedDestinationText]
+  );
+
+  const clearPickupLocationField = useCallback(() => {
+    setPaltoPickupLocation('');
+    setPickupResolvedPoint(null);
+    setLastConfirmedPickupText(null);
+    setPaltoRideSelectedDriverId(null);
+    setPickupGeocodeError(null);
+    setPickupSuggestionOpen(false);
+    setPickupAddressSuggestions([]);
+    setPickupGeocodeLoading(false);
+    setChauffeursSearchOk(false);
+    setPaltoMapSelectedDestination(null);
+    setLastConfirmedDestinationText(null);
+    setDestinationSearchError(null);
+    setDestinationSuggestionOpen(false);
+    setDestinationAddressSuggestions([]);
+    setDestinationSnapLoading(false);
+  }, []);
+
+  const clearDestinationField = useCallback(() => {
+    setPaltoRideDestination('');
+    setPaltoMapSelectedDestination(null);
+    setLastConfirmedDestinationText(null);
+    setDestinationSearchError(null);
+    setChauffeursSearchOk(false);
+    setPaltoRideSelectedDriverId(null);
+    setDestinationSuggestionOpen(false);
+    setDestinationAddressSuggestions([]);
+    setDestinationSnapLoading(false);
+  }, []);
+
+  const onPickupLocationKeyDown = useCallback(
+    (e: KeyboardEvent<HTMLInputElement>) => {
+      if (e.key !== 'Enter') return;
+      e.preventDefault();
+      setPickupSuggestionOpen(false);
+      void submitRideSearch();
+    },
+    [submitRideSearch]
+  );
+
+  const onDestinationKeyDown = useCallback(
+    (e: KeyboardEvent<HTMLInputElement>) => {
+      if (e.key !== 'Enter') return;
+      e.preventDefault();
+      setDestinationSuggestionOpen(false);
+      void submitRideSearch();
+    },
+    [submitRideSearch]
+  );
+
+  const applyPickupFromSuggestion = useCallback(
+    async (suggestion: GeocodeSuggestion) => {
+      setPaltoPickupLocation(suggestion.label);
+      setPickupSuggestionOpen(false);
+      setPickupGeocodeLoading(true);
+      setPickupGeocodeError(null);
+      try {
+        const snapped = await snapLngLatToMapboxDriving(mapboxToken, suggestion.longitude, suggestion.latitude, {
+          searchRadiusMeters: 75,
+        });
+        if (!snapped || !isLngLatInsideReunionIsland(snapped.longitude, snapped.latitude)) {
+          setPickupResolvedPoint(null);
+          setLastConfirmedPickupText(null);
+          setPickupGeocodeError('Point de départ hors zone ou non accessible par la route.');
+          return;
+        }
+        setPickupResolvedPoint(snapped);
+        setLastConfirmedPickupText(suggestion.label.trim());
+        setPaltoRideSelectedDriverId(null);
+        setChauffeursSearchOk(false);
+      } catch {
+        setPickupResolvedPoint(null);
+        setLastConfirmedPickupText(null);
+        setPickupGeocodeError('Erreur réseau. Réessayez.');
+      } finally {
+        setPickupGeocodeLoading(false);
+      }
+    },
+    [mapboxToken]
+  );
+
+  const applyDestinationFromSuggestion = useCallback(
+    async (suggestion: GeocodeSuggestion) => {
+      setPaltoRideDestination(suggestion.label);
+      setDestinationSuggestionOpen(false);
+      setDestinationSnapLoading(true);
+      setDestinationSearchError(null);
+      try {
+        const snapped = await snapLngLatToMapboxDriving(mapboxToken, suggestion.longitude, suggestion.latitude, {
+          searchRadiusMeters: 75,
+        });
+        if (!snapped || !isLngLatInsideReunionIsland(snapped.longitude, snapped.latitude)) {
+          setPaltoMapSelectedDestination(null);
+          setLastConfirmedDestinationText(null);
+          setDestinationSearchError('Destination hors zone ou non accessible par la route.');
+          return;
+        }
+        setPaltoMapSelectedDestination(snapped);
+        setPaltoRecapCoordsText(`${snapped.latitude.toFixed(4)}, ${snapped.longitude.toFixed(4)}`);
+        setLastConfirmedDestinationText(suggestion.label.trim());
+        setChauffeursSearchOk(false);
+        setPaltoRideSelectedDriverId(null);
+      } catch {
+        setPaltoMapSelectedDestination(null);
+        setLastConfirmedDestinationText(null);
+        setDestinationSearchError('Erreur réseau. Réessayez.');
+      } finally {
+        setDestinationSnapLoading(false);
+      }
+    },
+    [mapboxToken]
+  );
+
+  const requestBrowserPickupLocation = useCallback(() => {
+    if (!navigator.geolocation) {
+      setPickupGeocodeError('La géolocalisation n’est pas disponible sur cet appareil.');
+      return;
+    }
+    setPickupSuggestionOpen(false);
+    setPickupGeocodeLoading(true);
+    setPickupGeocodeError(null);
+
+    navigator.geolocation.getCurrentPosition(
+      async (position) => {
+        try {
+          const { longitude, latitude } = position.coords;
+          const snapped = await snapLngLatToMapboxDriving(mapboxToken, longitude, latitude, {
+            searchRadiusMeters: 75,
+          });
+          if (!snapped || !isLngLatInsideReunionIsland(snapped.longitude, snapped.latitude)) {
+            setPickupResolvedPoint(null);
+            setLastConfirmedPickupText(null);
+            setPickupGeocodeError('Position hors zone ou non accessible par la route.');
+            return;
+          }
+          const label =
+            (await geocodeReverse(snapped.longitude, snapped.latitude, mapboxToken, { language: 'fr' })) ??
+            `${snapped.latitude.toFixed(5)}, ${snapped.longitude.toFixed(5)}`;
+          setPaltoPickupLocation(label);
+          setPickupResolvedPoint(snapped);
+          setLastConfirmedPickupText(label);
+          setPaltoRideSelectedDriverId(null);
+          setChauffeursSearchOk(false);
+        } catch {
+          setPickupResolvedPoint(null);
+          setLastConfirmedPickupText(null);
+          setPickupGeocodeError('Erreur réseau. Réessayez.');
+        } finally {
+          setPickupGeocodeLoading(false);
+        }
+      },
+      () => {
+        setPickupGeocodeLoading(false);
+        setPickupGeocodeError('Autorisation de localisation refusée.');
+      },
+      { enableHighAccuracy: true, timeout: 10000, maximumAge: 30000 }
+    );
+  }, [mapboxToken]);
+
+  const onPickupLocationFocus = useCallback(() => {
+    setPickupSuggestionOpen(true);
+  }, []);
+
+  const onPickupLocationBlur = useCallback((e: FocusEvent<HTMLInputElement>) => {
+    const next = e.relatedTarget as HTMLElement | null;
+    if (next?.dataset?.pickupSuggestion === 'true') return;
+    setPickupSuggestionOpen(false);
+  }, []);
+
+  const onDestinationFocus = useCallback(() => {
+    setDestinationSuggestionOpen(true);
+  }, []);
+
+  const onDestinationBlur = useCallback((e: FocusEvent<HTMLInputElement>) => {
+    const next = e.relatedTarget as HTMLElement | null;
+    if (next?.dataset?.destinationSuggestion === 'true') return;
+    setDestinationSuggestionOpen(false);
+  }, []);
+
+  const pickupStaticSuggestions = useMemo(() => {
+    const items: Array<{ id: string; label: string; action: () => void }> = [
+      {
+        id: 'saved-locations',
+        label: 'Lieux enregistrés',
+        action: () => {
+          const firstSaved = PICKUP_SAVED_LOCATIONS[0];
+          void submitPickupLocationSearch(firstSaved);
+        },
+      },
+      {
+        id: 'ask-geolocation',
+        label: 'Autorisez l’accès à ma localisation…',
+        action: () => {
+          requestBrowserPickupLocation();
+        },
+      },
+    ];
+    if (lastConfirmedPickupText && lastConfirmedPickupText.trim()) {
+      items.push({
+        id: 'last-location',
+        label: `Dernier lieu entré : ${lastConfirmedPickupText}`,
+        action: () => {
+          void submitPickupLocationSearch(lastConfirmedPickupText);
+        },
+      });
+    } else {
+      items.push({
+        id: 'last-location-empty',
+        label: 'Dernier lieu entré : aucun',
+        action: () => {},
+      });
+    }
+    return items;
+  }, [lastConfirmedPickupText, requestBrowserPickupLocation, submitPickupLocationSearch]);
+
+  const applyDestinationFromQueryString = useCallback(
+    async (query: string) => {
+      setDestinationSnapLoading(true);
+      setDestinationSearchError(null);
+      try {
+        const res = await geocodeDestinationForRide(query, mapboxToken);
+        if (!res.ok) {
+          onDestinationInputChange(query.trim());
+          setDestinationSearchError(res.error);
+          return;
+        }
+        setPaltoRideDestination(res.queryUsed);
+        setPaltoMapSelectedDestination(res.snapped);
+        setPaltoRecapCoordsText(`${res.snapped.latitude.toFixed(4)}, ${res.snapped.longitude.toFixed(4)}`);
+        setLastConfirmedDestinationText(res.queryUsed);
+        setChauffeursSearchOk(false);
+        setPaltoRideSelectedDriverId(null);
+      } catch {
+        onDestinationInputChange(query.trim());
+        setDestinationSearchError('Erreur réseau. Réessayez.');
+      } finally {
+        setDestinationSnapLoading(false);
+        setDestinationSuggestionOpen(false);
+      }
+    },
+    [mapboxToken, onDestinationInputChange]
+  );
+
+  const destinationStaticSuggestions = useMemo(() => {
+    const items: Array<{ id: string; label: string; action: () => void }> = [
+      {
+        id: 'dest-saved-locations',
+        label: 'Lieux enregistrés',
+        action: () => {
+          void applyDestinationFromQueryString(DESTINATION_SAVED_LOCATIONS[0]);
+        },
+      },
+    ];
+    if (lastConfirmedDestinationText && lastConfirmedDestinationText.trim()) {
+      items.push({
+        id: 'dest-last',
+        label: `Dernière destination entrée : ${lastConfirmedDestinationText}`,
+        action: () => {
+          void applyDestinationFromQueryString(lastConfirmedDestinationText);
+        },
+      });
+    } else {
+      items.push({
+        id: 'dest-last-empty',
+        label: 'Dernière destination entrée : aucune',
+        action: () => {},
+      });
+    }
+    return items;
+  }, [lastConfirmedDestinationText, applyDestinationFromQueryString]);
+
+  const nowForDateTimeLocal = useCallback(() => {
+    const now = new Date();
+    const tzOffsetMs = now.getTimezoneOffset() * 60000;
+    return new Date(now.getTime() - tzOffsetMs).toISOString().slice(0, 16);
+  }, []);
+
+  useEffect(() => {
+    if (paltoPickupTiming === 'later') return;
+    const now = new Date();
+    setPaltoRecapPickupText(
+      now.toLocaleString('fr-FR', {
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit',
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit',
+      })
+    );
+  }, [paltoPickupTiming]);
+
+  useEffect(() => {
+    if (paltoPickupTiming !== 'later' || !paltoPickupDateTime) return;
+    const dt = new Date(paltoPickupDateTime);
+    if (Number.isNaN(dt.getTime())) return;
+    setPaltoRecapPickupText(
+      dt.toLocaleString('fr-FR', {
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit',
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit',
+      })
+    );
+  }, [paltoPickupTiming, paltoPickupDateTime]);
+
+  useEffect(() => {
+    if (pickupAutocompleteTimerRef.current) {
+      clearTimeout(pickupAutocompleteTimerRef.current);
+      pickupAutocompleteTimerRef.current = null;
+    }
+    if (!pickupSuggestionOpen) return;
+    const q = paltoPickupLocation.trim();
+    if (!mapboxToken || q.length < 3) {
+      setPickupAddressSuggestions([]);
+      setPickupSuggestionLoading(false);
+      return;
+    }
+    pickupAutocompleteTimerRef.current = setTimeout(async () => {
+      pickupAutocompleteTimerRef.current = null;
+      setPickupSuggestionLoading(true);
+      try {
+        const suggestions = await geocodeForwardSuggestions(q, mapboxToken, {
+          language: 'fr',
+          proximity: [55.45, -21.15],
+          bbox: REUNION_ISLAND_BBOX_GEOCODE,
+          limit: 5,
+        });
+        setPickupAddressSuggestions(suggestions);
+      } catch {
+        setPickupAddressSuggestions([]);
+      } finally {
+        setPickupSuggestionLoading(false);
+      }
+    }, PICKUP_AUTOCOMPLETE_DEBOUNCE_MS);
+
+    return () => {
+      if (pickupAutocompleteTimerRef.current) {
+        clearTimeout(pickupAutocompleteTimerRef.current);
+        pickupAutocompleteTimerRef.current = null;
+      }
+    };
+  }, [pickupSuggestionOpen, paltoPickupLocation, mapboxToken]);
+
+  useEffect(() => {
+    if (destinationAutocompleteTimerRef.current) {
+      clearTimeout(destinationAutocompleteTimerRef.current);
+      destinationAutocompleteTimerRef.current = null;
+    }
+    if (!destinationSuggestionOpen) return;
+    const q = paltoRideDestination.trim();
+    if (!mapboxToken || q.length < 3) {
+      setDestinationAddressSuggestions([]);
+      setDestinationSuggestionLoading(false);
+      return;
+    }
+    destinationAutocompleteTimerRef.current = setTimeout(async () => {
+      destinationAutocompleteTimerRef.current = null;
+      setDestinationSuggestionLoading(true);
+      try {
+        const suggestions = await geocodeForwardSuggestions(q, mapboxToken, {
+          language: 'fr',
+          proximity: [55.45, -21.15],
+          bbox: REUNION_ISLAND_BBOX_GEOCODE,
+          limit: 5,
+        });
+        setDestinationAddressSuggestions(suggestions);
+      } catch {
+        setDestinationAddressSuggestions([]);
+      } finally {
+        setDestinationSuggestionLoading(false);
+      }
+    }, PICKUP_AUTOCOMPLETE_DEBOUNCE_MS);
+
+    return () => {
+      if (destinationAutocompleteTimerRef.current) {
+        clearTimeout(destinationAutocompleteTimerRef.current);
+        destinationAutocompleteTimerRef.current = null;
+      }
+    };
+  }, [destinationSuggestionOpen, paltoRideDestination, mapboxToken]);
+
+  useEffect(() => {
+    if (!mapboxToken || !paltoMapSelectedDestination) {
+      setPaltoMapRouteFeature(null);
+      setPaltoRouteDistanceKm(null);
+      setPaltoRouteDeniveleEstimateM(null);
+      return;
+    }
+    let cancelled = false;
+    (async () => {
+      try {
+        const feature = await fetchDrivingRouteFeature(mapboxToken, effectiveRideOrigin, paltoMapSelectedDestination);
+        if (cancelled) return;
+        setPaltoMapRouteFeature(feature);
+        const durationSeconds =
+          feature &&
+          feature.properties &&
+          typeof (feature.properties as { durationSeconds?: unknown }).durationSeconds === 'number'
+            ? ((feature.properties as { durationSeconds: number }).durationSeconds)
+            : null;
+        const durationTrafficSeconds =
+          feature &&
+          feature.properties &&
+          typeof (feature.properties as { durationTrafficSeconds?: unknown }).durationTrafficSeconds === 'number'
+            ? ((feature.properties as { durationTrafficSeconds: number }).durationTrafficSeconds)
+            : null;
+        setPaltoRecapDurationText(
+          durationSeconds && Number.isFinite(durationSeconds)
+            ? `~${Math.max(1, Math.round(durationSeconds / 60))} min`
+            : ''
+        );
+        setPaltoRecapTrafficDurationText(
+          durationTrafficSeconds && Number.isFinite(durationTrafficSeconds)
+            ? `~${Math.max(1, Math.round(durationTrafficSeconds / 60))} min`
+            : ''
+        );
+        const distanceMeters =
+          feature &&
+          feature.properties &&
+          typeof (feature.properties as { distanceMeters?: unknown }).distanceMeters === 'number'
+            ? ((feature.properties as { distanceMeters: number }).distanceMeters)
+            : null;
+        const routeDistanceKm = distanceMeters && Number.isFinite(distanceMeters) ? distanceMeters / 1000 : null;
+        setPaltoRouteDistanceKm(routeDistanceKm);
+        if (routeDistanceKm) {
+          const directKm = haversineDistanceKm(effectiveRideOrigin, paltoMapSelectedDestination);
+          const deniveleEstimateM = Math.max(0, Math.round((routeDistanceKm - directKm) * 180));
+          setPaltoRouteDeniveleEstimateM(deniveleEstimateM);
+        } else {
+          setPaltoRouteDeniveleEstimateM(null);
+        }
+      } catch {
+        if (cancelled) return;
+        setPaltoMapRouteFeature(null);
+        setPaltoRouteDistanceKm(null);
+        setPaltoRouteDeniveleEstimateM(null);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [mapboxToken, paltoMapSelectedDestination, effectiveRideOrigin]);
+
+  const handlePaltoMainMapPick = useCallback(async (longitude: number, latitude: number) => {
+    if (!mapboxToken) return;
+    if (!isLngLatInsideReunionIsland(longitude, latitude)) return;
+    try {
+      const snapped = await snapLngLatToMapboxDriving(mapboxToken, longitude, latitude, { searchRadiusMeters: 75 });
+      if (!snapped) return;
+      const placeName =
+        (await geocodeReverse(snapped.longitude, snapped.latitude, mapboxToken, { language: 'fr' })) ??
+        `${snapped.latitude.toFixed(4)}, ${snapped.longitude.toFixed(4)}`;
+      const shouldPickPickupFirst = pickupResolvedPoint === null || !lastConfirmedPickupText?.trim();
+      if (shouldPickPickupFirst) {
+        // Premier clic carte: définir le point de départ utilisateur.
+        setPaltoPickupLocation(placeName);
+        setPickupResolvedPoint(snapped);
+        setLastConfirmedPickupText(placeName.trim());
+        setPickupGeocodeError(null);
+        // Un clic de départ invalide l'itinéraire en cours: le prochain clic servira pour la destination.
+        setPaltoMapSelectedDestination(null);
+        setPaltoRideDestination('');
+        setLastConfirmedDestinationText(null);
+        setDestinationSearchError(null);
+        setChauffeursSearchOk(false);
+        setPaltoRideSelectedDriverId(null);
+      } else {
+        setPaltoMapSelectedDestination(snapped);
+        setPaltoRecapCoordsText(`${snapped.latitude.toFixed(4)}, ${snapped.longitude.toFixed(4)}`);
+        setPaltoRideDestination(placeName);
+        setLastConfirmedDestinationText(placeName.trim());
+      }
+      const now = new Date();
+      setPaltoRecapPickupText(
+        now.toLocaleString('fr-FR', {
+          year: 'numeric',
+          month: '2-digit',
+          day: '2-digit',
+          hour: '2-digit',
+          minute: '2-digit',
+          second: '2-digit',
+        })
+      );
+    } catch {
+      // ignore network/snap errors
+    }
+  }, [mapboxToken, pickupResolvedPoint, lastConfirmedPickupText]);
   const [isClosing, setIsClosing] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
+  const [isDesktopViewport, setIsDesktopViewport] = useState(
+    typeof window !== 'undefined' ? window.matchMedia('(min-width: 769px)').matches : false
+  );
+  const [isRecapPopupOpen, setIsRecapPopupOpen] = useState(false);
+  const [isCheckoutPopupOpen, setIsCheckoutPopupOpen] = useState(false);
+  const [checkoutCustomerName, setCheckoutCustomerName] = useState('');
+  const [checkoutCustomerEmail, setCheckoutCustomerEmail] = useState('');
+  const [checkoutClientComment, setCheckoutClientComment] = useState('');
+  const [checkoutError, setCheckoutError] = useState<string | null>(null);
+  const [checkoutSuccessMessage, setCheckoutSuccessMessage] = useState<string | null>(null);
+  const [checkoutSubmitting, setCheckoutSubmitting] = useState(false);
+  const closeRecapPopup = useCallback(() => {
+    setIsRecapPopupOpen(false);
+  }, []);
+  const closeCheckoutPopup = useCallback(() => {
+    setIsCheckoutPopupOpen(false);
+    setCheckoutError(null);
+  }, []);
+  const handleRecapModalConfirmOrder = useCallback(() => {
+    if (paltoPickupTiming === 'now' && !paltoSelectedDriver) {
+      return;
+    }
+    if (paltoPickupTiming === 'later' && !paltoPickupDateTime.trim()) {
+      return;
+    }
+    trackEvent('click', 'go_ride', `${projectData.title}:recap_commande_course`);
+    setCheckoutError(null);
+    setCheckoutSuccessMessage(null);
+    closeRecapPopup();
+    setIsCheckoutPopupOpen(true);
+  }, [
+    closeRecapPopup,
+    projectData.title,
+    paltoPickupTiming,
+    paltoSelectedDriver,
+    paltoPickupDateTime,
+  ]);
+  const handleCheckoutConfirm = useCallback(async () => {
+    if (paltoPickupTiming === 'now' && !paltoSelectedDriver) {
+      setCheckoutError('Veuillez selectionner un chauffeur pour une course immediate.');
+      return;
+    }
+    if (paltoPickupTiming === 'later' && !paltoPickupDateTime.trim()) {
+      setCheckoutError('Veuillez indiquer la date et l heure de prise en charge.');
+      return;
+    }
+    const email = checkoutCustomerEmail.trim();
+    const emailIsValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+    if (!emailIsValid) {
+      setCheckoutError('Veuillez saisir un email valide pour le suivi de la commande.');
+      return;
+    }
+    if (!lastConfirmedPickupText?.trim() || !lastConfirmedDestinationText?.trim()) {
+      setCheckoutError('Depart ou destination manquant. Relancez une recherche.');
+      return;
+    }
+
+    const pad = (n: number) => String(n).padStart(2, '0');
+    const nowParts = () => {
+      const d = new Date();
+      return {
+        scheduledDate: `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`,
+        scheduledTime: `${pad(d.getHours())}:${pad(d.getMinutes())}:00`,
+      };
+    };
+    const laterParts = () => {
+      const [datePart, timeRaw] = paltoPickupDateTime.split('T');
+      if (!datePart || !timeRaw || !/^\d{4}-\d{2}-\d{2}$/.test(datePart)) return null;
+      const timePart = timeRaw.length >= 5 ? `${timeRaw.slice(0, 5)}:00` : null;
+      if (!timePart) return null;
+      return { scheduledDate: datePart, scheduledTime: timePart };
+    };
+
+    const schedule =
+      paltoPickupTiming === 'later' ? laterParts() ?? nowParts() : nowParts();
+    const bookingKind = paltoPickupTiming === 'later' ? ('scheduled' as const) : ('instant' as const);
+    let amountEur = paltoPricing ? Number.parseFloat(paltoPricing.ttc) : NaN;
+    if (!Number.isFinite(amountEur) || amountEur <= 0) {
+      const km = paltoRouteDistanceKm;
+      if (km != null && Number.isFinite(km)) {
+        amountEur = Math.max(
+          6,
+          (effectiveBaseFareEur + km * effectivePricePerKmEur) *
+            effectiveDriverPricingMultiplier *
+            (1 + (isNightRide ? effectiveNightSurchargeRate : 0))
+        );
+      } else {
+        amountEur = 0;
+      }
+    }
+    if (!Number.isFinite(amountEur) || amountEur <= 0) {
+      setCheckoutError('Montant indisponible. Verifiez le trajet sur la carte.');
+      return;
+    }
+
+    const customerName = checkoutCustomerName.trim();
+    trackEvent(
+      'submit',
+      'go_checkout',
+      `${projectData.title}:${bookingKind}:${customerName ? 'named' : 'anonymous'}`
+    );
+    setCheckoutError(null);
+    setCheckoutSuccessMessage(null);
+    setCheckoutSubmitting(true);
+    try {
+      const result = await createRideOrder({
+        bookingKind,
+        scheduledDate: schedule.scheduledDate,
+        scheduledTime: schedule.scheduledTime,
+        pickupAddress: lastConfirmedPickupText.trim(),
+        dropoffAddress: lastConfirmedDestinationText.trim(),
+        amountEur,
+        distanceKm: paltoRouteDistanceKm,
+        clientFullName: customerName || null,
+        clientEmail: email,
+        clientComment: checkoutClientComment.trim() || null,
+        requestedDriverExternalKey:
+          bookingKind === 'instant' ? paltoSelectedDriver?.id ?? null : null,
+        pickupLng: pickupResolvedPoint?.longitude ?? null,
+        pickupLat: pickupResolvedPoint?.latitude ?? null,
+        dropoffLng: paltoMapSelectedDestination?.longitude ?? null,
+        dropoffLat: paltoMapSelectedDestination?.latitude ?? null,
+      });
+      const driverLabel =
+        bookingKind === 'instant' && paltoSelectedDriver
+          ? paltoSelectedDriver.name
+          : 'un chauffeur disponible';
+      setCheckoutSuccessMessage(
+        `Commande enregistree (${result.externalCode}). Chauffeur : ${driverLabel}. Suivi : ${email}.`
+      );
+    } catch (e) {
+      setCheckoutError(e instanceof Error ? e.message : 'Enregistrement impossible. Reessayez.');
+    } finally {
+      setCheckoutSubmitting(false);
+    }
+  }, [
+    checkoutCustomerEmail,
+    checkoutClientComment,
+    checkoutCustomerName,
+    lastConfirmedDestinationText,
+    lastConfirmedPickupText,
+    paltoMapSelectedDestination?.latitude,
+    paltoMapSelectedDestination?.longitude,
+    pickupResolvedPoint?.latitude,
+    pickupResolvedPoint?.longitude,
+    paltoPickupDateTime,
+    paltoPickupTiming,
+    paltoPricing,
+    paltoRouteDistanceKm,
+    paltoSelectedDriver,
+    effectiveBaseFareEur,
+    effectivePricePerKmEur,
+    effectiveDriverPricingMultiplier,
+    effectiveNightSurchargeRate,
+    isNightRide,
+    projectData.title,
+  ]);
   const [showContactModal, setShowContactModal] = useState(false);
   /** Conception & Itération : indice du concept (graduations) et indice du visuel dans le carrousel vertical du concept actif */
-  const [playdagoConceptionConceptIndex, setPlaydagoConceptionConceptIndex] = useState(0);
-  const [playdagoConceptionSlideIndex, setPlaydagoConceptionSlideIndex] = useState(0);
+  const [paltoConceptionConceptIndex, setPaltoConceptionConceptIndex] = useState(0);
+  const [paltoConceptionSlideIndex, setPaltoConceptionSlideIndex] = useState(0);
   const LIFT_SCROLL_MAX = 200; // Pixels de "scroll" pour que le panneau touche le haut
   const [liftScroll, setLiftScroll] = useState(0); // 0 à LIFT_SCROLL_MAX : phase où seul le panneau monte
+  const showGoMobileMapFullTop = isGoProjectPage && !isDesktopViewport && liftScroll >= LIFT_SCROLL_MAX;
   const [contentScrollTop, setContentScrollTop] = useState(0); // scroll du contenu une fois le panneau en haut
   const pageRef = useRef<HTMLDivElement>(null);
   const barRef = useRef<HTMLDivElement>(null);
@@ -245,8 +1268,17 @@ const SingleProjectNew: FC<SingleProjectProps> = ({
   const userflowTreeContainerRef = useRef<HTMLDivElement>(null);
   const userflowTreeWrapperRef = useRef<HTMLDivElement>(null);
   /** Hauteur de la zone image centrale → contraint graduations + carrousel vertical (scroll interne) */
-  const playdagoConceptionStageInnerRef = useRef<HTMLDivElement>(null);
-  const [playdagoConceptionSideMaxPx, setPlaydagoConceptionSideMaxPx] = useState<number | null>(null);
+  const paltoConceptionStageInnerRef = useRef<HTMLDivElement>(null);
+  const [paltoConceptionSideMaxPx, setPaltoConceptionSideMaxPx] = useState<number | null>(null);
+
+  useEffect(() => {
+    const onResize = () => {
+      setIsDesktopViewport(window.matchMedia('(min-width: 769px)').matches);
+    };
+    onResize();
+    window.addEventListener('resize', onResize);
+    return () => window.removeEventListener('resize', onResize);
+  }, []);
 
   const introText =
     isEn && projectData.translations?.en?.summary ? projectData.translations.en.summary : projectData.summary;
@@ -294,86 +1326,78 @@ const SingleProjectNew: FC<SingleProjectProps> = ({
     return uf ? userFlowToFlowData(uf) : null;
   }, [projectData.userFlow, projectData.translations, isEn]);
 
-  /** Carrousels Playdago hors section #audit (ex. Design system — slides 2–3 = creation atelier) */
-  const auditCarouselImages = useMemo(
-    () => buildAuditCarouselImages(projectData.title),
-    [projectData.title]
-  );
+  /** Carrousels Palto hors section #audit (ex. Design system — slides 2–3 = creation atelier) */
+  const auditCarouselImages = useMemo(() => buildAuditCarouselImages(), []);
 
   /** Section #audit uniquement : slide 2 MacBook, slide 3 iPad */
   const auditSectionCarouselImages = useMemo(
     () =>
       buildAuditCarouselImages(
-        projectData.title,
-        auditCarouselMacBookPlaydagoAuditSection,
-        auditCarouselHandheldIpadPlaydagoAuditSection
+        auditCarouselMacBookPaltoAuditSection,
+        auditCarouselHandheldIpadPaltoAuditSection
       ),
-    [projectData.title]
+    []
   );
 
-  /** Design system Playdago — Bento 6 tuiles (grille 4×3 type dashboard) */
-  const playdagoDsBentoItems = useMemo(() => {
-    const n = auditCarouselImages.length;
-    if (projectData.title !== 'Playdago' || !projectData.designSystem) {
+  /** Design system Palto — Bento 6 tuiles (grille 4×3 type dashboard) */
+  const paltoDsBentoItems = useMemo(() => {
+    if (!projectData.designSystem) {
+      const n = auditCarouselImages.length;
       return auditCarouselImages.map((img, index) => ({
         src: img.src,
         alt: t(`project.auditAlt${index + 1}`),
         label: `${index + 1} / ${n}`,
       }));
     }
-    const frameAlt = (id: string) => `Playdago — Design system (${id})`;
+    const frameAlt = (id: string) => `Go — Design system (${id})`;
     return [
       {
-        src: playdagoDsFrame1050,
+        src: paltoDsFrame1050,
         alt: frameAlt('Frame 1050'),
       },
       {
-        src: playdagoDsFrame1051,
+        src: paltoDsFrame1051,
         alt: frameAlt('Frame 1051'),
       },
       {
         content: (
-          <PlaydagoTypescaleTable
+          <PaltoTypescaleTable
             projectData={projectData}
             t={t}
-            typographyHeadingId="playdago-bento-typescale"
+            typographyHeadingId="palto-bento-typescale"
           />
         ),
       },
       {
-        content: <PlaydagoPaletteTable projectData={projectData} isEn={isEn} t={t} />,
+        content: <PaltoPaletteTable projectData={projectData} isEn={isEn} t={t} />,
       },
       {
-        src: playdagoDsFrame1048,
+        src: paltoDsFrame1048,
         alt: frameAlt('Frame 1048'),
       },
       {
-        src: playdagoCardSwapDashboard,
+        src: paltoCardSwapDashboard,
         alt: frameAlt('Dashboard'),
         hideMediaFrame: true,
       },
     ];
   }, [projectData, isEn, t, auditCarouselImages]);
 
-  /** Groupes d’images par concept (Conception Playdago uniquement ; autres projets : repli 1 concept / 1 image) */
-  const playdagoConceptionConceptGroups = useMemo(() => {
-    if (projectData.title === 'Playdago') return PLAYDAGO_CONCEPTION_CONCEPT_GROUPS;
-    return [[{ src: AUDIT_CAROUSEL_FIRST_DEFAULT.src }]];
-  }, [projectData.title]);
+  /** Groupes d’images par concept (Conception Palto uniquement ; autres projets : repli 1 concept / 1 image) */
+  const paltoConceptionConceptGroups = useMemo(() => GO_CONCEPTION_CONCEPT_GROUPS, []);
 
   const conceptionSafeConceptIdx =
-    playdagoConceptionConceptGroups.length === 0
+    paltoConceptionConceptGroups.length === 0
       ? 0
       : Math.min(
-          Math.max(0, playdagoConceptionConceptIndex),
-          playdagoConceptionConceptGroups.length - 1
+          Math.max(0, paltoConceptionConceptIndex),
+          paltoConceptionConceptGroups.length - 1
         );
 
-  const playdagoConceptionCurrentSlides = playdagoConceptionConceptGroups[conceptionSafeConceptIdx] ?? [];
+  const paltoConceptionCurrentSlides = paltoConceptionConceptGroups[conceptionSafeConceptIdx] ?? [];
 
-  /** Conception & Itération (Playdago) : H3 + corps — priorité aux champs conception*, repli sur le doublon design system */
-  const playdagoConceptionPivotH3 = useMemo(() => {
-    if (projectData.title !== 'Playdago') return undefined;
+  /** Conception & Itération (Palto) : H3 + corps — priorité aux champs conception*, repli sur le doublon design system */
+  const paltoConceptionPivotH3 = useMemo(() => {
     return (
       (isEn && projectData.translations?.en?.conceptionDuplicatePivotH3
         ? projectData.translations.en.conceptionDuplicatePivotH3
@@ -384,8 +1408,7 @@ const SingleProjectNew: FC<SingleProjectProps> = ({
     );
   }, [projectData, isEn]);
 
-  const playdagoConceptionBody = useMemo(() => {
-    if (projectData.title !== 'Playdago') return '';
+  const paltoConceptionBody = useMemo(() => {
     return (
       (isEn && projectData.translations?.en?.conceptionDuplicateBody
         ? projectData.translations.en.conceptionDuplicateBody
@@ -397,34 +1420,34 @@ const SingleProjectNew: FC<SingleProjectProps> = ({
   }, [projectData, isEn]);
 
   const conceptionSafeSlideIdx =
-    playdagoConceptionCurrentSlides.length === 0
+    paltoConceptionCurrentSlides.length === 0
       ? 0
       : Math.min(
-          Math.max(0, playdagoConceptionSlideIndex),
-          playdagoConceptionCurrentSlides.length - 1
+          Math.max(0, paltoConceptionSlideIndex),
+          paltoConceptionCurrentSlides.length - 1
         );
 
   useEffect(() => {
-    setPlaydagoConceptionConceptIndex((i) =>
-      Math.min(i, Math.max(0, playdagoConceptionConceptGroups.length - 1))
+    setPaltoConceptionConceptIndex((i) =>
+      Math.min(i, Math.max(0, paltoConceptionConceptGroups.length - 1))
     );
-  }, [playdagoConceptionConceptGroups.length]);
+  }, [paltoConceptionConceptGroups.length]);
 
   useEffect(() => {
-    setPlaydagoConceptionSlideIndex((i) =>
-      Math.min(i, Math.max(0, playdagoConceptionCurrentSlides.length - 1))
+    setPaltoConceptionSlideIndex((i) =>
+      Math.min(i, Math.max(0, paltoConceptionCurrentSlides.length - 1))
     );
-  }, [conceptionSafeConceptIdx, playdagoConceptionCurrentSlides.length]);
+  }, [conceptionSafeConceptIdx, paltoConceptionCurrentSlides.length]);
 
   useEffect(() => {
-    const el = playdagoConceptionStageInnerRef.current;
+    const el = paltoConceptionStageInnerRef.current;
     if (!el) {
-      setPlaydagoConceptionSideMaxPx(null);
+      setPaltoConceptionSideMaxPx(null);
       return;
     }
     const apply = () => {
       const h = el.getBoundingClientRect().height;
-      if (h > 0) setPlaydagoConceptionSideMaxPx(Math.round(h));
+      if (h > 0) setPaltoConceptionSideMaxPx(Math.round(h));
     };
     apply();
     const ro = new ResizeObserver(apply);
@@ -434,7 +1457,7 @@ const SingleProjectNew: FC<SingleProjectProps> = ({
     projectData.title,
     conceptionSafeConceptIdx,
     conceptionSafeSlideIdx,
-    playdagoConceptionCurrentSlides.length,
+    paltoConceptionCurrentSlides.length,
   ]);
 
   const handleUserflowNodeClick = useCallback(
@@ -547,6 +1570,7 @@ const SingleProjectNew: FC<SingleProjectProps> = ({
 
   // Motion values pour le swipe down
   const y = useMotionValue(0);
+  const [panelOffsetY, setPanelOffsetY] = useState(0);
   
   // Mémoriser la hauteur de l'écran pour éviter les recalculs
   const screenHeight = useMemo(() => {
@@ -556,9 +1580,13 @@ const SingleProjectNew: FC<SingleProjectProps> = ({
   // Position top : uniquement pilotée par liftScroll (pas par le scroll du contenu)
   const initialTop = useMemo(() => screenHeight * 0.48 + 100, [screenHeight]);
   const topPosition = useMemo(() => {
+    if (isDesktopViewport) return 0;
     const progress = Math.min(liftScroll / LIFT_SCROLL_MAX, 1);
     return initialTop * (1 - progress);
-  }, [liftScroll, initialTop]);
+  }, [liftScroll, initialTop, isDesktopViewport]);
+  const maxSwipeDown = useMemo(() => {
+    return Math.max(0, screenHeight - SWIPE_BOTTOM_VISIBLE_MARGIN - topPosition);
+  }, [screenHeight, topPosition]);
 
   // Notifier le parent pour assombrir la cover (0 = pas assombri, 1 = panneau en haut)
   useEffect(() => {
@@ -574,6 +1602,7 @@ const SingleProjectNew: FC<SingleProjectProps> = ({
   liftScrollRef.current = liftScroll;
 
   useEffect(() => {
+    if (isDesktopViewport) return;
     const el = pageRef.current;
     if (!el) return;
 
@@ -651,7 +1680,7 @@ const SingleProjectNew: FC<SingleProjectProps> = ({
       el.removeEventListener('touchstart', handleTouchStart);
       el.removeEventListener('touchmove', handleTouchMove);
     };
-  }, []);
+  }, [isDesktopViewport]);
 
   // Suivre le scroll du contenu (pour FAB et autres) une fois le panneau en haut
   useEffect(() => {
@@ -675,12 +1704,58 @@ const SingleProjectNew: FC<SingleProjectProps> = ({
 
   // Remonter en haut de la page et réinitialiser la phase de montée à chaque changement de projet (prev/next)
   useEffect(() => {
-    setLiftScroll(0);
+    setLiftScroll(isDesktopViewport ? LIFT_SCROLL_MAX : 0);
     setContentScrollTop(0);
+    setPanelOffsetY(0);
+    y.set(0);
     onLiftProgressChange?.(0);
     const el = pageRef.current;
     if (el) el.scrollTo(0, 0);
-  }, [projectData.id, onLiftProgressChange]);
+  }, [projectData.id, onLiftProgressChange, y, isDesktopViewport]);
+
+  useEffect(() => {
+    if (!isGoProjectPage) return;
+    const onCoverMapUpdate = (evt: Event) => {
+      const customEvt = evt as CustomEvent<{
+        destinationText?: string;
+        coordsText?: string;
+        durationText?: string;
+        trafficDurationText?: string;
+      }>;
+      const detail = customEvt.detail;
+      if (!detail) return;
+
+      if (detail.destinationText && detail.destinationText.trim()) {
+        setPaltoRideDestination(detail.destinationText);
+      }
+      if (detail.coordsText && detail.coordsText.trim()) {
+        setPaltoRecapCoordsText(detail.coordsText);
+      }
+      if (detail.durationText && detail.durationText.trim()) {
+        setPaltoRecapDurationText(detail.durationText);
+      }
+      if (detail.trafficDurationText && detail.trafficDurationText.trim()) {
+        setPaltoRecapTrafficDurationText(detail.trafficDurationText);
+      }
+
+      const now = new Date();
+      setPaltoRecapPickupText(
+        now.toLocaleString('fr-FR', {
+          year: 'numeric',
+          month: '2-digit',
+          day: '2-digit',
+          hour: '2-digit',
+          minute: '2-digit',
+          second: '2-digit',
+        })
+      );
+    };
+
+    window.addEventListener('palto:cover-map-update', onCoverMapUpdate as EventListener);
+    return () => {
+      window.removeEventListener('palto:cover-map-update', onCoverMapUpdate as EventListener);
+    };
+  }, [isGoProjectPage]);
 
   // JSON-LD CreativeWork pour que les IA et crawlers (avec JS) puissent lire le contenu du projet
   useEffect(() => {
@@ -693,7 +1768,7 @@ const SingleProjectNew: FC<SingleProjectProps> = ({
       '@type': 'CreativeWork',
       name: projectData.title,
       description: projectData.summary,
-      author: { '@type': 'Person', name: 'Anthony Merault', jobTitle: 'Product Designer | Building Complex SaaS & Design Systems' },
+      author: { '@type': 'Organization', name: 'Palto' },
       datePublished: projectData.year || undefined,
       url: projectData.projectUrl || urlFr,
       mainEntityOfPage: [{ '@id': urlFr }, { '@id': urlEn }],
@@ -714,11 +1789,12 @@ const SingleProjectNew: FC<SingleProjectProps> = ({
 
   // Vérifier si on peut swiper (on peut toujours swiper depuis la barre)
   const canSwipe = useCallback(() => {
+    if (isDesktopViewport) return false;
     const target = pageRef.current;
     if (!target) return false;
     // Permettre le swipe même si on a scrollé un peu
     return true;
-  }, []);
+  }, [isDesktopViewport]);
 
   // Gestion du drag avec logique exacte comme React Native (comportement Facebook)
   // Comme useAnimatedGestureHandler avec ctx.startY et event.translationY
@@ -784,11 +1860,12 @@ const SingleProjectNew: FC<SingleProjectProps> = ({
       // Calculer la prochaine position Y (comme ctx.startY + event.translationY dans l'exemple RN)
       const nextY = startYValue + translationY;
       
-      // Empêcher de monter au-dessus de 0 (comme Math.max(0, nextY) dans l'exemple RN)
-      const newY = Math.max(0, nextY);
+      // Limiter le drag entre 0 (haut) et maxSwipeDown (bas avec marge visible)
+      const newY = Math.min(maxSwipeDown, Math.max(0, nextY));
       y.set(newY);
       if (onSwipeYChange) {
-        onSwipeYChange(newY);
+        // Garde la cover fixe: ne pas translater l'image de couverture pendant le drag.
+        onSwipeYChange(0);
       }
     };
 
@@ -822,11 +1899,12 @@ const SingleProjectNew: FC<SingleProjectProps> = ({
       // Calculer la prochaine position Y (comme ctx.startY + event.translationY dans l'exemple RN)
       const nextY = startYValue + translationY;
       
-      // Empêcher de monter au-dessus de 0 (comme Math.max(0, nextY) dans l'exemple RN)
-      const newY = Math.max(0, nextY);
+      // Limiter le drag entre 0 (haut) et maxSwipeDown (bas avec marge visible)
+      const newY = Math.min(maxSwipeDown, Math.max(0, nextY));
       y.set(newY);
       if (onSwipeYChange) {
-        onSwipeYChange(newY);
+        // Garde la cover fixe: ne pas translater l'image de couverture pendant le drag.
+        onSwipeYChange(0);
       }
     };
 
@@ -839,20 +1917,13 @@ const SingleProjectNew: FC<SingleProjectProps> = ({
       setStartY(null);
       setStartYValue(0);
       
-      // onEnd : décider de fermer ou revenir (comme dans l'exemple RN)
-      if (currentY > CLOSE_THRESHOLD) {
-        // Fermer avec animation (comme withSpring(SCREEN_HEIGHT))
-        y.set(screenHeight);
-        setIsClosing(true);
-        setTimeout(() => {
-          onBackClick();
-        }, 400);
-      } else {
-        // Revenir à 0 avec animation (comme withSpring(0))
-        y.set(0);
-        if (onSwipeYChange) {
-          onSwipeYChange(0);
-        }
+      // On ne ferme jamais la page avec le swipe vers le bas:
+      // on conserve la position pour pouvoir redescendre/remonter librement.
+      const clamped = Math.min(maxSwipeDown, Math.max(0, currentY));
+      y.set(clamped);
+      setPanelOffsetY(clamped);
+      if (onSwipeYChange) {
+        onSwipeYChange(0);
       }
     };
 
@@ -867,7 +1938,7 @@ const SingleProjectNew: FC<SingleProjectProps> = ({
       window.removeEventListener('touchmove', handleTouchMove);
       window.removeEventListener('touchend', handleEnd);
     };
-  }, [isDragging, startY, startYValue, initialScrollTop, y, screenHeight, onSwipeYChange, onBackClick]);
+  }, [isDragging, startY, startYValue, initialScrollTop, y, onSwipeYChange, maxSwipeDown]);
 
   // Notifier le parent des changements de y directement dans les handlers
 
@@ -886,7 +1957,7 @@ const SingleProjectNew: FC<SingleProjectProps> = ({
             ? undefined
             : (isClosing || coverFullscreenActive)
               ? { y: screenHeight }
-              : { y: 0 }
+              : { y: panelOffsetY }
         }
         transition={coverFullscreenActive
           ? { duration: 0.4, ease: [0.25, 0.1, 0.25, 1] }
@@ -904,13 +1975,697 @@ const SingleProjectNew: FC<SingleProjectProps> = ({
           style={{ 
             cursor: isDragging ? 'grabbing' : 'grab',
           }}
-          onMouseDown={handleBarMouseDown}
+            onMouseDown={handleBarMouseDown}
           onTouchStart={handleBarTouchStart}
         >
           <div className="swipe-indicator-handle"></div>
         </div>
         
         <div className="main-single-project">
+        {isGoProjectPage ? (
+        <>
+        <div className="dashboard-container dashboard-container--home-accueil single-project-go-topbar-wrap">
+          <div className="dashboard-main single-project-go-topbar-wrap__main">
+            <DashboardHomeTopbar
+              onOpenClientAccountAuth={onOpenClientAccountAuth}
+              onNavigateHome={onNavigateHome}
+            />
+            <DashboardHomeRidesBanner
+              clientUpcomingRide={clientUpcomingRide}
+              clientLiveMeetActive={clientLiveMeetActive}
+              onOpenClientLiveMeet={onOpenClientLiveMeet}
+              analyticsSuffix="go"
+            />
+          </div>
+        </div>
+        <div className="palto-ride-main">
+          {showGoMobileMapFullTop ? (
+            <section className="palto-main-top-map-card" aria-label="Carte en haut du main">
+              <div className="palto-main-top-map-shell">
+                <HomeMapboxBackground
+                  variant="embedded"
+                  userOrigin={pickupResolvedPoint}
+                  flyToTarget={pickupFlyToTarget}
+                  selectedDestination={paltoMapSelectedDestination}
+                  routeFeature={paltoMapRouteFeature}
+                  nearbyDrivers={chauffeursSearchOk ? pickupFilteredDrivers : []}
+                  onMapDestinationPick={handlePaltoMainMapPick}
+                />
+              </div>
+            </section>
+          ) : null}
+          <div className={`palto-ride-layout${showDriversColumn ? '' : ' palto-ride-layout--no-drivers'}`}>
+          <div className="palto-ride-column palto-ride-column--booking">
+          <section className="palto-ride-card">
+            <h2 className="palto-ride-card__title">Commandez une course</h2>
+            <p className="palto-ride-card__lead">Indiquez votre départ et votre arrivée sur La Réunion.</p>
+            <label className="palto-ride-field">
+              <span className="palto-ride-field__label">Localisation (départ)</span>
+              <div className="palto-ride-input-row">
+                <input
+                  type="text"
+                  className="palto-ride-input palto-ride-input--with-clear"
+                  value={paltoPickupLocation}
+                  placeholder="Indiquez votre depart"
+                  onChange={(e) => onPickupLocationInputChange(e.target.value)}
+                  onKeyDown={onPickupLocationKeyDown}
+                  onFocus={onPickupLocationFocus}
+                  onBlur={onPickupLocationBlur}
+                  aria-busy={pickupGeocodeLoading}
+                />
+                {paltoPickupLocation.trim().length > 0 ? (
+                  <button
+                    type="button"
+                    className="palto-ride-input-clear"
+                    aria-label="Effacer la localisation"
+                    onMouseDown={(e) => e.preventDefault()}
+                    onClick={clearPickupLocationField}
+                  >
+                    ×
+                  </button>
+                ) : null}
+                {pickupSuggestionOpen ? (
+                  <div className="palto-pickup-suggestions" role="listbox" aria-label="Suggestions localisation">
+                    {paltoPickupLocation.trim().length >= 3 ? (
+                      <>
+                        <p className="palto-pickup-suggestions__title">Suggestions d’adresse</p>
+                        {pickupSuggestionLoading ? (
+                          <p className="palto-pickup-suggestions__hint">Recherche en cours…</p>
+                        ) : pickupAddressSuggestions.length > 0 ? (
+                          <div className="palto-pickup-suggestions__list">
+                            {pickupAddressSuggestions.map((s) => (
+                              <button
+                                key={`${s.longitude}-${s.latitude}-${s.label}`}
+                                type="button"
+                                className="palto-pickup-suggestions__item"
+                                data-pickup-suggestion="true"
+                                onMouseDown={(e) => e.preventDefault()}
+                                onClick={() => {
+                                  void applyPickupFromSuggestion(s);
+                                }}
+                              >
+                                {s.label}
+                              </button>
+                            ))}
+                          </div>
+                        ) : (
+                          <p className="palto-pickup-suggestions__hint">Aucune adresse trouvée.</p>
+                        )}
+                      </>
+                    ) : (
+                      <>
+                        <p className="palto-pickup-suggestions__title">Pré-sélection</p>
+                        <div className="palto-pickup-suggestions__list">
+                          {pickupStaticSuggestions.map((item) => (
+                            <button
+                              key={item.id}
+                              type="button"
+                              className="palto-pickup-suggestions__item"
+                              data-pickup-suggestion="true"
+                              onMouseDown={(e) => e.preventDefault()}
+                              onClick={item.action}
+                            >
+                              {item.label}
+                            </button>
+                          ))}
+                        </div>
+                      </>
+                    )}
+                  </div>
+                ) : null}
+              </div>
+              {pickupGeocodeError ? (
+                <p className="palto-ride-field-error" role="alert">
+                  {pickupGeocodeError}
+                </p>
+              ) : null}
+              {pickupGeocodeLoading ? (
+                <p className="palto-ride-field-hint" aria-live="polite">
+                  Vérification du départ, de la destination et des chauffeurs…
+                </p>
+              ) : null}
+            </label>
+            <label className="palto-ride-field">
+              <span className="palto-ride-field__label">Destination</span>
+              <div className="palto-ride-input-row">
+                <input
+                  type="text"
+                  className="palto-ride-input palto-ride-input--with-clear"
+                  placeholder={t('search.destinationPlaceholder')}
+                  value={paltoRideDestination}
+                  onChange={(e) => onDestinationInputChange(e.target.value)}
+                  onKeyDown={onDestinationKeyDown}
+                  onFocus={onDestinationFocus}
+                  onBlur={onDestinationBlur}
+                  aria-busy={destinationSuggestionLoading || destinationSnapLoading}
+                />
+                {paltoRideDestination.trim().length > 0 ? (
+                  <button
+                    type="button"
+                    className="palto-ride-input-clear"
+                    aria-label="Effacer la destination"
+                    onMouseDown={(e) => e.preventDefault()}
+                    onClick={clearDestinationField}
+                  >
+                    ×
+                  </button>
+                ) : null}
+                {destinationSuggestionOpen ? (
+                  <div className="palto-pickup-suggestions" role="listbox" aria-label="Suggestions destination">
+                    {paltoRideDestination.trim().length >= 3 ? (
+                      <>
+                        <p className="palto-pickup-suggestions__title">Suggestions d’adresse</p>
+                        {destinationSuggestionLoading ? (
+                          <p className="palto-pickup-suggestions__hint">Recherche en cours…</p>
+                        ) : destinationAddressSuggestions.length > 0 ? (
+                          <div className="palto-pickup-suggestions__list">
+                            {destinationAddressSuggestions.map((s) => (
+                              <button
+                                key={`dest-${s.longitude}-${s.latitude}-${s.label}`}
+                                type="button"
+                                className="palto-pickup-suggestions__item"
+                                data-destination-suggestion="true"
+                                onMouseDown={(e) => e.preventDefault()}
+                                onClick={() => {
+                                  void applyDestinationFromSuggestion(s);
+                                }}
+                              >
+                                {s.label}
+                              </button>
+                            ))}
+                          </div>
+                        ) : (
+                          <p className="palto-pickup-suggestions__hint">Aucune adresse trouvée.</p>
+                        )}
+                      </>
+                    ) : (
+                      <>
+                        <p className="palto-pickup-suggestions__title">Pré-sélection</p>
+                        <div className="palto-pickup-suggestions__list">
+                          {destinationStaticSuggestions.map((item) => (
+                            <button
+                              key={item.id}
+                              type="button"
+                              className="palto-pickup-suggestions__item"
+                              data-destination-suggestion="true"
+                              onMouseDown={(e) => e.preventDefault()}
+                              onClick={item.action}
+                            >
+                              {item.label}
+                            </button>
+                          ))}
+                        </div>
+                      </>
+                    )}
+                  </div>
+                ) : null}
+              </div>
+              {destinationSnapLoading ? (
+                <p className="palto-ride-field-hint" aria-live="polite">
+                  Mise à jour de la destination sur la carte…
+                </p>
+              ) : null}
+              {destinationSearchError ? (
+                <p className="palto-ride-field-error" role="alert">
+                  {destinationSearchError}
+                </p>
+              ) : null}
+            </label>
+            {!pickupGeocodeLoading &&
+            !pickupGeocodeError &&
+            !destinationSearchError &&
+            !chauffeursSearchOk &&
+            (paltoPickupLocation.trim().length > 0 || paltoRideDestination.trim().length > 0) ? (
+              <p className="palto-ride-field-hint">
+                Renseignez la localisation et la destination, puis validez avec Entrée ou Rechercher pour afficher les
+                chauffeurs.
+              </p>
+            ) : null}
+            <div className="palto-ride-field">
+              <span className="palto-ride-field__label">Heure de prise en charge</span>
+              <div className="palto-ride-timing-toggle" role="radiogroup" aria-label="Heure de prise en charge">
+                <button
+                  type="button"
+                  className={
+                    'palto-ride-timing-choice' +
+                    (paltoPickupTiming === 'now' ? ' palto-ride-timing-choice--active' : '')
+                  }
+                  role="radio"
+                  aria-checked={paltoPickupTiming === 'now'}
+                  onClick={() => setPaltoPickupTiming('now')}
+                >
+                  Maintenant
+                </button>
+                <button
+                  type="button"
+                  className={
+                    'palto-ride-timing-choice' +
+                    (paltoPickupTiming === 'later' ? ' palto-ride-timing-choice--active' : '')
+                  }
+                  role="radio"
+                  aria-checked={paltoPickupTiming === 'later'}
+                  onClick={() => setPaltoPickupTiming('later')}
+                >
+                  Plus tard
+                </button>
+              </div>
+              {paltoPickupTiming === 'later' ? (
+                <div className="palto-ride-datetime-local-wrap">
+                  <input
+                    type="datetime-local"
+                    className="palto-ride-input palto-ride-input--datetime-local"
+                    min={nowForDateTimeLocal()}
+                    value={paltoPickupDateTime}
+                    onChange={(e) => setPaltoPickupDateTime(e.target.value)}
+                  />
+                </div>
+              ) : null}
+            </div>
+            <Button
+              variant="primary"
+              type="button"
+              className="palto-ride-search-btn"
+              onClick={() => void submitRideSearch()}
+              disabled={pickupGeocodeLoading}
+            >
+              {pickupGeocodeLoading ? 'Recherche…' : 'Rechercher'}
+            </Button>
+          </section>
+          </div>
+
+          {showDriversColumn ? (
+          <div className="palto-ride-column palto-ride-column--drivers">
+          <section className="palto-ride-card palto-ride-card--drivers">
+            <h2 className="palto-ride-card__title">Choisissez une course</h2>
+            <p className="palto-ride-card__lead">
+              Chauffeurs disponibles dans un rayon de {effectiveDriverSearchRadiusKm} km autour de votre départ.
+            </p>
+            <div className="palto-ride-drivers-list">
+              {pickupFilteredDrivers.length === 0 ? (
+                <p className="palto-ride-drivers-empty">
+                  Aucun chauffeur dans ce rayon. Essayez une autre adresse de départ.
+                </p>
+              ) : (
+                pickupFilteredDrivers.map((driver) => {
+                  const kmFromPickup =
+                    pickupResolvedPoint !== null
+                      ? haversineDistanceKm(pickupResolvedPoint, {
+                          latitude: driver.latitude,
+                          longitude: driver.longitude,
+                        })
+                      : 0;
+                  const minEst = Math.max(1, Math.round((kmFromPickup / 22) * 60));
+                  const serviceBadges = [
+                    chauffeurRideSettings.petFriendly ? 'Animaux' : null,
+                    chauffeurRideSettings.luggageAssistance ? 'Bagages' : null,
+                    chauffeurRideSettings.insulatedBag ? 'Sac isotherme' : null,
+                  ].filter((v): v is string => Boolean(v));
+                  const meta = `${kmFromPickup.toFixed(1).replace('.', ',')} km · ~${minEst} min${
+                    serviceBadges.length > 0 ? ` · ${serviceBadges.join(' · ')}` : ''
+                  }`;
+                  const dynamicDriverTtc = computeDriverPriceTtc(driver);
+                  return (
+                    <button
+                      key={driver.id}
+                      type="button"
+                      className={
+                        'palto-ride-driver-item' +
+                        (paltoRideSelectedDriverId === driver.id ? ' palto-ride-driver-item--selected' : '')
+                      }
+                      onClick={() => {
+                        setPaltoRideSelectedDriverId(driver.id);
+                        if (isDesktopViewport) setIsRecapPopupOpen(true);
+                      }}
+                    >
+                      <span className="palto-ride-driver-item__left">
+                        <span className="palto-ride-driver-item__name">{driver.name}</span>
+                        <span className="palto-ride-driver-item__meta">
+                          {driver.moto} · {meta}
+                        </span>
+                      </span>
+                      <span className="palto-ride-driver-item__price">
+                        {dynamicDriverTtc !== null ? `${dynamicDriverTtc.toFixed(2)} EUR` : driver.price}
+                      </span>
+                    </button>
+                  );
+                })
+              )}
+            </div>
+          </section>
+          </div>
+          ) : chauffeursSearchOk && paltoPickupTiming === 'later' ? (
+            <div className="palto-ride-column palto-ride-column--drivers">
+              <section className="palto-ride-card palto-ride-card--drivers">
+                <h2 className="palto-ride-card__title">Reservation programmee</h2>
+                <p className="palto-ride-card__lead">
+                  Pas de choix de chauffeur : les chauffeurs disponibles pourront accepter la course jusqu a la date
+                  prevue.
+                </p>
+              </section>
+            </div>
+          ) : null}
+
+          <div className="palto-ride-column palto-ride-column--map">
+          {isDesktopViewport ? (
+            <section className="palto-ride-card palto-ride-card--map-live">
+              <div className="palto-ride-map-shell">
+                <HomeMapboxBackground
+                  variant="embedded"
+                  userOrigin={pickupResolvedPoint}
+                  flyToTarget={pickupFlyToTarget}
+                  selectedDestination={paltoMapSelectedDestination}
+                  routeFeature={paltoMapRouteFeature}
+                  nearbyDrivers={chauffeursSearchOk ? pickupFilteredDrivers : []}
+                  onMapDestinationPick={handlePaltoMainMapPick}
+                />
+              </div>
+            </section>
+          ) : (
+            <section className="palto-ride-card palto-ride-card--map">
+              <h2 className="palto-ride-card__title">Recap commande</h2>
+              <div className="palto-ride-recap">
+                <div className="palto-ride-recap__section">
+                  <p className="palto-ride-recap-row">
+                    <span>Prise en charge</span>
+                    <strong>{paltoRecapPickupText}</strong>
+                  </p>
+                  <p className="palto-ride-recap__coords">{paltoRecapCoordsText}</p>
+                  <p className="palto-ride-recap-row">
+                    <span>Temps estime du trajet</span>
+                    <strong>{paltoRecapDurationText}</strong>
+                  </p>
+                  <p className="palto-ride-recap-row">
+                    <span>Temps en voiture a cause des bouchons</span>
+                    <strong>{paltoRecapTrafficDurationText}</strong>
+                  </p>
+                  {paltoRouteDistanceKm ? (
+                    <p className="palto-ride-recap-row">
+                      <span>Distance estimee</span>
+                      <strong>{paltoRouteDistanceKm.toFixed(2)} km</strong>
+                    </p>
+                  ) : null}
+                  {paltoRouteDeniveleEstimateM !== null ? (
+                    <p className="palto-ride-recap-row">
+                      <span>Denivele estime</span>
+                      <strong>+{paltoRouteDeniveleEstimateM} m</strong>
+                    </p>
+                  ) : null}
+                </div>
+                <hr className="palto-ride-recap-separator" />
+                <div className="palto-ride-recap__section">
+                  <p className="palto-ride-recap-row">
+                    <span>Chauffeur selectionne</span>
+                    <strong>
+                      {paltoPickupTiming === 'later'
+                        ? 'A confirmer par un chauffeur'
+                        : paltoSelectedDriver
+                          ? paltoSelectedDriver.name
+                          : 'Aucun'}
+                    </strong>
+                  </p>
+                  <p className="palto-ride-recap-row">
+                    <span>Vehicule</span>
+                    <strong>
+                      {paltoPickupTiming === 'later'
+                        ? '—'
+                        : paltoSelectedDriver
+                          ? paltoSelectedDriver.moto
+                          : '-'}
+                    </strong>
+                  </p>
+                </div>
+                <hr className="palto-ride-recap-separator" />
+                <div className="palto-ride-recap__section">
+                  {paltoPricing ? (
+                    <>
+                      <p className="palto-ride-recap-price-row">
+                        <span>Montant HT:</span>
+                        <strong>{paltoPricing.ht} EUR</strong>
+                      </p>
+                      <p className="palto-ride-recap-price-row">
+                        <span>TVA (20%):</span>
+                        <strong>{paltoPricing.tva} EUR</strong>
+                      </p>
+                      <p className="palto-ride-recap-price-row palto-ride-recap-price-row--total">
+                        <span>Total TTC:</span>
+                        <strong>{paltoPricing.ttc} EUR</strong>
+                      </p>
+                    </>
+                  ) : paltoRouteDistanceKm != null ? (
+                    <p className="palto-ride-recap-price-row palto-ride-recap-price-row--total">
+                      <span>Total estime TTC:</span>
+                      <strong>
+                        {Math.max(
+                          6,
+                          (effectiveBaseFareEur + paltoRouteDistanceKm * effectivePricePerKmEur) *
+                            effectiveDriverPricingMultiplier *
+                            (1 + (isNightRide ? effectiveNightSurchargeRate : 0))
+                        ).toFixed(2)}{' '}
+                        EUR
+                      </strong>
+                    </p>
+                  ) : null}
+                </div>
+              </div>
+            </section>
+          )}
+          </div>
+          </div>
+          {isDesktopViewport && isRecapPopupOpen ? (
+            <div className="palto-ride-recap-modal" role="dialog" aria-modal="true" aria-label="Recap commande">
+              <div className="palto-ride-recap-modal__backdrop" onClick={closeRecapPopup} />
+              <div className="palto-ride-recap-modal__content" onClick={(e) => e.stopPropagation()}>
+                <button
+                  type="button"
+                  className="palto-ride-recap-modal__close"
+                  onMouseDown={(e) => e.preventDefault()}
+                  onClick={closeRecapPopup}
+                  aria-label="Fermer"
+                >
+                  ×
+                </button>
+                <h2 className="palto-ride-card__title">Recap commande</h2>
+                <div className="palto-ride-recap">
+                  <div className="palto-ride-recap__section">
+                    <p className="palto-ride-recap-row">
+                      <span>Prise en charge</span>
+                      <strong>{paltoRecapPickupText}</strong>
+                    </p>
+                    <p className="palto-ride-recap__coords">{paltoRecapCoordsText}</p>
+                    <p className="palto-ride-recap-row">
+                      <span>Temps estime du trajet</span>
+                      <strong>{paltoRecapDurationText}</strong>
+                    </p>
+                    <p className="palto-ride-recap-row">
+                      <span>Temps en voiture a cause des bouchons</span>
+                      <strong>{paltoRecapTrafficDurationText}</strong>
+                    </p>
+                    {paltoRouteDistanceKm ? (
+                      <p className="palto-ride-recap-row">
+                        <span>Distance estimee</span>
+                        <strong>{paltoRouteDistanceKm.toFixed(2)} km</strong>
+                      </p>
+                    ) : null}
+                    {paltoRouteDeniveleEstimateM !== null ? (
+                      <p className="palto-ride-recap-row">
+                        <span>Denivele estime</span>
+                        <strong>+{paltoRouteDeniveleEstimateM} m</strong>
+                      </p>
+                    ) : null}
+                  </div>
+                  <hr className="palto-ride-recap-separator" />
+                  <div className="palto-ride-recap__section">
+                    <p className="palto-ride-recap-row">
+                      <span>Chauffeur selectionne</span>
+                      <strong>
+                        {paltoPickupTiming === 'later'
+                          ? 'A confirmer par un chauffeur'
+                          : paltoSelectedDriver
+                            ? paltoSelectedDriver.name
+                            : 'Aucun'}
+                      </strong>
+                    </p>
+                    <p className="palto-ride-recap-row">
+                      <span>Vehicule</span>
+                      <strong>
+                        {paltoPickupTiming === 'later'
+                          ? '—'
+                          : paltoSelectedDriver
+                            ? paltoSelectedDriver.moto
+                            : '-'}
+                      </strong>
+                    </p>
+                  </div>
+                  <hr className="palto-ride-recap-separator" />
+                  <div className="palto-ride-recap__section">
+                    {paltoPricing ? (
+                      <>
+                        <p className="palto-ride-recap-price-row">
+                          <span>Montant HT:</span>
+                          <strong>{paltoPricing.ht} EUR</strong>
+                        </p>
+                        <p className="palto-ride-recap-price-row">
+                          <span>TVA (20%):</span>
+                          <strong>{paltoPricing.tva} EUR</strong>
+                        </p>
+                        <p className="palto-ride-recap-price-row palto-ride-recap-price-row--total">
+                          <span>Total TTC:</span>
+                          <strong>{paltoPricing.ttc} EUR</strong>
+                        </p>
+                      </>
+                    ) : paltoRouteDistanceKm != null ? (
+                      <p className="palto-ride-recap-price-row palto-ride-recap-price-row--total">
+                        <span>Total estime TTC:</span>
+                        <strong>
+                          {Math.max(
+                            6,
+                            (effectiveBaseFareEur + paltoRouteDistanceKm * effectivePricePerKmEur) *
+                              effectiveDriverPricingMultiplier *
+                              (1 + (isNightRide ? effectiveNightSurchargeRate : 0))
+                          ).toFixed(2)}{' '}
+                          EUR
+                        </strong>
+                      </p>
+                    ) : null}
+                  </div>
+                </div>
+                <div className="palto-ride-recap-modal__actions">
+                  <Button
+                    variant="primary"
+                    type="button"
+                    className="palto-ride-search-btn palto-ride-recap-modal__cta"
+                    disabled={
+                      (paltoPickupTiming === 'now' && !paltoSelectedDriver) ||
+                      (paltoPickupTiming === 'later' && !paltoPickupDateTime.trim())
+                    }
+                    onClick={handleRecapModalConfirmOrder}
+                  >
+                    Commandez la course
+                  </Button>
+                </div>
+              </div>
+            </div>
+          ) : null}
+          {isDesktopViewport && isCheckoutPopupOpen ? (
+            <div className="palto-ride-recap-modal" role="dialog" aria-modal="true" aria-label="Checkout commande">
+              <div className="palto-ride-recap-modal__backdrop" onClick={closeCheckoutPopup} />
+              <div className="palto-ride-recap-modal__content" onClick={(e) => e.stopPropagation()}>
+                <button
+                  type="button"
+                  className="palto-ride-recap-modal__close"
+                  onMouseDown={(e) => e.preventDefault()}
+                  onClick={closeCheckoutPopup}
+                  aria-label="Fermer"
+                >
+                  ×
+                </button>
+                <h2 className="palto-ride-card__title">Checkout commande</h2>
+                <div className="palto-checkout">
+                  <p className="palto-checkout__lead">
+                    Verifiez les informations de la course avant confirmation.
+                  </p>
+                  <div className="palto-checkout__summary">
+                    <p>
+                      <span>Chauffeur :</span>{' '}
+                      <strong>
+                        {paltoPickupTiming === 'later'
+                          ? 'A confirmer par un chauffeur'
+                          : paltoSelectedDriver
+                            ? paltoSelectedDriver.name
+                            : '—'}
+                      </strong>
+                    </p>
+                    <p>
+                      <span>Vehicule :</span>{' '}
+                      <strong>
+                        {paltoPickupTiming === 'later'
+                          ? '—'
+                          : paltoSelectedDriver
+                            ? paltoSelectedDriver.moto
+                            : '—'}
+                      </strong>
+                    </p>
+                    <p>
+                      <span>Total estime TTC :</span>{' '}
+                      <strong>
+                        {paltoPricing
+                          ? `${paltoPricing.ttc} EUR`
+                          : paltoRouteDistanceKm != null
+                            ? `${Math.max(
+                                6,
+                                (effectiveBaseFareEur + paltoRouteDistanceKm * effectivePricePerKmEur) *
+                                  effectiveDriverPricingMultiplier *
+                                  (1 + (isNightRide ? effectiveNightSurchargeRate : 0))
+                              ).toFixed(2)} EUR`
+                            : '-'}
+                      </strong>
+                    </p>
+                    <p className="palto-checkout__lead">
+                      Paiement en ligne non active : reglement prevu directement avec le chauffeur.
+                    </p>
+                  </div>
+
+                  <label className="palto-checkout__field">
+                    <span>Nom (optionnel)</span>
+                    <input
+                      type="text"
+                      className="palto-ride-input"
+                      value={checkoutCustomerName}
+                      onChange={(e) => setCheckoutCustomerName(e.target.value)}
+                      placeholder="Votre nom"
+                      autoComplete="name"
+                    />
+                  </label>
+
+                  <label className="palto-checkout__field">
+                    <span>Email pour le recapitulatif</span>
+                    <input
+                      type="email"
+                      className="palto-ride-input"
+                      value={checkoutCustomerEmail}
+                      onChange={(e) => setCheckoutCustomerEmail(e.target.value)}
+                      placeholder="vous@example.com"
+                      autoComplete="email"
+                    />
+                  </label>
+                  <label className="palto-checkout__field">
+                    <span>Commentaire pour le chauffeur (optionnel)</span>
+                    <textarea
+                      className="palto-ride-input"
+                      value={checkoutClientComment}
+                      onChange={(e) => setCheckoutClientComment(e.target.value)}
+                      placeholder="Ex: l entree de mon batiment est derriere le batiment de la poste."
+                      maxLength={600}
+                      rows={3}
+                    />
+                  </label>
+
+                  {checkoutError ? <p className="palto-checkout__error">{checkoutError}</p> : null}
+                  {checkoutSuccessMessage ? (
+                    <p className="palto-checkout__success">{checkoutSuccessMessage}</p>
+                  ) : null}
+                </div>
+                <div className="palto-ride-recap-modal__actions">
+                  <Button
+                    variant="primary"
+                    type="button"
+                    className="palto-ride-search-btn palto-ride-recap-modal__cta"
+                    disabled={
+                      checkoutSubmitting ||
+                      (paltoPickupTiming === 'now' && !paltoSelectedDriver)
+                    }
+                    onClick={() => void handleCheckoutConfirm()}
+                  >
+                    {checkoutSubmitting ? 'Enregistrement…' : 'Confirmer la commande'}
+                  </Button>
+                </div>
+              </div>
+            </div>
+          ) : null}
+        </div>
+        </>
+        ) : (
+        <>
 
         {/* 1. Header (Figma: titre → badges) */}
         {/* Bloc unique Figma : titre, badges + Contexte du projet, gap 40px */}
@@ -1016,9 +2771,6 @@ const SingleProjectNew: FC<SingleProjectProps> = ({
                 )}
                 {projectData.designSystem && (
                   <li><a href="#design-system" className="toc-link">{projectData.designSystem.colorPalette.title}</a></li>
-                )}
-                {projectData.designSystem?.typography && projectData.title !== 'Playdago' && (
-                  <li><a href="#typography" className="toc-link">{projectData.designSystem.typography.title}</a></li>
                 )}
                 <li><a href="#implementation" className="toc-link">{t('project.implementation')}</a></li>
                 <li><a href="#results" className="toc-link">{t('project.results')}</a></li>
@@ -1156,11 +2908,9 @@ const SingleProjectNew: FC<SingleProjectProps> = ({
         {/* Audit */}
         <motion.section id="audit" className="project-section figma-audit-section" {...scrollSectionProps}>
           <h2 className="section-title">{t('project.audit')}</h2>
-          {projectData.title === 'Playdago' && (
-            <p className="figma-audit-subtitle">
-              {isEn ? 'Competitive benchmarking' : 'Benchmark concurrentiel'}
-            </p>
-          )}
+          <p className="figma-audit-subtitle">
+            {isEn ? 'Competitive benchmarking' : 'Benchmark concurrentiel'}
+          </p>
           <div className="figma-two-cols">
             <p className="figma-lead">
               {isEn
@@ -1186,11 +2936,7 @@ const SingleProjectNew: FC<SingleProjectProps> = ({
                 slidesPerView="auto"
                 centeredSlides={false}
                 pagination={{ clickable: true }}
-                className={
-                  projectData.title === 'Playdago'
-                    ? 'figma-audit-carousel figma-audit-carousel--playdago'
-                    : 'figma-audit-carousel'
-                }
+                className="figma-audit-carousel figma-audit-carousel--palto"
                 onSwiper={(swiper) => {
                   const idealWidth = 506.667;
                   const applySlideWidth = () => {
@@ -1210,9 +2956,7 @@ const SingleProjectNew: FC<SingleProjectProps> = ({
                   <SwiperSlide key={index}>
                     <div
                       className={
-                        projectData.title === 'Playdago' && index === 0
-                          ? 'figma-audit-slide figma-audit-slide--playdago-blue'
-                          : 'figma-audit-slide'
+                        index === 0 ? 'figma-audit-slide figma-audit-slide--palto-blue' : 'figma-audit-slide'
                       }
                     >
                       <img src={img.src} alt={t(`project.auditAlt${index + 1}`)} loading="eager" decoding="async" />
@@ -1264,14 +3008,14 @@ const SingleProjectNew: FC<SingleProjectProps> = ({
                 </div>
               </div>
             ) : (
-              <img src="/single-project/fe88fac0-9c5a-44ad-af6a-151d4da1bfa0.png" alt="User flow" className="figma-userflow-img" />
+              <img src={PLACEHOLDER_MEDIA} alt="User flow" className="figma-userflow-img" />
             )}
           </div>
 
-          {/* Playdago : Design system — texte + bento (palette & typéchelle intégrés aux tuiles) */}
-          {projectData.title === 'Playdago' && (
+          {/* Palto : Design system — texte + bento (palette & typéchelle intégrés aux tuiles) */}
+          {projectData.designSystem && (
             <>
-              <div id="design-system" className="figma-audit-playdago-duplicate">
+              <div id="design-system" className="figma-audit-palto-duplicate">
                 <h3 className="figma-subsection-title">{t('project.designSystem')}</h3>
                 <div className="figma-two-cols">
                   <p className="figma-lead whitespace-pre-line">
@@ -1285,82 +3029,82 @@ const SingleProjectNew: FC<SingleProjectProps> = ({
                       : projectData.architectureDsDuplicateBody ?? ''}
                   </p>
                 </div>
-                <div className="playdago-ds-magic-bento-wrap">
+                <div className="palto-ds-magic-bento-wrap">
                   <MagicBento
-                    className="playdago-ds-magic-bento"
-                    imageItems={playdagoDsBentoItems}
+                    className="palto-ds-magic-bento"
+                    imageItems={paltoDsBentoItems}
                     glowColor="241, 88, 42"
                   />
                 </div>
               </div>
 
-              <div className="figma-audit-playdago-duplicate figma-audit-playdago-duplicate--stacked">
+              <div className="figma-audit-palto-duplicate figma-audit-palto-duplicate--stacked">
                 <h3 className="figma-subsection-title">{t('project.conception')}</h3>
-                <p className="figma-lead figma-lead--playdago-conception-stacked whitespace-pre-line">
+                <p className="figma-lead figma-lead--palto-conception-stacked whitespace-pre-line">
                   {isEn && projectData.translations?.en?.conceptionDuplicateLead
                     ? projectData.translations.en.conceptionDuplicateLead
                     : projectData.conceptionDuplicateLead ?? ''}
                 </p>
-                <div className="playdago-conception-swap-copy-row">
-                  <div className="playdago-ds-stacked-body-col playdago-ds-stacked-body-col--swap-row">
-                    {playdagoConceptionPivotH3 && (
-                      <h3 className="figma-ds-pivot-h3">{playdagoConceptionPivotH3}</h3>
+                <div className="palto-conception-swap-copy-row">
+                  <div className="palto-ds-stacked-body-col palto-ds-stacked-body-col--swap-row">
+                    {paltoConceptionPivotH3 && (
+                      <h3 className="figma-ds-pivot-h3">{paltoConceptionPivotH3}</h3>
                     )}
-                    <p className="figma-body whitespace-pre-line">{playdagoConceptionBody}</p>
+                    <p className="figma-body whitespace-pre-line">{paltoConceptionBody}</p>
                   </div>
-                  <div className="figma-audit-carousel-wrapper playdago-conception-gallery-wrap playdago-conception-gallery-wrap--swap-copy-row">
+                  <div className="figma-audit-carousel-wrapper palto-conception-gallery-wrap palto-conception-gallery-wrap--swap-copy-row">
                     <div
-                      className="playdago-conception-gallery playdago-conception-gallery--hidden"
+                      className="palto-conception-gallery palto-conception-gallery--hidden"
                       role="region"
                       aria-label={t('project.conception')}
                       style={
                         {
-                          '--playdago-conception-n': playdagoConceptionConceptGroups.length,
-                          '--playdago-conception-images-n': playdagoConceptionCurrentSlides.length,
-                          ...(playdagoConceptionSideMaxPx != null
-                            ? { '--playdago-conception-side-max-h': `${playdagoConceptionSideMaxPx}px` }
+                          '--palto-conception-n': paltoConceptionConceptGroups.length,
+                          '--palto-conception-images-n': paltoConceptionCurrentSlides.length,
+                          ...(paltoConceptionSideMaxPx != null
+                            ? { '--palto-conception-side-max-h': `${paltoConceptionSideMaxPx}px` }
                             : {}),
                         } as React.CSSProperties
                       }
                     >
                       <div
-                        className="playdago-conception-concept-triggers"
+                        className="palto-conception-concept-triggers"
                         role="group"
                         aria-label={t('project.conceptionGraduationGroup')}
                       >
-                      {playdagoConceptionConceptGroups.map((_, conceptIdx) => (
+                      {paltoConceptionConceptGroups.map((_, conceptIdx) => (
                         <button
                           key={conceptIdx}
                           type="button"
-                          className={`playdago-conception-concept-item${
+                          className={`palto-conception-concept-item${
                             conceptionSafeConceptIdx === conceptIdx
-                              ? ' playdago-conception-concept-item--active'
+                              ? ' palto-conception-concept-item--active'
                               : ''
                           }`}
                           aria-pressed={conceptionSafeConceptIdx === conceptIdx}
-                          aria-controls="playdago-conception-main"
+                          aria-controls="palto-conception-main"
                           onClick={() => {
-                            setPlaydagoConceptionConceptIndex(conceptIdx);
-                            setPlaydagoConceptionSlideIndex(0);
+                            setPaltoConceptionConceptIndex(conceptIdx);
+                            setPaltoConceptionSlideIndex(0);
                           }}
                         >
-                          <span className="playdago-conception-concept-item__icon">
-                            <PlaydagoConceptionGraduationIcon />
+                          <span className="palto-conception-concept-item__icon">
+                            <PaltoConceptionGraduationIcon />
                           </span>
-                          <span className="playdago-conception-concept-item__label">
+                          <span className="palto-conception-concept-item__label">
                             {t('project.conceptGraduationLabel', { n: conceptIdx + 1 })}
                           </span>
                         </button>
                       ))}
                     </div>
-                    <div className="playdago-conception-stage">
+                    <div className="palto-conception-stage">
                       <div
-                        ref={playdagoConceptionStageInnerRef}
-                        className="playdago-conception-stage-inner"
-                        id="playdago-conception-main"
+                        ref={paltoConceptionStageInnerRef}
+                        className="palto-conception-stage-inner"
+                        id="palto-conception-main"
                       >
                         <img
-                          src={playdagoConceptionCurrentSlides[conceptionSafeSlideIdx]?.src}
+                          src={paltoConceptionCurrentSlides[conceptionSafeSlideIdx]?.src}
                           alt={t('project.conceptionStageAlt', {
                             concept: conceptionSafeConceptIdx + 1,
                             slide: conceptionSafeSlideIdx + 1,
@@ -1368,32 +3112,32 @@ const SingleProjectNew: FC<SingleProjectProps> = ({
                           loading="lazy"
                           decoding="async"
                           onLoad={() => {
-                            const el = playdagoConceptionStageInnerRef.current;
+                            const el = paltoConceptionStageInnerRef.current;
                             if (el) {
                               const h = el.getBoundingClientRect().height;
-                              if (h > 0) setPlaydagoConceptionSideMaxPx(Math.round(h));
+                              if (h > 0) setPaltoConceptionSideMaxPx(Math.round(h));
                             }
                           }}
                         />
                       </div>
                     </div>
-                    <div className="playdago-conception-thumbs-wrap">
+                    <div className="palto-conception-thumbs-wrap">
                       <div
-                        className="playdago-conception-thumbs"
+                        className="palto-conception-thumbs"
                         role="tablist"
                         aria-label={t('project.conceptionVerticalCarousel')}
                       >
-                        {playdagoConceptionCurrentSlides.map((img, index) => (
+                        {paltoConceptionCurrentSlides.map((img, index) => (
                           <button
                             key={`${conceptionSafeConceptIdx}-${index}`}
                             type="button"
                             role="tab"
-                            id={`playdago-conception-thumb-${conceptionSafeConceptIdx}-${index}`}
-                            tabIndex={playdagoConceptionSlideIndex === index ? 0 : -1}
-                            aria-selected={playdagoConceptionSlideIndex === index}
-                            aria-controls="playdago-conception-main"
-                            className={`playdago-conception-thumb${playdagoConceptionSlideIndex === index ? ' playdago-conception-thumb--active' : ''}`}
-                            onClick={() => setPlaydagoConceptionSlideIndex(index)}
+                            id={`palto-conception-thumb-${conceptionSafeConceptIdx}-${index}`}
+                            tabIndex={paltoConceptionSlideIndex === index ? 0 : -1}
+                            aria-selected={paltoConceptionSlideIndex === index}
+                            aria-controls="palto-conception-main"
+                            className={`palto-conception-thumb${paltoConceptionSlideIndex === index ? ' palto-conception-thumb--active' : ''}`}
+                            onClick={() => setPaltoConceptionSlideIndex(index)}
                           >
                             <img src={img.src} alt="" />
                           </button>
@@ -1401,9 +3145,9 @@ const SingleProjectNew: FC<SingleProjectProps> = ({
                       </div>
                     </div>
                   </div>
-                  {PLAYDAGO_CARD_SWAP_SLIDE_SRCS.length >= 2 && (
+                  {GO_CARD_SWAP_SLIDE_SRCS.length >= 2 && (
                     <div
-                      className="playdago-conception-card-swap-wrap"
+                      className="palto-conception-card-swap-wrap"
                       role="region"
                       aria-label={t('project.cardSwapAria')}
                     >
@@ -1417,17 +3161,17 @@ const SingleProjectNew: FC<SingleProjectProps> = ({
                         pauseOnHover
                         skewAmount={0}
                         easing="elastic"
-                        containerClassName="playdago-card-swap-aspect relative mx-auto perspective-[900px] overflow-visible max-[480px]:scale-[0.88]"
+                        containerClassName="palto-card-swap-aspect relative mx-auto perspective-[900px] overflow-visible max-[480px]:scale-[0.88]"
                       >
-                        {PLAYDAGO_CARD_SWAP_SLIDE_SRCS.map((src, idx) => (
+                        {GO_CARD_SWAP_SLIDE_SRCS.map((src, idx) => (
                           <Card
-                            key={`playdago-card-swap-${idx}`}
+                            key={`palto-card-swap-${idx}`}
                             customClass="!border-[#b2aaaa] !bg-[#EAEAE6] shadow-md box-border overflow-hidden p-2"
                           >
                             <img
                               src={src}
                               alt=""
-                              className="playdago-card-swap-img h-full w-full min-h-0 object-contain object-top"
+                              className="palto-card-swap-img h-full w-full min-h-0 object-contain object-top"
                               loading="lazy"
                               decoding="async"
                             />
@@ -1443,134 +3187,9 @@ const SingleProjectNew: FC<SingleProjectProps> = ({
           )}
         </motion.section>
 
-        {/* Design system — Playdago : contenu déplacé sous Architecture (switch carrousel / tables) */}
-        {projectData.designSystem && projectData.title !== 'Playdago' && (
-          <motion.section id="design-system" className="project-section figma-design-system-section" {...scrollSectionProps}>
-            <h2 className="section-title">{t('project.designSystem')}</h2>
-            <h3 className="figma-palette-title">{t('project.palette')}</h3>
-            <p className="figma-caption">{t('project.materialDesign')}</p>
-            <div className="figma-palette-table">
-              <div className="figma-palette-header">
-                <span>{t('project.roleToken')}</span>
-                <span>{t('project.usage')}</span>
-                <span className="figma-palette-header-hex">{t('project.hexValue')}</span>
-              </div>
-              {(projectData.title === 'Pedaboard'
-                ? (isEn
-                    ? [
-                        { role: 'Primary', usage: 'Brand color. Used for key elements (primary buttons, active states).', color: '#f07f00' },
-                        { role: 'On Primary', usage: 'Text & icons on Primary color.', color: '#ffffff' },
-                        { role: 'Secondary', usage: 'Brand & titles. The distinctive "Teal". Used for titles, logo and major interactive elements.', color: '#006d73' },
-                        { role: 'On Secondary', usage: 'Readability. Ensures clarity of content on accent elements (Teal).', color: '#ffffff' },
-                        { role: 'Surface (Main)', usage: 'App background. Very pale grey ("Off-White") to structure the workspace and reduce glare.', color: '#f1f3f4' },
-                        { role: 'On Surface', usage: 'Main text. Navy blue (not black) to reduce eye strain.', color: '#2b2e48' },
-                        { role: 'On Surface (Subtle)', usage: 'Secondary text. Medium grey for metadata and less important labels.', color: '#7d7d7d' },
-                      ]
-                    : [
-                        { role: 'Primary', usage: 'Couleur de marque. Utilisée pour les éléments clés (Boutons principaux, États actifs).', color: '#f07f00' },
-                        { role: 'On Primary', usage: 'Texte & Icônes posés sur la couleur Primary.', color: '#ffffff' },
-                        { role: 'Secondary', usage: 'Marque & Titres. Le "Bleu Canard" identitaire. Utilisé pour les titres, le logo et les éléments interactifs majeurs.', color: '#006d73' },
-                        { role: 'On Secondary', usage: "Lisibilité. Assure la clarté des contenus positionnés sur les éléments d'accentuation (Vert Canard).", color: '#ffffff' },
-                        { role: 'Surface (Main)', usage: "Fond d'Application. Un gris très pâle (« Off-White ») pour structurer l'espace de travail et réduire l'éblouissement.", color: '#f1f3f4' },
-                        { role: 'On Surface', usage: 'Texte Principal. Un Bleu Nuit (et non du noir) qui réduit la fatigue oculaire.', color: '#2b2e48' },
-                        { role: 'On Surface (Subtle)', usage: "Texte Secondaire. Gris moyen pour les métadonnées et labels moins importants, afin de hiérarchiser l'information.", color: '#7d7d7d' },
-                      ])
-                : (projectData.designSystem.colorPalette?.categories?.neutrals?.colors ?? []).slice(0, 7).map((c: { role: string; usage?: string; color: string }, i: number) => {
-                    const en = isEn && projectData.translations?.en?.designSystemNeutrals?.[i];
-                    return { role: en?.role ?? c.role, usage: en?.usage ?? (c as { usage?: string }).usage ?? '', color: c.color };
-                  })
-              ).map((c: { role: string; usage: string; color: string }, i: number) => (
-                <div key={i} className="figma-palette-row">
-                  <span>{c.role}</span>
-                  <span>{c.usage}</span>
-                  <span className="figma-swatch" style={{ backgroundColor: c.color }}>{c.color}</span>
-                </div>
-              ))}
-            </div>
-            <h3 className="figma-typescale-title">{t('project.typescale')}</h3>
-            <p className="figma-caption">{t('project.baseValue')}</p>
-            {projectData.designSystem && (
-              <div className="figma-typescale-table">
-                <div className="figma-typescale-header">
-                  <span>{t('project.roleCol')}</span>
-                  <span>{t('project.typography')}</span>
-                  <span>{t('project.size')}</span>
-                  <span>{t('project.lineHeight')}</span>
-                  <span>{t('project.example')}</span>
-                </div>
-                {(projectData.title === 'Pedaboard'
-                  ? [
-                      { role: 'H1', typo: 'Inter Bold', size: '32px (2.0rem)', line: '150% (48px)', weight: 700, sizePx: 32, example: 'The Quick Brown Fox Jumps Over The Lazy Dog' },
-                      { role: 'H2', typo: 'Inter SemiBold', size: '29px (1.8rem)', line: '150% (44px)', weight: 600, sizePx: 29, example: 'The Quick Brown Fox Jumps Over The Lazy Dog' },
-                      { role: 'H3', typo: 'Inter Medium', size: '26px (1.6rem)', line: '150% (39px)', weight: 500, sizePx: 26, example: 'The Quick Brown Fox Jumps Over The Lazy Dog' },
-                      { role: 'H4', typo: 'Inter Medium', size: '23px (1.4rem)', line: '150% (35px)', weight: 500, sizePx: 23, example: 'The Quick Brown Fox Jumps Over The Lazy Dog' },
-                      { role: 'Body', typo: 'Inter Regular', size: '16px (1.0rem)', line: '150% (24px)', weight: 400, sizePx: 16, example: 'The Quick Brown Fox Jumps Over The Lazy Dog' },
-                      { role: 'Label', typo: 'Inter Medium', size: '14px (0.875rem)', line: '150% (21px)', weight: 500, sizePx: 14, example: 'The Quick Brown Fox Jumps Over The Lazy Dog' },
-                      { role: 'Caption', typo: 'Inter Regular', size: '13px (0.8rem)', line: '150% (20px)', weight: 400, sizePx: 13, example: 'The quick brown fox jumps over the lazy dog' },
-                    ]
-                  : (projectData.designSystem.typography?.items ?? []).slice(0, 7).map((item: { style: string; font: string; size: string; lineHeight: string }) => {
-                      const sizeNum = parseInt(item.size, 10) || 16;
-                      const weight = item.font.toLowerCase().includes('bold') ? 700 : item.font.toLowerCase().includes('semi') ? 600 : item.font.toLowerCase().includes('medium') ? 500 : 400;
-                      return {
-                        role: item.style,
-                        typo: item.font,
-                        size: `${item.size}px`,
-                        line: item.lineHeight,
-                        weight,
-                        sizePx: sizeNum,
-                        example: 'The Quick Brown Fox Jumps Over The Lazy Dog',
-                      };
-                    })
-                ).map((row: { role: string; typo: string; size: string; line: string; weight: number; sizePx: number; example: string }, i: number) => (
-                  <div key={i} className="figma-typescale-row">
-                    <span className="figma-typescale-role">{row.role}</span>
-                    <span className="figma-typescale-typo">{row.typo}</span>
-                    <span className="figma-typescale-size">{row.size}</span>
-                    <span className="figma-typescale-line">{row.line}</span>
-                    <span className="figma-typescale-example" style={{ fontWeight: row.weight, fontSize: row.sizePx, lineHeight: 1.5 }}>{row.example}</span>
-                  </div>
-                ))}
-              </div>
-            )}
-          </motion.section>
-        )}
-
-        {/* Conception & Itération (Figma 100-424) — masqué sur Playdago (doublon couvert par le bloc sous l’arbre user flow) */}
-        {projectData.title !== 'Playdago' && (
-        <motion.section id="conception" className="project-section figma-conception-section" {...scrollSectionProps}>
-          <h2 className="section-title">{t('project.conception')}</h2>
-          <div className="figma-two-cols">
-            <p className="figma-lead">{t('project.conceptionLead1')}</p>
-            <p className="figma-lead">{t('project.conceptionLead2')}</p>
-          </div>
-          <div className="figma-conception-mockups">
-            <div className="figma-conception-card">
-              <div className="figma-conception-card-media">
-                <img src="/single-project/92b9c4b3-3a47-4482-ba0f-a5d916be93e1.png" alt={t('project.wireframeAlt')} />
-              </div>
-              <div className="figma-conception-captions">
-                <p className="figma-conception-caption">{t('project.conceptionCaption1')}</p>
-                <p className="figma-conception-caption">{t('project.conceptionCaption2')}</p>
-              </div>
-            </div>
-            <div className="figma-conception-card">
-              <div className="figma-conception-card-media">
-                <img src="/single-project/b81a3920-b92d-4a7d-af4c-4223b3f89174.png" alt={t('project.maquetteAlt')} />
-              </div>
-              <div className="figma-conception-captions">
-                <p className="figma-conception-caption">{t('project.conceptionCaption3')}</p>
-                <p className="figma-conception-caption">{t('project.conceptionCaption4')}</p>
-              </div>
-            </div>
-          </div>
-        </motion.section>
-        )}
-
-        {/* Bloc light-mode : logo Playdago (hors <section>) collé visuellement juste au-dessus de #light-mode */}
+        {/* Bloc light-mode : logo Palto (hors <section>) collé visuellement juste au-dessus de #light-mode */}
         <div className="figma-light-mode-group">
-          {projectData.title === 'Playdago' && (
-            <PlaydagoH1HandwritingLogo className="figma-light-mode-h1-logo" scrollContainerRef={pageRef} />
-          )}
+          <PaltoH1HandwritingLogo className="figma-light-mode-h1-logo" scrollContainerRef={pageRef} />
           {/* Suite aux tests de contraste */}
           <motion.section id="light-mode" className="project-section figma-light-mode-section" {...scrollSectionProps}>
             <ScrollStack
@@ -1587,7 +3206,7 @@ const SingleProjectNew: FC<SingleProjectProps> = ({
               <ScrollStackItem itemClassName="figma-light-mode-scroll-stack-card">
                 <div className="figma-light-mode-img-frame figma-light-mode-img-frame--stack-item">
                   <img
-                    src={playdagoLightModeMaine}
+                    src={paltoLightModeMaine}
                     alt={t('project.contrastImageAlt')}
                     className="figma-light-mode-zoom-img"
                     loading="lazy"
@@ -1598,7 +3217,7 @@ const SingleProjectNew: FC<SingleProjectProps> = ({
               <ScrollStackItem itemClassName="figma-light-mode-scroll-stack-card">
                 <div className="figma-light-mode-img-frame figma-light-mode-img-frame--stack-item">
                   <img
-                    src={playdagoLightModeSinglePage}
+                    src={paltoLightModeSinglePage}
                     alt={t('project.lightModeSinglePageAlt')}
                     className="figma-light-mode-zoom-img figma-light-mode-extra-img"
                     loading="lazy"
@@ -1609,7 +3228,7 @@ const SingleProjectNew: FC<SingleProjectProps> = ({
               <ScrollStackItem itemClassName="figma-light-mode-scroll-stack-card">
                 <div className="figma-light-mode-img-frame figma-light-mode-img-frame--stack-item">
                   <img
-                    src={playdagoLightModeSetp1}
+                    src={paltoLightModeSetp1}
                     alt={t('project.lightModeSetp1Alt')}
                     className="figma-light-mode-zoom-img figma-light-mode-extra-img"
                     loading="lazy"
@@ -1621,71 +3240,12 @@ const SingleProjectNew: FC<SingleProjectProps> = ({
           </motion.section>
         </div>
 
-        {/* Mes autres projets (Figma 117-135 : slider type carousel) */}
-        <motion.section id="autres-projets" className="project-section figma-autres-projets-section" {...scrollSectionProps}>
-          <h2 className="section-title">{t('project.otherProjects')}</h2>
-          <div className="figma-autres-projets-carousel-wrapper">
-            <Swiper
-              modules={[Pagination]}
-              className="figma-autres-projets-carousel"
-              spaceBetween={24}
-              slidesPerView="auto"
-              centeredSlides
-              centeredSlidesBounds
-              watchSlidesProgress
-              roundLengths
-              pagination={{ clickable: true }}
-              onSwiper={(swiper) => {
-                const idealWidth = 1118;
-                const applySlideWidth = () => {
-                  const w = Math.min(idealWidth, Math.max(0, Math.floor(swiper.width - 48)));
-                  swiper.slides.forEach((slide) => {
-                    const el = slide as HTMLElement;
-                    el.style.width = `${w}px`;
-                    el.style.minWidth = `${w}px`;
-                    el.style.maxWidth = `${w}px`;
-                  });
-                  swiper.update();
-                  swiper.slideTo(swiper.activeIndex, 0, false);
-                };
-                applySlideWidth();
-                swiper.on('resize', applySlideWidth);
-              }}
-            >
-              {[
-                { slug: 'Pedaboard', title: 'Pedaboard', date: t('project.december2023'), badges: [t('hero.categoryApplicationWeb'), 'UX/UI', 'CRM'], coverImage: '/images/cover-project-pedaboard.png' },
-                { slug: 'Playdago', title: 'Playdago', date: t('project.february2025'), badges: [t('hero.categoryApplication'), 'UX/UI', 'SaaS'], coverImage: '/images/cover-project-playdago.png' },
-                { slug: 'Kaldera', title: 'Kaldera', date: '2025', badges: [t('hero.categorySiteWeb'), 'UX/UI', 'Simulation'], coverImage: '/images/cover-project-kaldera.png' },
-              ].map((proj) => (
-                <SwiperSlide key={proj.slug}>
-                  <a href={`/project/${proj.slug}`} className="figma-projet-mockup-card">
-                    <div className="figma-projet-mockup">
-                      <div className="figma-projet-mockup-screen">
-                        <img src={proj.coverImage} alt={proj.title} loading="lazy" decoding="async" />
-                      </div>
-                      <div className="figma-projet-mockup-overlay">
-                        {proj.date && <span className="figma-projet-date">{proj.date}</span>}
-                        <h3 className="figma-projet-name">{proj.title}</h3>
-                        {proj.badges && proj.badges.length > 0 && (
-                          <div className="figma-projet-badges">
-                            {proj.badges.map((badge: string) => (
-                              <span key={badge} className="project-badge">{badge}</span>
-                            ))}
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  </a>
-                </SwiperSlide>
-              ))}
-            </Swiper>
-          </div>
-        </motion.section>
-
         <ContactModal
           isOpen={showContactModal}
           onClose={() => setShowContactModal(false)}
         />
+        </>
+        )}
         </div>
       </motion.div>
 

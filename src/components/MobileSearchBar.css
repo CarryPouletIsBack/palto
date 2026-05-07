@@ -1,8 +1,4 @@
-/* Mobile Search Bar */
-/* Couleur de fond de la search bar active : modifier uniquement ici */
-:root {
-  --search-bar-active-bg: rgba(255, 255, 255, 0.3);
-}
+/* Mobile Search Bar — tokens : src/styles/app-theme.css (--search-*) */
 
 .mobile-search-bar {
   position: fixed;
@@ -72,7 +68,7 @@
   left: 0;
   right: 0;
   bottom: 0;
-  background: rgba(0, 0, 0, 0.2);
+  background: var(--search-overlay-scrim);
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
   z-index: 9999;
@@ -99,29 +95,29 @@
 /* Bouton de fermeture de projet - même style que le bouton menu */
 .mobile-search-bar .project-close-button {
   flex-shrink: 0;
-  background: rgba(255, 255, 255, 0.1);
+  background: var(--search-a10);
   backdrop-filter: blur(10px);
-  border: 1px solid rgba(216, 216, 216, 0.3);
+  border: 1px solid var(--search-btn-border);
   position: relative;
   z-index: 3000;
 }
 
 .mobile-search-bar .project-close-button svg {
-  stroke: white;
+  stroke: var(--search-text-100);
 }
 
 .mobile-search-bar .project-close-button:hover {
-  background: rgba(255, 255, 255, 0.2);
+  background: var(--search-a20);
 }
 
 .mobile-search-bar .search-bar {
   flex: 1;
   max-width: none;
   min-width: auto;
-  background: rgba(255, 255, 255, 0.1);
+  background: var(--search-a10);
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
-  border: 1px solid rgba(255, 255, 255, 0.2);
+  border: 1px solid var(--search-a20);
   border-radius: 100px;
   padding-top: 16px;
   padding-bottom: 16px;
@@ -181,7 +177,7 @@
 /* Masquer le raccourci clavier sur mobile */
 @media (max-width: 768px) {
   .mobile-search-bar .search-shortcut-hint {
-    display: none !important;
+    display: none;
   }
 }
 
@@ -243,9 +239,9 @@
   margin: 0;
   transform: scale(1);
   isolation: auto;
-  backdrop-filter: blur(60px) saturate(2) brightness(1.2);
-  -webkit-backdrop-filter: blur(60px) saturate(2) brightness(1.2);
-  background: var(--search-bar-active-bg);
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  background: var(--search-panel-solid-bg);
   position: relative;
   z-index: 2;
   min-height: 0;
@@ -289,9 +285,9 @@
   padding-left: 16px;
   padding-right: 16px;
   isolation: auto;
-  backdrop-filter: blur(60px) saturate(2) brightness(1.2);
-  -webkit-backdrop-filter: blur(60px) saturate(2) brightness(1.2);
-  background: var(--search-bar-active-bg);
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  background: var(--search-panel-solid-bg);
   box-sizing: border-box;
   border-radius: 24px;
   position: relative;
@@ -314,7 +310,7 @@
 .mobile-search-bar .search-bar input {
   background: none;
   border: none;
-  color: white;
+  color: var(--search-text-100);
   font-size: 16px;
   outline: none;
   flex: 1;
@@ -327,7 +323,7 @@
   top: 50%;
   left: 0;
   transform: translateY(-50%);
-  color: rgba(255, 255, 255, 0.7);
+  color: var(--search-text-70);
   font-size: 16px;
   pointer-events: none;
   z-index: 1;
@@ -346,48 +342,26 @@
   position: relative;
 }
 
+/* Placeholder custom + input vide : évite le double texte (lettres superposées) */
+.mobile-search-bar .search-input-container:has(.search-placeholder-single) .search-input {
+  color: transparent;
+  caret-color: var(--search-caret);
+}
+
 .mobile-search-bar .btn {
   flex-shrink: 0;
 }
 
-/* Bouton Accueil - même taille que la search bar */
-.mobile-search-bar .home-button {
-  width: 57px;
-  height: 57px;
-  padding-top: 16px;
-  padding-bottom: 16px;
-  padding-left: 16px;
-  padding-right: 16px;
-  margin-top: 0px;
-  margin-bottom: 0px;
-  border-radius: 100px;
-  display: none;
-  align-items: center;
-  justify-content: center;
-  box-sizing: border-box;
-  transition: opacity 0.3s ease, visibility 0.3s ease;
-}
-
-/* Masquer le bouton menu quand la search bar est active */
-.mobile-search-bar.search-active .home-button {
-  display: none;
-}
-
-.mobile-search-bar .home-button svg {
-  fill: rgba(171, 171, 172, 1);
-  color: rgba(171, 171, 172, 1);
-}
-
 .mobile-search-bar .search-bar:focus-within {
-  background: rgba(255, 255, 255, 0.15);
-  border: 1px solid rgba(255, 255, 255, 0.3);
+  background: var(--search-a15);
+  border: 1px solid var(--search-a30);
   box-shadow: none;
-  backdrop-filter: blur(60px) saturate(2) brightness(1.2);
-  -webkit-backdrop-filter: blur(60px) saturate(2) brightness(1.2);
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
 }
 
 .mobile-search-bar .search-bar:focus-within input {
-  color: white;
+  color: var(--search-text-100);
 }
 
 /* Wrapper pour search-input-row et le bouton close */
@@ -397,6 +371,9 @@
   gap: 12px;
   width: 100%;
   flex-shrink: 0;
+  /* Au-dessus du ::before MagicBento (mix-blend-mode) pour éviter clignotements / halos sur le contenu */
+  position: relative;
+  z-index: 2;
 }
 
 /* Row contenant l'icône et l'input - CRITIQUE pour l'alignement */
@@ -430,43 +407,43 @@
   font-family: inherit;
   font-size: 12px;
   font-weight: 500;
-  color: rgba(255, 255, 255, 0.7);
+  color: var(--search-text-70);
   background: transparent;
   border: none;
 }
 .mobile-search-bar .search-shortcut-hint .search-shortcut-key {
-  color: rgba(255, 255, 255, 0.9);
+  color: var(--search-text-90);
 }
 
 /* Style de champ texte uniquement quand les résultats sont affichés */
 .mobile-search-bar .search-bar.has-results .search-input-row {
   flex-direction: row;
-  background-color: rgba(255, 255, 255, 0);
-  border: 1px solid rgba(255, 255, 255, 0);
+  background-color: transparent;
+  border: 1px solid transparent;
   border-radius: 12px;
   padding: 10px 16px;
   box-shadow: none;
 }
 
 .mobile-search-bar .search-bar.has-results .search-input-row {
-  border-color: rgba(255, 255, 255, 0);
+  border-color: transparent;
 }
 
 .mobile-search-bar .search-bar.has-results .search-input-row:focus-within {
-  background: rgba(255, 255, 255, 0.1);
-  border-color: rgba(255, 255, 255, 0.25);
+  background: var(--search-a10);
+  border-color: var(--search-a25);
   box-shadow: none;
 }
 
-/* Blur et fond quand la search bar est active + même border que l'input row (focus-within) */
+/* Fond opaque quand la search bar est active (voir --search-panel-solid-bg ; pas de blur sur Mapbox) */
 .mobile-search-bar.search-active .search-bar,
 .mobile-search-bar.search-active .search-bar:focus-within,
 .mobile-search-bar.search-active .search-bar.has-results {
   isolation: auto;
-  backdrop-filter: blur(60px) saturate(2) brightness(1.2);
-  -webkit-backdrop-filter: blur(60px) saturate(2) brightness(1.2);
-  background: rgba(36, 26, 26, 0.57);
-  border: 1px solid rgba(255, 255, 255, 0.25);
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  background: var(--search-panel-solid-bg);
+  border: 1px solid var(--search-a25);
   box-shadow: none;
 }
 
@@ -496,7 +473,7 @@
 .mobile-search-bar .search-input {
   background: none;
   border: none;
-  color: white;
+  color: var(--search-text-100);
   font-size: 16px;
   outline: none;
   flex: 1;
@@ -534,7 +511,7 @@
   transform: translateY(-50%);
   background: none;
   border: none;
-  color: rgba(255, 255, 255, 0.6);
+  color: var(--search-text-60);
   cursor: pointer;
   padding: 4px;
   border-radius: 50%;
@@ -546,8 +523,8 @@
 }
 
 .mobile-search-bar .clear-button:hover {
-  color: rgba(255, 255, 255, 0.9);
-  background: rgba(255, 255, 255, 0.1);
+  color: var(--search-text-90);
+  background: var(--search-a10);
 }
 
 .mobile-search-bar .clear-button:active {
@@ -567,6 +544,13 @@
   gap: 24px;
   border-radius: 0 0 24px 24px;
   background: transparent;
+  position: relative;
+  z-index: 2;
+}
+
+/* Overlay radial + mix-blend-mode sur les vignettes = reflets / « rechargements » visuels ; désactivé quand le panneau est ouvert */
+.mobile-search-bar .magic-bento.search-bar.has-results::before {
+  display: none;
 }
 
 .mobile-search-bar.search-active .search-bar.has-results .search-results,
@@ -599,7 +583,7 @@
   font-family: 'Space Grotesk', sans-serif;
   font-size: 14px;
   font-weight: 500;
-  color: rgba(255, 255, 255, 0.9);
+  color: var(--search-text-90);
   margin: 0;
   text-transform: uppercase;
   letter-spacing: 0.5px;
@@ -615,7 +599,7 @@
   width: 100%;
   padding-bottom: 4px;
   scrollbar-width: thin;
-  scrollbar-color: rgba(255, 255, 255, 0.3) transparent;
+  scrollbar-color: var(--search-scrollbar-list);
   -webkit-overflow-scrolling: touch;
 }
 
@@ -640,12 +624,12 @@
 }
 
 .mobile-search-bar .search-results-row::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.3);
+  background: var(--search-a30);
   border-radius: 3px;
 }
 
 .mobile-search-bar .search-results-row::-webkit-scrollbar-thumb:hover {
-  background: rgba(255, 255, 255, 0.5);
+  background: var(--search-result-row-hover-bg);
 }
 
 .mobile-search-bar .search-results-grid {
@@ -671,7 +655,7 @@
 }
 
 .mobile-search-bar .search-result-item:hover {
-  background: rgba(255, 255, 255, 0.1);
+  background: var(--search-a10);
 }
 
 .mobile-search-bar .search-result-item-disabled {
@@ -689,8 +673,8 @@
   aspect-ratio: 1;
   border-radius: 12px;
   overflow: hidden;
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: var(--search-a05);
+  border: 1px solid var(--search-a10);
   min-height: 0;
   flex-shrink: 0;
 }
@@ -712,13 +696,13 @@
   justify-content: center;
   font-size: 24px;
   font-weight: 600;
-  color: rgba(255, 255, 255, 0.5);
-  background: linear-gradient(135deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.05));
+  color: var(--search-text-50);
+  background: linear-gradient(135deg, var(--search-a10), var(--search-a05));
 }
 
 .mobile-search-bar .search-result-title {
   font-size: 12px;
-  color: rgba(255, 255, 255, 0.9);
+  color: var(--search-text-90);
   text-align: center;
   white-space: nowrap;
   overflow: hidden;
@@ -760,28 +744,28 @@
   overflow: hidden;
   transition: opacity 0.26s ease-out;
   /* Glass Surface Effect */
-  background: rgba(255, 255, 255, 0.25);
+  background: var(--search-a25);
   backdrop-filter: blur(12px) saturate(1.8) brightness(1.1);
   -webkit-backdrop-filter: blur(12px) saturate(1.8) brightness(1.1);
-  border: 1px solid rgba(255, 255, 255, 0.3);
+  border: 1px solid var(--search-a30);
   box-shadow:
     0 8px 32px 0 rgba(31, 38, 135, 0.2),
     0 2px 16px 0 rgba(31, 38, 135, 0.1),
-    inset 0 1px 0 0 rgba(255, 255, 255, 0.4),
-    inset 0 -1px 0 0 rgba(255, 255, 255, 0.2);
+    inset 0 1px 0 0 var(--search-a40),
+    inset 0 -1px 0 0 var(--search-a20);
 }
 
 .mobile-search-bar .back-left-button:hover,
 .mobile-action-buttons .back-left-button:hover {
-  background: rgba(255, 255, 255, 0.3);
+  background: var(--search-a30);
   backdrop-filter: blur(14px) saturate(2) brightness(1.15);
   -webkit-backdrop-filter: blur(14px) saturate(2) brightness(1.15);
-  border: 1px solid rgba(255, 255, 255, 0.4);
+  border: 1px solid var(--search-a40);
   box-shadow:
     0 8px 32px 0 rgba(31, 38, 135, 0.3),
     0 2px 16px 0 rgba(31, 38, 135, 0.15),
-    inset 0 1px 0 0 rgba(255, 255, 255, 0.5),
-    inset 0 -1px 0 0 rgba(255, 255, 255, 0.3);
+    inset 0 1px 0 0 var(--search-inset-gloss-top),
+    inset 0 -1px 0 0 var(--search-a30);
 }
 
 .mobile-search-bar .back-left-button svg,
@@ -864,10 +848,10 @@
   padding-bottom: 36px;
   padding-left: 8px;
   padding-right: 8px;
-  background: rgba(255, 255, 255, 0.25);
+  background: var(--search-a25);
   backdrop-filter: blur(12px) saturate(1.8) brightness(1.1);
   -webkit-backdrop-filter: blur(12px) saturate(1.8) brightness(1.1);
-  border: 1px solid rgba(255, 255, 255, 0.3);
+  border: 1px solid var(--search-a30);
   border-radius: 100px;
   position: relative;
   cursor: pointer;
@@ -883,8 +867,8 @@
   box-shadow:
     0 8px 32px 0 rgba(31, 38, 135, 0.2),
     0 2px 16px 0 rgba(31, 38, 135, 0.1),
-    inset 0 1px 0 0 rgba(255, 255, 255, 0.4),
-    inset 0 -1px 0 0 rgba(255, 255, 255, 0.2);
+    inset 0 1px 0 0 var(--search-a40),
+    inset 0 -1px 0 0 var(--search-a20);
 }
 
 .mobile-search-bar .slider-text,
@@ -903,15 +887,15 @@
 
 .mobile-search-bar .slider-button:hover,
 .mobile-action-buttons .slider-button:hover {
-  background: rgba(255, 255, 255, 0.3);
+  background: var(--search-a30);
   backdrop-filter: blur(14px) saturate(2) brightness(1.15);
   -webkit-backdrop-filter: blur(14px) saturate(2) brightness(1.15);
-  border: 1px solid rgba(255, 255, 255, 0.4);
+  border: 1px solid var(--search-a40);
   box-shadow:
     0 8px 32px 0 rgba(31, 38, 135, 0.3),
     0 2px 16px 0 rgba(31, 38, 135, 0.15),
-    inset 0 1px 0 0 rgba(255, 255, 255, 0.5),
-    inset 0 -1px 0 0 rgba(255, 255, 255, 0.3);
+    inset 0 1px 0 0 var(--search-inset-gloss-top),
+    inset 0 -1px 0 0 var(--search-a30);
 }
 
 .mobile-search-bar .slider-button-circle,
@@ -921,7 +905,7 @@
   left: 8px;
   width: 56px;
   height: 56px;
-  background: rgba(255, 255, 255, 0.9);
+  background: var(--search-bg-90);
   border-radius: 50%;
   display: flex;
   align-items: center;
@@ -933,7 +917,7 @@
   margin-top: 0px;
   margin-bottom: 0px;
   vertical-align: bottom;
-  color: rgba(255, 255, 255, 1);
+  color: var(--search-text-100);
   padding-bottom: 0px;
 }
 
@@ -950,7 +934,7 @@
 
 .mobile-search-bar .slider-button:hover .slider-button-circle,
 .mobile-action-buttons .slider-button:hover .slider-button-circle {
-  background: white;
+  background: var(--search-bg-90);
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
 }
 
@@ -960,11 +944,11 @@
   width: 32px;
   height: 32px;
   border-radius: 50%;
-  background: rgba(255, 255, 255, 0.1);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  color: white;
+  background: var(--search-a10);
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  border: 1px solid var(--search-a20);
+  color: var(--search-text-100);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -983,24 +967,24 @@
 @keyframes closeButtonBounceUp {
   0% {
     opacity: 0;
-    transform: translateX(-50%) translateY(100px);
+    transform: translateY(14px);
   }
   60% {
     opacity: 1;
-    transform: translateX(-50%) translateY(-10px);
+    transform: translateY(-5px);
   }
   80% {
-    transform: translateX(-50%) translateY(3px);
+    transform: translateY(2px);
   }
   100% {
     opacity: 1;
-    transform: translateX(-50%) translateY(0);
+    transform: translateY(0);
   }
 }
 
 .mobile-search-bar .search-close-button:hover {
-  background: rgba(255, 255, 255, 0.2);
-  border-color: rgba(255, 255, 255, 0.3);
+  background: var(--search-a20);
+  border-color: var(--search-a30);
   transform: scale(1.05);
 }
 

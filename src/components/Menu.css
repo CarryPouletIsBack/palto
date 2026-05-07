@@ -29,11 +29,11 @@
 .section-header {
   position: relative;
   padding: 12px;
-  border-left: 1px solid white;
+  border-left: 1px solid var(--app-menu-section-border);
 }
 
 .section-header h3 {
-  color: white;
+  color: var(--app-text-primary);
   font-family: 'Sora', sans-serif;
   font-size: 14px;
   font-weight: 400;
@@ -51,7 +51,7 @@
   overflow-y: hidden;
   padding-bottom: 16px;
   scrollbar-width: thin;
-  scrollbar-color: rgba(255, 255, 255, 0.3) transparent;
+  scrollbar-color: var(--app-menu-row-scrollbar) transparent;
   transition: all 0.3s ease-in-out;
 }
 
@@ -69,12 +69,12 @@
 }
 
 .projects-row::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.3);
+  background: var(--app-menu-row-scrollbar);
   border-radius: 4px;
 }
 
 .projects-row::-webkit-scrollbar-thumb:hover {
-  background: rgba(255, 255, 255, 0.5);
+  background: var(--app-scrollbar-thumb-hover);
 }
 
 /* Responsive */

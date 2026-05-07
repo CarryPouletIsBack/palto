@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="900" viewBox="0 0 1600 900" role="img" aria-label="Placeholder visuel">
+  <rect width="1600" height="900" fill="#1e1e26"/>
+  <rect x="48" y="48" width="1504" height="804" fill="none" stroke="#3d3d48" stroke-width="2" stroke-dasharray="14 10"/>
+  <text x="800" y="440" text-anchor="middle" fill="#8e8e9c" font-family="system-ui,-apple-system,sans-serif" font-size="28" font-weight="500">Image</text>
+  <text x="800" y="485" text-anchor="middle" fill="#5c5c6a" font-family="system-ui,-apple-system,sans-serif" font-size="16">16:9</text>
+</svg>

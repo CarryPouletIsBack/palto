@@ -1,6 +1,6 @@
 # 🚀 Guide de Déploiement
 
-Ce guide explique comment déployer le portfolio sur différentes plateformes.
+Ce guide explique comment déployer **Palto** (React / Vite) sur différentes plateformes.
 
 ## Vercel (Recommandé) ⚡
 
@@ -14,7 +14,7 @@ Vercel est la solution la plus simple et rapide pour déployer ce projet React/V
 
 2. **Importer le projet**
    - Cliquer sur "New Project"
-   - Sélectionner le dépôt `portfolio-react-anthony`
+   - Sélectionner le dépôt GitHub du projet (ex. `palto`)
    - Vercel détectera automatiquement les paramètres :
      - Framework: Vite
      - Build Command: `npm run build`
@@ -24,7 +24,7 @@ Vercel est la solution la plus simple et rapide pour déployer ce projet React/V
 3. **Déployer**
    - Cliquer sur "Deploy"
    - Le déploiement se fera automatiquement
-   - Une URL sera générée (ex: `portfolio-react-anthony.vercel.app`)
+   - Une URL sera générée (ex. `palto.vercel.app` ou `palto-xxx.vercel.app`)
 
 4. **Déploiements automatiques**
    - Chaque push sur `main` déclenchera un nouveau déploiement
@@ -80,11 +80,11 @@ vercel --prod
 
 ### Configuration Vite pour GitHub Pages
 
-Si le projet est dans un sous-dossier (ex: `/portfolio`), ajouter dans `vite.config.ts`:
+Si le site est servi sous un **sous-chemin** (ex. GitHub Pages `https://org.github.io/nom-repo/`), ajouter dans `vite.config.ts` :
 
 ```typescript
 export default defineConfig({
-  base: '/portfolio-react-anthony/', // Remplacer par le nom du repo
+  base: '/nom-du-repo/', // doit correspondre au segment d’URL du déploiement
   // ... reste de la config
 })
 ```

@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import SingleProjectNew from './SingleProjectNew';
 import { getProjectByTitle, getAllProjects, type ProjectWithMeta } from '../services/projectService';
-import { type ProjectData } from '../data/projectsNew';
+import { type ProjectData } from '../data/projects';
 import './Project.css';
 
 interface ProjectProps {
@@ -13,6 +13,9 @@ interface ProjectProps {
   onLiftProgressChange?: (progress: number) => void;
   onProjectScrollCombinedChange?: (combinedPx: number) => void;
   coverFullscreenActive?: boolean;
+  onOpenClientAccountAuth?: (mode: 'login' | 'signup') => void;
+  onNavigateHome?: () => void;
+  onOpenClientLiveMeet?: () => void;
 }
 
 function loadProject(projectName: string): ProjectData | null {
@@ -25,13 +28,16 @@ function loadProject(projectName: string): ProjectData | null {
 
 const Project = ({
   onBackClick,
-  projectName = 'Playdago',
+  projectName = 'Go',
   coverImage = null,
   projectCategory = null,
   onSwipeYChange,
   onLiftProgressChange,
   onProjectScrollCombinedChange,
   coverFullscreenActive = false,
+  onOpenClientAccountAuth,
+  onNavigateHome,
+  onOpenClientLiveMeet,
 }: ProjectProps) => {
   const [projectData, setProjectData] = useState<ProjectData | null>(null);
   const [isTransitioning, setIsTransitioning] = useState(false);
@@ -93,6 +99,9 @@ const Project = ({
       onLiftProgressChange={onLiftProgressChange}
       onProjectScrollCombinedChange={onProjectScrollCombinedChange}
       coverFullscreenActive={coverFullscreenActive}
+      onOpenClientAccountAuth={onOpenClientAccountAuth}
+      onNavigateHome={onNavigateHome}
+      onOpenClientLiveMeet={onOpenClientLiveMeet}
     />
   );
 };

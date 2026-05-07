@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630" role="img" aria-label="Placeholder couverture">
+  <rect width="1200" height="630" fill="#25252d"/>
+  <rect x="40" y="40" width="1120" height="550" fill="none" stroke="#4a4a55" stroke-width="2" stroke-dasharray="12 8"/>
+  <text x="600" y="310" text-anchor="middle" fill="#9a9aa8" font-family="system-ui,-apple-system,sans-serif" font-size="32" font-weight="500">Couverture</text>
+  <text x="600" y="355" text-anchor="middle" fill="#6b6b78" font-family="system-ui,-apple-system,sans-serif" font-size="18">1200 × 630</text>
+</svg>

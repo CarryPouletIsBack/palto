@@ -1,6 +1,6 @@
 /**
  * Magic Bento — React Bits (https://reactbits.dev)
- * Variante « imageItems » pour la section Design system Playdago (grille de captures).
+ * Variante « imageItems » pour une grille de captures (design system / vitrine).
  * Mode « shell » : si `children` est fourni sans tuiles (`imageItems` vide), rendu wrapper
  * pour la barre de recherche (MobileSearchBar / Header) — classes `.magic-bento` dans MagicBento.css.
  */
@@ -35,7 +35,7 @@ export interface BentoProps {
 }
 
 export interface MagicBentoProps extends BentoProps {
-  /** Tuiles du bento (Playdago design system). Ignoré en mode shell si `children` est fourni. */
+  /** Tuiles du bento (mode imageItems). Ignoré en mode shell si `children` est fourni. */
   imageItems?: MagicBentoImageItem[];
   className?: string;
   style?: React.CSSProperties;

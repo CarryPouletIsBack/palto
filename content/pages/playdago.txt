@@ -1,3 +1,0 @@
-Titre: Projet Playdago - Anthony Merault
-Description: Page projet détaillant le cas d'étude Playdago : contexte, objectifs, démarche UX/UI, maquettes, design system, implémentation et résultats. Portfolio Product Designer.
-URL: /fr/playdago ou /en/playdago

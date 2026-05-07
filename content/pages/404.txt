@@ -1,2 +1,2 @@
 Titre: Page non trouvée (404)
-Description: Page d'erreur affichée lorsque l'URL demandée n'existe pas. Propose un retour à l'accueil, la découverte des trois projets (Playdago, Pedaboard, Kaldera) et les liens réseaux sociaux.
+Description: Page d'erreur affichée lorsque l'URL demandée n'existe pas. Propose un retour à l'accueil, un accès à la réservation (Go) et les liens réseaux sociaux.

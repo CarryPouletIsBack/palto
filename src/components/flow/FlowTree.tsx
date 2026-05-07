@@ -5,7 +5,7 @@ import { cn } from "../../lib/utils";
 
 /**
  * Arbres UX (compétences, user flow).
- * Référence produit : le user flow Playdago (`#userflow-tree`, SingleProject, variant `userflow`).
+ * Référence produit : user flow page Go (`#userflow-tree`, `SingleProjectNew`, variant `userflow`).
  * Tout nouvel alignement / connecteurs / espacements des autres arbres du site devra s’aligner sur ce comportement (mise à jour des autres usages à planifier).
  */
 
@@ -63,7 +63,7 @@ export const TreeNode = ({
   selectedNodes = new Set(),
   onNodeClick,
   variant = 'competences',
-}) => {
+}: TreeNodeProps) => {
   const hasBranches = data.branches && data.branches.length > 0;
   const hasNext = !!data.next;
   const isSelected = selectedNodes.has(data.id);

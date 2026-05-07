@@ -1,39 +1,32 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-app-theme="light">
   <head>
     <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/apple-touch-icon-180.svg" />
+    <link rel="icon" type="image/svg+xml" href="/images/placeholder-app-icon.svg" />
     <link rel="manifest" href="/manifest.json" />
-    <link rel="apple-touch-icon" href="/apple-touch-icon-120.png" sizes="120x120" />
-    <link rel="apple-touch-icon" href="/apple-touch-icon-152.png" sizes="152x152" />
-    <link rel="apple-touch-icon" href="/apple-touch-icon-180.png" sizes="180x180" />
+    <link rel="apple-touch-icon" href="/images/placeholder-app-icon.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-    <meta name="description" content="Product Designer | Building Complex SaaS & Design Systems — Conception d'interfaces, design systems et expériences utilisateur. Découvrez les projets Pedaboard, Playdago et Kaldera. À propos · Contact. Portfolio Anthony Merault." />
+    <meta name="description" content="Palto — mobilité à La Réunion : carte, trajets, estimation de distance. Renseigner VITE_SITE_URL en production pour les métadonnées absolues (Open Graph)." />
     <!-- Image de prévisualisation (Google, partage social) : placer le fichier dans public/og-image.png -->
-    <meta property="og:image" content="/og-image.png" />
-    <meta property="og:image:alt" content="Anthony Merault - Product Designer | Building Complex SaaS & Design Systems" />
-    <meta property="og:title" content="Anthony Merault - Product Designer | Building Complex SaaS & Design Systems" />
-    <meta property="og:description" content="Product Designer | Building Complex SaaS & Design Systems — Conception d'interfaces, design systems et expériences utilisateur. Découvrez les projets Pedaboard, Playdago et Kaldera." />
+    <meta property="og:image" content="/images/placeholder-cover.svg" />
+    <meta property="og:image:alt" content="Palto — mobilité à La Réunion" />
+    <meta property="og:title" content="Palto" />
+    <meta property="og:description" content="Carte, recherche de destination, itinéraires et outils d’estimation autour de la mobilité à La Réunion." />
     <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:image" content="/og-image.png" />
-    <meta name="twitter:image:alt" content="Anthony Merault - Product Designer | Building Complex SaaS & Design Systems" />
-    <title>Anthony Merault - Product Designer | Building Complex SaaS & Design Systems</title>
-    <!-- Contenu pour crawlers / IA (sans JS) : JSON et HTML -->
-    <link rel="alternate" type="application/json" href="https://anthony-merault.fr/projects-content.json" title="Projects content (crawlers & AI)" />
-    <!-- JSON-LD WebSite pour SEO et sitelinks -->
+    <meta name="twitter:image" content="/images/placeholder-cover.svg" />
+    <meta name="twitter:image:alt" content="Palto — mobilité à La Réunion" />
+    <title>Palto</title>
+    <!-- Contenu pour crawlers / IA (sans JS) : JSON relatif au domaine déployé -->
+    <link rel="alternate" type="application/json" href="/projects-content.json" title="Projects content (crawlers & AI)" />
+    <!-- JSON-LD WebSite : remplacer l’URL par VITE_SITE_URL / domaine réel en prod si besoin -->
     <script type="application/ld+json">
     {
       "@context": "https://schema.org",
       "@type": "WebSite",
-      "name": "Anthony Merault - Product Designer",
-      "url": "https://anthony-merault.fr",
-      "description": "Product Designer | Building Complex SaaS & Design Systems. Conception d'interfaces, design systems et expériences utilisateur.",
-      "inLanguage": ["fr", "en"],
-      "potentialAction": {
-        "@type": "SearchAction",
-        "target": "https://anthony-merault.fr/fr?q={search_term_string}",
-        "query-input": "required name=search_term_string"
-      }
+      "name": "Palto",
+      "url": "/",
+      "description": "Mobilité à La Réunion — carte, trajets, estimation.",
+      "inLanguage": ["fr", "en"]
     }
     </script>
     <!-- Google Tag Manager -->

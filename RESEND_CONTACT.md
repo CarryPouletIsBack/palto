@@ -7,8 +7,8 @@ Dans le dashboard Vercel → Settings → Environment Variables, ajoute :
 | Variable | Description |
 |----------|-------------|
 | `RESEND_API_KEY` | Clé API Resend (obligatoire) |
-| `RESEND_TO_EMAIL` | Email qui reçoit les messages (optionnel, défaut : merault.anthony@gmail.com) |
-| `RESEND_FROM` | Expéditeur (optionnel, ex. `Portfolio <noreply@ton-domaine.com>`) |
+| `RESEND_TO_EMAIL` | Email qui reçoit les messages (**obligatoire** côté API) |
+| `RESEND_FROM` | Expéditeur (optionnel, ex. `Palto <noreply@votre-domaine.com>`) |
 
 ## Test en local
 

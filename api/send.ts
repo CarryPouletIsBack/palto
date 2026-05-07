@@ -29,7 +29,11 @@ export default async function handler(
     return res.status(500).json({ error: 'RESEND_API_KEY non configurée' });
   }
 
-  const toEmail = process.env.RESEND_TO_EMAIL || 'merault.anthony@gmail.com';
+  if (!process.env.RESEND_TO_EMAIL?.trim()) {
+    return res.status(500).json({ error: 'RESEND_TO_EMAIL non configurée' });
+  }
+
+  const toEmail = process.env.RESEND_TO_EMAIL.trim();
 
   try {
     const body = typeof req.body === 'string' ? JSON.parse(req.body) : req.body;
@@ -49,7 +53,7 @@ export default async function handler(
     const textBody = `${companyLine}${message}`;
 
     const data = await resend.emails.send({
-      from: process.env.RESEND_FROM ?? 'Portfolio <onboarding@resend.dev>',
+      from: process.env.RESEND_FROM ?? 'Palto <onboarding@resend.dev>',
       to: [toEmail],
       subject: `Nouveau message de ${name}${company && String(company).trim() ? ` (${String(company).trim()})` : ''}`,
       reply_to: email,
