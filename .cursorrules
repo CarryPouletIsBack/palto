@@ -37,8 +37,15 @@ Pour plus d'informations, consultez : https://mui.com/x/introduction/mcp/
 
 ## Arbres (TreeNode / user flow)
 
-- **Référence** : l’implémentation **Playdago** autour de `#userflow-tree` (`SingleProjectNew.tsx` → `TreeNode` avec `variant="userflow"`, styles `.figma-userflow`, données `userFlow` dans `projectsNew.ts`).
+- **Référence** : l’implémentation **page Go** autour de `#userflow-tree` (`SingleProjectNew.tsx` → `TreeNode` avec `variant="userflow"`, styles `.figma-userflow`, données `userFlow` dans `projects.ts`).
 - C’est le **comportement cible** pour connecteurs continus, safe zone entre bulles et colonne verticale mesurée (`FlowTree.tsx`).
-- **Alignement futur** : mettre à jour les autres arbres du site (ex. page À propos / compétences) pour suivre cette référence — **à faire dans un chantier dédié**, pas bloquant pour les évolutions courantes.
+- **Alignement futur** : aligner d’éventuels autres arbres métier sur cette référence — **à faire dans un chantier dédié**, pas bloquant pour les évolutions courantes.
+
+---
+
+## Chauffeurs à proximité (page Go / Palto)
+
+- **État actuel** : `getNearbyDriversMock()` dans `src/data/nearbyDrivers.ts` — entrée alignée backend : `origin`, `radiusKm`, `limit` (`NearbyDriversQuery`).
+- **Évolution prévue** : remplacer le mock par un appel API réel en gardant le même contrat d’entrée pour ne pas casser l’UI ; optionnel : service `getNearbyDrivers()` dans `src/services/` avec fallback mock (plug-and-play).
 
 
