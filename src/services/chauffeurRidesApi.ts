@@ -26,6 +26,10 @@ type ApiRide = {
   status: string
   amount_eur: number
   distance_km: number | null
+  pickup_lng?: number | null
+  pickup_lat?: number | null
+  dropoff_lng?: number | null
+  dropoff_lat?: number | null
   booking_kind: string
   started_at: string | null
   client_comment?: string | null
@@ -77,6 +81,12 @@ function mapRide(row: ApiRide): CourseRowState {
     startedAt: row.started_at ? Date.parse(row.started_at) : undefined,
     bookingKind: mapBookingKind(row.booking_kind),
     clientComment: row.client_comment?.trim() || undefined,
+    pickupLng: typeof row.pickup_lng === 'number' && Number.isFinite(row.pickup_lng) ? row.pickup_lng : undefined,
+    pickupLat: typeof row.pickup_lat === 'number' && Number.isFinite(row.pickup_lat) ? row.pickup_lat : undefined,
+    dropoffLng:
+      typeof row.dropoff_lng === 'number' && Number.isFinite(row.dropoff_lng) ? row.dropoff_lng : undefined,
+    dropoffLat:
+      typeof row.dropoff_lat === 'number' && Number.isFinite(row.dropoff_lat) ? row.dropoff_lat : undefined,
   }
 }
 

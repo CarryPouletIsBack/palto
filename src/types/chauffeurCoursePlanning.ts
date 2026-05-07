@@ -18,4 +18,8 @@ export type CourseRowState = {
   routeSnapDeviationKm?: number
   bookingKind?: BookingKindUi
   clientComment?: string
+  pickupLng?: number
+  pickupLat?: number
+  dropoffLng?: number
+  dropoffLat?: number
 }

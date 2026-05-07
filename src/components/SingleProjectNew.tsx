@@ -1281,6 +1281,12 @@ const SingleProjectNew: FC<SingleProjectProps> = ({
           ? `Demande prise en compte (${result.externalCode}). Un chauffeur l'acceptera prochainement. Suivi : ${email}.`
           : `Commande enregistree (${result.externalCode}). Chauffeur : ${driverLabel}. Suivi : ${email}.`
       setCheckoutSuccessMessage(successMessage);
+      window.setTimeout(() => {
+        setIsCheckoutPopupOpen(false);
+        if (onOpenClientAccount) {
+          onOpenClientAccount();
+        }
+      }, 900);
     } catch (e) {
       setCheckoutError(e instanceof Error ? e.message : 'Enregistrement impossible. Reessayez.');
     } finally {
@@ -1306,6 +1312,7 @@ const SingleProjectNew: FC<SingleProjectProps> = ({
     effectiveDriverPricingMultiplier,
     effectiveNightSurchargeRate,
     isNightRide,
+    onOpenClientAccount,
     projectData.title,
   ]);
   const [showContactModal, setShowContactModal] = useState(false);
@@ -2731,6 +2738,7 @@ const SingleProjectNew: FC<SingleProjectProps> = ({
                     className="palto-ride-search-btn palto-ride-recap-modal__cta"
                     disabled={
                       checkoutSubmitting ||
+                      Boolean(checkoutSuccessMessage) ||
                       (paltoPickupTiming === 'now' && !paltoSelectedDriver)
                     }
                     onClick={() => void handleCheckoutConfirm()}

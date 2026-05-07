@@ -58,6 +58,10 @@ type CourseRow = {
   status: string
   amount_eur: number
   distance_km: number | null
+  pickup_lng: number | null
+  pickup_lat: number | null
+  dropoff_lng: number | null
+  dropoff_lat: number | null
   booking_kind: string
   requested_driver_external_key: string | null
   assigned_driver_external_key: string | null
@@ -126,7 +130,7 @@ async function handleRidesGet(res: VercelResponse, driverKey: string) {
   const { data, error } = await supabase
     .from('courses')
     .select(
-      'id, external_code, client_id, scheduled_date, scheduled_time, pickup_address, dropoff_address, status, amount_eur, distance_km, booking_kind, requested_driver_external_key, assigned_driver_external_key, accepted_at, started_at, completed_at, cancelled_at, created_at'
+      'id, external_code, client_id, scheduled_date, scheduled_time, pickup_address, dropoff_address, status, amount_eur, distance_km, pickup_lng, pickup_lat, dropoff_lng, dropoff_lat, booking_kind, requested_driver_external_key, assigned_driver_external_key, accepted_at, started_at, completed_at, cancelled_at, created_at'
     )
     .order('created_at', { ascending: false })
     .limit(200)

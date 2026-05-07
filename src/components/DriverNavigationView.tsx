@@ -89,6 +89,10 @@ function buildSnapshotFromCourseId(
     montant: number
     modePaiement?: string
     startedAt?: number
+    pickupLng?: number
+    pickupLat?: number
+    dropoffLng?: number
+    dropoffLat?: number
   }
 ): ChauffeurNavCourseSnapshot {
   return {
@@ -102,6 +106,10 @@ function buildSnapshotFromCourseId(
     montantPrevuEuros: Number.isFinite(ride.montant) ? ride.montant : 0,
     modePaiement: ride.modePaiement || 'carte',
     startedAt: typeof ride.startedAt === 'number' ? ride.startedAt : Date.now(),
+    pickupLng: ride.pickupLng,
+    pickupLat: ride.pickupLat,
+    dropoffLng: ride.dropoffLng,
+    dropoffLat: ride.dropoffLat,
   }
 }
 
@@ -203,20 +211,23 @@ export default function DriverNavigationView({ courseId, onClose }: Props) {
     setRouteFeature(null)
     setDurationLabel(null)
 
-    const queryDepart = `${snap.depart}, La Reunion`
-    const queryArrivee = `${snap.arrivee}, La Reunion`
-
     try {
-      const rawO = await geocodeForward(queryDepart, '', {
-        language: 'fr',
-        proximity: REUNION_PROXIMITY,
-        bbox: REUNION_ISLAND_BBOX_GEOCODE,
-      })
-      const rawD = await geocodeForward(queryArrivee, '', {
-        language: 'fr',
-        proximity: REUNION_PROXIMITY,
-        bbox: REUNION_ISLAND_BBOX_GEOCODE,
-      })
+      const rawO =
+        typeof snap.pickupLng === 'number' && typeof snap.pickupLat === 'number'
+          ? { longitude: snap.pickupLng, latitude: snap.pickupLat }
+          : await geocodeForward(`${snap.depart}, La Reunion`, '', {
+              language: 'fr',
+              proximity: REUNION_PROXIMITY,
+              bbox: REUNION_ISLAND_BBOX_GEOCODE,
+            })
+      const rawD =
+        typeof snap.dropoffLng === 'number' && typeof snap.dropoffLat === 'number'
+          ? { longitude: snap.dropoffLng, latitude: snap.dropoffLat }
+          : await geocodeForward(`${snap.arrivee}, La Reunion`, '', {
+              language: 'fr',
+              proximity: REUNION_PROXIMITY,
+              bbox: REUNION_ISLAND_BBOX_GEOCODE,
+            })
       if (!rawO || !rawD) {
         setGeoError('Impossible de localiser le depart ou la destination sur la carte.')
         setLoadingRoute(false)

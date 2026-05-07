@@ -1366,6 +1366,10 @@ const Dashboard = ({
             montantPrevuEuros: current.montant,
             modePaiement: 'especes',
             startedAt,
+            pickupLng: current.pickupLng,
+            pickupLat: current.pickupLat,
+            dropoffLng: current.dropoffLng,
+            dropoffLat: current.dropoffLat,
           };
           try {
             sessionStorage.setItem(CHAUFFEUR_NAV_COURSE_STORAGE_KEY, JSON.stringify(snap));
@@ -1402,6 +1406,10 @@ const Dashboard = ({
           montantPrevuEuros: current.montant,
           modePaiement: current.modePaiement ?? 'carte',
           startedAt,
+          pickupLng: current.pickupLng,
+          pickupLat: current.pickupLat,
+          dropoffLng: current.dropoffLng,
+          dropoffLat: current.dropoffLat,
         };
         try {
           sessionStorage.setItem(CHAUFFEUR_NAV_COURSE_STORAGE_KEY, JSON.stringify(snap));

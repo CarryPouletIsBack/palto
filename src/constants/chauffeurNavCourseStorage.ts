@@ -15,4 +15,8 @@ export type ChauffeurNavCourseSnapshot = {
   montantPrevuEuros: number
   modePaiement: string
   startedAt: number
+  pickupLng?: number
+  pickupLat?: number
+  dropoffLng?: number
+  dropoffLat?: number
 }
