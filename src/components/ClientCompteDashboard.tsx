@@ -287,6 +287,7 @@ export default function ClientCompteDashboard({ onBack, onOpenClientLiveMeet }: 
   const [selectedRideId, setSelectedRideId] = useState<string | null>(null);
   const [clientRides, setClientRides] = useState<ClientRideItem[]>([]);
   const [ridesSyncTick, setRidesSyncTick] = useState(0);
+  const [authSessionTick, setAuthSessionTick] = useState(0);
   const [orgSyncTick, setOrgSyncTick] = useState(0);
   const ridesForUi = useMemo<DemoRide[]>(() => {
     return clientRides.map((ride) => {
@@ -339,8 +340,8 @@ export default function ClientCompteDashboard({ onBack, onOpenClientLiveMeet }: 
         durationMin: 0,
         distanceKm: Number(ride.distanceKm ?? 0),
         priceEur: Number(ride.amountEur ?? 0),
-        driverName: '—',
-        vehicleLabel: '—',
+        driverName: ride.driverName?.trim() || '—',
+        vehicleLabel: ride.vehicleLabel?.trim() || '—',
         paymentMethod: 'Carte',
         paymentMethodEn: 'Card',
         reference: ride.id,
@@ -447,6 +448,22 @@ export default function ClientCompteDashboard({ onBack, onOpenClientLiveMeet }: 
   }, []);
 
   useEffect(() => {
+    const bump = () => setAuthSessionTick((n) => n + 1);
+    const onStorage = (e: StorageEvent) => {
+      if (e.key == null) return;
+      if (e.key === 'palto:client_token' || e.key === 'palto:client_auth' || e.key === 'dashboard_token' || e.key === 'dashboard_auth') {
+        bump();
+      }
+    };
+    window.addEventListener(PALTO_CLIENT_SESSION_CHANGED_EVENT, bump as EventListener);
+    window.addEventListener('storage', onStorage);
+    return () => {
+      window.removeEventListener(PALTO_CLIENT_SESSION_CHANGED_EVENT, bump as EventListener);
+      window.removeEventListener('storage', onStorage);
+    };
+  }, []);
+
+  useEffect(() => {
     if (!clientRidesApiEnabled()) {
       setClientRides([]);
       return;
@@ -493,7 +510,7 @@ export default function ClientCompteDashboard({ onBack, onOpenClientLiveMeet }: 
     setPhoneNationalDraft(parsed.nationalNumber);
     setPhotoDraftUrl(hydrated.profilePhotoUrl ?? null);
     setPhotoDraftName(hydrated.profilePhotoName ?? '');
-  }, []);
+  }, [authSessionTick]);
 
   useEffect(() => {
     const bump = () => setOrgSyncTick((n) => n + 1);

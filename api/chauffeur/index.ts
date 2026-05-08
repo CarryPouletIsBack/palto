@@ -157,7 +157,12 @@ async function handleRidesGet(res: VercelResponse, driverKey: string) {
   return res.status(200).json({ rides })
 }
 
-async function handleRidesActionPost(req: VercelRequest, res: VercelResponse, driverKey: string) {
+async function handleRidesActionPost(
+  req: VercelRequest,
+  res: VercelResponse,
+  driverKey: string,
+  dashboardEmail: string
+) {
   const parsed = RideActionBodySchema.safeParse(typeof req.body === 'string' ? JSON.parse(req.body) : req.body)
   if (!parsed.success) return res.status(400).json({ error: 'Payload invalide', details: parsed.error.flatten() })
   const { courseId, action } = parsed.data
@@ -178,6 +183,25 @@ async function handleRidesActionPost(req: VercelRequest, res: VercelResponse, dr
       .select('id, status')
       .maybeSingle()
     if (upErr || !updated) return res.status(409).json({ error: 'Impossible d accepter' })
+    const { data: account } = await supabase
+      .from('app_accounts')
+      .select('full_name, vehicle_type')
+      .eq('email', dashboardEmail)
+      .eq('role', 'chauffeur')
+      .maybeSingle()
+    const fallbackName = dashboardEmail.split('@')[0] || 'Chauffeur'
+    const driverName = (account?.full_name ?? '').trim() || fallbackName
+    const vehicleLabel = (account?.vehicle_type ?? '').trim() || ''
+    await supabase.from('course_events').insert({
+      course_id: courseId,
+      event_type: 'accepted',
+      event_note: 'Course acceptee par chauffeur',
+      payload: {
+        driverName,
+        vehicleLabel,
+        driverEmail: dashboardEmail,
+      },
+    })
     return res.status(200).json({ ok: true, status: updated.status })
   }
   if (action === 'start') {
@@ -306,7 +330,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   const driverKey = getChauffeurDriverExternalKey()
 
   if (req.method === 'GET' && resource === 'rides') return handleRidesGet(res, driverKey)
-  if (req.method === 'POST' && resource === 'rides-action') return handleRidesActionPost(req, res, driverKey)
+  if (req.method === 'POST' && resource === 'rides-action') return handleRidesActionPost(req, res, driverKey, dashboardEmail)
   if (req.method === 'GET' && resource === 'stats') return handleStatsGet(res, driverKey)
   if (req.method === 'GET' && resource === 'organization') return handleOrganizationGet(res, dashboardEmail)
   if (req.method === 'PUT' && resource === 'organization') return handleOrganizationPut(req, res, dashboardEmail)

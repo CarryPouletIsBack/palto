@@ -16,6 +16,8 @@ export type ClientRideItem = {
   dropoffLng?: number | null
   dropoffLat?: number | null
   createdAt: string
+  driverName?: string | null
+  vehicleLabel?: string | null
 }
 
 export async function fetchClientRides(email: string, status: 'upcoming' | 'completed' | 'cancelled' | 'all' = 'all') {

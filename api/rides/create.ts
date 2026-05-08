@@ -51,6 +51,41 @@ function externalCode(): string {
   return `TM-${randomBytes(4).toString('hex').toUpperCase()}`
 }
 
+function normalizeAddressForStorage(raw: string): string {
+  const input = raw.trim()
+  if (!input) return ''
+  const normalize = (value: string) =>
+    value
+      .toLowerCase()
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .replace(/\s+/g, ' ')
+      .trim()
+  const normalizeNoPostal = (value: string) => normalize(value).replace(/\b97\d{3}\b/g, '').trim()
+  const parts = input
+    .split(',')
+    .map((p) => p.trim())
+    .filter(Boolean)
+
+  const uniqueParts: string[] = []
+  const seen = new Set<string>()
+  for (const part of parts) {
+    const key = normalizeNoPostal(part)
+    if (!key || seen.has(key)) continue
+    seen.add(key)
+    uniqueParts.push(part.replace(/\s+/g, ' ').trim())
+  }
+
+  const deDuplicated = uniqueParts.filter((part, index) => {
+    const current = normalizeNoPostal(part)
+    return !uniqueParts.slice(0, index).some((prev) => {
+      const previous = normalizeNoPostal(prev)
+      return previous === current || previous.includes(current) || current.includes(previous)
+    })
+  })
+  return deDuplicated.join(', ') || input
+}
+
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   res.setHeader('Access-Control-Allow-Origin', '*')
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS')
@@ -131,8 +166,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     client_id: clientId,
     scheduled_date: b.scheduledDate,
     scheduled_time: scheduledTime,
-    pickup_address: b.pickupAddress.trim(),
-    dropoff_address: b.dropoffAddress.trim(),
+    pickup_address: normalizeAddressForStorage(b.pickupAddress),
+    dropoff_address: normalizeAddressForStorage(b.dropoffAddress),
     status: 'pending' as const,
     amount_eur: b.amountEur,
     distance_km: b.distanceKm ?? null,

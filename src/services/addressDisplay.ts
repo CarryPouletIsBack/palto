@@ -15,13 +15,23 @@ export function simplifyAddressDisplay(raw: string): string {
     .filter(Boolean)
   const uniqueParts: string[] = []
   const seen = new Set<string>()
+  const normalizeNoPostal = (value: string) => normalize(value).replace(/\b97\d{3}\b/g, '').trim()
   for (const part of parts) {
-    const key = normalize(part).replace(/\b97\d{3}\b/g, '').trim()
+    const key = normalizeNoPostal(part)
     if (!key || seen.has(key)) continue
     seen.add(key)
     uniqueParts.push(part)
   }
-  const effectiveParts = uniqueParts.length > 0 ? uniqueParts : parts
+  const effectivePartsRaw = uniqueParts.length > 0 ? uniqueParts : parts
+  // Déduplication « floue » : supprime les segments qui sont des variantes longues/courtes
+  // d'un segment déjà vu (ex: "X 97420 Le Port" vs "X Le Port").
+  const effectiveParts = effectivePartsRaw.filter((part, index) => {
+    const current = normalizeNoPostal(part)
+    return !effectivePartsRaw.slice(0, index).some((prev) => {
+      const previous = normalizeNoPostal(prev)
+      return previous === current || previous.includes(current) || current.includes(previous)
+    })
+  })
   if (effectiveParts.length === 0) return input
 
   const cpPart = effectiveParts.find((p) => /\b97\d{3}\b/.test(p)) ?? ''

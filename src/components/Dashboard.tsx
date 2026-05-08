@@ -15,6 +15,7 @@ import {
   isAuthenticated,
   isChauffeurPrimaryAccountEmail,
   logout,
+  PALTO_CLIENT_SESSION_CHANGED_EVENT,
 } from '../services/authService';
 import ProjectEditor from './ProjectEditor';
 import DashboardStats, {
@@ -719,6 +720,7 @@ const Dashboard = ({
   const [phoneCountryDraft, setPhoneCountryDraft] = useState<SupportedPhoneCountry>('RE');
   const [phoneNationalDraft, setPhoneNationalDraft] = useState('');
   const [phoneError, setPhoneError] = useState<string | null>(null);
+  const [authSessionTick, setAuthSessionTick] = useState(0);
   const [complianceApiSnapshot, setComplianceApiSnapshot] = useState<ChauffeurComplianceSnapshot | null>(null);
   const [apiChauffeurStats, setApiChauffeurStats] = useState<ChauffeurActivityStatsForView | null>(null);
   const [apiHeatmapStats, setApiHeatmapStats] = useState<ChauffeurHeatmapStatsForView | null>(null);
@@ -727,8 +729,40 @@ const Dashboard = ({
   const useStatsApi = statsApiEnabled();
 
   useEffect(() => {
+    const bump = () => setAuthSessionTick((n) => n + 1);
+    const onStorage = (e: StorageEvent) => {
+      if (e.key == null) return;
+      if (e.key === 'dashboard_token' || e.key === 'dashboard_auth' || e.key === 'palto:client_token' || e.key === 'palto:client_auth') {
+        bump();
+      }
+    };
+    window.addEventListener(PALTO_CLIENT_SESSION_CHANGED_EVENT, bump as EventListener);
+    window.addEventListener('storage', onStorage);
+    return () => {
+      window.removeEventListener(PALTO_CLIENT_SESSION_CHANGED_EVENT, bump as EventListener);
+      window.removeEventListener('storage', onStorage);
+    };
+  }, []);
+
+  useEffect(() => {
     const sessionEmail = getUnifiedSessionEmail().toLowerCase();
     if (!sessionEmail) return;
+    const storedProfile = loadStoredChauffeurProfile(normalizeChauffeurEmail(sessionEmail));
+    if (storedProfile) {
+      setChauffeurProfile(storedProfile);
+      setUserProfileDraft(storedProfile);
+      setProfilePhotoUrl(storedProfile.profilePhotoUrl ?? null);
+      setOrganizationPhotoUrl(storedProfile.organizationPhotoUrl ?? null);
+      setVehiclePhotoUrl(storedProfile.vehiclePhotoUrl ?? null);
+      setProfilePhotoName(storedProfile.profilePhotoName ?? '');
+      setOrganizationPhotoName(storedProfile.organizationPhotoName ?? '');
+      setVehiclePhotoName(storedProfile.vehiclePhotoName ?? '');
+      const parsedStoredPhone = parseStoredPhone(storedProfile.telephone);
+      if (storedProfile.telephone.trim()) {
+        setPhoneCountryDraft(parsedStoredPhone.country);
+        setPhoneNationalDraft(parsedStoredPhone.nationalNumber);
+      }
+    }
     const inferred = inferProfileFromEmail(sessionEmail);
     const registryPhone = loadChauffeurRegistry()[normalizeChauffeurEmail(sessionEmail)]?.phoneInternational ?? '';
     const parsedRegistryPhone = parseStoredPhone(registryPhone);
@@ -750,7 +784,7 @@ const Dashboard = ({
       setPhoneCountryDraft(parsedRegistryPhone.country);
       setPhoneNationalDraft(parsedRegistryPhone.nationalNumber);
     }
-  }, []);
+  }, [authSessionTick]);
 
   useEffect(() => {
     saveChauffeurOrg(chauffeurOrg);

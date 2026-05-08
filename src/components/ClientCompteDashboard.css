@@ -328,6 +328,13 @@ body.accueil-page .dashboard-container--home-accueil .dashboard-main {
   display: flex;
   flex-direction: column;
   gap: 10px;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.client-compte-bento-card > * {
+  min-width: 0;
+  max-width: 100%;
 }
 
 .client-compte-bento-card--clickable {
@@ -1554,6 +1561,7 @@ html[data-app-theme='dark'] .client-compte-account-edit-modal-input {
   padding: 6px 10px;
   font-size: 12px;
   position: relative;
+  min-width: 0;
 }
 
 .client-compte-wallet-mini-list li:not(:first-child)::after {
@@ -1593,6 +1601,9 @@ html[data-app-theme='dark'] .client-compte-account-edit-modal-input {
 }
 
 .client-compte-wallet-mini-list__route {
+  flex: 1 1 auto;
+  min-width: 0;
+  max-width: 100%;
   color: #64748b;
   overflow: hidden;
   text-overflow: ellipsis;

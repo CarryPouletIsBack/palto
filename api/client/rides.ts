@@ -28,6 +28,14 @@ type RideRow = {
   created_at: string
 }
 
+type CourseEventRow = {
+  course_id: string
+  payload: {
+    driverName?: string
+    vehicleLabel?: string
+  } | null
+}
+
 type ClientRow = {
   id: string
 }
@@ -205,7 +213,26 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     return
   }
 
-  const items = (data as unknown as RideRow[]).map((row) => ({
+  const rows = data as unknown as RideRow[]
+  const courseIds = rows.map((r) => r.id)
+  let driverMetaByCourse = new Map<string, { driverName?: string; vehicleLabel?: string }>()
+  if (courseIds.length > 0) {
+    const { data: eventsData } = await supabase
+      .from('course_events')
+      .select('course_id,payload')
+      .in('course_id', courseIds)
+      .in('event_type', ['accepted', 'started', 'completed'])
+      .order('created_at', { ascending: false })
+    for (const row of (eventsData ?? []) as CourseEventRow[]) {
+      if (driverMetaByCourse.has(row.course_id)) continue
+      const driverName = row.payload?.driverName?.trim()
+      const vehicleLabel = row.payload?.vehicleLabel?.trim()
+      if (!driverName && !vehicleLabel) continue
+      driverMetaByCourse.set(row.course_id, { driverName, vehicleLabel })
+    }
+  }
+
+  const items = rows.map((row) => ({
     id: row.id,
     status: row.status,
     pickupAddress: row.pickup_address,
@@ -219,6 +246,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     dropoffLng: row.dropoff_lng,
     dropoffLat: row.dropoff_lat,
     createdAt: row.created_at,
+    driverName: driverMetaByCourse.get(row.id)?.driverName ?? null,
+    vehicleLabel: driverMetaByCourse.get(row.id)?.vehicleLabel ?? null,
   }))
 
   res.status(200).json({ items })
