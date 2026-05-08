@@ -1,4 +1,5 @@
 import { useMemo, useState, type FormEvent } from 'react'
+import { Eye, EyeOff } from 'lucide-react'
 import { login, registerChauffeur } from '../services/authService'
 import './AuthPage.css'
 
@@ -76,7 +77,7 @@ export default function ChauffeurAuthPage({ onAuthSuccess }: Props) {
               onClick={() => setShowPassword((visible) => !visible)}
               aria-label={showPassword ? 'Masquer le mot de passe' : 'Afficher le mot de passe'}
             >
-              {showPassword ? 'Masquer' : 'Afficher'}
+              {showPassword ? <EyeOff size={16} aria-hidden /> : <Eye size={16} aria-hidden />}
             </button>
           </div>
           {mode === 'login' ? (

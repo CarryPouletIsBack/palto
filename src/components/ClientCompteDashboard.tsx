@@ -288,11 +288,6 @@ export default function ClientCompteDashboard({ onBack, onOpenClientLiveMeet }: 
   const [clientRides, setClientRides] = useState<ClientRideItem[]>([]);
   const [ridesSyncTick, setRidesSyncTick] = useState(0);
   const [orgSyncTick, setOrgSyncTick] = useState(0);
-  const activeClientEmail = useMemo(() => {
-    const fromSession = getCurrentClientUser()?.email?.trim().toLowerCase() ?? '';
-    if (fromSession) return fromSession;
-    return profile.email.trim().toLowerCase();
-  }, [profile.email, ridesSyncTick]);
   const ridesForUi = useMemo<DemoRide[]>(() => {
     return clientRides.map((ride) => {
       const iso = `${ride.scheduledDate}T${ride.scheduledTime}`;
@@ -370,6 +365,11 @@ export default function ClientCompteDashboard({ onBack, onOpenClientLiveMeet }: 
   const [profile, setProfile] = useState<ClientAccountSnapshot>(() =>
     loadClientAccountSnapshot(getCurrentClientUser()?.email)
   );
+  const activeClientEmail = useMemo(() => {
+    const fromSession = getCurrentClientUser()?.email?.trim().toLowerCase() ?? '';
+    if (fromSession) return fromSession;
+    return profile.email.trim().toLowerCase();
+  }, [profile.email, ridesSyncTick]);
   const chauffeurLinkContext = useMemo(() => {
     void orgSyncTick;
     const emailNorm = normalizeChauffeurEmail(profile.email || '');
