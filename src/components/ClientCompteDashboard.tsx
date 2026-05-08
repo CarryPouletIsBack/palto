@@ -90,6 +90,7 @@ import {
   getCurrentClientUser,
   isChauffeurPrimaryAccountEmail,
   isClientAuthenticated,
+  logoutClient,
   PALTO_CLIENT_SESSION_CHANGED_EVENT,
 } from '../services/authService';
 import { cancelClientRide, clientRidesApiEnabled, fetchClientRides, type ClientRideItem } from '../services/clientRidesApi';
@@ -982,6 +983,13 @@ export default function ClientCompteDashboard({ onBack, onOpenClientLiveMeet }: 
     if (isMobileViewport) setMobileSidebarOpen(false);
   }, [onBack, isMobileViewport]);
 
+  const handleClientLogout = useCallback(() => {
+    logoutClient();
+    setAccountModalOpen(false);
+    if (isMobileViewport) setMobileSidebarOpen(false);
+    onBack();
+  }, [isMobileViewport, onBack]);
+
   const handleGoPage = useCallback(() => {
     const prefix = language === 'en' ? '/en' : '/fr';
     window.history.pushState({}, '', `${prefix}/go`);
@@ -1391,13 +1399,6 @@ export default function ClientCompteDashboard({ onBack, onOpenClientLiveMeet }: 
                             <button
                               type="button"
                               className="client-compte-account-menu__item"
-                              onClick={() => topbarPhotoInputRef.current?.click()}
-                            >
-                              {isEn ? 'Add profile photo' : 'Ajouter une photo de profil'}
-                            </button>
-                            <button
-                              type="button"
-                              className="client-compte-account-menu__item"
                               onClick={() => {
                                 goNav('settings');
                                 setAccountModalOpen(false);
@@ -1414,6 +1415,13 @@ export default function ClientCompteDashboard({ onBack, onOpenClientLiveMeet }: 
                               }}
                             >
                               Gerer le compte Palto
+                            </button>
+                            <button
+                              type="button"
+                              className="client-compte-account-menu__item"
+                              onClick={handleClientLogout}
+                            >
+                              {isEn ? 'Sign out' : 'Se deconnecter'}
                             </button>
                           </div>
                         </div>
