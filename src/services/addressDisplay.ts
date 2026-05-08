@@ -1,19 +1,42 @@
 export function simplifyAddressDisplay(raw: string): string {
   const input = raw.trim()
   if (!input) return ''
+  const normalize = (value: string) =>
+    value
+      .toLowerCase()
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .replace(/\s+/g, ' ')
+      .trim()
+
   const parts = input
     .split(',')
     .map((p) => p.trim())
     .filter(Boolean)
-  if (parts.length === 0) return input
+  const uniqueParts: string[] = []
+  const seen = new Set<string>()
+  for (const part of parts) {
+    const key = normalize(part).replace(/\b97\d{3}\b/g, '').trim()
+    if (!key || seen.has(key)) continue
+    seen.add(key)
+    uniqueParts.push(part)
+  }
+  const effectiveParts = uniqueParts.length > 0 ? uniqueParts : parts
+  if (effectiveParts.length === 0) return input
 
-  const cpPart = parts.find((p) => /\b97\d{3}\b/.test(p)) ?? ''
+  const cpPart = effectiveParts.find((p) => /\b97\d{3}\b/.test(p)) ?? ''
   const cityPart =
-    parts.find((p) => /\bsaint\b|\ble\s+\w+|\bla\s+\w+|port|tampon|possession|etang|saline/i.test(p)) ??
-    (parts.length > 1 ? parts[1] : '')
-  const streetPart = parts[0]
+    effectiveParts.find((p) => /\bsaint\b|\ble\s+\w+|\bla\s+\w+|port|tampon|possession|etang|saline/i.test(p)) ??
+    (effectiveParts.length > 1 ? effectiveParts[1] : '')
+  const streetPart = effectiveParts[0]
   const cp = (cpPart.match(/\b97\d{3}\b/) ?? [])[0] ?? ''
   const city = cityPart.replace(/\b97\d{3}\b/g, '').replace(/\bla reunion\b/gi, '').trim()
+
+  // Si le premier segment contient déjà "numéro/voie + CP + ville", on le garde tel quel
+  // pour éviter les doublons du type "..., Le Port, 97420".
+  if (/\b97\d{3}\b/.test(streetPart) && /\bsaint\b|\ble\s+\w+|\bla\s+\w+|port|tampon|possession|etang|saline/i.test(streetPart)) {
+    return streetPart.replace(/\s+/g, ' ').trim()
+  }
 
   const compact = [streetPart, city, cp].filter(Boolean).join(', ')
   return compact || input

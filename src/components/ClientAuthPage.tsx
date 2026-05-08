@@ -54,8 +54,13 @@ export default function ClientAuthPage({ onAuthSuccess }: Props) {
             <button
               className="auth-page-toggle-visibility"
               type="button"
-              onClick={() => setShowPassword((visible) => !visible)}
-              aria-label={showPassword ? 'Masquer le mot de passe' : 'Afficher le mot de passe'}
+              onMouseDown={() => setShowPassword(true)}
+              onMouseUp={() => setShowPassword(false)}
+              onMouseLeave={() => setShowPassword(false)}
+              onTouchStart={() => setShowPassword(true)}
+              onTouchEnd={() => setShowPassword(false)}
+              onBlur={() => setShowPassword(false)}
+              aria-label="Maintenir pour afficher le mot de passe"
             >
               {showPassword ? <EyeOff size={16} aria-hidden /> : <Eye size={16} aria-hidden />}
             </button>
