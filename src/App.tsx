@@ -772,6 +772,10 @@ function App() {
                 />
               ) : (
                 <ClientAuthPage
+                  onClose={() => {
+                    setCurrentPage('accueil')
+                    window.history.pushState({}, '', getPathFromPage('accueil'))
+                  }}
                   onAuthSuccess={() => {
                     const prefix = language === 'en' ? '/en' : '/fr'
                     window.history.pushState({}, '', `${prefix}/compte`)
@@ -800,6 +804,10 @@ function App() {
                 />
               ) : (
                 <ChauffeurAuthPage
+                  onClose={() => {
+                    setCurrentPage('accueil-chauffeur')
+                    window.history.pushState({}, '', getPathFromPage('accueil-chauffeur'))
+                  }}
                   onAuthSuccess={() => {
                     const prefix = language === 'en' ? '/en' : '/fr'
                     window.history.pushState({}, '', `${prefix}/dashboard?dashboardView=user`)

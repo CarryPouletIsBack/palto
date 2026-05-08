@@ -1,13 +1,14 @@
 import { useMemo, useState } from 'react'
-import { Eye, EyeOff } from 'lucide-react'
+import { Eye, EyeOff, X } from 'lucide-react'
 import { loginClient, registerClient } from '../services/authService'
 import './AuthPage.css'
 
 type Props = {
   onAuthSuccess: () => void
+  onClose?: () => void
 }
 
-export default function ClientAuthPage({ onAuthSuccess }: Props) {
+export default function ClientAuthPage({ onAuthSuccess, onClose }: Props) {
   const signupDefault = useMemo(() => new URLSearchParams(window.location.search).get('clientSignup') === '1', [])
   const [mode, setMode] = useState<'login' | 'signup'>(signupDefault ? 'signup' : 'login')
   const [email, setEmail] = useState('')
@@ -33,6 +34,11 @@ export default function ClientAuthPage({ onAuthSuccess }: Props) {
   return (
     <section className="auth-page-shell">
       <div className="auth-page-card">
+        {onClose ? (
+          <button type="button" className="auth-page-close" onClick={onClose} aria-label="Fermer">
+            <X size={18} aria-hidden />
+          </button>
+        ) : null}
         <h1 className="auth-page-title">{mode === 'signup' ? 'Creer un compte client' : 'Connexion client'}</h1>
         <p className="auth-page-subtitle">Compte client connecte a la base de donnees.</p>
         <div className="auth-page-grid">
@@ -87,7 +93,7 @@ export default function ClientAuthPage({ onAuthSuccess }: Props) {
               type="button"
               onClick={() => setMode((m) => (m === 'signup' ? 'login' : 'signup'))}
             >
-              {mode === 'signup' ? 'J ai deja un compte' : 'Creer un compte'}
+              {mode === 'signup' ? "J'ai deja un compte" : 'Creer un compte'}
             </button>
           </div>
         </div>

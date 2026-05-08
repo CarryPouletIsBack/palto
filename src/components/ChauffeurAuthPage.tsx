@@ -1,13 +1,14 @@
 import { useMemo, useState, type FormEvent } from 'react'
-import { Eye, EyeOff } from 'lucide-react'
+import { Eye, EyeOff, X } from 'lucide-react'
 import { login, registerChauffeur } from '../services/authService'
 import './AuthPage.css'
 
 type Props = {
   onAuthSuccess: () => void
+  onClose?: () => void
 }
 
-export default function ChauffeurAuthPage({ onAuthSuccess }: Props) {
+export default function ChauffeurAuthPage({ onAuthSuccess, onClose }: Props) {
   const signupDefault = useMemo(
     () => new URLSearchParams(window.location.search).get('chauffeurSignup') === '1',
     []
@@ -53,6 +54,11 @@ export default function ChauffeurAuthPage({ onAuthSuccess }: Props) {
   return (
     <section className="auth-page-shell">
       <div className="auth-page-card">
+        {onClose ? (
+          <button type="button" className="auth-page-close" onClick={onClose} aria-label="Fermer">
+            <X size={18} aria-hidden />
+          </button>
+        ) : null}
         <h1 className="auth-page-title">{mode === 'signup' ? 'Creer un compte chauffeur' : 'Connexion chauffeur'}</h1>
         <p className="auth-page-subtitle">Compte chauffeur connecte a la base de donnees.</p>
         <form className="auth-page-grid" onSubmit={handleSubmit}>
@@ -132,7 +138,7 @@ export default function ChauffeurAuthPage({ onAuthSuccess }: Props) {
               type="button"
               onClick={() => setMode((m) => (m === 'signup' ? 'login' : 'signup'))}
             >
-              {mode === 'signup' ? 'J ai deja un compte' : 'Creer un compte'}
+              {mode === 'signup' ? "J'ai deja un compte" : 'Creer un compte'}
             </button>
           </div>
         </form>
