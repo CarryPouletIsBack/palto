@@ -712,6 +712,9 @@ body.accueil-page .dashboard-container--home-accueil .dashboard-main {
 .client-compte-overview-ride-card .dashboard-home-topbar-upcoming {
   width: fit-content;
   max-width: 100%;
+  font-size: 28px;
+  line-height: 1.2;
+  gap: 10px;
 }
 
 .client-compte-overview-ride-card .dashboard-home-topbar-upcoming-label,
@@ -721,7 +724,13 @@ body.accueil-page .dashboard-container--home-accueil .dashboard-main {
 }
 
 .client-compte-overview-ride-card .dashboard-home-topbar-upcoming-label {
-  font-size: 14px;
+  font-size: 28px;
+  font-weight: 700;
+}
+
+.client-compte-overview-ride-card .dashboard-home-topbar-upcoming-route,
+.client-compte-overview-ride-card .dashboard-home-topbar-upcoming-time {
+  font-size: 24px;
   font-weight: 700;
 }
 
