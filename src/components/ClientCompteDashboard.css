@@ -823,6 +823,27 @@ body.accueil-page .dashboard-container--home-accueil .dashboard-main {
   color: #64748b;
 }
 
+.client-compte-account-menu__role-label {
+  display: grid;
+  gap: 4px;
+  margin-top: 8px;
+  font-size: 11px;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  color: #64748b;
+}
+
+.client-compte-account-menu__role-select {
+  width: 100%;
+  border: 1px solid #cbd5e1;
+  border-radius: 10px;
+  padding: 8px 10px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #0f172a;
+  background: #ffffff;
+}
+
 .client-compte-account-menu__actions {
   display: grid;
 }
@@ -945,6 +966,16 @@ html[data-app-theme='dark'] .client-compte-account-menu__head strong {
 
 html[data-app-theme='dark'] .client-compte-account-menu__head span {
   color: var(--app-text-muted, #94a3b8);
+}
+
+html[data-app-theme='dark'] .client-compte-account-menu__role-label {
+  color: var(--app-text-muted, #94a3b8);
+}
+
+html[data-app-theme='dark'] .client-compte-account-menu__role-select {
+  border-color: rgba(255, 255, 255, 0.18);
+  color: var(--app-text-primary, #f1f5f9);
+  background: rgba(15, 23, 42, 0.75);
 }
 
 html[data-app-theme='dark'] .client-compte-account-menu__item {
@@ -1560,6 +1591,10 @@ html[data-app-theme='dark'] .client-compte-account-edit-modal-input {
   padding: 0;
   display: grid;
   gap: 6px;
+  min-width: 0;
+  width: 100%;
+  max-width: 100%;
+  overflow: hidden;
 }
 
 .client-compte-wallet-mini-list li {
@@ -1571,6 +1606,9 @@ html[data-app-theme='dark'] .client-compte-account-edit-modal-input {
   font-size: 12px;
   position: relative;
   min-width: 0;
+  width: 100%;
+  max-width: 100%;
+  overflow: hidden;
 }
 
 .client-compte-wallet-mini-list li:not(:first-child)::after {
@@ -1588,6 +1626,9 @@ html[data-app-theme='dark'] .client-compte-account-edit-modal-input {
   cursor: pointer;
   position: relative;
   isolation: isolate;
+  width: 100%;
+  max-width: 100%;
+  overflow: hidden;
 }
 
 .client-compte-wallet-mini-list__item::before {
@@ -1611,6 +1652,7 @@ html[data-app-theme='dark'] .client-compte-account-edit-modal-input {
 
 .client-compte-wallet-mini-list__route {
   flex: 1 1 auto;
+  display: block;
   min-width: 0;
   max-width: 100%;
   color: #64748b;

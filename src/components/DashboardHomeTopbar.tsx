@@ -1,8 +1,9 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { User } from 'lucide-react'
 import { useLanguage } from '../contexts/LanguageContext'
 import { trackEvent } from '../services/googleAnalyticsTracking'
 import { loadClientAccountSnapshot } from '../constants/clientAccountStorage'
+import { isChauffeurPrimaryAccountEmail, logoutClient } from '../services/authService'
 import {
   getCurrentClientUser,
   getCurrentUser,
@@ -35,8 +36,10 @@ export function DashboardHomeTopbar({
   onOpenClientAccount,
   onNavigateHome,
 }: DashboardHomeTopbarProps) {
-  const { t } = useLanguage()
+  const { t, language } = useLanguage()
   const [authTick, setAuthTick] = useState(0)
+  const [accountModalOpen, setAccountModalOpen] = useState(false)
+  const accountMenuRef = useRef<HTMLDivElement | null>(null)
 
   useEffect(() => {
     const refresh = () => setAuthTick((n) => n + 1)
@@ -97,6 +100,41 @@ export function DashboardHomeTopbar({
     return badges
   }, [session.clientLogged, session.chauffeurLogged])
 
+  const hasLinkedChauffeurAccount = useMemo(() => {
+    const email = session.user?.email?.trim() ?? ''
+    if (!email) return false
+    return session.chauffeurLogged || isChauffeurPrimaryAccountEmail(email)
+  }, [session.chauffeurLogged, session.user?.email])
+
+  useEffect(() => {
+    if (!accountModalOpen) return
+    const onPointerDown = (event: MouseEvent) => {
+      if (!accountMenuRef.current) return
+      if (!accountMenuRef.current.contains(event.target as Node)) {
+        setAccountModalOpen(false)
+      }
+    }
+    window.addEventListener('mousedown', onPointerDown)
+    return () => window.removeEventListener('mousedown', onPointerDown)
+  }, [accountModalOpen])
+
+  const handleDriverDashboard = () => {
+    const prefix = language === 'en' ? '/en' : '/fr'
+    window.history.pushState({}, '', `${prefix}/dashboard`)
+    window.dispatchEvent(new PopStateEvent('popstate'))
+    setAccountModalOpen(false)
+  }
+
+  const handleClientAccount = () => {
+    setAccountModalOpen(false)
+    onOpenClientAccount?.()
+  }
+
+  const handleLogout = () => {
+    logoutClient()
+    setAccountModalOpen(false)
+  }
+
   const titleEl =
     onNavigateHome != null ? (
       <button
@@ -122,12 +160,12 @@ export function DashboardHomeTopbar({
           <div className="dashboard-home-topbar-right-cluster">
             <LanguageSwitcher />
             {accountDisplayName && onOpenClientAccount ? (
-              <div className="client-compte-topbar-menu-anchor">
+              <div className="client-compte-topbar-menu-anchor" ref={accountMenuRef}>
                 <div className="client-compte-topbar-session">
                   <button
                     type="button"
                     className="client-compte-topbar-user-btn"
-                    onClick={onOpenClientAccount}
+                    onClick={() => setAccountModalOpen((prev) => !prev)}
                     aria-label="Gerer le compte"
                   >
                     {accountPhotoUrl ? (
@@ -147,6 +185,37 @@ export function DashboardHomeTopbar({
                     </div>
                   ) : null}
                 </div>
+                {accountModalOpen ? (
+                  <div className="client-compte-account-menu" role="menu" aria-label="Menu compte">
+                    <div className="client-compte-account-menu__head">
+                      <strong>{accountDisplayName}</strong>
+                      <span>{session.user?.email ?? ''}</span>
+                      {hasLinkedChauffeurAccount ? (
+                        <label className="client-compte-account-menu__role-label">
+                          {language === 'en' ? 'Account' : 'Compte'}
+                          <select
+                            className="client-compte-account-menu__role-select"
+                            value="client"
+                            onChange={(e) => {
+                              if (e.target.value === 'chauffeur') handleDriverDashboard()
+                            }}
+                          >
+                            <option value="client">{language === 'en' ? 'Client account' : 'Compte client'}</option>
+                            <option value="chauffeur">{language === 'en' ? 'Driver account' : 'Compte chauffeur'}</option>
+                          </select>
+                        </label>
+                      ) : null}
+                    </div>
+                    <div className="client-compte-account-menu__actions">
+                      <button type="button" className="client-compte-account-menu__item" onClick={handleClientAccount}>
+                        {language === 'en' ? 'Manage Palto account' : 'Gerer le compte Palto'}
+                      </button>
+                      <button type="button" className="client-compte-account-menu__item" onClick={handleLogout}>
+                        {language === 'en' ? 'Sign out' : 'Se deconnecter'}
+                      </button>
+                    </div>
+                  </div>
+                ) : null}
               </div>
             ) : onOpenClientAccountAuth ? (
               <div className="hero-topbar-auth" role="group" aria-label={t('hero.topbarAuthAria')}>

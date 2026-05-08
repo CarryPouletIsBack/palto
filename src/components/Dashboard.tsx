@@ -598,6 +598,7 @@ const Dashboard = ({
   const [clientModalOpen, setClientModalOpen] = useState(false);
   const [alertsOpen, setAlertsOpen] = useState(false);
   const [moreMenuOpen, setMoreMenuOpen] = useState(false);
+  const [topbarAccountMenuOpen, setTopbarAccountMenuOpen] = useState(false);
   const [paltoMenuOpen, setPaltoMenuOpen] = useState(false);
   const [bugReportModalOpen, setBugReportModalOpen] = useState(false);
   const [bugSentiment, setBugSentiment] = useState<'up' | 'down' | null>(null);
@@ -613,6 +614,7 @@ const Dashboard = ({
   );
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
   const paltoMenuRef = useRef<HTMLDivElement | null>(null);
+  const topbarAccountMenuRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
@@ -727,6 +729,9 @@ const Dashboard = ({
   const useOrgApi = organizationApiEnabled();
   const useComplianceApi = complianceApiEnabled();
   const useStatsApi = statsApiEnabled();
+  const hasLinkedClientAccount = useMemo(() => {
+    return Boolean(getCurrentClientUser()?.email?.trim());
+  }, [authSessionTick]);
 
   useEffect(() => {
     const bump = () => setAuthSessionTick((n) => n + 1);
@@ -950,6 +955,18 @@ const Dashboard = ({
   }, [paltoMenuOpen]);
 
   useEffect(() => {
+    if (!topbarAccountMenuOpen) return;
+    const onPointerDown = (event: MouseEvent) => {
+      if (!topbarAccountMenuRef.current) return;
+      if (!topbarAccountMenuRef.current.contains(event.target as Node)) {
+        setTopbarAccountMenuOpen(false);
+      }
+    };
+    window.addEventListener('mousedown', onPointerDown);
+    return () => window.removeEventListener('mousedown', onPointerDown);
+  }, [topbarAccountMenuOpen]);
+
+  useEffect(() => {
     if (planningModalDate === null || !isMobileViewport) return;
     const html = document.documentElement;
     const body = document.body;
@@ -975,6 +992,24 @@ const Dashboard = ({
       }
     },
     [isMobileViewport]
+  );
+
+  const handleTopbarLogout = useCallback(() => {
+    setTopbarAccountMenuOpen(false);
+    logout();
+    window.location.href = '/';
+  }, []);
+
+  const handleTopbarRoleSelect = useCallback(
+    (nextRole: 'chauffeur' | 'client') => {
+      if (nextRole === 'client') {
+        const prefix = language === 'en' ? '/en' : '/fr';
+        setTopbarAccountMenuOpen(false);
+        window.history.pushState({}, '', `${prefix}/compte`);
+        window.dispatchEvent(new PopStateEvent('popstate'));
+      }
+    },
+    [language]
   );
 
   const ORG_EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/i;
@@ -2078,20 +2113,65 @@ const Dashboard = ({
                 </div>
               )}
               <div className="dashboard-topbar-right">
-                <button
-                  className={`dashboard-avatar dashboard-avatar--topbar ${activeView === 'user' ? 'active' : ''}`}
-                  onClick={() => {
-                    setAlertsOpen(false);
-                    setMoreMenuOpen(false);
-                    handleNavSelect('user');
-                  }}
-                  title="Ouvrir le compte"
-                  aria-pressed={activeView === 'user'}
-                >
-                  <span className="dashboard-avatar-icon" aria-hidden>
-                    <User size={18} />
-                  </span>
-                </button>
+                <div className="client-compte-topbar-menu-anchor" ref={topbarAccountMenuRef}>
+                  <button
+                    type="button"
+                    className="client-compte-topbar-user-btn"
+                    onClick={() => {
+                      setAlertsOpen(false);
+                      setMoreMenuOpen(false);
+                      setTopbarAccountMenuOpen((prev) => !prev);
+                    }}
+                    aria-label="Gerer le compte"
+                  >
+                    {profilePhotoUrl ? (
+                      <img
+                        src={profilePhotoUrl}
+                        alt={t('clientAccount.photoAlt')}
+                        className="client-compte-topbar-user-btn__avatar"
+                      />
+                    ) : (
+                      <User size={16} aria-hidden />
+                    )}
+                    <span>{`${chauffeurProfile.prenom} ${chauffeurProfile.nom}`.trim() || chauffeurProfile.email || 'Compte'}</span>
+                  </button>
+                  {topbarAccountMenuOpen ? (
+                    <div className="client-compte-account-menu" role="menu" aria-label="Menu compte">
+                      <div className="client-compte-account-menu__head">
+                        <strong>{`${chauffeurProfile.prenom} ${chauffeurProfile.nom}`.trim() || 'Compte chauffeur'}</strong>
+                        <span>{chauffeurProfile.email}</span>
+                        {hasLinkedClientAccount ? (
+                          <label className="client-compte-account-menu__role-label">
+                            {language === 'en' ? 'Account' : 'Compte'}
+                            <select
+                              className="client-compte-account-menu__role-select"
+                              value="chauffeur"
+                              onChange={(e) => handleTopbarRoleSelect(e.target.value as 'chauffeur' | 'client')}
+                            >
+                              <option value="chauffeur">{language === 'en' ? 'Driver account' : 'Compte chauffeur'}</option>
+                              <option value="client">{language === 'en' ? 'Client account' : 'Compte client'}</option>
+                            </select>
+                          </label>
+                        ) : null}
+                      </div>
+                      <div className="client-compte-account-menu__actions">
+                        <button
+                          type="button"
+                          className="client-compte-account-menu__item"
+                          onClick={() => {
+                            setTopbarAccountMenuOpen(false);
+                            handleNavSelect('user');
+                          }}
+                        >
+                          {language === 'en' ? 'Manage Palto account' : 'Gerer le compte Palto'}
+                        </button>
+                        <button type="button" className="client-compte-account-menu__item" onClick={handleTopbarLogout}>
+                          {language === 'en' ? 'Sign out' : 'Se deconnecter'}
+                        </button>
+                      </div>
+                    </div>
+                  ) : null}
+                </div>
               </div>
             </header>
 

@@ -1004,6 +1004,16 @@ export default function ClientCompteDashboard({ onBack, onOpenClientLiveMeet }: 
     trackEvent('click', 'client_account', 'overview_driver_dashboard');
   }, [language]);
 
+  const handleAccountRoleSelect = useCallback(
+    (nextRole: 'client' | 'chauffeur') => {
+      if (nextRole === 'chauffeur') {
+        setAccountModalOpen(false);
+        handleDriverDashboard();
+      }
+    },
+    [handleDriverDashboard]
+  );
+
   const handleBecomeDriver = useCallback(() => {
     const prefix = language === 'en' ? '/en' : '/fr';
     window.history.pushState({}, '', `${prefix}/dashboard?chauffeurSignup=1`);
@@ -1394,6 +1404,21 @@ export default function ClientCompteDashboard({ onBack, onOpenClientLiveMeet }: 
                               {profile.prenom} {profile.nom}
                             </strong>
                             <span>{profile.email}</span>
+                            {chauffeurLinkContext.hasLinkedChauffeurAccount ? (
+                              <label className="client-compte-account-menu__role-label">
+                                {isEn ? 'Account' : 'Compte'}
+                                <select
+                                  className="client-compte-account-menu__role-select"
+                                  value="client"
+                                  onChange={(e) => handleAccountRoleSelect(e.target.value as 'client' | 'chauffeur')}
+                                >
+                                  <option value="client">{isEn ? 'Client account' : 'Compte client'}</option>
+                                  <option value="chauffeur">
+                                    {isEn ? 'Driver account' : 'Compte chauffeur'} ({chauffeurLinkContext.scopeLabel})
+                                  </option>
+                                </select>
+                              </label>
+                            ) : null}
                           </div>
                           <div className="client-compte-account-menu__actions">
                             <button
