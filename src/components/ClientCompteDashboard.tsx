@@ -471,9 +471,9 @@ export default function ClientCompteDashboard({ onBack, onOpenClientLiveMeet }: 
   }, [ridesSyncTick]);
 
   useEffect(() => {
-    const snap = loadClientAccountSnapshot(sessionEmail);
     const sessionUser = getCurrentClientUser();
     const sessionEmail = (sessionUser?.email ?? '').trim().toLowerCase();
+    const snap = loadClientAccountSnapshot(sessionEmail);
     const needsEmailHydration = sessionEmail.length > 0 && snap.email.trim().toLowerCase() !== sessionEmail;
     const needsNameHydration = !snap.prenom.trim() && !snap.nom.trim() && sessionEmail.length > 0;
     const inferred = inferClientIdentityFromEmail(sessionEmail);
