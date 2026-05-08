@@ -714,7 +714,7 @@ html[data-app-theme='dark'] .dashboard-home-topbar-upcoming-btn {
 }
 
 .dashboard-container--chauffeur .dashboard-topbar {
-  overflow: hidden;
+  overflow: visible;
   display: flex;
   align-items: center;
   gap: 8px;
@@ -722,12 +722,17 @@ html[data-app-theme='dark'] .dashboard-home-topbar-upcoming-btn {
 }
 
 .dashboard-container--chauffeur .dashboard-topbar-right {
-  width: 44px;
-  max-width: 44px;
-  flex: 0 0 44px;
-  min-width: 0;
+  width: auto;
+  max-width: none;
+  flex: 0 0 auto;
+  min-width: 154px;
   justify-content: flex-end;
-  overflow: hidden;
+  overflow: visible;
+}
+
+.dashboard-container--chauffeur .dashboard-topbar-right .client-compte-topbar-menu-anchor {
+  position: relative;
+  overflow: visible;
 }
 
 .dashboard-avatar--topbar {
@@ -829,9 +834,10 @@ html[data-app-theme='dark'] .dashboard-home-topbar-upcoming-btn {
   }
 
   .dashboard-container--chauffeur .dashboard-topbar-right {
-    width: 154px;
-    max-width: 154px;
-    flex-basis: 154px;
+    width: auto;
+    max-width: none;
+    flex: 0 0 auto;
+    min-width: 154px;
   }
 
   .dashboard-container--chauffeur .topbar-ride-wrap {
