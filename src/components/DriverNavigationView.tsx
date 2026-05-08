@@ -319,21 +319,9 @@ export default function DriverNavigationView({ courseId, onClose }: Props) {
     onClose()
   }, [courseId, onClose])
 
-  const dismissRecapContinue = useCallback(() => {
-    phaseRef.current = 'navigating'
-    setPhase('navigating')
-    arrivalStreakRef.current = 0
-  }, [])
-
   useEffect(() => {
     requestFinishRef.current = requestFinish
   }, [requestFinish])
-
-  useEffect(() => {
-    if (phase !== 'recap') return
-    const id = window.setInterval(() => setRecapNow(Date.now()), 1000)
-    return () => window.clearInterval(id)
-  }, [phase])
 
   /** Écran allumé pendant l’écran navigation (comme une appli GPS). */
   useEffect(() => {
@@ -713,14 +701,7 @@ export default function DriverNavigationView({ courseId, onClose }: Props) {
 
             <div className="driver-recap-actions">
               <button type="button" className="driver-recap-btn driver-recap-btn--primary" onClick={confirmRecapAndLeave}>
-                Retour au planning
-              </button>
-              <button
-                type="button"
-                className="driver-recap-btn driver-recap-btn--ghost"
-                onClick={dismissRecapContinue}
-              >
-                Poursuivre la navigation
+                Terminer la course
               </button>
             </div>
           </div>

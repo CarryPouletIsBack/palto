@@ -74,6 +74,7 @@ import {
   type AppTheme,
   type ClientAppPreferencesSnapshot,
 } from '../constants/clientAppPreferencesStorage';
+import { loadClientAccountSnapshot } from '../constants/clientAccountStorage';
 import { trackEvent } from '../services/googleAnalyticsTracking';
 import { toast } from 'sonner';
 import './Dashboard.css';
@@ -729,6 +730,20 @@ const Dashboard = ({
   const useOrgApi = organizationApiEnabled();
   const useComplianceApi = complianceApiEnabled();
   const useStatsApi = statsApiEnabled();
+  const paltoIdentity = useMemo(() => {
+    const sessionEmail = getUnifiedSessionEmail().trim().toLowerCase();
+    const snap = loadClientAccountSnapshot(sessionEmail);
+    const fullName = `${snap.prenom.trim()} ${snap.nom.trim()}`.trim();
+    const fallbackName = `${chauffeurProfile.prenom} ${chauffeurProfile.nom}`.trim();
+    const inferred = inferProfileFromEmail(sessionEmail);
+    const inferredName = `${inferred.prenom} ${inferred.nom}`.trim();
+    const photo = typeof snap.profilePhotoUrl === 'string' && snap.profilePhotoUrl.trim() ? snap.profilePhotoUrl : null;
+    return {
+      email: snap.email.trim() || sessionEmail || chauffeurProfile.email,
+      fullName: fullName || fallbackName || inferredName || 'Compte Palto',
+      photoUrl: photo,
+    };
+  }, [authSessionTick, chauffeurProfile.email, chauffeurProfile.nom, chauffeurProfile.prenom]);
   const hasLinkedClientAccount = useMemo(() => {
     return Boolean(getCurrentClientUser()?.email?.trim());
   }, [authSessionTick]);
@@ -2124,22 +2139,22 @@ const Dashboard = ({
                     }}
                     aria-label="Gerer le compte"
                   >
-                    {profilePhotoUrl ? (
+                    {paltoIdentity.photoUrl ? (
                       <img
-                        src={profilePhotoUrl}
+                        src={paltoIdentity.photoUrl}
                         alt={t('clientAccount.photoAlt')}
                         className="client-compte-topbar-user-btn__avatar"
                       />
                     ) : (
                       <User size={16} aria-hidden />
                     )}
-                    <span>{`${chauffeurProfile.prenom} ${chauffeurProfile.nom}`.trim() || chauffeurProfile.email || 'Compte'}</span>
+                    <span>{paltoIdentity.fullName}</span>
                   </button>
                   {topbarAccountMenuOpen ? (
                     <div className="client-compte-account-menu" role="menu" aria-label="Menu compte">
                       <div className="client-compte-account-menu__head">
-                        <strong>{`${chauffeurProfile.prenom} ${chauffeurProfile.nom}`.trim() || 'Compte chauffeur'}</strong>
-                        <span>{chauffeurProfile.email}</span>
+                        <strong>{paltoIdentity.fullName}</strong>
+                        <span>{paltoIdentity.email}</span>
                         {hasLinkedClientAccount ? (
                           <label className="client-compte-account-menu__role-label">
                             {language === 'en' ? 'Account' : 'Compte'}
@@ -3425,35 +3440,11 @@ const Dashboard = ({
                         {userSubView === 'profile' ? (
                           <>
                             <div className="dashboard-user-card-head">
-                              <div className="dashboard-user-avatar-lg dashboard-user-avatar-lg--editable">
-                                {profilePhotoDraftUrl ? (
-                                  <img
-                                    src={profilePhotoDraftUrl ?? undefined}
-                                    alt="Photo de profil chauffeur"
-                                  />
-                                ) : (
-                                  <User size={22} />
-                                )}
-                                <label className="dashboard-user-avatar-edit-btn" aria-label="Modifier la photo de profil">
-                                  <Pencil size={12} />
-                                  <input
-                                    type="file"
-                                    accept=".jpg,.jpeg,.png,.webp"
-                                    onChange={(e) => {
-                                      void handleImageUpload(
-                                        e.target.files?.[0],
-                                        setProfilePhotoDraftUrl,
-                                        setProfilePhotoDraftName
-                                      );
-                                    }}
-                                  />
-                                </label>
-                              </div>
                               <div>
                                 <h4>
-                                  {chauffeurProfile.prenom} {chauffeurProfile.nom}
+                                  {paltoIdentity.fullName}
                                 </h4>
-                                <p>Profil actif · Palto</p>
+                                <p>Identité gérée dans "Gérer le compte Palto".</p>
                               </div>
                             </div>
                             <form
@@ -3463,39 +3454,6 @@ const Dashboard = ({
                                 saveUserProfileEdit();
                               }}
                             >
-                                <label>
-                                  Prénom
-                                  <input
-                                    type="text"
-                                    value={userProfileDraft.prenom}
-                                    onChange={(e) =>
-                                      setUserProfileDraft((prev) => ({ ...prev, prenom: e.target.value }))
-                                    }
-                                    required
-                                  />
-                                </label>
-                                <label>
-                                  Nom
-                                  <input
-                                    type="text"
-                                    value={userProfileDraft.nom}
-                                    onChange={(e) =>
-                                      setUserProfileDraft((prev) => ({ ...prev, nom: e.target.value }))
-                                    }
-                                    required
-                                  />
-                                </label>
-                                <label>
-                                  Email
-                                  <input
-                                    type="email"
-                                    value={userProfileDraft.email}
-                                    onChange={(e) =>
-                                      setUserProfileDraft((prev) => ({ ...prev, email: e.target.value }))
-                                    }
-                                    required
-                                  />
-                                </label>
                                 <label>
                                   Téléphone
                                   <div className="dashboard-phone-input-row">
