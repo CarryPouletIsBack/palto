@@ -30,6 +30,25 @@ export async function fetchClientRides(email: string, status: 'upcoming' | 'comp
   return Array.isArray(data.items) ? data.items : []
 }
 
+export async function cancelClientRide(courseId: string): Promise<void> {
+  const token =
+    (typeof window !== 'undefined' && (localStorage.getItem('palto:client_token') || localStorage.getItem('dashboard_token'))) ||
+    ''
+  const headers: HeadersInit = {
+    'Content-Type': 'application/json',
+  }
+  if (token) headers.Authorization = `Bearer ${token}`
+  const res = await fetch(`${API_BASE_URL}/client/rides`, {
+    method: 'POST',
+    headers,
+    body: JSON.stringify({ courseId }),
+  })
+  const data = (await res.json().catch(() => ({}))) as { error?: string }
+  if (!res.ok) {
+    throw new Error(data.error || `Erreur ${res.status}`)
+  }
+}
+
 export function clientRidesApiEnabled(): boolean {
   return useClientRidesApi()
 }

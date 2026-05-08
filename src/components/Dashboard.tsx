@@ -10,6 +10,7 @@ import {
 import useEmblaCarousel from 'embla-carousel-react';
 import { type ProjectWithMeta } from '../services/projectService';
 import {
+  getCurrentClientUser,
   getCurrentUser,
   isAuthenticated,
   isChauffeurPrimaryAccountEmail,
@@ -171,6 +172,12 @@ type ChauffeurProfile = {
   ville: string;
   vehicule: string;
   plaque: string;
+  profilePhotoUrl?: string | null;
+  organizationPhotoUrl?: string | null;
+  vehiclePhotoUrl?: string | null;
+  profilePhotoName?: string;
+  organizationPhotoName?: string;
+  vehiclePhotoName?: string;
 };
 
 type ChauffeurPayment = {
@@ -190,6 +197,32 @@ type ChauffeurDocument = {
 };
 
 const CHAUFFEUR_PROFILE_STORAGE_KEY = 'palto:chauffeur_profile_v1';
+const REUNION_CITY_SUGGESTIONS = [
+  'Saint-Denis',
+  'Sainte-Marie',
+  'Sainte-Suzanne',
+  'Saint-Andre',
+  'Bras-Panon',
+  'Saint-Benoit',
+  'La Plaine-des-Palmistes',
+  'Sainte-Rose',
+  'Salazie',
+  'La Possession',
+  'Le Port',
+  'Saint-Paul',
+  'Trois-Bassins',
+  'Saint-Leu',
+  'Les Avirons',
+  "L'Etang-Sale",
+  'Saint-Louis',
+  'Entre-Deux',
+  'Le Tampon',
+  'Saint-Pierre',
+  'Petite-Ile',
+  'Saint-Joseph',
+  'Saint-Philippe',
+  'Cilaos',
+] as const;
 
 function loadStoredChauffeurProfiles(): Record<string, ChauffeurProfile> {
   if (typeof window === 'undefined') return {};
@@ -238,6 +271,12 @@ function inferProfileFromEmail(emailRaw: string): Pick<ChauffeurProfile, 'prenom
   return { prenom: pretty(chunks[0]), nom: pretty(chunks.slice(1).join(' ')) };
 }
 
+function getUnifiedSessionEmail(): string {
+  const dashboardEmail = getCurrentUser()?.email?.trim() ?? '';
+  if (dashboardEmail) return dashboardEmail;
+  return getCurrentClientUser()?.email?.trim() ?? '';
+}
+
 async function readFileAsDataUrl(file: File): Promise<string> {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
@@ -245,6 +284,13 @@ async function readFileAsDataUrl(file: File): Promise<string> {
     reader.onerror = () => reject(new Error('Lecture fichier impossible'));
     reader.readAsDataURL(file);
   });
+}
+
+function rideStatusTone(status: string): 'pending' | 'active' | 'completed' | 'cancelled' {
+  if (status === 'Annulee') return 'cancelled';
+  if (status === 'Terminee') return 'completed';
+  if (status === 'Acceptee' || status === 'En cours') return 'active';
+  return 'pending';
 }
 
 function ElapsedSince({ startedAt }: { startedAt: number }) {
@@ -605,7 +651,7 @@ const Dashboard = ({
   }, [persistRides]);
 
   const [chauffeurProfile, setChauffeurProfile] = useState<ChauffeurProfile>(() => {
-    const currentUserEmail = getCurrentUser()?.email?.trim() ?? '';
+    const currentUserEmail = getUnifiedSessionEmail();
     const emailNorm = normalizeChauffeurEmail(currentUserEmail);
     const storedProfile = loadStoredChauffeurProfile(emailNorm);
     if (storedProfile) return storedProfile;
@@ -620,6 +666,12 @@ const Dashboard = ({
       ville: '',
       vehicule: '',
       plaque: '',
+      profilePhotoUrl: null,
+      organizationPhotoUrl: null,
+      vehiclePhotoUrl: null,
+      profilePhotoName: '',
+      organizationPhotoName: '',
+      vehiclePhotoName: '',
     };
   });
   const [userProfileDraft, setUserProfileDraft] = useState<ChauffeurProfile>(chauffeurProfile);
@@ -649,12 +701,12 @@ const Dashboard = ({
   const [orgInviteEmail, setOrgInviteEmail] = useState('');
   const [orgFleetZoneFilter, setOrgFleetZoneFilter] = useState<FleetZoneId | 'all'>('all');
   const [orgInviteError, setOrgInviteError] = useState<string | null>(null);
-  const [profilePhotoUrl, setProfilePhotoUrl] = useState<string | null>(null);
-  const [organizationPhotoUrl, setOrganizationPhotoUrl] = useState<string | null>(null);
-  const [vehiclePhotoUrl, setVehiclePhotoUrl] = useState<string | null>(null);
-  const [profilePhotoName, setProfilePhotoName] = useState('');
-  const [organizationPhotoName, setOrganizationPhotoName] = useState('');
-  const [vehiclePhotoName, setVehiclePhotoName] = useState('');
+  const [profilePhotoUrl, setProfilePhotoUrl] = useState<string | null>(chauffeurProfile.profilePhotoUrl ?? null);
+  const [organizationPhotoUrl, setOrganizationPhotoUrl] = useState<string | null>(chauffeurProfile.organizationPhotoUrl ?? null);
+  const [vehiclePhotoUrl, setVehiclePhotoUrl] = useState<string | null>(chauffeurProfile.vehiclePhotoUrl ?? null);
+  const [profilePhotoName, setProfilePhotoName] = useState(chauffeurProfile.profilePhotoName ?? '');
+  const [organizationPhotoName, setOrganizationPhotoName] = useState(chauffeurProfile.organizationPhotoName ?? '');
+  const [vehiclePhotoName, setVehiclePhotoName] = useState(chauffeurProfile.vehiclePhotoName ?? '');
   const [profilePhotoDraftUrl, setProfilePhotoDraftUrl] = useState<string | null>(null);
   const [organizationPhotoDraftUrl, setOrganizationPhotoDraftUrl] = useState<string | null>(null);
   const [vehiclePhotoDraftUrl, setVehiclePhotoDraftUrl] = useState<string | null>(null);
@@ -675,8 +727,7 @@ const Dashboard = ({
   const useStatsApi = statsApiEnabled();
 
   useEffect(() => {
-    const user = getCurrentUser();
-    const sessionEmail = (user?.email ?? '').trim().toLowerCase();
+    const sessionEmail = getUnifiedSessionEmail().toLowerCase();
     if (!sessionEmail) return;
     const inferred = inferProfileFromEmail(sessionEmail);
     const registryPhone = loadChauffeurRegistry()[normalizeChauffeurEmail(sessionEmail)]?.phoneInternational ?? '';
@@ -757,7 +808,7 @@ const Dashboard = ({
       setComplianceApiSnapshot(null);
       return;
     }
-    const email = getCurrentUser()?.email ?? '';
+    const email = getUnifiedSessionEmail();
     const norm = normalizeChauffeurEmail(email);
     if (!norm || !isChauffeurInSelfServiceRegistry(norm)) {
       setComplianceApiSnapshot(null);
@@ -1338,7 +1389,7 @@ const Dashboard = ({
 
   const coursesBlockedByCompliance = useMemo(() => {
     void complianceUiTick;
-    const email = getCurrentUser()?.email;
+    const email = getUnifiedSessionEmail();
     if (!email?.trim()) return false;
     if (isChauffeurPrimaryAccountEmail(email)) return false;
     const norm = normalizeChauffeurEmail(email);
@@ -1651,6 +1702,12 @@ const Dashboard = ({
       ...userProfileDraft,
       plaque: normalizedPlate,
       telephone: buildInternationalPhone(phoneCountryDraft, normalizedNationalPhone),
+      profilePhotoUrl: profilePhotoDraftUrl,
+      organizationPhotoUrl: organizationPhotoDraftUrl,
+      vehiclePhotoUrl: vehiclePhotoDraftUrl,
+      profilePhotoName: profilePhotoDraftName,
+      organizationPhotoName: organizationPhotoDraftName,
+      vehiclePhotoName: vehiclePhotoDraftName,
     };
 
     setPlateError(null);
@@ -2027,7 +2084,7 @@ const Dashboard = ({
                       </h3>
                       <p className="dashboard-compliance-lead">{t('chauffeurCompliance.bannerLead')}</p>
                       <ChauffeurDocumentsChecklist
-                        emailNorm={normalizeChauffeurEmail(getCurrentUser()?.email ?? '')}
+                        emailNorm={normalizeChauffeurEmail(getUnifiedSessionEmail())}
                         onComplianceChange={() => setComplianceUiTick((n) => n + 1)}
                       />
                     </section>
@@ -2271,7 +2328,12 @@ const Dashboard = ({
                           onClick={() => handleNavSelect('courses')}
                         >
                           <strong>{course.client} · {course.depart}</strong>
-                          <p>{course.heure} · {course.arrivee} · {course.statut}</p>
+                          <p>
+                            {course.heure} · {course.arrivee} ·{' '}
+                            <span className={`ride-status-badge ride-status-badge--${rideStatusTone(course.statut)}`}>
+                              {course.statut}
+                            </span>
+                          </p>
                         </button>
                       ))}
                     </div>
@@ -2325,7 +2387,11 @@ const Dashboard = ({
                                 <td>{course.client}</td>
                                 <td>{course.depart}</td>
                                 <td>{course.arrivee}</td>
-                                <td>{course.statut}</td>
+                                <td>
+                                  <span className={`ride-status-badge ride-status-badge--${rideStatusTone(course.statut)}`}>
+                                    {course.statut}
+                                  </span>
+                                </td>
                                 <td>{formatEurAmount(course.montant)}</td>
                               </tr>
                             ))}
@@ -3352,12 +3418,18 @@ const Dashboard = ({
                                   Ville
                                   <input
                                     type="text"
+                                    list="reunion-city-suggestions"
                                     value={userProfileDraft.ville}
                                     onChange={(e) =>
                                       setUserProfileDraft((prev) => ({ ...prev, ville: e.target.value }))
                                     }
                                     required
                                   />
+                                  <datalist id="reunion-city-suggestions">
+                                    {REUNION_CITY_SUGGESTIONS.map((city) => (
+                                      <option key={city} value={city} />
+                                    ))}
+                                  </datalist>
                                 </label>
                                 <label>
                                   Véhicule
@@ -4160,7 +4232,12 @@ const Dashboard = ({
                       <article key={slot.id} className="planning-modal-item">
                         <div>
                           <strong>{slot.heure}</strong>
-                          <p>Course planifiee - {slot.statut}</p>
+                          <p>
+                            Course planifiee -{' '}
+                            <span className={`ride-status-badge ride-status-badge--${rideStatusTone(slot.statut)}`}>
+                              {slot.statut}
+                            </span>
+                          </p>
                           {(() => {
                             const details = courseRows.find((course) => course.id === slot.id);
                             if (!details) return null;

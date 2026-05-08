@@ -92,7 +92,7 @@ import {
   isClientAuthenticated,
   PALTO_CLIENT_SESSION_CHANGED_EVENT,
 } from '../services/authService';
-import { clientRidesApiEnabled, fetchClientRides, type ClientRideItem } from '../services/clientRidesApi';
+import { cancelClientRide, clientRidesApiEnabled, fetchClientRides, type ClientRideItem } from '../services/clientRidesApi';
 
 type ClientPlaceMapTarget =
   | { kind: 'domicile' }
@@ -112,6 +112,7 @@ type ClientRideFlowKind = 'meet_driver' | 'end_cash';
 
 type DemoRide = {
   id: string;
+  rawStatus: string;
   route: string;
   date: string;
   dateEn?: string;
@@ -141,6 +142,14 @@ type DemoRide = {
 function demoRideStatusLabel(r: DemoRide, lang: Language): string {
   if (lang === 'en' && r.statusEn) return r.statusEn;
   return r.status;
+}
+
+function rideStatusTone(status: string): 'pending' | 'active' | 'completed' | 'cancelled' {
+  const value = status.toLowerCase();
+  if (value.includes('annul') || value.includes('cancel')) return 'cancelled';
+  if (value.includes('termin') || value.includes('completed')) return 'completed';
+  if (value.includes('cours') || value.includes('progress') || value.includes('accept')) return 'active';
+  return 'pending';
 }
 
 function demoRideDateLabel(r: DemoRide, lang: Language): string {
@@ -266,7 +275,9 @@ export default function ClientCompteDashboard({ onBack, onOpenClientLiveMeet }: 
     postalCode: '',
   });
   const [paymentErrors, setPaymentErrors] = useState<Record<string, string>>({});
-  const [placesDraft, setPlacesDraft] = useState<ClientSavedPlacesSnapshot>(() => loadClientSavedPlaces());
+  const [placesDraft, setPlacesDraft] = useState<ClientSavedPlacesSnapshot>(() =>
+    loadClientSavedPlaces(getCurrentClientUser()?.email)
+  );
   const [mapPickTarget, setMapPickTarget] = useState<ClientPlaceMapTarget | null>(null);
   const [security, setSecurity] = useState<ClientSecuritySnapshot>(() => loadClientSecuritySnapshot());
   const [pwdPanelOpen, setPwdPanelOpen] = useState(false);
@@ -277,6 +288,11 @@ export default function ClientCompteDashboard({ onBack, onOpenClientLiveMeet }: 
   const [clientRides, setClientRides] = useState<ClientRideItem[]>([]);
   const [ridesSyncTick, setRidesSyncTick] = useState(0);
   const [orgSyncTick, setOrgSyncTick] = useState(0);
+  const activeClientEmail = useMemo(() => {
+    const fromSession = getCurrentClientUser()?.email?.trim().toLowerCase() ?? '';
+    if (fromSession) return fromSession;
+    return profile.email.trim().toLowerCase();
+  }, [profile.email, ridesSyncTick]);
   const ridesForUi = useMemo<DemoRide[]>(() => {
     return clientRides.map((ride) => {
       const iso = `${ride.scheduledDate}T${ride.scheduledTime}`;
@@ -315,6 +331,7 @@ export default function ClientCompteDashboard({ onBack, onOpenClientLiveMeet }: 
       };
       return {
         id: ride.id,
+        rawStatus: ride.status,
         route: `${simplifyAddressDisplay(ride.pickupAddress)} -> ${simplifyAddressDisplay(ride.dropoffAddress)}`,
         date: dateFr,
         dateEn,
@@ -340,13 +357,19 @@ export default function ClientCompteDashboard({ onBack, onOpenClientLiveMeet }: 
     () => ridesForUi.find((r) => r.id === selectedRideId) ?? null,
     [selectedRideId, ridesForUi]
   );
+  const canCancelSelectedRide = useMemo(() => {
+    if (!selectedRide) return false;
+    return selectedRide.rawStatus === 'pending' || selectedRide.rawStatus === 'accepted';
+  }, [selectedRide]);
   const recentRidePrices = useMemo(() => {
     return ridesForUi.filter((r) => r.priceEur > 0).slice(0, 3);
   }, [ridesForUi]);
   const overviewRecentRides = useMemo(() => ridesForUi.slice(0, 6), [ridesForUi]);
   const overviewMapBgUrl = '/images/2948124.jpg';
 
-  const [profile, setProfile] = useState<ClientAccountSnapshot>(() => loadClientAccountSnapshot());
+  const [profile, setProfile] = useState<ClientAccountSnapshot>(() =>
+    loadClientAccountSnapshot(getCurrentClientUser()?.email)
+  );
   const chauffeurLinkContext = useMemo(() => {
     void orgSyncTick;
     const emailNorm = normalizeChauffeurEmail(profile.email || '');
@@ -448,7 +471,7 @@ export default function ClientCompteDashboard({ onBack, onOpenClientLiveMeet }: 
   }, [ridesSyncTick]);
 
   useEffect(() => {
-    const snap = loadClientAccountSnapshot();
+    const snap = loadClientAccountSnapshot(sessionEmail);
     const sessionUser = getCurrentClientUser();
     const sessionEmail = (sessionUser?.email ?? '').trim().toLowerCase();
     const needsEmailHydration = sessionEmail.length > 0 && snap.email.trim().toLowerCase() !== sessionEmail;
@@ -461,7 +484,7 @@ export default function ClientCompteDashboard({ onBack, onOpenClientLiveMeet }: 
       nom: needsNameHydration ? inferred.nom : snap.nom,
     };
     if (needsEmailHydration || needsNameHydration) {
-      saveClientAccountSnapshot(hydrated);
+      saveClientAccountSnapshot(hydrated, sessionEmail);
     }
     setProfile(hydrated);
     setDraft(hydrated);
@@ -510,9 +533,9 @@ export default function ClientCompteDashboard({ onBack, onOpenClientLiveMeet }: 
 
   useEffect(() => {
     if (activeNav === 'places') {
-      setPlacesDraft(loadClientSavedPlaces());
+      setPlacesDraft(loadClientSavedPlaces(activeClientEmail));
     }
-  }, [activeNav]);
+  }, [activeClientEmail, activeNav]);
 
   useEffect(() => {
     if (activeNav === 'places') {
@@ -834,13 +857,33 @@ export default function ClientCompteDashboard({ onBack, onOpenClientLiveMeet }: 
   const savePlaces = useCallback(
     (e: FormEvent) => {
       e.preventDefault();
-      saveClientSavedPlaces(placesDraft);
+      saveClientSavedPlaces(placesDraft, activeClientEmail);
       trackEvent('click', 'client_account', 'places_save');
       toast.success(isEn ? 'Saved places updated.' : 'Lieux enregistrés avec succès.');
       goNav('overview');
     },
-    [goNav, isEn, placesDraft]
+    [activeClientEmail, goNav, isEn, placesDraft]
   );
+
+  const handleCancelSelectedRide = useCallback(async () => {
+    if (!selectedRide || !canCancelSelectedRide) return;
+    const confirmed = window.confirm(
+      isEn
+        ? 'Do you really want to cancel this ride?'
+        : 'Confirmez-vous l’annulation de cette course ?'
+    );
+    if (!confirmed) return;
+    try {
+      await cancelClientRide(selectedRide.id);
+      setClientRides((prev) =>
+        prev.map((ride) => (ride.id === selectedRide.id ? { ...ride, status: 'cancelled' } : ride))
+      );
+      toast.success(isEn ? 'Ride cancelled.' : 'Course annulée.');
+    } catch (e) {
+      console.error('[ClientCompteDashboard] cancel ride', e);
+      toast.error(isEn ? 'Unable to cancel this ride.' : "Impossible d'annuler cette course.");
+    }
+  }, [canCancelSelectedRide, isEn, selectedRide]);
 
   const applyMapPickResult = useCallback((r: ClientCompteMapPickResult, target: ClientPlaceMapTarget) => {
     const coords = { lng: r.lng, lat: r.lat };
@@ -877,11 +920,11 @@ export default function ClientCompteDashboard({ onBack, onOpenClientLiveMeet }: 
         profilePhotoName: photoDraftName,
       };
       setProfile(next);
-      saveClientAccountSnapshot(next);
+      saveClientAccountSnapshot(next, activeClientEmail);
       setIsEditing(false);
       trackEvent('click', 'client_account', 'save');
     },
-    [draft, phoneCountryDraft, phoneNationalDraft, photoDraftName, photoDraftUrl]
+    [activeClientEmail, draft, phoneCountryDraft, phoneNationalDraft, photoDraftName, photoDraftUrl]
   );
 
   const onPhotoPick = useCallback(async (file: File | undefined | null) => {
@@ -908,14 +951,14 @@ export default function ClientCompteDashboard({ onBack, onOpenClientLiveMeet }: 
       setDraft(next);
       setPhotoDraftUrl(dataUrl);
       setPhotoDraftName(file.name);
-      saveClientAccountSnapshot(next);
+      saveClientAccountSnapshot(next, activeClientEmail);
       setAccountModalOpen(false);
       trackEvent('click', 'client_account', 'topbar_photo_updated');
       toast.success(isEn ? 'Profile photo updated.' : 'Photo de profil mise à jour.');
     } catch {
       toast.error(isEn ? 'Unable to update photo.' : 'Impossible de mettre à jour la photo.');
     }
-  }, [isEn, profile]);
+  }, [activeClientEmail, isEn, profile]);
 
   const handleBackSite = useCallback(() => {
     onBack();
@@ -1513,7 +1556,10 @@ export default function ClientCompteDashboard({ onBack, onOpenClientLiveMeet }: 
                         >
                           <span className="client-compte-overview-rides-list__route">{ride.route}</span>
                           <span className="client-compte-overview-rides-list__meta">
-                            {demoRideDateLabel(ride, language)} · {demoRideStatusLabel(ride, language)}
+                            {demoRideDateLabel(ride, language)} ·{' '}
+                            <span className={`ride-status-badge ride-status-badge--${rideStatusTone(demoRideStatusLabel(ride, language))}`}>
+                              {demoRideStatusLabel(ride, language)}
+                            </span>
                           </span>
                         </li>
                       ))}
@@ -2225,7 +2271,10 @@ export default function ClientCompteDashboard({ onBack, onOpenClientLiveMeet }: 
                         >
                           <strong>{r.route}</strong>
                           <span className="client-compte-ride-row-meta">
-                            {demoRideDateLabel(r, language)} · {demoRideStatusLabel(r, language)}
+                            {demoRideDateLabel(r, language)} ·{' '}
+                            <span className={`ride-status-badge ride-status-badge--${rideStatusTone(demoRideStatusLabel(r, language))}`}>
+                              {demoRideStatusLabel(r, language)}
+                            </span>
                           </span>
                         </button>
                       </li>
@@ -2235,13 +2284,26 @@ export default function ClientCompteDashboard({ onBack, onOpenClientLiveMeet }: 
                     <section className="client-compte-ride-detail" aria-live="polite">
                       <div className="client-compte-ride-detail-head">
                         <h4 className="client-compte-ride-detail-title">{t('clientAccount.rideDetailTitle')}</h4>
-                        <button
-                          type="button"
-                          className="dashboard-user-edit-btn"
-                          onClick={() => setSelectedRideId(null)}
-                        >
-                          {t('clientAccount.rideDetailClose')}
-                        </button>
+                        <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                          {canCancelSelectedRide ? (
+                            <button
+                              type="button"
+                              className="dashboard-user-cancel-btn"
+                              onClick={() => {
+                                void handleCancelSelectedRide();
+                              }}
+                            >
+                              {isEn ? 'Cancel ride' : 'Annuler la course'}
+                            </button>
+                          ) : null}
+                          <button
+                            type="button"
+                            className="dashboard-user-edit-btn"
+                            onClick={() => setSelectedRideId(null)}
+                          >
+                            {t('clientAccount.rideDetailClose')}
+                          </button>
+                        </div>
                       </div>
                       {selectedRide.flow === 'meet_driver' ? (
                         <ClientCompteRideMeetDriver
@@ -2274,7 +2336,15 @@ export default function ClientCompteDashboard({ onBack, onOpenClientLiveMeet }: 
                         <dt>{t('clientAccount.rideReference')}</dt>
                         <dd>{selectedRide.reference}</dd>
                         <dt>{t('clientAccount.rideStatus')}</dt>
-                        <dd>{demoRideStatusLabel(selectedRide, language)}</dd>
+                        <dd>
+                          <span
+                            className={`ride-status-badge ride-status-badge--${rideStatusTone(
+                              demoRideStatusLabel(selectedRide, language)
+                            )}`}
+                          >
+                            {demoRideStatusLabel(selectedRide, language)}
+                          </span>
+                        </dd>
                         <dt>{t('clientAccount.rideDate')}</dt>
                         <dd>{demoRideDateLabel(selectedRide, language)}</dd>
                         <dt>{t('clientAccount.rideDepart')}</dt>

@@ -1,5 +1,6 @@
 /** Persistance locale du profil client (MVP sans backend dédié). */
 export const CLIENT_ACCOUNT_STORAGE_KEY = 'palto_client_account_v1';
+const CLIENT_ACCOUNT_BY_EMAIL_STORAGE_KEY = 'palto_client_account_by_email_v1';
 
 export type ClientPreferredPayment = 'indifferent' | 'card' | 'cash';
 
@@ -28,29 +29,54 @@ export const DEFAULT_CLIENT_ACCOUNT: ClientAccountSnapshot = {
   profilePhotoName: '',
 };
 
-export function loadClientAccountSnapshot(): ClientAccountSnapshot {
+function normalizeEmail(email: string | null | undefined): string {
+  return String(email ?? '').trim().toLowerCase();
+}
+
+function sanitizeSnapshot(parsed: Partial<ClientAccountSnapshot> | null | undefined): ClientAccountSnapshot {
+  const value = parsed ?? {};
+  return {
+    ...DEFAULT_CLIENT_ACCOUNT,
+    ...value,
+    preferredPayment:
+      value.preferredPayment === 'card' ||
+      value.preferredPayment === 'cash' ||
+      value.preferredPayment === 'indifferent'
+        ? value.preferredPayment
+        : 'indifferent',
+  };
+}
+
+export function loadClientAccountSnapshot(email?: string): ClientAccountSnapshot {
   try {
-    const raw = localStorage.getItem(CLIENT_ACCOUNT_STORAGE_KEY);
-    if (!raw) return { ...DEFAULT_CLIENT_ACCOUNT };
-    const parsed = JSON.parse(raw) as Partial<ClientAccountSnapshot>;
-    return {
-      ...DEFAULT_CLIENT_ACCOUNT,
-      ...parsed,
-      preferredPayment:
-        parsed.preferredPayment === 'card' ||
-        parsed.preferredPayment === 'cash' ||
-        parsed.preferredPayment === 'indifferent'
-          ? parsed.preferredPayment
-          : 'indifferent',
-    };
+    const emailKey = normalizeEmail(email);
+    if (emailKey) {
+      const byEmailRaw = localStorage.getItem(CLIENT_ACCOUNT_BY_EMAIL_STORAGE_KEY);
+      if (byEmailRaw) {
+        const byEmail = JSON.parse(byEmailRaw) as Record<string, Partial<ClientAccountSnapshot>>;
+        if (byEmail[emailKey]) return sanitizeSnapshot(byEmail[emailKey]);
+      }
+    }
+    const legacyRaw = localStorage.getItem(CLIENT_ACCOUNT_STORAGE_KEY);
+    if (!legacyRaw) return { ...DEFAULT_CLIENT_ACCOUNT };
+    const legacy = sanitizeSnapshot(JSON.parse(legacyRaw) as Partial<ClientAccountSnapshot>);
+    if (emailKey) saveClientAccountSnapshot(legacy, emailKey);
+    return legacy;
   } catch {
     return { ...DEFAULT_CLIENT_ACCOUNT };
   }
 }
 
-export function saveClientAccountSnapshot(data: ClientAccountSnapshot): void {
+export function saveClientAccountSnapshot(data: ClientAccountSnapshot, email?: string): void {
   try {
-    localStorage.setItem(CLIENT_ACCOUNT_STORAGE_KEY, JSON.stringify(data));
+    const snapshot = sanitizeSnapshot(data);
+    localStorage.setItem(CLIENT_ACCOUNT_STORAGE_KEY, JSON.stringify(snapshot));
+    const emailKey = normalizeEmail(email || snapshot.email);
+    if (!emailKey) return;
+    const byEmailRaw = localStorage.getItem(CLIENT_ACCOUNT_BY_EMAIL_STORAGE_KEY);
+    const byEmail = byEmailRaw ? (JSON.parse(byEmailRaw) as Record<string, ClientAccountSnapshot>) : {};
+    byEmail[emailKey] = snapshot;
+    localStorage.setItem(CLIENT_ACCOUNT_BY_EMAIL_STORAGE_KEY, JSON.stringify(byEmail));
   } catch {
     /* ignore */
   }

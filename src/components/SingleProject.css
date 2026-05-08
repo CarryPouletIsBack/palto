@@ -6257,7 +6257,8 @@
 @media (min-width: 1367px) {
   .palto-ride-layout {
     display: grid;
-    grid-template-columns: minmax(0, 1fr) minmax(0, 1.85fr) minmax(0, 1fr);
+    /* Harmonise la largeur booking/drivers sur grands écrans. */
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1fr);
     gap: 10px;
     align-items: stretch;
   }

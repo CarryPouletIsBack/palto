@@ -22,14 +22,25 @@ export async function getVerifiedDashboardEmail(req: VercelRequest): Promise<str
     const supabase = getSupabaseAdmin()
     const { data, error } = await supabase
       .from('app_sessions')
-      .select('email, role, expires_at')
+      .select('email, expires_at')
       .eq('token', token)
-      .eq('role', 'chauffeur')
       .maybeSingle()
     if (error || !data) return null
     const expiresAt = Date.parse(data.expires_at)
     if (Number.isNaN(expiresAt) || expiresAt < Date.now()) return null
-    return data.email
+    const email = String(data.email || '').trim().toLowerCase()
+    if (!email) return null
+
+    // Session unifiee: un token valide suffit, puis on confirme que le compte
+    // possede bien le role chauffeur pour autoriser les routes dashboard.
+    const { data: roleAccount, error: roleError } = await supabase
+      .from('app_accounts')
+      .select('id')
+      .eq('email', email)
+      .eq('role', 'chauffeur')
+      .maybeSingle()
+    if (roleError || !roleAccount) return null
+    return email
   } catch {
     return null
   }

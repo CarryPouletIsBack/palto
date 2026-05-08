@@ -63,8 +63,8 @@ export function isChauffeurPrimaryAccountEmail(email: string | null | undefined)
 export async function registerChauffeur(payload: RegisterChauffeurPayload): Promise<{ success: boolean; error?: string }> {
   const result = await postAuth('/auth/chauffeur/register', payload as unknown as Record<string, unknown>)
   if (!result.success || !result.token || !result.user) return { success: false, error: result.error }
-  localStorage.setItem(DASHBOARD_AUTH_TOKEN_KEY, result.token)
-  localStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(result.user))
+  persistUnifiedSession(result.token, result.user)
+  notifyClientSessionChanged()
   return { success: true }
 }
 
@@ -95,14 +95,17 @@ export const login = async (
 ): Promise<{ success: boolean; user?: User; error?: string }> => {
   const result = await postAuth('/auth/chauffeur/login', credentials)
   if (!result.success || !result.token || !result.user) return { success: false, error: result.error }
-  localStorage.setItem(DASHBOARD_AUTH_TOKEN_KEY, result.token)
-  localStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(result.user))
+  persistUnifiedSession(result.token, result.user)
+  notifyClientSessionChanged()
   return { success: true, user: result.user }
 }
 
 export const logout = (): void => {
   localStorage.removeItem(DASHBOARD_AUTH_TOKEN_KEY)
   localStorage.removeItem(AUTH_STORAGE_KEY)
+  localStorage.removeItem(CLIENT_AUTH_TOKEN_KEY)
+  localStorage.removeItem(CLIENT_AUTH_STORAGE_KEY)
+  notifyClientSessionChanged()
 }
 
 /** En-tête `Authorization` pour les routes `/api/chauffeur/*` (token dashboard). */
@@ -139,11 +142,17 @@ function notifyClientSessionChanged(): void {
   window.dispatchEvent(new CustomEvent(PALTO_CLIENT_SESSION_CHANGED_EVENT))
 }
 
+function persistUnifiedSession(token: string, user: User): void {
+  localStorage.setItem(DASHBOARD_AUTH_TOKEN_KEY, token)
+  localStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(user))
+  localStorage.setItem(CLIENT_AUTH_TOKEN_KEY, token)
+  localStorage.setItem(CLIENT_AUTH_STORAGE_KEY, JSON.stringify(user))
+}
+
 export async function registerClient(credentials: LoginCredentials): Promise<{ success: boolean; error?: string }> {
   const result = await postAuth('/auth/client/register', credentials)
   if (!result.success || !result.token || !result.user) return { success: false, error: result.error }
-  localStorage.setItem(CLIENT_AUTH_TOKEN_KEY, result.token)
-  localStorage.setItem(CLIENT_AUTH_STORAGE_KEY, JSON.stringify(result.user))
+  persistUnifiedSession(result.token, result.user)
   notifyClientSessionChanged()
   return { success: true }
 }
@@ -153,8 +162,7 @@ export async function loginClient(
 ): Promise<{ success: boolean; user?: User; error?: string }> {
   const result = await postAuth('/auth/client/login', credentials)
   if (!result.success || !result.token || !result.user) return { success: false, error: result.error }
-  localStorage.setItem(CLIENT_AUTH_TOKEN_KEY, result.token)
-  localStorage.setItem(CLIENT_AUTH_STORAGE_KEY, JSON.stringify(result.user))
+  persistUnifiedSession(result.token, result.user)
   notifyClientSessionChanged()
   return { success: true, user: result.user }
 }
@@ -179,6 +187,8 @@ export const isClientAuthenticated = (): boolean => {
 }
 
 export const logoutClient = (): void => {
+  localStorage.removeItem(DASHBOARD_AUTH_TOKEN_KEY)
+  localStorage.removeItem(AUTH_STORAGE_KEY)
   localStorage.removeItem(CLIENT_AUTH_TOKEN_KEY)
   localStorage.removeItem(CLIENT_AUTH_STORAGE_KEY)
   notifyClientSessionChanged()

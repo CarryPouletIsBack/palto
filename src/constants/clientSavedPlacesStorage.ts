@@ -1,5 +1,6 @@
 /** Lieux favoris passager (MVP local, aligné futur backend). */
 export const CLIENT_SAVED_PLACES_STORAGE_KEY = 'palto_client_saved_places_v1';
+const CLIENT_SAVED_PLACES_BY_EMAIL_STORAGE_KEY = 'palto_client_saved_places_by_email_v1';
 
 /** Coordonnées WGS84 (longitude, latitude), ordre standard web carto. */
 export type SavedPlaceCoords = {
@@ -30,6 +31,10 @@ export const DEFAULT_CLIENT_SAVED_PLACES: ClientSavedPlacesSnapshot = {
   extras: [],
 };
 
+function normalizeEmail(email: string | null | undefined): string {
+  return String(email ?? '').trim().toLowerCase();
+}
+
 function genPlaceId(): string {
   return `p_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 9)}`;
 }
@@ -43,41 +48,62 @@ function parseCoords(raw: unknown): SavedPlaceCoords | null {
   return { lng, lat };
 }
 
-export function loadClientSavedPlaces(): ClientSavedPlacesSnapshot {
+function sanitizeSnapshot(
+  parsed: Partial<ClientSavedPlacesSnapshot> & { extras?: unknown[] }
+): ClientSavedPlacesSnapshot {
+  const extrasRaw = Array.isArray(parsed.extras) ? parsed.extras : [];
+  const extras: ClientSavedPlaceExtra[] = extrasRaw
+    .filter((e): e is Record<string, unknown> => e && typeof e === 'object' && typeof (e as { id?: unknown }).id === 'string')
+    .map((e) => ({
+      id: String(e.id),
+      label: typeof e.label === 'string' ? e.label : '',
+      address: typeof e.address === 'string' ? e.address : '',
+      coords: parseCoords(e.coords),
+    }));
+  const snapshot: ClientSavedPlacesSnapshot = {
+    domicile: typeof parsed.domicile === 'string' ? parsed.domicile : '',
+    domicileCoords: parseCoords(parsed.domicileCoords),
+    travail: typeof parsed.travail === 'string' ? parsed.travail : '',
+    travailCoords: parseCoords(parsed.travailCoords),
+    extras,
+  };
+  if (!snapshot.domicile.trim() && !snapshot.travail.trim() && snapshot.extras.length === 0) {
+    return { ...DEFAULT_CLIENT_SAVED_PLACES };
+  }
+  return snapshot;
+}
+
+export function loadClientSavedPlaces(email?: string): ClientSavedPlacesSnapshot {
   try {
+    const emailKey = normalizeEmail(email);
+    if (emailKey) {
+      const byEmailRaw = localStorage.getItem(CLIENT_SAVED_PLACES_BY_EMAIL_STORAGE_KEY);
+      if (byEmailRaw) {
+        const byEmail = JSON.parse(byEmailRaw) as Record<string, Partial<ClientSavedPlacesSnapshot> & { extras?: unknown[] }>;
+        if (byEmail[emailKey]) return sanitizeSnapshot(byEmail[emailKey]);
+      }
+    }
     const raw = localStorage.getItem(CLIENT_SAVED_PLACES_STORAGE_KEY);
     if (!raw) return { ...DEFAULT_CLIENT_SAVED_PLACES };
-    const parsed = JSON.parse(raw) as Partial<ClientSavedPlacesSnapshot> & {
-      extras?: unknown[];
-    };
-    const extrasRaw = Array.isArray(parsed.extras) ? parsed.extras : [];
-    const extras: ClientSavedPlaceExtra[] = extrasRaw
-      .filter((e): e is Record<string, unknown> => e && typeof e === 'object' && typeof (e as { id?: unknown }).id === 'string')
-      .map((e) => ({
-        id: String(e.id),
-        label: typeof e.label === 'string' ? e.label : '',
-        address: typeof e.address === 'string' ? e.address : '',
-        coords: parseCoords(e.coords),
-      }));
-    const snapshot: ClientSavedPlacesSnapshot = {
-      domicile: typeof parsed.domicile === 'string' ? parsed.domicile : '',
-      domicileCoords: parseCoords(parsed.domicileCoords),
-      travail: typeof parsed.travail === 'string' ? parsed.travail : '',
-      travailCoords: parseCoords(parsed.travailCoords),
-      extras,
-    };
-    if (!snapshot.domicile.trim() && !snapshot.travail.trim() && snapshot.extras.length === 0) {
-      return { ...DEFAULT_CLIENT_SAVED_PLACES };
-    }
-    return snapshot;
+    const legacy = sanitizeSnapshot(JSON.parse(raw) as Partial<ClientSavedPlacesSnapshot> & { extras?: unknown[] });
+    if (emailKey) saveClientSavedPlaces(legacy, emailKey);
+    return legacy;
   } catch {
     return { ...DEFAULT_CLIENT_SAVED_PLACES };
   }
 }
 
-export function saveClientSavedPlaces(data: ClientSavedPlacesSnapshot): void {
+export function saveClientSavedPlaces(data: ClientSavedPlacesSnapshot, email?: string): void {
   try {
     localStorage.setItem(CLIENT_SAVED_PLACES_STORAGE_KEY, JSON.stringify(data));
+    const emailKey = normalizeEmail(email);
+    if (!emailKey) return;
+    const byEmailRaw = localStorage.getItem(CLIENT_SAVED_PLACES_BY_EMAIL_STORAGE_KEY);
+    const byEmail = byEmailRaw
+      ? (JSON.parse(byEmailRaw) as Record<string, ClientSavedPlacesSnapshot>)
+      : {};
+    byEmail[emailKey] = data;
+    localStorage.setItem(CLIENT_SAVED_PLACES_BY_EMAIL_STORAGE_KEY, JSON.stringify(byEmail));
   } catch {
     /* ignore */
   }

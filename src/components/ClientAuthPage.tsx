@@ -11,12 +11,15 @@ export default function ClientAuthPage({ onAuthSuccess }: Props) {
   const [mode, setMode] = useState<'login' | 'signup'>(signupDefault ? 'signup' : 'login')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
+  const [showPassword, setShowPassword] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [helpMessage, setHelpMessage] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
 
   const submit = async () => {
     setLoading(true)
     setError(null)
+    setHelpMessage(null)
     const result = mode === 'signup' ? await registerClient({ email, password }) : await loginClient({ email, password })
     setLoading(false)
     if (!result.success) {
@@ -39,14 +42,36 @@ export default function ClientAuthPage({ onAuthSuccess }: Props) {
             onChange={(e) => setEmail(e.target.value)}
             placeholder="Email"
           />
-          <input
-            className="auth-page-input"
-            type="password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            placeholder="Mot de passe"
-          />
+          <div className="auth-page-password-row">
+            <input
+              className="auth-page-input"
+              type={showPassword ? 'text' : 'password'}
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              placeholder="Mot de passe"
+            />
+            <button
+              className="auth-page-toggle-visibility"
+              type="button"
+              onClick={() => setShowPassword((visible) => !visible)}
+              aria-label={showPassword ? 'Masquer le mot de passe' : 'Afficher le mot de passe'}
+            >
+              {showPassword ? 'Masquer' : 'Afficher'}
+            </button>
+          </div>
+          {mode === 'login' ? (
+            <button
+              className="auth-page-forgot"
+              type="button"
+              onClick={() =>
+                setHelpMessage("Lien de reinitialisation bientot disponible. Contacte le support pour le moment.")
+              }
+            >
+              Mot de passe oublie ?
+            </button>
+          ) : null}
           {error ? <p className="auth-page-error">{error}</p> : null}
+          {helpMessage ? <p className="auth-page-help">{helpMessage}</p> : null}
           <div className="auth-page-actions">
             <button className="auth-page-btn" type="button" onClick={submit} disabled={loading}>
               {loading ? 'Chargement...' : mode === 'signup' ? "S'inscrire" : 'Se connecter'}

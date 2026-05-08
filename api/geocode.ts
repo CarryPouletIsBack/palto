@@ -131,6 +131,35 @@ const REUNION_BIAS_LAT = '-21.115141'
 
 type GeocodeSearchRow = { display_name: string; lon: string; lat: string }
 
+function normalizeAscii(value: string): string {
+  return value
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+}
+
+function cleanDisplayName(value: string): string {
+  const trimmed = value.trim()
+  if (!trimmed) return ''
+  return trimmed
+    .replace(/\s*,\s*/g, ' ')
+    .replace(/\s+/g, ' ')
+    .replace(/\bfrance\b/gi, '')
+    .replace(/\bla reunion\b/gi, '')
+    .replace(/\breunion\b/gi, '')
+    .replace(/\s+/g, ' ')
+    .trim()
+}
+
+function addressTokenSignature(label: string): string {
+  const tokens = normalizeAscii(label)
+    .replace(/[^a-z0-9]+/g, ' ')
+    .split(/\s+/)
+    .map((t) => t.trim())
+    .filter(Boolean)
+  return [...new Set(tokens)].sort().join('|')
+}
+
 function haversineMeters(lon1: number, lat1: number, lon2: number, lat2: number): number {
   const R = 6371000
   const toRad = (d: number) => (d * Math.PI) / 180
@@ -199,26 +228,35 @@ async function searchWithBan(q: string, maxNeeded: number): Promise<GeocodeSearc
 
 function mergeBanAndNominatim(ban: GeocodeSearchRow[], nomi: GeocodeSearchRow[], limit: number): GeocodeSearchRow[] {
   const out: GeocodeSearchRow[] = []
-  const seen = new Set<string>()
+  const seenCoordAndLabel = new Set<string>()
+  const seenAddressSignature = new Set<string>()
 
-  for (const row of ban) {
+  for (const raw of ban) {
     if (out.length >= limit) break
-    const key = `${row.lon}|${row.lat}|${row.display_name.toLowerCase()}`
-    if (seen.has(key)) continue
-    seen.add(key)
+    const row = { ...raw, display_name: cleanDisplayName(raw.display_name) }
+    if (!row.display_name) continue
+    const key = `${row.lon}|${row.lat}|${normalizeAscii(row.display_name)}`
+    const signature = addressTokenSignature(row.display_name)
+    if (seenCoordAndLabel.has(key) || seenAddressSignature.has(signature)) continue
+    seenCoordAndLabel.add(key)
+    seenAddressSignature.add(signature)
     out.push(row)
   }
 
-  for (const row of nomi) {
+  for (const raw of nomi) {
     if (out.length >= limit) break
+    const row = { ...raw, display_name: cleanDisplayName(raw.display_name) }
+    if (!row.display_name) continue
     const lon = Number.parseFloat(row.lon)
     const lat = Number.parseFloat(row.lat)
     if (!Number.isFinite(lon) || !Number.isFinite(lat)) continue
-    const key = `${row.lon}|${row.lat}|${row.display_name.toLowerCase()}`
-    if (seen.has(key)) continue
+    const key = `${row.lon}|${row.lat}|${normalizeAscii(row.display_name)}`
+    const signature = addressTokenSignature(row.display_name)
+    if (seenCoordAndLabel.has(key) || seenAddressSignature.has(signature)) continue
     const near = out.some((b) => haversineMeters(lon, lat, Number.parseFloat(b.lon), Number.parseFloat(b.lat)) < 35)
     if (near) continue
-    seen.add(key)
+    seenCoordAndLabel.add(key)
+    seenAddressSignature.add(signature)
     out.push(row)
   }
   return out

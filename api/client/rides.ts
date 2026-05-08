@@ -8,6 +8,10 @@ const QuerySchema = z.object({
   limit: z.coerce.number().int().min(1).max(100).optional(),
 })
 
+const CancelBodySchema = z.object({
+  courseId: z.string().uuid(),
+})
+
 type RideRow = {
   id: string
   status: string
@@ -28,17 +32,111 @@ type ClientRow = {
   id: string
 }
 
+async function getVerifiedSessionEmail(req: VercelRequest): Promise<string | null> {
+  const raw = req.headers.authorization
+  if (!raw?.toLowerCase().startsWith('bearer ')) return null
+  const token = raw.slice(7).trim()
+  if (!token) return null
+  try {
+    const supabase = getSupabaseAdmin()
+    const { data, error } = await supabase
+      .from('app_sessions')
+      .select('email, expires_at')
+      .eq('token', token)
+      .maybeSingle()
+    if (error || !data) return null
+    const expiresAt = Date.parse(data.expires_at)
+    if (Number.isNaN(expiresAt) || expiresAt < Date.now()) return null
+    const email = String(data.email || '').trim().toLowerCase()
+    return email || null
+  } catch {
+    return null
+  }
+}
+
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   res.setHeader('Access-Control-Allow-Origin', '*')
-  res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS')
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type')
+  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS')
+  res.setHeader('Access-Control-Allow-Headers', 'Authorization, Content-Type')
 
   if (req.method === 'OPTIONS') {
     res.status(200).end()
     return
   }
-  if (req.method !== 'GET') {
+  if (req.method !== 'GET' && req.method !== 'POST') {
     res.status(405).json({ error: 'Method not allowed' })
+    return
+  }
+
+  if (req.method === 'POST') {
+    const parsedBody = CancelBodySchema.safeParse(typeof req.body === 'string' ? JSON.parse(req.body) : req.body)
+    if (!parsedBody.success) {
+      res.status(400).json({ error: 'Payload invalide', details: parsedBody.error.flatten() })
+      return
+    }
+    const sessionEmail = await getVerifiedSessionEmail(req)
+    if (!sessionEmail) {
+      res.status(401).json({ error: 'Non autorise' })
+      return
+    }
+    let supabase
+    try {
+      supabase = getSupabaseAdmin()
+    } catch (e) {
+      console.error('[client/rides cancel]', e)
+      res.status(503).json({ error: 'Service indisponible' })
+      return
+    }
+    const { data: clients, error: clientsError } = await supabase
+      .from('clients')
+      .select('id')
+      .ilike('email', sessionEmail)
+    if (clientsError) {
+      console.error('[client/rides cancel] clients lookup', clientsError)
+      res.status(500).json({ error: 'Lecture impossible' })
+      return
+    }
+    const clientIds = ((clients ?? []) as ClientRow[]).map((c) => c.id).filter(Boolean)
+    if (clientIds.length === 0) {
+      res.status(403).json({ error: 'Compte client introuvable' })
+      return
+    }
+    const { courseId } = parsedBody.data
+    const { data: ride, error: rideErr } = await supabase
+      .from('courses')
+      .select('id,client_id,status')
+      .eq('id', courseId)
+      .maybeSingle()
+    if (rideErr || !ride) {
+      res.status(404).json({ error: 'Course introuvable' })
+      return
+    }
+    if (!clientIds.includes(String(ride.client_id ?? ''))) {
+      res.status(403).json({ error: 'Course non autorisee' })
+      return
+    }
+    if (ride.status !== 'pending' && ride.status !== 'accepted') {
+      res.status(409).json({ error: 'Annulation impossible pour ce statut' })
+      return
+    }
+    const nowIso = new Date().toISOString()
+    const { data: updated, error: updateErr } = await supabase
+      .from('courses')
+      .update({
+        status: 'cancelled',
+        cancelled_at: nowIso,
+        cancelled_reason: 'Annule par le client',
+        updated_at: nowIso,
+      })
+      .eq('id', courseId)
+      .in('status', ['pending', 'accepted'])
+      .select('id,status')
+      .maybeSingle()
+    if (updateErr || !updated) {
+      res.status(409).json({ error: 'Annulation impossible' })
+      return
+    }
+    res.status(200).json({ ok: true, status: updated.status })
     return
   }
 

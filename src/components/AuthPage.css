@@ -42,6 +42,50 @@
   background: #ffffff;
 }
 
+.auth-page-password-row {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.auth-page-password-row .auth-page-input {
+  flex: 1 1 auto;
+}
+
+.auth-page-toggle-visibility {
+  height: 42px;
+  padding: 0 12px;
+  border-radius: 10px;
+  border: 1px solid var(--app-border-subtle, #cbd5e1);
+  background: #ffffff;
+  color: #0f172a;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.auth-page-toggle-visibility:hover {
+  background: #f8fafc;
+}
+
+.auth-page-forgot {
+  width: fit-content;
+  margin-top: -2px;
+  border: 0;
+  padding: 0;
+  background: transparent;
+  color: #2563eb;
+  font-size: 0.92rem;
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.auth-page-help {
+  margin: 2px 0;
+  color: #334155;
+  font-size: 0.92rem;
+}
+
 .auth-page-checkbox-row {
   display: flex;
   gap: 8px;
