@@ -2180,7 +2180,11 @@ const Dashboard = ({
                         >
                           {language === 'en' ? 'Manage Palto account' : 'Gerer le compte Palto'}
                         </button>
-                        <button type="button" className="client-compte-account-menu__item" onClick={handleTopbarLogout}>
+                        <button
+                          type="button"
+                          className="client-compte-account-menu__item client-compte-account-menu__item--danger"
+                          onClick={handleTopbarLogout}
+                        >
                           {language === 'en' ? 'Sign out' : 'Se deconnecter'}
                         </button>
                       </div>

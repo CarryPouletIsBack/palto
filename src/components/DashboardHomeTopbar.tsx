@@ -76,7 +76,8 @@ export function DashboardHomeTopbar({
       return `${pretty(chunks[0])} ${pretty(chunks.slice(1).join(' '))}`
     }
 
-    const clientProfile = session.clientLogged ? loadClientAccountSnapshot() : null
+    const sessionEmail = session.user?.email?.trim().toLowerCase() ?? ''
+    const clientProfile = session.clientLogged ? loadClientAccountSnapshot(sessionEmail || undefined) : null
     const fullClientName = `${clientProfile?.prenom?.trim() ?? ''} ${clientProfile?.nom?.trim() ?? ''}`.trim()
     if (fullClientName) return fullClientName
 
@@ -84,14 +85,15 @@ export function DashboardHomeTopbar({
     if (user?.displayName?.trim()) return user.displayName.trim()
     if (user?.email?.trim()) return inferFromEmail(user.email.trim())
     return ''
-  }, [session.clientLogged, session.user])
+  }, [session.clientLogged, session.user, authTick])
 
   const accountPhotoUrl = useMemo(() => {
     if (!session.clientLogged) return null
-    const clientProfile = loadClientAccountSnapshot()
+    const sessionEmail = session.user?.email?.trim().toLowerCase() ?? ''
+    const clientProfile = loadClientAccountSnapshot(sessionEmail || undefined)
     const photo = clientProfile.profilePhotoUrl
     return typeof photo === 'string' && photo.trim() ? photo : null
-  }, [session.clientLogged, authTick])
+  }, [session.clientLogged, session.user, authTick])
 
   const sessionBadges = useMemo(() => {
     const badges: string[] = []
@@ -210,7 +212,11 @@ export function DashboardHomeTopbar({
                       <button type="button" className="client-compte-account-menu__item" onClick={handleClientAccount}>
                         {language === 'en' ? 'Manage Palto account' : 'Gerer le compte Palto'}
                       </button>
-                      <button type="button" className="client-compte-account-menu__item" onClick={handleLogout}>
+                      <button
+                        type="button"
+                        className="client-compte-account-menu__item client-compte-account-menu__item--danger"
+                        onClick={handleLogout}
+                      >
                         {language === 'en' ? 'Sign out' : 'Se deconnecter'}
                       </button>
                     </div>

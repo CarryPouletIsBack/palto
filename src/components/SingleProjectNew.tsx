@@ -784,8 +784,9 @@ const SingleProjectNew: FC<SingleProjectProps> = ({
     setDestinationSuggestionOpen(false);
   }, []);
 
+  const clientEmailForSavedPlaces = getCurrentClientUser()?.email ?? '';
   const savedPlacesChoices = useMemo(() => {
-    const snapshot = loadClientSavedPlaces();
+    const snapshot = loadClientSavedPlaces(clientEmailForSavedPlaces || undefined);
     const entries: Array<{ id: string; label: string; address: string }> = [];
     if (snapshot.domicile.trim()) {
       entries.push({ id: 'home', label: 'Domicile', address: snapshot.domicile.trim() });
@@ -803,7 +804,7 @@ const SingleProjectNew: FC<SingleProjectProps> = ({
       });
     }
     return entries;
-  }, []);
+  }, [clientEmailForSavedPlaces]);
 
   const pickupStaticSuggestions = useMemo(() => {
     const items: Array<{ id: string; label: string; action: () => void }> = [

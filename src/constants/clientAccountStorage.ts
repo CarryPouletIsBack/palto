@@ -47,21 +47,53 @@ function sanitizeSnapshot(parsed: Partial<ClientAccountSnapshot> | null | undefi
   };
 }
 
+function readAccountByEmailMap(): Record<string, Partial<ClientAccountSnapshot>> {
+  try {
+    const raw = localStorage.getItem(CLIENT_ACCOUNT_BY_EMAIL_STORAGE_KEY);
+    if (!raw) return {};
+    return JSON.parse(raw) as Record<string, Partial<ClientAccountSnapshot>>;
+  } catch {
+    return {};
+  }
+}
+
+/** Indique si des données compte existent pour cet email (map ou legacy dont l’email correspond). */
+export function clientAccountRowExistsForEmail(email: string | undefined): boolean {
+  const emailKey = normalizeEmail(email);
+  if (!emailKey) return false;
+  const byEmail = readAccountByEmailMap();
+  if (byEmail[emailKey]) return true;
+  try {
+    const legacyRaw = localStorage.getItem(CLIENT_ACCOUNT_STORAGE_KEY);
+    if (!legacyRaw) return false;
+    const legacy = sanitizeSnapshot(JSON.parse(legacyRaw) as Partial<ClientAccountSnapshot>);
+    return normalizeEmail(legacy.email) === emailKey;
+  } catch {
+    return false;
+  }
+}
+
 export function loadClientAccountSnapshot(email?: string): ClientAccountSnapshot {
   try {
     const emailKey = normalizeEmail(email);
     if (emailKey) {
-      const byEmailRaw = localStorage.getItem(CLIENT_ACCOUNT_BY_EMAIL_STORAGE_KEY);
-      if (byEmailRaw) {
-        const byEmail = JSON.parse(byEmailRaw) as Record<string, Partial<ClientAccountSnapshot>>;
-        if (byEmail[emailKey]) return sanitizeSnapshot(byEmail[emailKey]);
+      const byEmail = readAccountByEmailMap();
+      if (byEmail[emailKey]) return sanitizeSnapshot(byEmail[emailKey]);
+
+      const legacyRaw = localStorage.getItem(CLIENT_ACCOUNT_STORAGE_KEY);
+      if (legacyRaw) {
+        const legacy = sanitizeSnapshot(JSON.parse(legacyRaw) as Partial<ClientAccountSnapshot>);
+        if (normalizeEmail(legacy.email) === emailKey) {
+          saveClientAccountSnapshot(legacy, emailKey);
+          return legacy;
+        }
       }
+      return { ...DEFAULT_CLIENT_ACCOUNT, email: emailKey };
     }
+
     const legacyRaw = localStorage.getItem(CLIENT_ACCOUNT_STORAGE_KEY);
     if (!legacyRaw) return { ...DEFAULT_CLIENT_ACCOUNT };
-    const legacy = sanitizeSnapshot(JSON.parse(legacyRaw) as Partial<ClientAccountSnapshot>);
-    if (emailKey) saveClientAccountSnapshot(legacy, emailKey);
-    return legacy;
+    return sanitizeSnapshot(JSON.parse(legacyRaw) as Partial<ClientAccountSnapshot>);
   } catch {
     return { ...DEFAULT_CLIENT_ACCOUNT };
   }
@@ -70,13 +102,14 @@ export function loadClientAccountSnapshot(email?: string): ClientAccountSnapshot
 export function saveClientAccountSnapshot(data: ClientAccountSnapshot, email?: string): void {
   try {
     const snapshot = sanitizeSnapshot(data);
-    localStorage.setItem(CLIENT_ACCOUNT_STORAGE_KEY, JSON.stringify(snapshot));
     const emailKey = normalizeEmail(email || snapshot.email);
     if (!emailKey) return;
-    const byEmailRaw = localStorage.getItem(CLIENT_ACCOUNT_BY_EMAIL_STORAGE_KEY);
-    const byEmail = byEmailRaw ? (JSON.parse(byEmailRaw) as Record<string, ClientAccountSnapshot>) : {};
+    const byEmail = readAccountByEmailMap();
     byEmail[emailKey] = snapshot;
     localStorage.setItem(CLIENT_ACCOUNT_BY_EMAIL_STORAGE_KEY, JSON.stringify(byEmail));
+    if (normalizeEmail(snapshot.email) === emailKey) {
+      localStorage.setItem(CLIENT_ACCOUNT_STORAGE_KEY, JSON.stringify(snapshot));
+    }
   } catch {
     /* ignore */
   }

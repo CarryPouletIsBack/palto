@@ -51,17 +51,21 @@ import {
 } from '../constants/clientAccountStorage';
 import {
   loadClientSecuritySnapshot,
+  migrateLegacySecurityIfOwnedByEmail,
   saveClientSecuritySnapshot,
   type ClientSecuritySnapshot,
 } from '../constants/clientAccountSecurityStorage';
 import {
   formatWalletEUR,
   loadClientWalletSnapshot,
+  migrateLegacyWalletIfOwnedByEmail,
   saveClientWalletSnapshot,
 } from '../constants/clientWalletStorage';
 import {
   FONT_SCALE_PERCENT_MAX,
   FONT_SCALE_PERCENT_MIN,
+  applyAppThemeToDocument,
+  applyUserFontScaleToDocument,
   clampFontScalePercent,
   loadClientAppPreferences,
   saveClientAppPreferences,
@@ -71,6 +75,7 @@ import {
 import {
   createEmptySavedPlaceExtra,
   loadClientSavedPlaces,
+  migrateLegacySavedPlacesIfOwnedByEmail,
   saveClientSavedPlaces,
   type ClientSavedPlacesSnapshot,
 } from '../constants/clientSavedPlacesStorage';
@@ -243,8 +248,10 @@ export default function ClientCompteDashboard({ onBack, onOpenClientLiveMeet }: 
   const isEn = language === 'en';
   const { clientUpcomingRide, clientLiveMeetActive } = useClientHomeTopbarRides(language);
   const openstreetToken = import.meta.env.VITE_OPENSTREET_ACCESS_TOKEN as string | undefined;
-  const [wallet, setWallet] = useState(() => loadClientWalletSnapshot());
-  const [appPrefs, setAppPrefs] = useState<ClientAppPreferencesSnapshot>(() => loadClientAppPreferences());
+  const [wallet, setWallet] = useState(() => loadClientWalletSnapshot(getCurrentClientUser()?.email));
+  const [appPrefs, setAppPrefs] = useState<ClientAppPreferencesSnapshot>(() =>
+    loadClientAppPreferences(getCurrentClientUser()?.email)
+  );
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [isMobileViewport, setIsMobileViewport] = useState(() =>
     typeof window !== 'undefined' ? window.innerWidth <= 768 : false
@@ -280,7 +287,9 @@ export default function ClientCompteDashboard({ onBack, onOpenClientLiveMeet }: 
     loadClientSavedPlaces(getCurrentClientUser()?.email)
   );
   const [mapPickTarget, setMapPickTarget] = useState<ClientPlaceMapTarget | null>(null);
-  const [security, setSecurity] = useState<ClientSecuritySnapshot>(() => loadClientSecuritySnapshot());
+  const [security, setSecurity] = useState<ClientSecuritySnapshot>(() =>
+    loadClientSecuritySnapshot(getCurrentClientUser()?.email)
+  );
   const [pwdPanelOpen, setPwdPanelOpen] = useState(false);
   const [newPwd, setNewPwd] = useState('');
   const [confirmPwd, setConfirmPwd] = useState('');
@@ -371,7 +380,7 @@ export default function ClientCompteDashboard({ onBack, onOpenClientLiveMeet }: 
     const fromSession = getCurrentClientUser()?.email?.trim().toLowerCase() ?? '';
     if (fromSession) return fromSession;
     return profile.email.trim().toLowerCase();
-  }, [profile.email, ridesSyncTick]);
+  }, [profile.email, ridesSyncTick, authSessionTick]);
   const chauffeurLinkContext = useMemo(() => {
     void orgSyncTick;
     const emailNorm = normalizeChauffeurEmail(profile.email || '');
@@ -491,6 +500,11 @@ export default function ClientCompteDashboard({ onBack, onOpenClientLiveMeet }: 
   useEffect(() => {
     const sessionUser = getCurrentClientUser();
     const sessionEmail = (sessionUser?.email ?? '').trim().toLowerCase();
+    if (sessionEmail) {
+      migrateLegacySavedPlacesIfOwnedByEmail(sessionEmail);
+      migrateLegacyWalletIfOwnedByEmail(sessionEmail);
+      migrateLegacySecurityIfOwnedByEmail(sessionEmail);
+    }
     const snap = loadClientAccountSnapshot(sessionEmail);
     const needsEmailHydration = sessionEmail.length > 0 && snap.email.trim().toLowerCase() !== sessionEmail;
     const needsNameHydration = !snap.prenom.trim() && !snap.nom.trim() && sessionEmail.length > 0;
@@ -511,6 +525,14 @@ export default function ClientCompteDashboard({ onBack, onOpenClientLiveMeet }: 
     setPhoneNationalDraft(parsed.nationalNumber);
     setPhotoDraftUrl(hydrated.profilePhotoUrl ?? null);
     setPhotoDraftName(hydrated.profilePhotoName ?? '');
+    if (sessionEmail) {
+      const prefs = loadClientAppPreferences(sessionEmail);
+      setAppPrefs(prefs);
+      applyAppThemeToDocument(prefs.theme);
+      applyUserFontScaleToDocument(prefs.fontScalePercent);
+      setWallet(loadClientWalletSnapshot(sessionEmail));
+      setSecurity(loadClientSecuritySnapshot(sessionEmail));
+    }
   }, [authSessionTick]);
 
   useEffect(() => {
@@ -576,10 +598,11 @@ export default function ClientCompteDashboard({ onBack, onOpenClientLiveMeet }: 
   }, [profile]);
 
   useEffect(() => {
-    setWallet(loadClientWalletSnapshot());
-    setAppPrefs(loadClientAppPreferences());
+    const email = activeClientEmail || undefined;
+    setWallet(loadClientWalletSnapshot(email));
+    setAppPrefs(loadClientAppPreferences(email));
     if (activeNav === 'security') {
-      setSecurity(loadClientSecuritySnapshot());
+      setSecurity(loadClientSecuritySnapshot(email));
       setPwdPanelOpen(false);
       setNewPwd('');
       setConfirmPwd('');
@@ -588,43 +611,47 @@ export default function ClientCompteDashboard({ onBack, onOpenClientLiveMeet }: 
     if (activeNav !== 'courses') {
       setSelectedRideId(null);
     }
-  }, [activeNav]);
+  }, [activeNav, activeClientEmail]);
 
   const handleWalletDemoCredit = useCallback(() => {
-    const current = loadClientWalletSnapshot();
+    const email = activeClientEmail || undefined;
+    const current = loadClientWalletSnapshot(email);
     const next = { balanceCents: current.balanceCents + 500 };
-    saveClientWalletSnapshot(next);
+    saveClientWalletSnapshot(next, email);
     setWallet(next);
     trackEvent('click', 'client_account', 'wallet_demo_credit');
-  }, []);
+  }, [activeClientEmail]);
 
   const setAppTheme = useCallback((theme: AppTheme) => {
+    const email = activeClientEmail || undefined;
     setAppPrefs((prev) => {
       const next = { ...prev, theme };
-      saveClientAppPreferences(next);
+      saveClientAppPreferences(next, email);
       trackEvent('click', 'client_account', `theme_${theme}`);
       return next;
     });
-  }, []);
+  }, [activeClientEmail]);
 
   const setFontScalePercent = useCallback((raw: number) => {
     const fontScalePercent = clampFontScalePercent(raw);
+    const email = activeClientEmail || undefined;
     setAppPrefs((prev) => {
       const next = { ...prev, fontScalePercent };
-      saveClientAppPreferences(next);
+      saveClientAppPreferences(next, email);
       trackEvent('click', 'client_account', `font_scale_${fontScalePercent}`);
       return next;
     });
-  }, []);
+  }, [activeClientEmail]);
 
   const toggleAppNotify = useCallback((key: 'notifyEmail' | 'notifySms' | 'notifyPush') => {
+    const email = activeClientEmail || undefined;
     setAppPrefs((prev) => {
       const next = { ...prev, [key]: !prev[key] };
-      saveClientAppPreferences(next);
+      saveClientAppPreferences(next, email);
       trackEvent('click', 'client_account', `notify_${key}_${next[key] ? 'on' : 'off'}`);
       return next;
     });
-  }, []);
+  }, [activeClientEmail]);
 
   const cancelEdit = useCallback(() => {
     const parsed = parseStoredPhone(profile.telephone);
@@ -800,7 +827,7 @@ export default function ClientCompteDashboard({ onBack, onOpenClientLiveMeet }: 
               ...security,
               passwordLastChangedAt: updatedAt,
             };
-            saveClientSecuritySnapshot(nextSecurity);
+            saveClientSecuritySnapshot(nextSecurity, activeClientEmail || undefined);
             setSecurity(nextSecurity);
             return `${'•'.repeat(10)} · ${formatSecurityDate(updatedAt)}`;
           })()
@@ -836,7 +863,7 @@ export default function ClientCompteDashboard({ onBack, onOpenClientLiveMeet }: 
     setAccountCardOverrides((prev) => ({ ...prev, [accountEditModal.key]: nextValue }));
     setAccountEditModal((prev) => ({ ...prev, open: false }));
     setAccountEditErrors({});
-  }, [accountEditModal, security, setLanguage, validateAccountEditFields, formatSecurityDate]);
+  }, [accountEditModal, activeClientEmail, security, setLanguage, validateAccountEditFields, formatSecurityDate]);
 
   const openPaymentModal = useCallback(() => {
     setPaymentErrors({});
@@ -1065,14 +1092,15 @@ export default function ClientCompteDashboard({ onBack, onOpenClientLiveMeet }: 
 
   const toggleOAuth = useCallback(
     (key: 'oauthGoogle' | 'oauthFacebook' | 'oauthApple') => {
+      const email = activeClientEmail || undefined;
       setSecurity((prev) => {
         const next = { ...prev, [key]: !prev[key] };
-        saveClientSecuritySnapshot(next);
+        saveClientSecuritySnapshot(next, email);
         trackEvent('click', 'client_account', `oauth_${key}_${next[key] ? 'on' : 'off'}`);
         return next;
       });
     },
-    []
+    [activeClientEmail]
   );
 
   const submitPasswordChange = useCallback(
@@ -1092,7 +1120,7 @@ export default function ClientCompteDashboard({ onBack, onOpenClientLiveMeet }: 
           ...prev,
           passwordLastChangedAt: new Date().toISOString(),
         };
-        saveClientSecuritySnapshot(next);
+        saveClientSecuritySnapshot(next, activeClientEmail || undefined);
         return next;
       });
       setNewPwd('');
@@ -1100,7 +1128,7 @@ export default function ClientCompteDashboard({ onBack, onOpenClientLiveMeet }: 
       setPwdPanelOpen(false);
       trackEvent('click', 'client_account', 'password_demo_updated');
     },
-    [newPwd, confirmPwd, t]
+    [activeClientEmail, newPwd, confirmPwd, t]
   );
 
   const mainSectionTitle =
@@ -1443,7 +1471,7 @@ export default function ClientCompteDashboard({ onBack, onOpenClientLiveMeet }: 
                             </button>
                             <button
                               type="button"
-                              className="client-compte-account-menu__item"
+                              className="client-compte-account-menu__item client-compte-account-menu__item--danger"
                               onClick={handleClientLogout}
                             >
                               {isEn ? 'Sign out' : 'Se deconnecter'}

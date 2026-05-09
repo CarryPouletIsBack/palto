@@ -1,3 +1,5 @@
+import { clientAccountRowExistsForEmail } from './clientAccountStorage';
+
 /** Lieux favoris passager (MVP local, aligné futur backend). */
 export const CLIENT_SAVED_PLACES_STORAGE_KEY = 'palto_client_saved_places_v1';
 const CLIENT_SAVED_PLACES_BY_EMAIL_STORAGE_KEY = 'palto_client_saved_places_by_email_v1';
@@ -73,37 +75,66 @@ function sanitizeSnapshot(
   return snapshot;
 }
 
+function readPlacesByEmailMap(): Record<string, ClientSavedPlacesSnapshot> {
+  try {
+    const raw = localStorage.getItem(CLIENT_SAVED_PLACES_BY_EMAIL_STORAGE_KEY);
+    if (!raw) return {};
+    return JSON.parse(raw) as Record<string, ClientSavedPlacesSnapshot>;
+  } catch {
+    return {};
+  }
+}
+
+function isPlacesSnapshotEmpty(s: ClientSavedPlacesSnapshot): boolean {
+  return !s.domicile.trim() && !s.travail.trim() && s.extras.length === 0;
+}
+
 export function loadClientSavedPlaces(email?: string): ClientSavedPlacesSnapshot {
   try {
     const emailKey = normalizeEmail(email);
     if (emailKey) {
-      const byEmailRaw = localStorage.getItem(CLIENT_SAVED_PLACES_BY_EMAIL_STORAGE_KEY);
-      if (byEmailRaw) {
-        const byEmail = JSON.parse(byEmailRaw) as Record<string, Partial<ClientSavedPlacesSnapshot> & { extras?: unknown[] }>;
-        if (byEmail[emailKey]) return sanitizeSnapshot(byEmail[emailKey]);
-      }
+      const byEmail = readPlacesByEmailMap();
+      if (byEmail[emailKey]) return sanitizeSnapshot(byEmail[emailKey]);
+      return { ...DEFAULT_CLIENT_SAVED_PLACES };
     }
     const raw = localStorage.getItem(CLIENT_SAVED_PLACES_STORAGE_KEY);
     if (!raw) return { ...DEFAULT_CLIENT_SAVED_PLACES };
-    const legacy = sanitizeSnapshot(JSON.parse(raw) as Partial<ClientSavedPlacesSnapshot> & { extras?: unknown[] });
-    if (emailKey) saveClientSavedPlaces(legacy, emailKey);
-    return legacy;
+    return sanitizeSnapshot(JSON.parse(raw) as Partial<ClientSavedPlacesSnapshot> & { extras?: unknown[] });
   } catch {
     return { ...DEFAULT_CLIENT_SAVED_PLACES };
   }
 }
 
+/**
+ * Migre la clé legacy globale des lieux vers l’email donné si le compte Palto
+ * est bien rattaché à cet email (évite de coller les lieux d’un autre utilisateur).
+ */
+export function migrateLegacySavedPlacesIfOwnedByEmail(email: string | undefined): void {
+  const emailKey = normalizeEmail(email);
+  if (!emailKey || !clientAccountRowExistsForEmail(emailKey)) return;
+  const byEmail = readPlacesByEmailMap();
+  if (byEmail[emailKey]) return;
+  try {
+    const raw = localStorage.getItem(CLIENT_SAVED_PLACES_STORAGE_KEY);
+    if (!raw) return;
+    const legacy = sanitizeSnapshot(JSON.parse(raw) as Partial<ClientSavedPlacesSnapshot> & { extras?: unknown[] });
+    if (isPlacesSnapshotEmpty(legacy)) return;
+    saveClientSavedPlaces(legacy, emailKey);
+    localStorage.removeItem(CLIENT_SAVED_PLACES_STORAGE_KEY);
+  } catch {
+    /* ignore */
+  }
+}
+
 export function saveClientSavedPlaces(data: ClientSavedPlacesSnapshot, email?: string): void {
   try {
-    localStorage.setItem(CLIENT_SAVED_PLACES_STORAGE_KEY, JSON.stringify(data));
     const emailKey = normalizeEmail(email);
     if (!emailKey) return;
-    const byEmailRaw = localStorage.getItem(CLIENT_SAVED_PLACES_BY_EMAIL_STORAGE_KEY);
-    const byEmail = byEmailRaw
-      ? (JSON.parse(byEmailRaw) as Record<string, ClientSavedPlacesSnapshot>)
-      : {};
-    byEmail[emailKey] = data;
+    const snapshot = sanitizeSnapshot(data as Partial<ClientSavedPlacesSnapshot> & { extras?: unknown[] });
+    const byEmail = readPlacesByEmailMap();
+    byEmail[emailKey] = snapshot;
     localStorage.setItem(CLIENT_SAVED_PLACES_BY_EMAIL_STORAGE_KEY, JSON.stringify(byEmail));
+    localStorage.setItem(CLIENT_SAVED_PLACES_STORAGE_KEY, JSON.stringify(snapshot));
   } catch {
     /* ignore */
   }

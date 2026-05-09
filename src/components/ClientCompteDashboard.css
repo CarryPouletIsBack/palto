@@ -867,6 +867,21 @@ body.accueil-page .dashboard-container--home-accueil .dashboard-main {
   background: #f8fafc;
 }
 
+.client-compte-account-menu__item--danger {
+  color: #b91c1c;
+  font-weight: 600;
+}
+
+.client-compte-account-menu__item--danger:hover {
+  background: #fef2f2;
+  color: #991b1b;
+}
+
+.client-compte-account-menu__item--danger:focus-visible {
+  outline: 2px solid #dc2626;
+  outline-offset: -2px;
+}
+
 .client-compte-manage-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -986,6 +1001,15 @@ html[data-app-theme='dark'] .client-compte-account-menu__item {
 
 html[data-app-theme='dark'] .client-compte-account-menu__item:hover {
   background: rgba(255, 255, 255, 0.08);
+}
+
+html[data-app-theme='dark'] .client-compte-account-menu__item--danger {
+  color: #f87171;
+}
+
+html[data-app-theme='dark'] .client-compte-account-menu__item--danger:hover {
+  background: rgba(248, 113, 113, 0.12);
+  color: #fca5a5;
 }
 
 html[data-app-theme='dark'] .client-compte-overview-ride-route {

@@ -1,5 +1,6 @@
 /** Préférences app démo : thème global (`data-app-theme`) + canaux de notification (local uniquement). */
 export const CLIENT_APP_PREFERENCES_KEY = 'palto_client_app_preferences_v1';
+const CLIENT_APP_PREFERENCES_BY_EMAIL_STORAGE_KEY = 'palto_client_app_preferences_by_email_v1';
 
 export type AppTheme = 'light' | 'dark' | 'contrast';
 
@@ -28,6 +29,20 @@ export const DEFAULT_CLIENT_APP_PREFERENCES: ClientAppPreferencesSnapshot = {
   notifyPush: true,
 };
 
+function normalizeEmail(email: string | null | undefined): string {
+  return String(email ?? '').trim().toLowerCase();
+}
+
+function readPrefsByEmailMap(): Record<string, ClientAppPreferencesSnapshot> {
+  try {
+    const raw = localStorage.getItem(CLIENT_APP_PREFERENCES_BY_EMAIL_STORAGE_KEY);
+    if (!raw) return {};
+    return JSON.parse(raw) as Record<string, ClientAppPreferencesSnapshot>;
+  } catch {
+    return {};
+  }
+}
+
 export function clampFontScalePercent(value: unknown): number {
   const n = typeof value === 'number' ? value : Number(value);
   if (!Number.isFinite(n)) return FONT_SCALE_PERCENT_DEFAULT;
@@ -53,28 +68,62 @@ export function applyAppThemeToDocument(theme: AppTheme): void {
   document.documentElement.setAttribute('data-app-theme', nextTheme);
 }
 
-export function loadClientAppPreferences(): ClientAppPreferencesSnapshot {
+function parsePrefsFromRaw(raw: string): ClientAppPreferencesSnapshot {
+  const parsed = JSON.parse(raw) as Partial<ClientAppPreferencesSnapshot>;
+  const theme: AppTheme =
+    parsed.theme === 'dark' || parsed.theme === 'contrast' ? parsed.theme : 'light';
+  return {
+    theme,
+    fontScalePercent: clampFontScalePercent(parsed.fontScalePercent),
+    notifyEmail: typeof parsed.notifyEmail === 'boolean' ? parsed.notifyEmail : DEFAULT_CLIENT_APP_PREFERENCES.notifyEmail,
+    notifySms: typeof parsed.notifySms === 'boolean' ? parsed.notifySms : DEFAULT_CLIENT_APP_PREFERENCES.notifySms,
+    notifyPush: typeof parsed.notifyPush === 'boolean' ? parsed.notifyPush : DEFAULT_CLIENT_APP_PREFERENCES.notifyPush,
+  };
+}
+
+export function loadClientAppPreferences(email?: string): ClientAppPreferencesSnapshot {
   try {
+    const emailKey = normalizeEmail(email);
+    if (emailKey) {
+      const byEmail = readPrefsByEmailMap();
+      if (byEmail[emailKey]) {
+        const p = byEmail[emailKey];
+        const theme: AppTheme = p.theme === 'dark' || p.theme === 'contrast' ? p.theme : 'light';
+        return {
+          theme,
+          fontScalePercent: clampFontScalePercent(p.fontScalePercent),
+          notifyEmail: typeof p.notifyEmail === 'boolean' ? p.notifyEmail : DEFAULT_CLIENT_APP_PREFERENCES.notifyEmail,
+          notifySms: typeof p.notifySms === 'boolean' ? p.notifySms : DEFAULT_CLIENT_APP_PREFERENCES.notifySms,
+          notifyPush: typeof p.notifyPush === 'boolean' ? p.notifyPush : DEFAULT_CLIENT_APP_PREFERENCES.notifyPush,
+        };
+      }
+      return { ...DEFAULT_CLIENT_APP_PREFERENCES };
+    }
     const raw = localStorage.getItem(CLIENT_APP_PREFERENCES_KEY);
     if (!raw) return { ...DEFAULT_CLIENT_APP_PREFERENCES };
-    const parsed = JSON.parse(raw) as Partial<ClientAppPreferencesSnapshot>;
-    const theme: AppTheme =
-      parsed.theme === 'dark' || parsed.theme === 'contrast' ? parsed.theme : 'light';
-    return {
-      theme,
-      fontScalePercent: clampFontScalePercent(parsed.fontScalePercent),
-      notifyEmail: typeof parsed.notifyEmail === 'boolean' ? parsed.notifyEmail : DEFAULT_CLIENT_APP_PREFERENCES.notifyEmail,
-      notifySms: typeof parsed.notifySms === 'boolean' ? parsed.notifySms : DEFAULT_CLIENT_APP_PREFERENCES.notifySms,
-      notifyPush: typeof parsed.notifyPush === 'boolean' ? parsed.notifyPush : DEFAULT_CLIENT_APP_PREFERENCES.notifyPush,
-    };
+    return parsePrefsFromRaw(raw);
   } catch {
     return { ...DEFAULT_CLIENT_APP_PREFERENCES };
   }
 }
 
-export function saveClientAppPreferences(data: ClientAppPreferencesSnapshot): void {
+export function saveClientAppPreferences(data: ClientAppPreferencesSnapshot, email?: string): void {
   try {
-    localStorage.setItem(CLIENT_APP_PREFERENCES_KEY, JSON.stringify(data));
+    const emailKey = normalizeEmail(email);
+    const theme: AppTheme = data.theme === 'dark' || data.theme === 'contrast' ? data.theme : 'light';
+    const snapshot: ClientAppPreferencesSnapshot = {
+      theme,
+      fontScalePercent: clampFontScalePercent(data.fontScalePercent),
+      notifyEmail: Boolean(data.notifyEmail),
+      notifySms: Boolean(data.notifySms),
+      notifyPush: Boolean(data.notifyPush),
+    };
+    if (emailKey) {
+      const byEmail = readPrefsByEmailMap();
+      byEmail[emailKey] = snapshot;
+      localStorage.setItem(CLIENT_APP_PREFERENCES_BY_EMAIL_STORAGE_KEY, JSON.stringify(byEmail));
+    }
+    localStorage.setItem(CLIENT_APP_PREFERENCES_KEY, JSON.stringify(snapshot));
   } catch {
     /* ignore */
   }
