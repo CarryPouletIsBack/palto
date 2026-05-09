@@ -2,6 +2,12 @@ import { apiBaseUrl, useClientRidesApi } from '../constants/featureFlags'
 
 const API_BASE_URL = apiBaseUrl()
 
+/** Intervalle de relecture des courses si Realtime Supabase n’est pas configuré. */
+export const CLIENT_RIDES_POLL_INTERVAL_MS = 8000
+
+/** Secours lorsque Realtime est actif (évite tout dépendre du WebSocket). */
+export const CLIENT_RIDES_POLL_FALLBACK_WHEN_REALTIME_MS = 60000
+
 export type ClientRideItem = {
   id: string
   status: string

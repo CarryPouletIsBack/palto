@@ -95,13 +95,6 @@ export function DashboardHomeTopbar({
     return typeof photo === 'string' && photo.trim() ? photo : null
   }, [session.clientLogged, session.user, authTick])
 
-  const sessionBadges = useMemo(() => {
-    const badges: string[] = []
-    if (session.clientLogged) badges.push('Client')
-    if (session.chauffeurLogged) badges.push('Chauffeur')
-    return badges
-  }, [session.clientLogged, session.chauffeurLogged])
-
   const hasLinkedChauffeurAccount = useMemo(() => {
     const email = session.user?.email?.trim() ?? ''
     if (!email) return false
@@ -163,30 +156,19 @@ export function DashboardHomeTopbar({
             <LanguageSwitcher />
             {accountDisplayName && onOpenClientAccount ? (
               <div className="client-compte-topbar-menu-anchor" ref={accountMenuRef}>
-                <div className="client-compte-topbar-session">
-                  <button
-                    type="button"
-                    className="client-compte-topbar-user-btn"
-                    onClick={() => setAccountModalOpen((prev) => !prev)}
-                    aria-label="Gerer le compte"
-                  >
-                    {accountPhotoUrl ? (
-                      <img src={accountPhotoUrl} alt={t('clientAccount.photoAlt')} className="client-compte-topbar-user-btn__avatar" />
-                    ) : (
-                      <User size={16} aria-hidden />
-                    )}
-                    <span>{accountDisplayName}</span>
-                  </button>
-                  {sessionBadges.length > 0 ? (
-                    <div className="client-compte-topbar-session-badges" aria-label="Sessions actives">
-                      {sessionBadges.map((badge) => (
-                        <span key={badge} className="client-compte-topbar-session-badge">
-                          {badge}
-                        </span>
-                      ))}
-                    </div>
-                  ) : null}
-                </div>
+                <button
+                  type="button"
+                  className="client-compte-topbar-user-btn"
+                  onClick={() => setAccountModalOpen((prev) => !prev)}
+                  aria-label="Gerer le compte"
+                >
+                  {accountPhotoUrl ? (
+                    <img src={accountPhotoUrl} alt={t('clientAccount.photoAlt')} className="client-compte-topbar-user-btn__avatar" />
+                  ) : (
+                    <User size={16} aria-hidden />
+                  )}
+                  <span>{accountDisplayName}</span>
+                </button>
                 {accountModalOpen ? (
                   <div className="client-compte-account-menu" role="menu" aria-label="Menu compte">
                     <div className="client-compte-account-menu__head">

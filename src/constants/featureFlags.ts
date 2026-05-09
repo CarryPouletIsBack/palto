@@ -40,3 +40,10 @@ export function useClientRidesApi(): boolean {
 export function usePricingApi(): boolean {
   return isEnabled(import.meta.env.VITE_USE_PRICING_API as string | undefined)
 }
+
+/** Realtime Supabase (courses / course_events) : URL + clé anon + endpoint /api/auth/realtime-token + SUPABASE_JWT_SECRET côté serveur. */
+export function supabaseRealtimeConfigured(): boolean {
+  const url = (import.meta.env.VITE_SUPABASE_URL as string | undefined)?.trim()
+  const key = (import.meta.env.VITE_SUPABASE_ANON_KEY as string | undefined)?.trim()
+  return Boolean(url && key)
+}

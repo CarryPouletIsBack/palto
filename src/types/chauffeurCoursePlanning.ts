@@ -18,6 +18,9 @@ export type CourseRowState = {
   routeSnapDeviationKm?: number
   bookingKind?: BookingKindUi
   clientComment?: string
+  /** Renseignés quand les courses viennent de l’API (join `clients`). */
+  clientPhone?: string
+  clientEmail?: string
   pickupLng?: number
   pickupLat?: number
   dropoffLng?: number

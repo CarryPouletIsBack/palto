@@ -82,6 +82,8 @@ function mapRide(row: ApiRide): CourseRowState {
     startedAt: row.started_at ? Date.parse(row.started_at) : undefined,
     bookingKind: mapBookingKind(row.booking_kind),
     clientComment: row.client_comment?.trim() || undefined,
+    clientPhone: row.clients?.phone?.trim() || undefined,
+    clientEmail: row.clients?.email?.trim() || undefined,
     pickupLng: typeof row.pickup_lng === 'number' && Number.isFinite(row.pickup_lng) ? row.pickup_lng : undefined,
     pickupLat: typeof row.pickup_lat === 'number' && Number.isFinite(row.pickup_lat) ? row.pickup_lat : undefined,
     dropoffLng:

@@ -106,12 +106,14 @@ import {
   postChauffeurRideAction,
   ridesPersistenceEnabled,
 } from '../services/chauffeurRidesApi';
+import { subscribePaltoCoursesRealtime } from '../services/paltoCoursesRealtime';
 import {
   fetchChauffeurOrganizationFromApi,
   organizationApiEnabled,
   saveChauffeurOrganizationToApi,
 } from '../services/chauffeurOrganizationApi';
 import { fetchChauffeurStatsFromApi, statsApiEnabled } from '../services/chauffeurStatsApi';
+import { supabaseRealtimeConfigured } from '../constants/featureFlags';
 import {
   CHAUFFEUR_COMPLIANCE_KEY,
   CHAUFFEUR_COMPLIANCE_CHANGED_EVENT,
@@ -142,6 +144,60 @@ interface DashboardProps {
   onNavigatePublicHome?: () => void;
   /** Retour vers la vitrine chauffeur Palto. */
   onNavigateDriverHome?: () => void;
+}
+
+type DashboardClientRow = {
+  id: string;
+  nom: string;
+  telephone: string;
+  courses: number;
+  depense: string;
+  note: string;
+};
+
+/** Client factice pour l’ajout manuel de course (mode sans API) quand aucun client agrégé encore. */
+const DASHBOARD_FALLBACK_CLIENT_ROW: DashboardClientRow = {
+  id: 'CL-manual',
+  nom: 'Client',
+  telephone: '—',
+  courses: 0,
+  depense: '0,00 EUR',
+  note: '—',
+};
+
+function buildDashboardClientRowsFromCourses(courses: CourseRowState[]): DashboardClientRow[] {
+  const map = new Map<
+    string,
+    { nom: string; telephone: string; courseCount: number; spentTermineeEur: number }
+  >();
+  for (const c of courses) {
+    const key = c.clientId.trim() || `anon:${(c.client.trim() || 'Client').toLowerCase()}`;
+    const nom = c.client.trim() || 'Client';
+    const phone = (c.clientPhone ?? '').trim();
+    const agg = map.get(key);
+    if (!agg) {
+      map.set(key, {
+        nom,
+        telephone: phone,
+        courseCount: 1,
+        spentTermineeEur: c.statut === 'Terminee' ? c.montant : 0,
+      });
+    } else {
+      agg.courseCount += 1;
+      if (phone && !agg.telephone) agg.telephone = phone;
+      if (c.statut === 'Terminee') agg.spentTermineeEur += c.montant;
+    }
+  }
+  return Array.from(map.entries())
+    .map(([id, v]) => ({
+      id,
+      nom: v.nom,
+      telephone: v.telephone || '—',
+      courses: v.courseCount,
+      depense: `${v.spentTermineeEur.toFixed(2).replace('.', ',')} EUR`,
+      note: '—',
+    }))
+    .sort((a, b) => a.nom.localeCompare(b.nom, 'fr', { sensitivity: 'base' }));
 }
 
 type DashboardView =
@@ -627,7 +683,7 @@ const Dashboard = ({
   }, []);
 
   const [newCourseForm, setNewCourseForm] = useState({
-    clientId: 'CL-101',
+    clientId: DASHBOARD_FALLBACK_CLIENT_ROW.id,
     date: new Date().toISOString().slice(0, 10),
     heure: '08:00',
     depart: '',
@@ -641,8 +697,22 @@ const Dashboard = ({
     return [];
   });
 
-  const clientRows: Array<{ id: string; nom: string; telephone: string; courses: number; depense: string; note: string }> = [];
-  const [selectedClientId, setSelectedClientId] = useState(clientRows[0]?.id ?? null);
+  const clientRows = useMemo(() => buildDashboardClientRowsFromCourses(courseRows), [courseRows]);
+  const [selectedClientId, setSelectedClientId] = useState<string | null>(null);
+
+  useEffect(() => {
+    setSelectedClientId((prev) => {
+      if (prev && clientRows.some((c) => c.id === prev)) return prev;
+      return clientRows[0]?.id ?? null;
+    });
+  }, [clientRows]);
+
+  useEffect(() => {
+    if (clientRows.length === 0) return;
+    setNewCourseForm((prev) =>
+      clientRows.some((c) => c.id === prev.clientId) ? prev : { ...prev, clientId: clientRows[0].id }
+    );
+  }, [clientRows]);
 
   const refreshRides = useCallback(async () => {
     if (!persistRides) return;
@@ -653,6 +723,14 @@ const Dashboard = ({
       console.error('[Dashboard] refresh rides', e);
     }
   }, [persistRides]);
+
+  useEffect(() => {
+    if (!persistRides || !isAuthenticated() || !supabaseRealtimeConfigured()) return;
+    return subscribePaltoCoursesRealtime(() => {
+      if (!isAuthenticated()) return;
+      void refreshRides();
+    });
+  }, [persistRides, refreshRides]);
 
   const [chauffeurProfile, setChauffeurProfile] = useState<ChauffeurProfile>(() => {
     const currentUserEmail = getUnifiedSessionEmail();
@@ -1302,9 +1380,10 @@ const Dashboard = ({
 
   useEffect(() => {
     if (!persistRides || !isAuthenticated()) return;
+    const intervalMs = supabaseRealtimeConfigured() ? 60000 : 25000;
     const t = window.setInterval(() => {
       void refreshRides();
-    }, 25000);
+    }, intervalMs);
     return () => clearInterval(t);
   }, [persistRides, refreshRides]);
 
@@ -1340,7 +1419,9 @@ const Dashboard = ({
     };
   }, [useStatsApi, activeView, courseRows.length]);
   const selectedNewCourseClient =
-    clientRows.find((client) => client.id === newCourseForm.clientId) ?? clientRows[0];
+    clientRows.find((client) => client.id === newCourseForm.clientId) ??
+    clientRows[0] ??
+    DASHBOARD_FALLBACK_CLIENT_ROW;
   const displayedCourseRows = courseRows.filter((course) => {
     if (courseStatusFilter !== 'all' && course.statut !== courseStatusFilter) return false;
     return true;

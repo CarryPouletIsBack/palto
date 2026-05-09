@@ -10,7 +10,14 @@ import {
   getClientLiveMeetRideModel,
   saveClientLiveMeetRideModel,
 } from '../constants/clientLiveMeetRide';
-import { clientRidesApiEnabled, fetchClientRides } from '../services/clientRidesApi';
+import {
+  CLIENT_RIDES_POLL_FALLBACK_WHEN_REALTIME_MS,
+  CLIENT_RIDES_POLL_INTERVAL_MS,
+  clientRidesApiEnabled,
+  fetchClientRides,
+} from '../services/clientRidesApi';
+import { supabaseRealtimeConfigured } from '../constants/featureFlags';
+import { subscribePaltoCoursesRealtime } from '../services/paltoCoursesRealtime';
 import { simplifyAddressDisplay } from '../services/addressDisplay';
 import type { ClientTopbarUpcomingRide } from '../components/DashboardHomeTopbar'
 
@@ -52,6 +59,27 @@ export function useClientHomeTopbarRides(language: 'fr' | 'en') {
       window.removeEventListener('storage', onStorage);
       window.removeEventListener(PALTO_CLIENT_SESSION_CHANGED_EVENT, bump as EventListener);
     };
+  }, []);
+
+  useEffect(() => {
+    if (!clientRidesApiEnabled() || !supabaseRealtimeConfigured()) return;
+    return subscribePaltoCoursesRealtime(() => {
+      if (!isClientAuthenticated() || !getCurrentClientUser()?.email) return;
+      setTick((n) => n + 1);
+    });
+  }, []);
+
+  useEffect(() => {
+    if (!clientRidesApiEnabled()) return;
+    const ms = supabaseRealtimeConfigured()
+      ? CLIENT_RIDES_POLL_FALLBACK_WHEN_REALTIME_MS
+      : CLIENT_RIDES_POLL_INTERVAL_MS;
+    const id = window.setInterval(() => {
+      if (document.visibilityState !== 'visible') return;
+      if (!isClientAuthenticated() || !getCurrentClientUser()?.email) return;
+      setTick((n) => n + 1);
+    }, ms);
+    return () => window.clearInterval(id);
   }, []);
 
   useEffect(() => {
@@ -150,5 +178,5 @@ export function useClientHomeTopbarRides(language: 'fr' | 'en') {
     return getClientLiveMeetRideModel() != null;
   }, [tick, apiLiveMeetActive]);
 
-  return { clientUpcomingRide, clientLiveMeetActive };
+  return { clientUpcomingRide, clientLiveMeetActive, ridesRefreshEpoch: tick };
 }

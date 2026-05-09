@@ -6257,8 +6257,8 @@
 @media (min-width: 1367px) {
   .palto-ride-layout {
     display: grid;
-    /* Harmonise la largeur booking/drivers sur grands écrans. */
-    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1fr);
+    /* Colonne chauffeurs plus étroite que résa + carte (évite une liste trop étalée). */
+    grid-template-columns: minmax(0, 1.08fr) minmax(0, 0.68fr) minmax(0, 1.24fr);
     gap: 10px;
     align-items: stretch;
   }
@@ -6286,6 +6286,9 @@
   .palto-ride-column--drivers {
     grid-column: 1;
     grid-row: 2;
+    justify-self: start;
+    width: 100%;
+    max-width: min(100%, 440px);
   }
 
   .palto-ride-column--map {

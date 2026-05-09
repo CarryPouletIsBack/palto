@@ -246,7 +246,7 @@ function inferClientIdentityFromEmail(email: string): { prenom: string; nom: str
 export default function ClientCompteDashboard({ onBack, onOpenClientLiveMeet }: ClientCompteDashboardProps) {
   const { t, language, setLanguage } = useLanguage();
   const isEn = language === 'en';
-  const { clientUpcomingRide, clientLiveMeetActive } = useClientHomeTopbarRides(language);
+  const { clientUpcomingRide, clientLiveMeetActive, ridesRefreshEpoch } = useClientHomeTopbarRides(language);
   const openstreetToken = import.meta.env.VITE_OPENSTREET_ACCESS_TOKEN as string | undefined;
   const [wallet, setWallet] = useState(() => loadClientWalletSnapshot(getCurrentClientUser()?.email));
   const [appPrefs, setAppPrefs] = useState<ClientAppPreferencesSnapshot>(() =>
@@ -495,7 +495,7 @@ export default function ClientCompteDashboard({ onBack, onOpenClientLiveMeet }: 
     return () => {
       cancelled = true;
     };
-  }, [ridesSyncTick]);
+  }, [ridesSyncTick, ridesRefreshEpoch]);
 
   useEffect(() => {
     const sessionUser = getCurrentClientUser();
