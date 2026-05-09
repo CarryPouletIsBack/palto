@@ -13,7 +13,7 @@ import {
   CHAUFFEUR_COURSE_COMPLETED_EVENT,
   type ChauffeurNavCourseSnapshot,
 } from '../constants/chauffeurNavCourseStorage'
-import { fetchChauffeurRidesFromApi } from '../services/chauffeurRidesApi'
+import { fetchChauffeurRidesFromApi, postChauffeurRideAction, ridesPersistenceEnabled } from '../services/chauffeurRidesApi'
 import './DriverNavigationView.css'
 
 const REUNION_PROXIMITY: [number, number] = [55.45, -21.15]
@@ -147,6 +147,8 @@ export default function DriverNavigationView({ courseId, onClose }: Props) {
   /** Après « Terminer » ou arrivée : modale récap avant fermeture. */
   const [phase, setPhase] = useState<'navigating' | 'recap'>('navigating')
   const [recapNow, setRecapNow] = useState(() => Date.now())
+  const [recapClosing, setRecapClosing] = useState(false)
+  const [recapFinalizeError, setRecapFinalizeError] = useState<string | null>(null)
 
   const finishedRef = useRef(false)
   const phaseRef = useRef<'navigating' | 'recap'>('navigating')
@@ -305,8 +307,24 @@ export default function DriverNavigationView({ courseId, onClose }: Props) {
     setRecapNow(Date.now())
   }, [])
 
-  const confirmRecapAndLeave = useCallback(() => {
-    if (finishedRef.current) return
+  const confirmRecapAndLeave = useCallback(async () => {
+    if (finishedRef.current || recapClosing) return
+
+    if (ridesPersistenceEnabled()) {
+      setRecapFinalizeError(null)
+      setRecapClosing(true)
+      try {
+        await postChauffeurRideAction(courseId, 'complete')
+      } catch (e) {
+        setRecapClosing(false)
+        setRecapFinalizeError(
+          e instanceof Error ? e.message : 'Impossible de cloturer la course. Verifiez la connexion.'
+        )
+        return
+      }
+      setRecapClosing(false)
+    }
+
     finishedRef.current = true
     try {
       sessionStorage.removeItem(CHAUFFEUR_NAV_COURSE_STORAGE_KEY)
@@ -317,7 +335,7 @@ export default function DriverNavigationView({ courseId, onClose }: Props) {
       new CustomEvent(CHAUFFEUR_COURSE_COMPLETED_EVENT, { detail: { id: courseId } })
     )
     onClose()
-  }, [courseId, onClose])
+  }, [courseId, onClose, recapClosing])
 
   useEffect(() => {
     requestFinishRef.current = requestFinish
@@ -700,8 +718,20 @@ export default function DriverNavigationView({ courseId, onClose }: Props) {
             </div>
 
             <div className="driver-recap-actions">
-              <button type="button" className="driver-recap-btn driver-recap-btn--primary" onClick={confirmRecapAndLeave}>
-                Terminer la course
+              {recapFinalizeError ? (
+                <p className="driver-recap-error" role="alert">
+                  {recapFinalizeError}
+                </p>
+              ) : null}
+              <button
+                type="button"
+                className="driver-recap-btn driver-recap-btn--primary"
+                onClick={() => {
+                  void confirmRecapAndLeave()
+                }}
+                disabled={recapClosing}
+              >
+                {recapClosing ? 'Cloture en cours…' : 'Terminer la course'}
               </button>
             </div>
           </div>

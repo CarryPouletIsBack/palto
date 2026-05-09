@@ -1358,9 +1358,8 @@ const Dashboard = ({
       const id = ce.detail?.id;
       if (!id) return;
       if (persistRides) {
-        void postChauffeurRideAction(id, 'complete')
-          .then(() => refreshRides())
-          .catch((err) => console.error(err));
+        // La clôture API est faite dans DriverNavigationView (Dashboard souvent démonté sur /navigation).
+        void refreshRides();
         return;
       }
       setCourseRows((prev) =>
