@@ -26,7 +26,7 @@ import {
 } from './constants/clientAppPreferencesStorage'
 import { trackPageView, trackEvent } from './services/googleAnalyticsTracking'
 import { useLanguage } from './contexts/LanguageContext'
-import { purgeDemoDataOnce } from './services/purgeDemoData'
+import { purgeStaleLocalSnapshotsOnce } from './services/purgeStaleLocalSnapshots'
 import './App.css'
 import { PLACEHOLDER_COVER } from './constants/imagePlaceholders'
 
@@ -74,7 +74,7 @@ function App() {
   )
 
   useEffect(() => {
-    purgeDemoDataOnce()
+    purgeStaleLocalSnapshotsOnce()
   }, [])
 
   useEffect(() => {

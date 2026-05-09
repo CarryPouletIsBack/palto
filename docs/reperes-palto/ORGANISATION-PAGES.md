@@ -30,7 +30,7 @@ Les **identifiants internes** (`currentPage`) sont ceux utilisés dans `App.tsx`
 | URL (exemple) | `currentPage` | Composant(s) principal(aux) | Rôle produit |
 |-----------------|----------------|-----------------------------|--------------|
 | `/`, `/fr`, `/en` | `accueil` | `Hero` (+ carte Mapbox embarquée, réservation, chauffeurs mock) | **Accueil** : grille hero, destination, trajet, liens compte / chauffeur / Go. |
-| `/go`, `/project/go` | `project-Go` | `Project` → `SingleProjectNew` ; en overlay `ProjectCoverCarousel` | **Page Go** : parcours « commande de course » (démo), carte, recap. Données texte / user flow : `src/data/projects.ts` (clé **Go**). |
+| `/go`, `/project/go` | `project-Go` | `Project` → `SingleProjectNew` ; en overlay `ProjectCoverCarousel` | **Page Go** : parcours « commande de course » (prototype), carte, recap. Données texte / user flow : `src/data/projects.ts` (clé **Go**). |
 | `/menu` | `menu` | `Menu` | Liste des projets publiés (menu case-study léger). |
 | `/contact` | `contact` | `Contact` | Formulaire contact (API `api/send.ts`). |
 | `/compte` | `client-compte` | `ClientCompteDashboard` | Espace **client** (compte / préférences côté app). |
@@ -106,11 +106,11 @@ Chemins typiques déployés sur Vercel (préfixe `/api`) :
 | `src/data/projects.ts` | **Seed** projet « Go » : textes FR/EN, user flow, matrices, etc. Export `defaultProjectsData` + type `ProjectData`. |
 | `src/services/projectService.ts` | Fusion seed + `localStorage`, CRUD menu/dashboard. |
 | `src/data/nearbyDrivers.ts` | Mock **chauffeurs à proximité** (contrat prêt pour API réelle). |
-| `src/constants/chauffeurOrganizationStorage.ts` | Organisation / flotte (démo locale). |
-| `src/constants/chauffeurInboxStorage.ts` | Notifications type invitation flotte (démo). |
-| `src/constants/chauffeurFleetZones.ts` | Secteurs / disponibilité flotte (démo). |
-| `src/constants/chauffeurComplianceStorage.ts` | Checklist documents chauffeur (démo). |
-| `src/constants/chauffeurRegistrationStorage.ts` | Inscription chauffeurs additionnels (démo). |
+| `src/constants/chauffeurOrganizationStorage.ts` | Organisation / flotte (stockage local). |
+| `src/constants/chauffeurInboxStorage.ts` | Notifications type invitation flotte (stockage local). |
+| `src/constants/chauffeurFleetZones.ts` | Secteurs / disponibilité flotte (stockage local). |
+| `src/constants/chauffeurComplianceStorage.ts` | Checklist documents chauffeur (stockage local). |
+| `src/constants/chauffeurRegistrationStorage.ts` | Inscription chauffeurs additionnels (stockage local). |
 | `src/data/popularDestinations.ts` | Destinations « lieux » / spotlight. |
 | `content/pages/*.txt` | Textes **éditoriaux** versionnés (accueil, dashboard, go, 404). À relier à l’usage réel dans le front si tu t’en sers (sinon référence rédaction / export). |
 | `public/projects-content.json`, `public/content-for-crawlers.html` | Contenus **crawler / SEO** — à aligner avec `projects.ts` si besoin (voir `SEO_INDEXATION.md`). |

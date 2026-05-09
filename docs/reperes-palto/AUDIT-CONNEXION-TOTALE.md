@@ -66,7 +66,7 @@ Consolider l'etat reel des connexions entre:
 - **Tarifs chauffeur**: localStorage.
 - **Organisation flotte**: localStorage.
 - **Conformite**: localStorage.
-- **Client account rides**: mix demo/local.
+- **Client account rides**: mix API / stockage local selon les flags.
 - **Stats**: derivees front (partiellement mockees).
 
 ## Risques principaux

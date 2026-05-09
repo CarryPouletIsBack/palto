@@ -141,7 +141,7 @@ Ces endpoints sont nécessaires car ils utilisent le `CLIENT_SECRET` qui ne doit
      - `https://www.googleapis.com/auth/analytics` (lecture/écriture, si nécessaire)
 
 4. **Gérer les tokens de manière sécurisée**
-   - Les tokens sont stockés dans `localStorage` (pour la démo)
+   - Les tokens sont stockés dans `localStorage` (configuration actuelle)
    - En production, considérez utiliser des cookies httpOnly ou un système de session
 
 ## 🐛 Dépannage

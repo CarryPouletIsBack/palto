@@ -1,5 +1,5 @@
 /**
- * Boîte de réception chauffeur (démo locale) : invitations organisation, etc.
+ * Boîte de réception chauffeur (stockage local) : invitations organisation, etc.
  * Cible `targetEmail` — affichée quand le profil chauffeur utilise cet e-mail.
  */
 export const CHAUFFEUR_INBOX_STORAGE_KEY = 'palto_chauffeur_inbox_v1'

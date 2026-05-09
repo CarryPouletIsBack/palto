@@ -1,4 +1,4 @@
-/** Persistance locale démo : date dernier changement MDP + statuts OAuth (sans secrets). */
+/** Persistance locale : date dernier changement MDP + statuts OAuth (sans secrets). */
 import { clientAccountRowExistsForEmail } from './clientAccountStorage';
 
 export const CLIENT_SECURITY_STORAGE_KEY = 'palto_client_security_v1';

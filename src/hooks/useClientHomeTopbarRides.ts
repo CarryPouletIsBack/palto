@@ -23,7 +23,7 @@ import { simplifyAddressDisplay } from '../services/addressDisplay';
 import type { ClientTopbarUpcomingRide } from '../components/DashboardHomeTopbar'
 
 /**
- * Données passager pour la topbar d’accueil : course à venir + indicateur « chauffeur sur place » (démo).
+ * Données passager pour la topbar d’accueil : course à venir + indicateur « chauffeur sur place ».
  */
 export function useClientHomeTopbarRides(language: 'fr' | 'en') {
   const [tick, setTick] = useState(0);

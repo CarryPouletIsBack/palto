@@ -92,7 +92,7 @@ export default function ChauffeurDocumentsChecklist({
       {allDone ? (
         <p className="chauffeur-compliance-checklist__success">{t('chauffeurCompliance.allProvided')}</p>
       ) : (
-        <p className="chauffeur-compliance-checklist__hint">{t('chauffeurCompliance.demoHint')}</p>
+        <p className="chauffeur-compliance-checklist__hint">{t('chauffeurCompliance.complianceUploadHint')}</p>
       )}
     </div>
   );

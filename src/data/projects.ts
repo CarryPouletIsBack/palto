@@ -250,7 +250,7 @@ export const defaultProjectsData: { [key: string]: ProjectData } = {
     ],
 
     teamNote:
-      'Contenu produit de démonstration : les libellés et métriques illustrent le positionnement Palto (moto-taxi, La Réunion) sans reprendre d’anciens cas clients.',
+      'Contenu produit illustratif : les libellés et métriques présentent le positionnement Palto (moto-taxi, La Réunion) sans reprendre d’anciens cas clients.',
     
     // 3. Contexte & Problématique
     context: {
@@ -367,7 +367,7 @@ Grille 4 px : alignements pour boutons, champs et badges de statut sur le flux d
         {
           subtitle: 'Tests & ajustements',
           content:
-            'Scénarios « trajet typique » sur La Réunion : vérifier lisibilité des estimations, enchaînements clavier / tactile, et cohérence avec le dashboard chauffeur (démo).',
+            'Scénarios « trajet typique » sur La Réunion : vérifier lisibilité des estimations, enchaînements clavier / tactile, et cohérence avec le dashboard chauffeur.',
         },
       ],
     },
@@ -465,7 +465,7 @@ Grille 4 px : alignements pour boutons, champs et badges de statut sur le flux d
     
     // 8. Impacts & Résultats
     results: {
-      title: 'Résultats & indicateurs (démo)',
+      title: 'Résultats & indicateurs',
       metrics: [
         { label: 'Parcours', value: '5 étapes clés jusqu’au récap' },
         { label: 'Carte', value: 'OpenStreetMap géocodage + directions' },
@@ -514,7 +514,7 @@ Grille 4 px : alignements pour boutons, champs et badges de statut sur le flux d
           'Go structures the flow into steps: locations → map & route → ride mode → drivers → recap → submit. Copy and states guide the user; enabling the API connects this flow to the driver schedule.',
 
         teamNote:
-          'Demo product copy: labels and metrics illustrate the Palto positioning (moto-taxi, Réunion) without legacy client case studies.',
+          'Illustrative product copy: labels and metrics present the Palto positioning (moto-taxi, Réunion) without legacy client case studies.',
 
         positionnementMatrix: {
           axisHorizontalPrefix: 'X Axis (Horizontal) ',

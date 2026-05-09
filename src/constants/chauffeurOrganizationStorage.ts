@@ -1,5 +1,5 @@
 /**
- * Organisation chauffeur (démo locale) : création, rôle admin, invitations.
+ * Organisation chauffeur (stockage local) : création, rôle admin, invitations.
  * Persistance `localStorage` — remplaçable plus tard par une API.
  */
 import type { FleetAvailability, FleetZoneId } from './chauffeurFleetZones'
@@ -18,7 +18,7 @@ export type ChauffeurOrgMember = {
   role: OrgMemberRole
   status: OrgMemberStatus
   invitedAt: string
-  /** Immatriculation (démo — pas de validation serveur). */
+  /** Immatriculation (pas de validation serveur). */
   vehiclePlate?: string
   /** Modèle / type (ex. scooter, berline). */
   vehicleModel?: string

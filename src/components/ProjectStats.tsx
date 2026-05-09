@@ -183,7 +183,7 @@ const ProjectStats: React.FC<ProjectStatsProps> = ({
       <div className="project-stats-container">
         <h2 className="project-stats-title">Impact du projet</h2>
         <p className="project-stats-description">
-          Les métriques clés qui démontrent l'efficacité et l'impact de cette solution
+          Les métriques clés qui illustrent l’efficacité et l’impact de cette solution
         </p>
         
         {/* Stats d'impact produit / business */}

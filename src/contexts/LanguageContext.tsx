@@ -74,7 +74,7 @@ const TRANSLATIONS: Record<Language, Record<string, unknown>> = {
     clientMeetDriver: {
       back: 'Retour',
       unavailable:
-        'Cette vue est réservée aux passagers connectés avec une course « chauffeur sur place » (démonstration).',
+        'Cette vue est réservée aux passagers connectés avec une course « chauffeur sur place » en cours.',
     },
     hero: {
       title: 'Palto — des trajets clairs sur La Réunion, du départ à l’arrivée.',
@@ -211,7 +211,7 @@ const TRANSLATIONS: Record<Language, Record<string, unknown>> = {
       titleSignup: 'Créer un compte chauffeur',
       subtitleLogin: 'Accédez à votre tableau de bord, courses et organisation.',
       subtitleSignup:
-        'Après inscription, vos courses restent bloquées tant que les pièces légales listées dans le tableau de bord ne sont pas fournies (démo : cases à cocher). Téléphone, type de véhicule et équipement livraison sont enregistrés sur cet appareil.',
+        'Après inscription, vos courses restent bloquées tant que les pièces légales listées dans le tableau de bord ne sont pas fournies (cases à cocher sur cet appareil). Téléphone, type de véhicule et équipement livraison sont enregistrés sur cet appareil.',
       signupPhoneLabel: 'Téléphone',
       signupPhoneDial: 'Indicatif pays',
       signupPhonePlaceholder: 'Ex. 692 12 34 56',
@@ -249,11 +249,12 @@ const TRANSLATIONS: Record<Language, Record<string, unknown>> = {
     chauffeurCompliance: {
       bannerTitle: 'Documents légaux requis',
       bannerLead:
-        'En tant que chauffeur inscrit sur cet appareil, vous devez fournir les pièces ci-dessous avant d’accepter ou de lancer des courses. En démo, cochez chaque ligne une fois le justificatif déposé (simulation).',
+        'En tant que chauffeur inscrit sur cet appareil, vous devez fournir les pièces ci-dessous avant d’accepter ou de lancer des courses. Cochez chaque ligne une fois le justificatif déposé (simulation locale).',
       checklistLead: 'Cochez chaque document dès qu’il est fourni (contrôle réel à brancher côté serveur).',
       checklistAria: 'Liste des documents obligatoires',
       allProvided: 'Tous les documents sont indiqués comme fournis — les courses sont débloquées.',
-      demoHint: 'Aucun fichier n’est envoyé ici ; l’intégration KYC / upload sécurisé est à prévoir en production.',
+      complianceUploadHint:
+        'Aucun fichier n’est envoyé ici ; l’intégration KYC / upload sécurisé est à prévoir en production.',
       doc_driving_license: 'Permis de conduire (catégorie adaptée)',
       doc_vtc_or_goods_capacity:
         'Carte professionnelle VTC ou droit d’exercer — ou attestation de capacité de transport de marchandises',
@@ -269,7 +270,7 @@ const TRANSLATIONS: Record<Language, Record<string, unknown>> = {
       titleSignup: 'Créer un compte passager',
       subtitleLogin: 'Accédez à votre compte, courses et préférences.',
       subtitleSignup:
-        'Compte enregistré sur cet appareil (démo). Vos données « Mon compte » restent locales sur ce navigateur.',
+        'Compte enregistré sur cet appareil. Vos données « Mon compte » restent locales sur ce navigateur.',
       tabLogin: 'Connexion',
       tabSignup: 'Créer un compte',
       email: 'E-mail',
@@ -287,7 +288,7 @@ const TRANSLATIONS: Record<Language, Record<string, unknown>> = {
       errorGeneric: 'Une erreur est survenue. Réessayez.',
       errorEmailUsed: 'Cette adresse e-mail est déjà enregistrée sur cet appareil.',
       errorEmailReserved:
-        'Cette adresse correspond au compte démo principal passager : utilisez « Connexion » ou une autre adresse.',
+        'Cette adresse correspond au compte passager principal réservé : utilisez « Connexion » ou une autre adresse.',
       errorPasswordShort: 'Le mot de passe doit contenir au moins 6 caractères.',
       errorPasswordMismatch: 'Les mots de passe ne correspondent pas.',
       errorInvalidEmail: 'Adresse e-mail invalide.',
@@ -371,7 +372,7 @@ const TRANSLATIONS: Record<Language, Record<string, unknown>> = {
       lightModeSinglePageAlt: 'Go — récapitulatif parcours',
       lightModeSetp1Alt: 'Go — choix chauffeur, étape 1',
       integrationTitle:
-        'Déploiement progressif : l’interface peut tourner en démo ; l’activation API + Supabase permet la persistance des courses et les actions côté chauffeur.',
+        'Déploiement progressif : l’interface évolue sans friction ; l’activation API + Supabase permet la persistance des courses et les actions côté chauffeur.',
       integrationLead:
         'Composants isolés (carte, liste chauffeurs, récap) pour faire évoluer règles métier, paiement hors ligne pour l’instant, puis notifications et suivi avancé.',
       december2023: 'Recherche & cadrage',
@@ -411,13 +412,12 @@ const TRANSLATIONS: Record<Language, Record<string, unknown>> = {
       navHelp: 'Aide',
       navOrganization: 'Organisation',
       titleOrganization: 'Mon organisation',
-      helpLead: 'Raccourcis et réponses courantes pour le tableau de bord chauffeur (démo).',
+      helpLead: 'Raccourcis et réponses courantes pour le tableau de bord chauffeur.',
       settingsMoreHint:
         'Ces préférences sont les mêmes que sur le site (compte passager) : elles s’appliquent à tout Palto sur cet appareil.',
-      mainSubtitle:
-        'Palto aligne demandes, planning et suivi pour que vous gardiez la main sur la route.',
+      mainSubtitle: 'Vos courses, votre planning et votre activité au même endroit.',
       orgPageLead:
-        'Gérez votre flotte localement sur cet appareil (démo). Les invitations sont simulées — branchement API à prévoir.',
+        'Gérez votre flotte localement sur cet appareil. Les invitations sont simulées — branchement API à prévoir.',
       orgFleetCode: 'Code flotte',
       orgBase: 'Base',
       orgAdminEmail: 'Administrateur',
@@ -434,7 +434,7 @@ const TRANSLATIONS: Record<Language, Record<string, unknown>> = {
       orgRoleAdmin: 'Administrateur',
       orgRoleDriver: 'Chauffeur',
       orgRemoveInvite: 'Retirer',
-      orgDeleteOrg: 'Supprimer l’organisation (démo)',
+      orgDeleteOrg: 'Supprimer l’organisation',
       orgDeleteConfirm:
         'Supprimer cette organisation ? Les données locales seront effacées ; l’entrée de menu disparaîtra.',
       orgSectionTitle: 'Organisation',
@@ -457,7 +457,7 @@ const TRANSLATIONS: Record<Language, Record<string, unknown>> = {
       orgProfileRatingLabel: 'Note moyenne',
       orgProfileRatingSuffix: 'avis',
       orgProfileReviewsTitle: 'Derniers avis',
-      orgProfileReviewsLead: 'Exemples pour la démo — branchement avis clients à prévoir.',
+      orgProfileReviewsLead: 'Exemples illustratifs — branchement avis clients à prévoir.',
       orgProfileReview1Author: 'Marie L.',
       orgProfileReview1Body:
         'Chauffeur ponctuel, trajet impeccable. Je recommande cette flotte pour les courses en ville.',
@@ -471,7 +471,7 @@ const TRANSLATIONS: Record<Language, Record<string, unknown>> = {
       orgReviewsGoTo: 'Aller à l’avis {n}',
       orgInviteNotifTitle: 'Invitation flotte · {org}',
       orgInviteNotifDesc:
-        'Code flotte {code} · Invitation envoyée par {from}. Rejoignez la flotte depuis votre compte (démo).',
+        'Code flotte {code} · Invitation envoyée par {from}. Rejoignez la flotte depuis votre compte.',
       notificationsModalTitle: 'Toutes les notifications',
       notificationsSeeAll: 'Voir tout',
       moreMenuAria: "Plus d'options",
@@ -491,10 +491,10 @@ const TRANSLATIONS: Record<Language, Record<string, unknown>> = {
       bugValidation: 'Décrivez le problème avant d’envoyer.',
       bugEmailMissing: 'Ajoutez un e-mail dans votre profil chauffeur pour envoyer un signalement.',
       orgSettingsDangerLead:
-        'Zone sensible : la suppression efface la flotte, les membres et les invitations enregistrés sur cet appareil (démo).',
+        'Zone sensible : la suppression efface la flotte, les membres et les invitations enregistrés sur cet appareil.',
       fleetTitle: 'Gestion de flotte',
       fleetLead:
-        'Secteurs (Ouest, Sud, Est, Nord, Cilaos, etc.), véhicules et disponibilité — données locales sur cet appareil (démo). À brancher sur votre outil métier ou API plus tard.',
+        'Secteurs (Ouest, Sud, Est, Nord, Cilaos, etc.), véhicules et disponibilité — données locales sur cet appareil. À brancher sur votre outil métier ou API plus tard.',
       fleetFilterLabel: 'Filtrer par secteur',
       fleetFilterAll: 'Tous les secteurs',
       fleetSummaryTitle: 'Répartition (chauffeurs actifs)',
@@ -523,7 +523,7 @@ const TRANSLATIONS: Record<Language, Record<string, unknown>> = {
     },
     clientAccount: {
       title: 'Mon compte',
-      lead: 'Informations utilisées pour vos courses et votre contact avec les chauffeurs Palto. Données enregistrées sur cet appareil (démo).',
+      lead: 'Informations utilisées pour vos courses et votre contact avec les chauffeurs Palto. Données enregistrées sur cet appareil.',
       navOverview: "Vue d'ensemble",
       navPersonalInfo: 'Informations personnelles',
       navSecurity: 'Sécurité',
@@ -556,7 +556,7 @@ const TRANSLATIONS: Record<Language, Record<string, unknown>> = {
       save: 'Enregistrer',
       cancel: 'Annuler',
       recentTitle: 'Courses récentes',
-      recentDemo: 'Historique démo (aucune donnée serveur).',
+      recentRidesCaption: 'Historique local sur cet appareil.',
       bookRide: 'Commander une course',
       rideDetailTitle: 'Récapitulatif de la course',
       rideDetailClose: 'Fermer',
@@ -583,17 +583,17 @@ const TRANSLATIONS: Record<Language, Record<string, unknown>> = {
       rideMeetPickupTime: 'Prise en charge vers',
       rideMeetVehicleColor: 'Couleur :',
       rideMeetCall: 'Appeler le chauffeur',
-      rideMeetCallDisabledHint: 'Indisponible en démo',
+      rideMeetCallDisabledHint: 'Indisponible pour le moment',
       rideMeetCta: 'J’ai rejoint mon chauffeur',
       rideMeetConfirmed: 'C’est noté',
       rideMeetToast: 'Merci ! Bon trajet avec Palto.',
       rideMeetDriverCardAria: 'Informations sur le chauffeur et le véhicule',
       rideMeetLocationTitle: 'Position du chauffeur',
-      rideMeetLocationLive: 'Temps réel (démo)',
+      rideMeetLocationLive: 'Temps réel',
       rideMeetLocationAria: 'Localisation du chauffeur par rapport au lieu de prise en charge',
       rideMeetDistanceMeters: '≈ {m} m du point de prise en charge',
       rideMeetMapNoToken:
-        'Sans service cartographique disponible, la carte ne s’affiche pas ici. La distance se met à jour quand même (démonstration).',
+        'Sans service cartographique disponible, la carte ne s’affiche pas ici. La distance se met à jour quand même.',
       rideMeetDriverPin: 'Chauffeur',
       rideMeetClientPin: 'Vous',
       rideEndTitle: 'Fin de course',
@@ -601,11 +601,11 @@ const TRANSLATIONS: Record<Language, Record<string, unknown>> = {
       rideEndStatsAria: 'Montant, distance et durée de la course',
       rideEndCashTitle: 'Règlement en espèces',
       rideEndCashHint:
-        'Pour le moment, seul le paiement en espèces est prévu sur cette vue (démonstration). Préparez la monnaie exacte si possible.',
+        'Pour le moment, seul le paiement en espèces est prévu sur cette vue. Préparez la monnaie exacte si possible.',
       rideEndCashConfirm: 'Je confirme avoir réglé {amount} au chauffeur en espèces.',
       rideEndReviewTitle: 'Votre avis',
       rideEndReviewHint:
-        'Note et commentaire sont une simulation : rien n’est envoyé au serveur dans cette version démo.',
+        'Note et commentaire sont une simulation : rien n’est envoyé au serveur pour le moment.',
       rideEndStarsAria: 'Note sur 5',
       rideEndStarLabel: 'Noter {n} sur 5',
       rideEndCommentLabel: 'Commentaire (optionnel)',
@@ -621,19 +621,19 @@ const TRANSLATIONS: Record<Language, Record<string, unknown>> = {
       navPlaces: 'Lieux enregistrés',
       navWallet: 'Portefeuille',
       walletLead:
-        'Consultez votre solde et un historique de démonstration. Les montants sont stockés localement sur cet appareil (aucune transaction réelle).',
+        'Consultez votre solde et votre historique d’activité. Les montants sont stockés localement sur cet appareil (aucune transaction réelle).',
       walletBalanceTitle: 'Solde disponible',
-      walletDemoNote:
+      walletActivityNote:
         'Les mouvements ci-dessous sont fictifs ; seul le solde peut être mis à jour via la simulation de recharge.',
       walletMovementsTitle: 'Derniers mouvements',
-      walletDemoCredit: 'Simuler une recharge (+5,00 €)',
+      walletSimulateTopup: 'Simuler une recharge (+5,00 €)',
       walletMov1: 'Course · Le Port → Saint-Denis',
       walletMov2: 'Recharge portefeuille (simulation)',
       walletMov3: 'Course · Saint-Pierre → Étang-Salé',
       walletOpen: 'Gérer le portefeuille',
       overviewWalletHint: 'Solde actuel : {balance}. Recharges et détail dans l’onglet Portefeuille.',
       coursesRecapTitle: 'Récapitulatif des courses',
-      coursesRecapLead: 'Liste de toutes vos courses enregistrées sur cet appareil (démo).',
+      coursesRecapLead: 'Liste de toutes vos courses enregistrées sur cet appareil.',
       coursesEmptyHint: "Vous n'avez pas encore commandé de course.",
       securityPasswordTitle: 'Mot de passe',
       securityPasswordField: 'Mot de passe actuel',
@@ -653,7 +653,7 @@ const TRANSLATIONS: Record<Language, Record<string, unknown>> = {
       securityOAuthDisconnect: 'Déconnecter',
       securityOAuthConnected: 'Connecté',
       securityOAuthNotConnected: 'Non connecté',
-      settingsLead: 'Personnalisez l’affichage et le comportement de l’application sur cet appareil (démo).',
+      settingsLead: 'Personnalisez l’affichage et le comportement de l’application sur cet appareil.',
       settingsLanguageTitle: 'Langue',
       settingsLanguageHint: 'Choisissez la langue des textes du compte et du site.',
       settingsAppearanceTitle: 'Apparence',
@@ -667,7 +667,7 @@ const TRANSLATIONS: Record<Language, Record<string, unknown>> = {
       settingsTextSizeValue: '{n} %',
       settingsNotificationsTitle: 'Notifications',
       settingsNotificationsHint:
-        'Canaux pour rappels et messages liés à vos courses (démo : aucun envoi réel, préférences enregistrées sur cet appareil).',
+        'Canaux pour rappels et messages liés à vos courses (aucun envoi réel pour le moment ; préférences enregistrées sur cet appareil).',
       settingsNotifyEmail: 'E-mail',
       settingsNotifySms: 'SMS',
       settingsNotifyPush: 'Notifications push',
@@ -675,17 +675,17 @@ const TRANSLATIONS: Record<Language, Record<string, unknown>> = {
       helpLead: 'Questions fréquentes et pistes pour obtenir de l’aide.',
       helpFaq1Q: 'Comment sont enregistrées mes données dans ce compte ?',
       helpFaq1A:
-        'En version démo, profil, sécurité et portefeuille sont stockés localement dans votre navigateur. Aucune synchronisation serveur pour ces écrans.',
+        'Profil, sécurité et portefeuille sont stockés localement dans votre navigateur. Aucune synchronisation serveur pour ces écrans.',
       helpFaq2Q: 'Comment consulter mes courses ?',
       helpFaq2A:
         'Ouvrez l’onglet « Mes courses », puis touchez une ligne pour afficher le récapitulatif détaillé. Les courses affichées sont fictives.',
       helpFaq3Q: 'Le solde du portefeuille est-il réel ?',
       helpFaq3A:
-        'Non : il s’agit d’une simulation locale. Le bouton « Simuler une recharge » augmente uniquement le solde de démonstration sur cet appareil.',
+        'Non : il s’agit d’une simulation locale. Le bouton « Simuler une recharge » augmente uniquement le solde fictif sur cet appareil.',
       helpContactHint:
         'Pour nous contacter, utilisez la page Contact du site Palto (menu ou pied de page depuis l’accueil).',
       placesLead:
-        'Enregistrez vos adresses habituelles pour remplir plus vite le départ ou l’arrivée sur une course. Données stockées sur cet appareil (démo).',
+        'Enregistrez vos adresses habituelles pour remplir plus vite le départ ou l’arrivée sur une course. Données stockées sur cet appareil.',
       placesHome: 'Domicile',
       placesWork: 'Travail',
       placesAddressLabel: 'Adresse',
@@ -724,7 +724,7 @@ const TRANSLATIONS: Record<Language, Record<string, unknown>> = {
     clientMeetDriver: {
       back: 'Back',
       unavailable:
-        'This screen is for signed-in passengers with a “driver waiting” ride (demo).',
+        'This screen is for signed-in passengers with a “driver waiting” ride in progress.',
     },
     hero: {
       title: 'Palto — clear rides across Réunion, from pickup to drop-off.',
@@ -860,7 +860,7 @@ const TRANSLATIONS: Record<Language, Record<string, unknown>> = {
       titleSignup: 'Create a driver account',
       subtitleLogin: 'Open your dashboard, rides and fleet tools.',
       subtitleSignup:
-        'After signup, rides stay blocked until the legal documents listed in the dashboard are provided (demo: checkboxes). Phone, vehicle type and delivery equipment are stored on this device.',
+        'After signup, rides stay blocked until the legal documents listed in the dashboard are provided (checkboxes on this device). Phone, vehicle type and delivery equipment are stored on this device.',
       signupPhoneLabel: 'Phone',
       signupPhoneDial: 'Country code',
       signupPhonePlaceholder: 'e.g. 692 12 34 56',
@@ -898,11 +898,12 @@ const TRANSLATIONS: Record<Language, Record<string, unknown>> = {
     chauffeurCompliance: {
       bannerTitle: 'Legal documents required',
       bannerLead:
-        'As a driver registered on this device, you must provide the items below before accepting or starting rides. In demo mode, tick each line once the proof is submitted (simulation).',
+        'As a driver registered on this device, you must provide the items below before accepting or starting rides. Tick each line once the proof is submitted (local simulation).',
       checklistLead: 'Tick each document once provided (real checks to be wired server-side).',
       checklistAria: 'Mandatory documents list',
       allProvided: 'All documents are marked as provided — rides are unlocked.',
-      demoHint: 'No file is uploaded here; secure KYC / upload integration is planned for production.',
+      complianceUploadHint:
+        'No file is uploaded here; secure KYC / upload integration is planned for production.',
       doc_driving_license: 'Driving licence (appropriate category)',
       doc_vtc_or_goods_capacity:
         'Professional VTC card or right to operate — or goods transport capacity certificate',
@@ -918,7 +919,7 @@ const TRANSLATIONS: Record<Language, Record<string, unknown>> = {
       titleSignup: 'Create a passenger account',
       subtitleLogin: 'Access your account, rides and preferences.',
       subtitleSignup:
-        'Account is stored on this device (demo). Your “My account” data stays local in this browser.',
+        'Account is stored on this device. Your “My account” data stays local in this browser.',
       tabLogin: 'Sign in',
       tabSignup: 'Create account',
       email: 'Email',
@@ -936,7 +937,7 @@ const TRANSLATIONS: Record<Language, Record<string, unknown>> = {
       errorGeneric: 'Something went wrong. Please try again.',
       errorEmailUsed: 'This email is already registered on this device.',
       errorEmailReserved:
-        'This email is reserved for the main demo passenger account — use Sign in or another email.',
+        'This email is reserved for the main passenger account — use Sign in or another email.',
       errorPasswordShort: 'Password must be at least 6 characters.',
       errorPasswordMismatch: 'Passwords do not match.',
       errorInvalidEmail: 'Invalid email address.',
@@ -1020,7 +1021,7 @@ const TRANSLATIONS: Record<Language, Record<string, unknown>> = {
       lightModeSinglePageAlt: 'Go — journey recap',
       lightModeSetp1Alt: 'Go — driver choice, step 1',
       integrationTitle:
-        'Progressive rollout: the UI can run as a demo; enabling the API + Supabase persists rides and driver actions.',
+        'Progressive rollout: the UI evolves smoothly; enabling the API + Supabase persists rides and driver actions.',
       integrationLead:
         'Isolated building blocks (map, driver list, recap) so business rules, off-line payment for now, then notifications, can evolve cleanly.',
       december2023: 'Research & framing',
@@ -1059,13 +1060,12 @@ const TRANSLATIONS: Record<Language, Record<string, unknown>> = {
       navHelp: 'Help',
       navOrganization: 'Organization',
       titleOrganization: 'My organization',
-      helpLead: 'Shortcuts and common answers for the driver dashboard (demo).',
+      helpLead: 'Shortcuts and common answers for the driver dashboard.',
       settingsMoreHint:
         'These preferences match the passenger site account: they apply to all of Palto on this device.',
-      mainSubtitle:
-        'Palto aligns requests, schedule, and follow-ups so you stay in control on the road.',
+      mainSubtitle: 'Your rides, schedule and operations in one place.',
       orgPageLead:
-        'Manage your fleet on this device (demo). Invitations are simulated — API integration planned later.',
+        'Manage your fleet on this device. Invitations are simulated — API integration planned later.',
       orgFleetCode: 'Fleet code',
       orgBase: 'Base',
       orgAdminEmail: 'Administrator',
@@ -1082,7 +1082,7 @@ const TRANSLATIONS: Record<Language, Record<string, unknown>> = {
       orgRoleAdmin: 'Administrator',
       orgRoleDriver: 'Driver',
       orgRemoveInvite: 'Remove',
-      orgDeleteOrg: 'Delete organization (demo)',
+      orgDeleteOrg: 'Delete organization',
       orgDeleteConfirm:
         'Delete this organization? Local data will be cleared and the sidebar entry will disappear.',
       orgSectionTitle: 'Organization',
@@ -1105,7 +1105,7 @@ const TRANSLATIONS: Record<Language, Record<string, unknown>> = {
       orgProfileRatingLabel: 'Average rating',
       orgProfileRatingSuffix: 'reviews',
       orgProfileReviewsTitle: 'Latest reviews',
-      orgProfileReviewsLead: 'Demo samples — connect real customer reviews later.',
+      orgProfileReviewsLead: 'Illustrative samples — connect real customer reviews later.',
       orgProfileReview1Author: 'Marie L.',
       orgProfileReview1Body:
         'Driver on time, smooth ride. I recommend this fleet for city trips.',
@@ -1118,7 +1118,7 @@ const TRANSLATIONS: Record<Language, Record<string, unknown>> = {
       orgReviewsDots: 'Review navigation',
       orgReviewsGoTo: 'Go to review {n}',
       orgInviteNotifTitle: 'Fleet invite · {org}',
-      orgInviteNotifDesc: 'Fleet code {code} · Invited by {from}. Join from your account (demo).',
+      orgInviteNotifDesc: 'Fleet code {code} · Invited by {from}. Join from your account.',
       notificationsModalTitle: 'All notifications',
       notificationsSeeAll: 'See all',
       moreMenuAria: 'More options',
@@ -1138,10 +1138,10 @@ const TRANSLATIONS: Record<Language, Record<string, unknown>> = {
       bugValidation: 'Please describe the issue before sending.',
       bugEmailMissing: 'Add an email to your driver profile to send a report.',
       orgSettingsDangerLead:
-        'Sensitive area: deleting removes fleet data, members, and invitations stored on this device (demo).',
+        'Sensitive area: deleting removes fleet data, members, and invitations stored on this device.',
       fleetTitle: 'Fleet management',
       fleetLead:
-        'Sectors (West, South, East, North, Cilaos, etc.), vehicles, and availability — local data on this device (demo). Connect to your back office or API later.',
+        'Sectors (West, South, East, North, Cilaos, etc.), vehicles, and availability — local data on this device. Connect to your back office or API later.',
       fleetFilterLabel: 'Filter by sector',
       fleetFilterAll: 'All sectors',
       fleetSummaryTitle: 'Active drivers by sector',
@@ -1170,7 +1170,7 @@ const TRANSLATIONS: Record<Language, Record<string, unknown>> = {
     },
     clientAccount: {
       title: 'My account',
-      lead: 'Information used for your rides and contact with Palto drivers. Data stored on this device (demo).',
+      lead: 'Information used for your rides and contact with Palto drivers. Data stored on this device.',
       navOverview: 'Overview',
       navPersonalInfo: 'Personal information',
       navSecurity: 'Security',
@@ -1203,7 +1203,7 @@ const TRANSLATIONS: Record<Language, Record<string, unknown>> = {
       save: 'Save',
       cancel: 'Cancel',
       recentTitle: 'Recent rides',
-      recentDemo: 'Demo history (no server data).',
+      recentRidesCaption: 'Local history on this device.',
       bookRide: 'Book a ride',
       rideDetailTitle: 'Ride summary',
       rideDetailClose: 'Close',
@@ -1230,17 +1230,17 @@ const TRANSLATIONS: Record<Language, Record<string, unknown>> = {
       rideMeetPickupTime: 'Pickup around',
       rideMeetVehicleColor: 'Colour:',
       rideMeetCall: 'Call driver',
-      rideMeetCallDisabledHint: 'Unavailable in demo',
+      rideMeetCallDisabledHint: 'Unavailable for now',
       rideMeetCta: 'I am with my driver',
       rideMeetConfirmed: 'Noted',
       rideMeetToast: 'Thanks! Have a good ride with Palto.',
       rideMeetDriverCardAria: 'Driver and vehicle details',
       rideMeetLocationTitle: 'Driver location',
-      rideMeetLocationLive: 'Live (demo)',
+      rideMeetLocationLive: 'Live',
       rideMeetLocationAria: 'Driver location relative to pickup',
       rideMeetDistanceMeters: '≈ {m} m from pickup',
       rideMeetMapNoToken:
-        'If mapping service is unavailable, the map is hidden here. Distance still updates (demo).',
+        'If mapping service is unavailable, the map is hidden here. Distance still updates.',
       rideMeetDriverPin: 'Driver',
       rideMeetClientPin: 'You',
       rideEndTitle: 'End of ride',
@@ -1248,10 +1248,10 @@ const TRANSLATIONS: Record<Language, Record<string, unknown>> = {
       rideEndStatsAria: 'Fare, distance and trip duration',
       rideEndCashTitle: 'Cash payment',
       rideEndCashHint:
-        'For now this screen only demonstrates cash payment. Exact change helps when possible.',
+        'For now only cash payment is supported on this screen. Exact change helps when possible.',
       rideEndCashConfirm: 'I confirm I paid {amount} to the driver in cash.',
       rideEndReviewTitle: 'Your review',
-      rideEndReviewHint: 'Rating and comment are a demo only; nothing is sent to a server.',
+      rideEndReviewHint: 'Rating and comment are simulated; nothing is sent to a server yet.',
       rideEndStarsAria: 'Rating out of 5',
       rideEndStarLabel: 'Rate {n} out of 5',
       rideEndCommentLabel: 'Comment (optional)',
@@ -1267,19 +1267,19 @@ const TRANSLATIONS: Record<Language, Record<string, unknown>> = {
       navPlaces: 'Saved places',
       navWallet: 'Wallet',
       walletLead:
-        'View your balance and a demo activity list. Amounts are stored locally on this device (no real payments).',
+        'View your balance and activity history. Amounts are stored locally on this device (no real payments).',
       walletBalanceTitle: 'Available balance',
-      walletDemoNote:
+      walletActivityNote:
         'The movements below are fictional; only the balance can change using the simulated top-up.',
       walletMovementsTitle: 'Recent activity',
-      walletDemoCredit: 'Simulate top-up (+€5.00)',
+      walletSimulateTopup: 'Simulate top-up (+€5.00)',
       walletMov1: 'Ride · Le Port → Saint-Denis',
       walletMov2: 'Wallet top-up (simulation)',
       walletMov3: 'Ride · Saint-Pierre → Étang-Salé',
       walletOpen: 'Manage wallet',
       overviewWalletHint: 'Current balance: {balance}. Top-ups and details in the Wallet tab.',
       coursesRecapTitle: 'All your rides',
-      coursesRecapLead: 'Every ride stored on this device (demo data).',
+      coursesRecapLead: 'Every ride stored on this device.',
       coursesEmptyHint: "You haven't ordered a ride yet.",
       securityPasswordTitle: 'Password',
       securityPasswordField: 'Current password',
@@ -1299,7 +1299,7 @@ const TRANSLATIONS: Record<Language, Record<string, unknown>> = {
       securityOAuthDisconnect: 'Disconnect',
       securityOAuthConnected: 'Connected',
       securityOAuthNotConnected: 'Not connected',
-      settingsLead: 'Adjust how the app behaves on this device (demo).',
+      settingsLead: 'Adjust how the app behaves on this device.',
       settingsLanguageTitle: 'Language',
       settingsLanguageHint: 'Choose the language for account and site copy.',
       settingsAppearanceTitle: 'Appearance',
@@ -1313,7 +1313,7 @@ const TRANSLATIONS: Record<Language, Record<string, unknown>> = {
       settingsTextSizeValue: '{n}%',
       settingsNotificationsTitle: 'Notifications',
       settingsNotificationsHint:
-        'Channels for ride reminders and messages (demo: nothing is sent; preferences stored on this device).',
+        'Channels for ride reminders and messages (nothing is sent yet; preferences stored on this device).',
       settingsNotifyEmail: 'Email',
       settingsNotifySms: 'SMS',
       settingsNotifyPush: 'Push notifications',
@@ -1321,16 +1321,16 @@ const TRANSLATIONS: Record<Language, Record<string, unknown>> = {
       helpLead: 'Frequently asked questions and where to get support.',
       helpFaq1Q: 'How is my account data stored?',
       helpFaq1A:
-        'In this demo, profile, security, and wallet data are stored locally in your browser. These screens are not synced to a server.',
+        'Profile, security, and wallet data are stored locally in your browser. These screens are not synced to a server.',
       helpFaq2Q: 'How do I view my rides?',
       helpFaq2A:
         'Open the Rides tab, then tap a row for the full summary. Listed rides are fictional sample data.',
       helpFaq3Q: 'Is the wallet balance real?',
       helpFaq3A:
-        'No — it is a local simulation only. “Simulate top-up” increases the demo balance on this device.',
+        'No — it is a local simulation only. “Simulate top-up” increases the fictional balance on this device.',
       helpContactHint: 'To reach us, use the Palto Contact page from the home menu or footer.',
       placesLead:
-        'Save your usual addresses to fill pickup or drop-off faster. Data is stored on this device (demo).',
+        'Save your usual addresses to fill pickup or drop-off faster. Data is stored on this device.',
       placesHome: 'Home',
       placesWork: 'Work',
       placesAddressLabel: 'Address',

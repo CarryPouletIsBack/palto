@@ -73,7 +73,7 @@ Après le redéploiement :
 
 - ✅ Le `CLIENT_SECRET` est uniquement utilisé dans les API routes (côté serveur)
 - ✅ Le `CLIENT_ID` peut être exposé côté client (c'est normal)
-- ✅ Les tokens d'accès sont stockés dans le localStorage (pour la démo)
+- ✅ Les tokens d'accès sont stockés dans le localStorage (configuration actuelle)
 - ⚠️ En production, considérez utiliser des cookies httpOnly ou un système de session
 
 ## 📝 Configuration locale (Développement)

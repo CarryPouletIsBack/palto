@@ -39,7 +39,7 @@ Le chantier **Palto** (carte accueil, héros) est **terminé** : livrable dans l
 
 ## Page projet **Go** — prototype parcours course (La Réunion)
 
-Route **`/go`** (projet **Go** dans `projects.ts` / `SingleProjectNew.tsx`). Parcours type **commande de course** (démo, sans backend de commande réelle) :
+Route **`/go`** (projet **Go** dans `projects.ts` / `SingleProjectNew.tsx`). Parcours type **commande de course** (prototype, sans backend de commande réelle) :
 
 - **Localisation (départ)** et **destination** : saisie, **pré-sélection** au focus (lieux enregistrés, dernière valeur ; **géolocalisation navigateur** uniquement sur le départ), **suggestions d’adresse** via `/api/geocode` (BAN + OSM, biais La Réunion) à partir de quelques caractères, bouton **×** pour vider chaque champ.
 - **Rechercher** : géocodage **départ + destination** en une fois ; affichage des **chauffeurs** (mock `getNearbyDriversMock()`, rayon **20 km** autour du départ validé) et tracé **itinéraire** sur la carte embarquée.
@@ -47,7 +47,7 @@ Route **`/go`** (projet **Go** dans `projects.ts` / `SingleProjectNew.tsx`). Par
 - Carte : pin départ après validation, `flyTo` sur le pickup, pins / route OSM comme sur le reste du site.
 
 > **Statut actuel (avril 2026)** : la page **Go** est mise en pause côté évolutions.  
-> Le flux actuel (recherche, sélection chauffeur, recap, checkout démo) est conservé tel quel ; intégration paiement réel (ex. Stripe Connect) prévue plus tard.
+> Le flux actuel (recherche, sélection chauffeur, recap, checkout simulé) est conservé tel quel ; intégration paiement réel (ex. Stripe Connect) prévue plus tard.
 
 ## Stack technique
 

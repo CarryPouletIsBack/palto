@@ -511,7 +511,7 @@ function formatShortId(value: string): string {
   return `${v.slice(0, 8)}…${v.slice(-4)}`;
 }
 
-type OrgProfileDemoReview = {
+type OrgProfileSampleReview = {
   id: string
   authorKey: string
   bodyKey: string
@@ -524,7 +524,7 @@ function OrgProfileReviewsCarousel({
   t,
   language,
 }: {
-  reviews: OrgProfileDemoReview[]
+  reviews: OrgProfileSampleReview[]
   t: (key: string, params?: Record<string, string | number>) => string
   language: Language
 }) {
@@ -638,7 +638,7 @@ const Dashboard = ({
 }: DashboardProps) => {
   const { t, language } = useLanguage();
   const persistRides = ridesPersistenceEnabled();
-  /** Couverture démo Picsum (id aléatoire une fois au montage) si l’org n’a pas d’URL. */
+  /** Couverture Picsum (id aléatoire une fois au montage) si l’org n’a pas d’URL. */
   const orgProfileCoverFallbackRef = useRef(
     `https://picsum.photos/id/${Math.floor(Math.random() * 80) + 20}/1200/400`
   );
@@ -995,25 +995,25 @@ const Dashboard = ({
     );
   }, [chauffeurOrg, chauffeurProfile.email]);
 
-  /** Avis démo sur la page « profil » flotte (à remplacer par des données API). */
-  const orgProfileDemoReviews = useMemo((): OrgProfileDemoReview[] => {
+  /** Avis d’exemple sur la page « profil » flotte (à remplacer par des données API). */
+  const orgProfileSampleReviews = useMemo((): OrgProfileSampleReview[] => {
     return [
       {
-        id: 'demo-1',
+        id: 'sample-review-1',
         authorKey: 'driverDashboard.orgProfileReview1Author',
         bodyKey: 'driverDashboard.orgProfileReview1Body',
         rating: 5,
         isoDate: '2026-04-18',
       },
       {
-        id: 'demo-2',
+        id: 'sample-review-2',
         authorKey: 'driverDashboard.orgProfileReview2Author',
         bodyKey: 'driverDashboard.orgProfileReview2Body',
         rating: 5,
         isoDate: '2026-04-02',
       },
       {
-        id: 'demo-3',
+        id: 'sample-review-3',
         authorKey: 'driverDashboard.orgProfileReview3Author',
         bodyKey: 'driverDashboard.orgProfileReview3Body',
         rating: 4,
@@ -1358,7 +1358,7 @@ const Dashboard = ({
       const id = ce.detail?.id;
       if (!id) return;
       if (persistRides) {
-        // La clôture API est faite dans DriverNavigationView (Dashboard souvent démonté sur /navigation).
+        // La clôture API est faite dans DriverNavigationView (Dashboard souvent absent sur /navigation).
         void refreshRides();
         return;
       }
@@ -3099,7 +3099,7 @@ const Dashboard = ({
                                 {t('driverDashboard.orgProfileReviewsLead')}
                               </p>
                               <OrgProfileReviewsCarousel
-                                reviews={orgProfileDemoReviews}
+                                reviews={orgProfileSampleReviews}
                                 t={t}
                                 language={language}
                               />
@@ -4018,7 +4018,7 @@ const Dashboard = ({
                                       {t('driverDashboard.orgProfileReviewsLead')}
                                     </p>
                                     <OrgProfileReviewsCarousel
-                                      reviews={orgProfileDemoReviews}
+                                      reviews={orgProfileSampleReviews}
                                       t={t}
                                       language={language}
                                     />

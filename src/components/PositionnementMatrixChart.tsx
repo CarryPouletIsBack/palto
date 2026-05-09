@@ -32,7 +32,7 @@ interface PositionnementMatrixChartProps {
   scrollRootRef?: RefObject<HTMLElement | null>;
 }
 
-/** Style inspiré du demo Highcharts "Sonified function" : axes croisés à 0, grille, rendu épuré */
+/** Style inspiré de l’exemple Highcharts « Sonified function » : axes croisés à 0, grille, rendu épuré */
 const PositionnementMatrixChart: FC<PositionnementMatrixChartProps> = ({ data, className = '', scrollRootRef }) => {
   const { t } = useLanguage();
   const [hasEnteredView, setHasEnteredView] = useState(false);

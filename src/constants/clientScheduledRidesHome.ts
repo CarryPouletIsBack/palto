@@ -26,7 +26,7 @@ function isValidRide(x: unknown): x is ClientScheduledRideHome {
   )
 }
 
-/** `null` = clé absente (utiliser la démo). `[]` = aucune course enregistrée. */
+/** `null` = clé absente (données par défaut). `[]` = aucune course enregistrée. */
 export function loadClientScheduledRidesHomeRaw(): ClientScheduledRideHome[] | null {
   if (typeof window === 'undefined') return null
   try {

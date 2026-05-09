@@ -1,5 +1,5 @@
 /**
- * Zones d’exploitation type flotte à La Réunion (démo locale).
+ * Zones d’exploitation type flotte à La Réunion (stockage local).
  * Les libellés affichés passent par i18n (`driverDashboard.fleetZone*`).
  */
 export const FLEET_ZONE_IDS = [

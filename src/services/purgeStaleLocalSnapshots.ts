@@ -1,5 +1,5 @@
-const DEMO_PURGE_MARKER_KEY = 'palto:demo-purged-version';
-const DEMO_PURGE_VERSION = '2026-05-prod-empty-v1';
+const LOCAL_SNAPSHOT_PURGE_MARKER_KEY = 'palto:local-snapshot-purge-v1';
+const LOCAL_SNAPSHOT_PURGE_VERSION = '2026-05-local-purge-v2';
 
 const LOCAL_STORAGE_KEYS_TO_CLEAR = [
   'dashboard_auth',
@@ -23,13 +23,14 @@ const LOCAL_STORAGE_KEYS_TO_CLEAR = [
 
 const SESSION_STORAGE_KEYS_TO_CLEAR = ['palto:goPrefill', 'palto:chauffeur-nav-course'] as const;
 
-export function purgeDemoDataOnce(): void {
+/** Nettoie une fois les brouillons locaux obsolètes après changement majeur de schéma. */
+export function purgeStaleLocalSnapshotsOnce(): void {
   if (typeof window === 'undefined') return;
   try {
-    if (localStorage.getItem(DEMO_PURGE_MARKER_KEY) === DEMO_PURGE_VERSION) return;
+    if (localStorage.getItem(LOCAL_SNAPSHOT_PURGE_MARKER_KEY) === LOCAL_SNAPSHOT_PURGE_VERSION) return;
     LOCAL_STORAGE_KEYS_TO_CLEAR.forEach((key) => localStorage.removeItem(key));
     SESSION_STORAGE_KEYS_TO_CLEAR.forEach((key) => sessionStorage.removeItem(key));
-    localStorage.setItem(DEMO_PURGE_MARKER_KEY, DEMO_PURGE_VERSION);
+    localStorage.setItem(LOCAL_SNAPSHOT_PURGE_MARKER_KEY, LOCAL_SNAPSHOT_PURGE_VERSION);
   } catch {
     // Ignore les navigateurs qui bloquent le storage.
   }

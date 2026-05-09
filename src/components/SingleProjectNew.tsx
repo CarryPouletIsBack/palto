@@ -349,7 +349,7 @@ const SingleProjectNew: FC<SingleProjectProps> = ({
     }
     return hour >= 20 || hour < 6;
   }, [paltoPickupTiming, paltoPickupDateTime]);
-  // Prod: aucun fallback demo, en attendant le branchement API réel.
+  // Prod: aucun fallback local fictif, en attendant le branchement API réel.
   const allNearbyDrivers = useMemo(() => [], []);
 
   const pickupFilteredDrivers = useMemo(() => {

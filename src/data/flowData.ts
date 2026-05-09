@@ -138,7 +138,8 @@ export const flowData: FlowNodeData = {
             {
               id: "tech_prototypage",
               label: "Prototypage avancé",
-              description: "Prototypes interactifs avancés, prototypage code, démonstrations fonctionnelles, validation technique."
+              description:
+                'Prototypes interactifs avancés, prototypage code, validations fonctionnelles, validation technique.',
             },
             {
               id: "tech_collaboration",

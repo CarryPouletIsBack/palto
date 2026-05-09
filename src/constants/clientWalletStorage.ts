@@ -1,4 +1,4 @@
-/** Persistance locale démo : solde portefeuille (centimes, sans serveur). */
+/** Persistance locale : solde portefeuille (centimes, sans serveur). */
 import { clientAccountRowExistsForEmail } from './clientAccountStorage';
 
 export const CLIENT_WALLET_STORAGE_KEY = 'palto_client_wallet_v1';

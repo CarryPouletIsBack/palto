@@ -1,4 +1,4 @@
-/** Préférences app démo : thème global (`data-app-theme`) + canaux de notification (local uniquement). */
+/** Préférences app : thème global (`data-app-theme`) + canaux de notification (local uniquement). */
 export const CLIENT_APP_PREFERENCES_KEY = 'palto_client_app_preferences_v1';
 const CLIENT_APP_PREFERENCES_BY_EMAIL_STORAGE_KEY = 'palto_client_app_preferences_by_email_v1';
 

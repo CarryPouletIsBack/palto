@@ -1,5 +1,5 @@
 /**
- * Documents légaux chauffeur (démo : cases à cocher « fourni » sur cet appareil).
+ * Documents légaux chauffeur (cases à cocher « fourni » sur cet appareil).
  * Les chauffeurs inscrits via self-service ont les courses bloquées tant que tout n’est pas coché.
  */
 

@@ -117,7 +117,7 @@ function pickInitialMarkerForMap(
 
 type ClientRideFlowKind = 'meet_driver' | 'end_cash';
 
-type DemoRide = {
+type ClientAccountRideRow = {
   id: string;
   rawStatus: string;
   route: string;
@@ -142,11 +142,11 @@ type DemoRide = {
   vehicleColor?: string;
   /** Prise en charge (carte « retrouver le chauffeur ») */
   meetPickupCoords?: { lng: number; lat: number };
-  /** Position initiale du chauffeur (démo : convergence vers la prise en charge) */
+  /** Position initiale du chauffeur (animation vers la prise en charge si pas de temps réel) */
   meetDriverCoordsInitial?: { lng: number; lat: number };
 };
 
-function demoRideStatusLabel(r: DemoRide, lang: Language): string {
+function rideRowStatusLabel(r: ClientAccountRideRow, lang: Language): string {
   if (lang === 'en' && r.statusEn) return r.statusEn;
   return r.status;
 }
@@ -159,12 +159,12 @@ function rideStatusTone(status: string): 'pending' | 'active' | 'completed' | 'c
   return 'pending';
 }
 
-function demoRideDateLabel(r: DemoRide, lang: Language): string {
+function rideRowDateLabel(r: ClientAccountRideRow, lang: Language): string {
   if (lang === 'en' && r.dateEn) return r.dateEn;
   return r.date;
 }
 
-function demoRidePaymentLabel(r: DemoRide, lang: Language): string {
+function rideRowPaymentLabel(r: ClientAccountRideRow, lang: Language): string {
   if (lang === 'en' && r.paymentMethodEn) return r.paymentMethodEn;
   return r.paymentMethod;
 }
@@ -179,9 +179,7 @@ function clientRideDurationMinutes(ride: ClientRideItem): number {
   return Math.max(1, Math.round((b - a) / 60000));
 }
 
-const DEMO_RIDES: DemoRide[] = [];
-
-const WALLET_DEMO_MOVEMENTS: Array<{
+const WALLET_SAMPLE_MOVEMENTS: Array<{
   id: string;
   date: string;
   amountCents: number;
@@ -310,7 +308,7 @@ export default function ClientCompteDashboard({ onBack, onOpenClientLiveMeet }: 
   const [ridesSyncTick, setRidesSyncTick] = useState(0);
   const [authSessionTick, setAuthSessionTick] = useState(0);
   const [orgSyncTick, setOrgSyncTick] = useState(0);
-  const ridesForUi = useMemo<DemoRide[]>(() => {
+  const ridesForUi = useMemo<ClientAccountRideRow[]>(() => {
     return clientRides.map((ride) => {
       const iso = `${ride.scheduledDate}T${ride.scheduledTime}`;
       const dt = new Date(iso);
@@ -633,13 +631,13 @@ export default function ClientCompteDashboard({ onBack, onOpenClientLiveMeet }: 
     }
   }, [activeNav, activeClientEmail]);
 
-  const handleWalletDemoCredit = useCallback(() => {
+  const handleWalletSimulateTopup = useCallback(() => {
     const email = activeClientEmail || undefined;
     const current = loadClientWalletSnapshot(email);
     const next = { balanceCents: current.balanceCents + 500 };
     saveClientWalletSnapshot(next, email);
     setWallet(next);
-    trackEvent('click', 'client_account', 'wallet_demo_credit');
+    trackEvent('click', 'client_account', 'wallet_simulate_topup');
   }, [activeClientEmail]);
 
   const setAppTheme = useCallback((theme: AppTheme) => {
@@ -1146,7 +1144,7 @@ export default function ClientCompteDashboard({ onBack, onOpenClientLiveMeet }: 
       setNewPwd('');
       setConfirmPwd('');
       setPwdPanelOpen(false);
-      trackEvent('click', 'client_account', 'password_demo_updated');
+      trackEvent('click', 'client_account', 'password_local_updated');
     },
     [activeClientEmail, newPwd, confirmPwd, t]
   );
@@ -1654,9 +1652,9 @@ export default function ClientCompteDashboard({ onBack, onOpenClientLiveMeet }: 
                         >
                           <span className="client-compte-overview-rides-list__route">{ride.route}</span>
                           <span className="client-compte-overview-rides-list__meta">
-                            {demoRideDateLabel(ride, language)} ·{' '}
-                            <span className={`ride-status-badge ride-status-badge--${rideStatusTone(demoRideStatusLabel(ride, language))}`}>
-                              {demoRideStatusLabel(ride, language)}
+                            {rideRowDateLabel(ride, language)} ·{' '}
+                            <span className={`ride-status-badge ride-status-badge--${rideStatusTone(rideRowStatusLabel(ride, language))}`}>
+                              {rideRowStatusLabel(ride, language)}
                             </span>
                           </span>
                         </li>
@@ -2356,7 +2354,7 @@ export default function ClientCompteDashboard({ onBack, onOpenClientLiveMeet }: 
                 </div>
                 <article className="dashboard-user-card">
                   <p className="dashboard-field-hint" style={{ margin: '0 0 12px' }}>
-                    {t('clientAccount.recentDemo')}
+                    {t('clientAccount.recentRidesCaption')}
                   </p>
                   <ul className="client-compte-ride-list">
                     {ridesForUi.map((r) => (
@@ -2369,9 +2367,9 @@ export default function ClientCompteDashboard({ onBack, onOpenClientLiveMeet }: 
                         >
                           <strong>{r.route}</strong>
                           <span className="client-compte-ride-row-meta">
-                            {demoRideDateLabel(r, language)} ·{' '}
-                            <span className={`ride-status-badge ride-status-badge--${rideStatusTone(demoRideStatusLabel(r, language))}`}>
-                              {demoRideStatusLabel(r, language)}
+                            {rideRowDateLabel(r, language)} ·{' '}
+                            <span className={`ride-status-badge ride-status-badge--${rideStatusTone(rideRowStatusLabel(r, language))}`}>
+                              {rideRowStatusLabel(r, language)}
                             </span>
                           </span>
                         </button>
@@ -2438,14 +2436,14 @@ export default function ClientCompteDashboard({ onBack, onOpenClientLiveMeet }: 
                         <dd>
                           <span
                             className={`ride-status-badge ride-status-badge--${rideStatusTone(
-                              demoRideStatusLabel(selectedRide, language)
+                              rideRowStatusLabel(selectedRide, language)
                             )}`}
                           >
-                            {demoRideStatusLabel(selectedRide, language)}
+                            {rideRowStatusLabel(selectedRide, language)}
                           </span>
                         </dd>
                         <dt>{t('clientAccount.rideDate')}</dt>
-                        <dd>{demoRideDateLabel(selectedRide, language)}</dd>
+                        <dd>{rideRowDateLabel(selectedRide, language)}</dd>
                         <dt>{t('clientAccount.rideDepart')}</dt>
                         <dd>{selectedRide.pickupLabel}</dd>
                         <dt>{t('clientAccount.rideArrive')}</dt>
@@ -2477,7 +2475,7 @@ export default function ClientCompteDashboard({ onBack, onOpenClientLiveMeet }: 
                         <dt>{t('clientAccount.rideVehicle')}</dt>
                         <dd>{selectedRide.vehicleLabel}</dd>
                         <dt>{t('clientAccount.ridePayment')}</dt>
-                        <dd>{demoRidePaymentLabel(selectedRide, language)}</dd>
+                        <dd>{rideRowPaymentLabel(selectedRide, language)}</dd>
                       </dl>
                     </section>
                   ) : null}
@@ -2642,18 +2640,18 @@ export default function ClientCompteDashboard({ onBack, onOpenClientLiveMeet }: 
                     {formatWalletEUR(wallet.balanceCents, language)}
                   </p>
                   <div className="dashboard-payment-actions" style={{ marginTop: 8 }}>
-                    <button type="button" className="dashboard-user-edit-btn" onClick={handleWalletDemoCredit}>
-                      {t('clientAccount.walletDemoCredit')}
+                    <button type="button" className="dashboard-user-edit-btn" onClick={handleWalletSimulateTopup}>
+                      {t('clientAccount.walletSimulateTopup')}
                     </button>
                   </div>
                   <p className="dashboard-field-hint" style={{ marginTop: 16 }}>
-                    {t('clientAccount.walletDemoNote')}
+                    {t('clientAccount.walletActivityNote')}
                   </p>
                 </article>
                 <article className="dashboard-user-card" style={{ marginTop: 20 }}>
                   <h3 className="client-compte-section-title">{t('clientAccount.walletMovementsTitle')}</h3>
                   <ul className="client-compte-wallet-movements">
-                    {WALLET_DEMO_MOVEMENTS.map((m) => (
+                    {WALLET_SAMPLE_MOVEMENTS.map((m) => (
                       <li key={m.id} className="client-compte-wallet-movement-row">
                         <div>
                           <strong>{t(m.labelKey)}</strong>
