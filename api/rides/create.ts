@@ -17,25 +17,39 @@ const BodySchema = z
     clientEmail: z.string().email().max(320),
     clientPhone: z.string().max(40).nullable().optional(),
     clientComment: z.string().max(600).nullable().optional(),
-    requestedDriverExternalKey: z.string().max(32).nullable().optional(),
+    /** Clé « mock » (ex. d1) ou futur slug court — préférer requestedChauffeurAccountId (UUID compte). */
+    requestedDriverExternalKey: z.string().max(64).nullable().optional(),
+    /** UUID `app_accounts` rôle chauffeur — réservé à bookingKind instant. */
+    requestedChauffeurAccountId: z.string().uuid().nullable().optional(),
     pickupLng: z.number().finite().nullable().optional(),
     pickupLat: z.number().finite().nullable().optional(),
     dropoffLng: z.number().finite().nullable().optional(),
     dropoffLat: z.number().finite().nullable().optional(),
   })
   .superRefine((data, ctx) => {
-    if (data.bookingKind === 'instant' && !data.requestedDriverExternalKey?.trim()) {
-      ctx.addIssue({
-        code: 'custom',
-        message: 'Chauffeur requis pour une commande instantanee',
-        path: ['requestedDriverExternalKey'],
-      })
+    if (data.bookingKind === 'instant') {
+      const hasAcc = Boolean(data.requestedChauffeurAccountId?.trim())
+      const hasLeg = Boolean(data.requestedDriverExternalKey?.trim())
+      if (!hasAcc && !hasLeg) {
+        ctx.addIssue({
+          code: 'custom',
+          message: 'Chauffeur requis pour une commande instantanee',
+          path: ['requestedChauffeurAccountId'],
+        })
+      }
     }
     if (data.bookingKind === 'scheduled' && data.requestedDriverExternalKey?.trim()) {
       ctx.addIssue({
         code: 'custom',
         message: 'Ne pas cibler un chauffeur pour une reservation programme',
         path: ['requestedDriverExternalKey'],
+      })
+    }
+    if (data.bookingKind === 'scheduled' && data.requestedChauffeurAccountId?.trim()) {
+      ctx.addIssue({
+        code: 'custom',
+        message: 'Ne pas cibler un chauffeur (UUID) pour une reservation programme',
+        path: ['requestedChauffeurAccountId'],
       })
     }
   })
@@ -160,6 +174,25 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     clientId = clientRow.id
   }
 
+  let requestedDriverKey: string | null = null
+  if (b.bookingKind === 'instant') {
+    const accId = b.requestedChauffeurAccountId?.trim()
+    if (accId) {
+      const { data: accRow, error: accErr } = await supabase
+        .from('app_accounts')
+        .select('id')
+        .eq('id', accId)
+        .eq('role', 'chauffeur')
+        .maybeSingle()
+      if (accErr || !accRow) {
+        return res.status(400).json({ error: 'Chauffeur demande inconnu ou invalide' })
+      }
+      requestedDriverKey = accRow.id
+    } else {
+      requestedDriverKey = resolveRequestedDriverKeyForInsert(b.bookingKind, b.requestedDriverExternalKey)
+    }
+  }
+
   const code = externalCode()
   const insertPayload = {
     external_code: code,
@@ -172,10 +205,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     amount_eur: b.amountEur,
     distance_km: b.distanceKm ?? null,
     booking_kind: b.bookingKind,
-    requested_driver_external_key: resolveRequestedDriverKeyForInsert(
-      b.bookingKind,
-      b.requestedDriverExternalKey
-    ),
+    requested_driver_external_key: requestedDriverKey,
     pickup_lng: b.pickupLng ?? null,
     pickup_lat: b.pickupLat ?? null,
     dropoff_lng: b.dropoffLng ?? null,

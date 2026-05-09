@@ -1,7 +1,16 @@
 import type { VercelRequest } from '@vercel/node'
 import { getSupabaseAdmin } from './supabaseAdmin.js'
 
-export async function getVerifiedDashboardEmail(req: VercelRequest): Promise<string | null> {
+export type VerifiedChauffeurSession = {
+  email: string
+  /** Identifiant unique chauffeur (aligné sur `app_accounts.id`, stocké dans courses.*_driver_external_key). */
+  accountId: string
+}
+
+/**
+ * Session dashboard chauffeur : email + id compte pour filtrer les courses (plus une clé globale env).
+ */
+export async function getVerifiedChauffeurSession(req: VercelRequest): Promise<VerifiedChauffeurSession | null> {
   const raw = req.headers.authorization
   if (!raw?.toLowerCase().startsWith('bearer ')) return null
   const token = raw.slice(7).trim()
@@ -11,8 +20,19 @@ export async function getVerifiedDashboardEmail(req: VercelRequest): Promise<str
   if (expected) {
     try {
       const decoded = Buffer.from(token, 'base64').toString('utf8')
-      const email = decoded.split(':')[0]?.trim()
-      if (email && email === expected) return email
+      const emailRaw = decoded.split(':')[0]?.trim()
+      if (emailRaw && emailRaw === expected) {
+        const supabase = getSupabaseAdmin()
+        const email = emailRaw.toLowerCase()
+        const { data: roleAccount, error: roleError } = await supabase
+          .from('app_accounts')
+          .select('id')
+          .eq('email', email)
+          .eq('role', 'chauffeur')
+          .maybeSingle()
+        if (roleError || !roleAccount) return null
+        return { email, accountId: roleAccount.id }
+      }
     } catch {
       // noop
     }
@@ -31,8 +51,6 @@ export async function getVerifiedDashboardEmail(req: VercelRequest): Promise<str
     const email = String(data.email || '').trim().toLowerCase()
     if (!email) return null
 
-    // Session unifiee: un token valide suffit, puis on confirme que le compte
-    // possede bien le role chauffeur pour autoriser les routes dashboard.
     const { data: roleAccount, error: roleError } = await supabase
       .from('app_accounts')
       .select('id')
@@ -40,12 +58,18 @@ export async function getVerifiedDashboardEmail(req: VercelRequest): Promise<str
       .eq('role', 'chauffeur')
       .maybeSingle()
     if (roleError || !roleAccount) return null
-    return email
+    return { email, accountId: roleAccount.id }
   } catch {
     return null
   }
 }
 
+export async function getVerifiedDashboardEmail(req: VercelRequest): Promise<string | null> {
+  const s = await getVerifiedChauffeurSession(req)
+  return s?.email ?? null
+}
+
+/** @deprecated Préférer `getVerifiedChauffeurSession().accountId` — clé unique par compte. */
 export function getChauffeurDriverExternalKey(): string {
   return (process.env.CHAUFFEUR_DRIVER_EXTERNAL_KEY ?? 'd1').trim() || 'd1'
 }

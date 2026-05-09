@@ -66,6 +66,14 @@ const PICKUP_DRIVER_SEARCH_RADIUS_KM = 20;
 const DEFAULT_BASE_FARE_EUR = 4;
 const DEFAULT_PRICE_PER_KM_EUR = 1.35;
 const PICKUP_AUTOCOMPLETE_DEBOUNCE_MS = 120;
+
+const CHAUFFEUR_ACCOUNT_UUID_RE =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+
+function isChauffeurAccountUuid(value: string | null | undefined): boolean {
+  return typeof value === 'string' && CHAUFFEUR_ACCOUNT_UUID_RE.test(value.trim());
+}
+
 type GeocodeSnappedResult =
   | { ok: true; snapped: GeoPoint; queryUsed: string }
   | { ok: false; error: string };
@@ -1256,6 +1264,7 @@ const SingleProjectNew: FC<SingleProjectProps> = ({
     setCheckoutSuccessMessage(null);
     setCheckoutSubmitting(true);
     try {
+      const selDriver = paltoSelectedDriver;
       const result = await createRideOrder({
         bookingKind,
         scheduledDate: schedule.scheduledDate,
@@ -1268,7 +1277,13 @@ const SingleProjectNew: FC<SingleProjectProps> = ({
         clientEmail: email,
         clientComment: checkoutClientComment.trim() || null,
         requestedDriverExternalKey:
-          bookingKind === 'instant' ? paltoSelectedDriver?.id ?? null : null,
+          bookingKind === 'instant' && selDriver && !isChauffeurAccountUuid(selDriver.id)
+            ? selDriver.id
+            : null,
+        requestedChauffeurAccountId:
+          bookingKind === 'instant' && selDriver && isChauffeurAccountUuid(selDriver.id)
+            ? selDriver.id
+            : null,
         pickupLng: pickupResolvedPoint?.longitude ?? null,
         pickupLat: pickupResolvedPoint?.latitude ?? null,
         dropoffLng: paltoMapSelectedDestination?.longitude ?? null,

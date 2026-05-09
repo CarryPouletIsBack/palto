@@ -1,6 +1,5 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node'
 import { getSupabaseAdmin } from '../../server/lib/supabaseAdmin.js'
-import { getChauffeurDriverExternalKey } from '../../server/lib/chauffeurAuth.js'
 import { getPaltoAppSessionByToken } from '../../server/lib/paltoAppSession.js'
 import { signPaltoSupabaseRealtimeJwt } from '../../server/lib/paltoRealtimeJwt.js'
 
@@ -53,7 +52,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       accountId: session.accountId,
       email: session.email,
       paltoRole: session.role,
-      driverKey: session.role === 'chauffeur' ? getChauffeurDriverExternalKey() : undefined,
+      driverKey: session.role === 'chauffeur' ? session.accountId : undefined,
       ttlSeconds: 3600,
     })
     res.status(200).json({ accessToken, expiresIn: 3600 })

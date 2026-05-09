@@ -51,6 +51,20 @@ const DRIVER_TEMPLATES: DriverTemplate[] = [
 ]
 
 /**
+ * Remplace les ids mock (d1, …) par des UUID `app_accounts` chauffeur si
+ * `VITE_NEARBY_DRIVER_ACCOUNT_IDS` est défini (liste séparée par des virgules, même ordre que les templates).
+ */
+function driverTemplatesWithOptionalAccountIds(): DriverTemplate[] {
+  const raw = (import.meta.env.VITE_NEARBY_DRIVER_ACCOUNT_IDS as string | undefined)?.trim() ?? ''
+  const ids = raw
+    .split(',')
+    .map((s) => s.trim())
+    .filter(Boolean)
+  if (ids.length === 0) return DRIVER_TEMPLATES
+  return DRIVER_TEMPLATES.map((t, i) => (ids[i] ? { ...t, id: ids[i] } : t))
+}
+
+/**
  * Génère des chauffeurs mock autour d'une origine donnée.
  * Scalable: la signature (`origin`, `radiusKm`, `limit`) est alignée avec un futur backend.
  */
@@ -60,7 +74,8 @@ export function getNearbyDriversMock({
   limit = 9,
 }: NearbyDriversQuery = {}): NearbyDriver[] {
   const maxDistanceKm = Math.max(1, radiusKm * 0.95)
-  const templates = DRIVER_TEMPLATES.slice(0, Math.max(1, Math.min(limit, DRIVER_TEMPLATES.length)))
+  const baseTemplates = driverTemplatesWithOptionalAccountIds()
+  const templates = baseTemplates.slice(0, Math.max(1, Math.min(limit, baseTemplates.length)))
   const seedShift = Math.abs(Math.round((origin.latitude + origin.longitude) * 1000)) % templates.length
 
   return templates.map((tpl, index) => {

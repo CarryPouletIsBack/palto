@@ -1,7 +1,7 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node'
 import { z } from 'zod'
 import { getSupabaseAdmin } from '../../server/lib/supabaseAdmin.js'
-import { getChauffeurDriverExternalKey, getVerifiedDashboardEmail } from '../../server/lib/chauffeurAuth.js'
+import { getVerifiedChauffeurSession } from '../../server/lib/chauffeurAuth.js'
 import { sameDriverExternalKey } from '../../server/lib/driverIdentity.js'
 
 const ComplianceQuerySchema = z.object({ email: z.string().email() })
@@ -325,9 +325,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   const resource = typeof resourceRaw === 'string' ? resourceRaw.trim().toLowerCase() : ''
   if (!resource) return res.status(400).json({ error: 'resource requis' })
 
-  const dashboardEmail = await getVerifiedDashboardEmail(req)
-  if (!dashboardEmail) return res.status(401).json({ error: 'Non autorise' })
-  const driverKey = getChauffeurDriverExternalKey()
+  const session = await getVerifiedChauffeurSession(req)
+  if (!session) return res.status(401).json({ error: 'Non autorise' })
+  const { email: dashboardEmail, accountId: driverKey } = session
 
   if (req.method === 'GET' && resource === 'rides') return handleRidesGet(res, driverKey)
   if (req.method === 'POST' && resource === 'rides-action') return handleRidesActionPost(req, res, driverKey, dashboardEmail)

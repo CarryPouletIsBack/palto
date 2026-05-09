@@ -15,6 +15,8 @@ export type CreateRideOrderPayload = {
   clientPhone?: string | null
   clientComment?: string | null
   requestedDriverExternalKey?: string | null
+  /** UUID compte chauffeur (`app_accounts.id`) pour commande instantanée. */
+  requestedChauffeurAccountId?: string | null
   pickupLng?: number | null
   pickupLat?: number | null
   dropoffLng?: number | null
