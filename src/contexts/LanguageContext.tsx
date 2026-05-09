@@ -595,6 +595,7 @@ const TRANSLATIONS: Record<Language, Record<string, unknown>> = {
       rideMeetMapNoToken:
         'Sans service cartographique disponible, la carte ne s’affiche pas ici. La distance se met à jour quand même (démonstration).',
       rideMeetDriverPin: 'Chauffeur',
+      rideMeetClientPin: 'Vous',
       rideEndTitle: 'Fin de course',
       rideEndLead: 'Course {route} avec {driver}. Vérifiez le montant, le temps et la distance, puis laissez un avis.',
       rideEndStatsAria: 'Montant, distance et durée de la course',
@@ -1241,6 +1242,7 @@ const TRANSLATIONS: Record<Language, Record<string, unknown>> = {
       rideMeetMapNoToken:
         'If mapping service is unavailable, the map is hidden here. Distance still updates (demo).',
       rideMeetDriverPin: 'Driver',
+      rideMeetClientPin: 'You',
       rideEndTitle: 'End of ride',
       rideEndLead: 'Ride {route} with {driver}. Check the fare, time and distance, then leave a review.',
       rideEndStatsAria: 'Fare, distance and trip duration',

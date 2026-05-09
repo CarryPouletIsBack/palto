@@ -26,6 +26,8 @@ type RideRow = {
   dropoff_lng: number | null
   dropoff_lat: number | null
   created_at: string
+  started_at: string | null
+  completed_at: string | null
 }
 
 type CourseEventRow = {
@@ -192,7 +194,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   let query = supabase
     .from('courses')
     .select(
-      'id,status,pickup_address,dropoff_address,scheduled_date,scheduled_time,amount_eur,distance_km,pickup_lng,pickup_lat,dropoff_lng,dropoff_lat,created_at'
+      'id,status,pickup_address,dropoff_address,scheduled_date,scheduled_time,amount_eur,distance_km,pickup_lng,pickup_lat,dropoff_lng,dropoff_lat,created_at,started_at,completed_at'
     )
     .in('client_id', clientIds)
     .order('scheduled_date', { ascending: false })
@@ -215,7 +217,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
   const rows = data as unknown as RideRow[]
   const courseIds = rows.map((r) => r.id)
-  let driverMetaByCourse = new Map<string, { driverName?: string; vehicleLabel?: string }>()
+  const driverMetaByCourse = new Map<string, { driverName?: string; vehicleLabel?: string }>()
   if (courseIds.length > 0) {
     const { data: eventsData } = await supabase
       .from('course_events')
@@ -246,6 +248,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     dropoffLng: row.dropoff_lng,
     dropoffLat: row.dropoff_lat,
     createdAt: row.created_at,
+    startedAt: row.started_at,
+    completedAt: row.completed_at,
     driverName: driverMetaByCourse.get(row.id)?.driverName ?? null,
     vehicleLabel: driverMetaByCourse.get(row.id)?.vehicleLabel ?? null,
   }))

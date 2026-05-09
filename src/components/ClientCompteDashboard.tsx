@@ -98,6 +98,7 @@ import {
   logoutClient,
   PALTO_CLIENT_SESSION_CHANGED_EVENT,
 } from '../services/authService';
+import { buildClientLiveMeetRideFromRideItem } from '../constants/clientLiveMeetRide';
 import { cancelClientRide, clientRidesApiEnabled, fetchClientRides, type ClientRideItem } from '../services/clientRidesApi';
 
 type ClientPlaceMapTarget =
@@ -166,6 +167,16 @@ function demoRideDateLabel(r: DemoRide, lang: Language): string {
 function demoRidePaymentLabel(r: DemoRide, lang: Language): string {
   if (lang === 'en' && r.paymentMethodEn) return r.paymentMethodEn;
   return r.paymentMethod;
+}
+
+function clientRideDurationMinutes(ride: ClientRideItem): number {
+  const s = ride.startedAt?.trim();
+  const c = ride.completedAt?.trim();
+  if (!s || !c) return 0;
+  const a = Date.parse(s);
+  const b = Date.parse(c);
+  if (Number.isNaN(a) || Number.isNaN(b) || b <= a) return 0;
+  return Math.max(1, Math.round((b - a) / 60000));
 }
 
 const DEMO_RIDES: DemoRide[] = [];
@@ -335,6 +346,13 @@ export default function ClientCompteDashboard({ onBack, onOpenClientLiveMeet }: 
         completed: 'Completed',
         cancelled: 'Cancelled',
       };
+      const liveMeet = ride.status === 'in_progress' ? buildClientLiveMeetRideFromRideItem(ride) : null;
+      const flow: ClientRideFlowKind | null =
+        ride.status === 'completed'
+          ? 'end_cash'
+          : liveMeet
+            ? 'meet_driver'
+            : null;
       return {
         id: ride.id,
         rawStatus: ride.status,
@@ -347,7 +365,7 @@ export default function ClientCompteDashboard({ onBack, onOpenClientLiveMeet }: 
         dropoffLabel: simplifyAddressDisplay(ride.dropoffAddress),
         departTime: ride.scheduledTime.slice(0, 5),
         arriveTime: '',
-        durationMin: 0,
+        durationMin: ride.status === 'completed' ? clientRideDurationMinutes(ride) : 0,
         distanceKm: Number(ride.distanceKm ?? 0),
         priceEur: Number(ride.amountEur ?? 0),
         driverName: ride.driverName?.trim() || '—',
@@ -355,7 +373,9 @@ export default function ClientCompteDashboard({ onBack, onOpenClientLiveMeet }: 
         paymentMethod: 'Carte',
         paymentMethodEn: 'Card',
         reference: ride.id,
-        flow: null,
+        flow,
+        meetPickupCoords: liveMeet?.meetPickupCoords,
+        meetDriverCoordsInitial: liveMeet?.meetDriverCoordsInitial,
       };
     });
   }, [clientRides]);
@@ -2386,6 +2406,7 @@ export default function ClientCompteDashboard({ onBack, onOpenClientLiveMeet }: 
                       {selectedRide.flow === 'meet_driver' ? (
                         <ClientCompteRideMeetDriver
                           key={`meet-${selectedRide.id}`}
+                          courseId={selectedRide.id}
                           pickupLabel={selectedRide.pickupLabel}
                           driverName={selectedRide.driverName}
                           vehicleLabel={selectedRide.vehicleLabel}

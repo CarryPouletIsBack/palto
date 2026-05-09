@@ -22,6 +22,8 @@ export type ClientRideItem = {
   dropoffLng?: number | null
   dropoffLat?: number | null
   createdAt: string
+  startedAt?: string | null
+  completedAt?: string | null
   driverName?: string | null
   vehicleLabel?: string | null
 }

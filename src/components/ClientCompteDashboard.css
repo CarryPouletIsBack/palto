@@ -2188,6 +2188,10 @@ html[data-app-theme='dark'] .client-compte-place-suggestions {
   background: #ea580c;
 }
 
+.client-compte-ride-flow__map-pin--client {
+  background: #059669;
+}
+
 .client-compte-ride-flow__driver-locate-fallback {
   margin: 0;
   font-size: 12px;

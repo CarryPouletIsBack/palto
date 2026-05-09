@@ -6,6 +6,7 @@ import {
 } from '../services/authService';
 import { getUpcomingScheduledRidesForHomeBanner } from '../constants/clientScheduledRidesHome';
 import {
+  buildClientLiveMeetRideFromRideItem,
   clearClientLiveMeetRideModel,
   getClientLiveMeetRideModel,
   saveClientLiveMeetRideModel,
@@ -115,31 +116,9 @@ export function useClientHomeTopbarRides(language: 'fr' | 'en') {
           });
         }
         const inProgress = allItems.find((item) => item.status === 'in_progress');
-        if (
-          inProgress &&
-          typeof inProgress.pickupLng === 'number' &&
-          typeof inProgress.pickupLat === 'number'
-        ) {
-          const pickup = {
-            lng: inProgress.pickupLng,
-            lat: inProgress.pickupLat,
-          };
-          saveClientLiveMeetRideModel({
-            pickupLabel: simplifyAddressDisplay(inProgress.pickupAddress),
-            route: `${simplifyAddressDisplay(inProgress.pickupAddress)} → ${simplifyAddressDisplay(
-              inProgress.dropoffAddress
-            )}`,
-            departTime: inProgress.scheduledTime.slice(0, 5),
-            driverName: 'Chauffeur Palto',
-            vehicleLabel: 'Moto',
-            vehicleColor: '',
-            licensePlate: '',
-            meetPickupCoords: pickup,
-            meetDriverCoordsInitial: {
-              lng: pickup.lng - 0.0035,
-              lat: pickup.lat + 0.0022,
-            },
-          });
+        const meetModel = inProgress ? buildClientLiveMeetRideFromRideItem(inProgress) : null;
+        if (meetModel) {
+          saveClientLiveMeetRideModel(meetModel);
           setApiLiveMeetActive(true);
         } else {
           clearClientLiveMeetRideModel();

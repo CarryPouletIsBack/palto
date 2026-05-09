@@ -5,10 +5,17 @@ import 'maplibre-gl/dist/maplibre-gl.css';
 import { trackEvent } from '../services/googleAnalyticsTracking';
 import { HOME_OPENSTREET_STYLE_URL } from './HomeMapboxBackground';
 import { REUNION_MAP_MAX_BOUNDS } from '../constants/reunionIsland';
+import {
+  isRideGeoBroadcastEnabled,
+  joinRideGeoRoom,
+  type RideGeoPayload,
+} from '../services/paltoRideLocationRealtime';
 
 export type LngLat = { lng: number; lat: number };
 
 export type ClientCompteRideMeetDriverProps = {
+  /** Id course — active broadcast `ride_geo:{courseId}` si Realtime configuré. */
+  courseId?: string;
   pickupLabel: string;
   driverName: string;
   vehicleLabel: string;
@@ -19,8 +26,10 @@ export type ClientCompteRideMeetDriverProps = {
   t: (key: string, params?: Record<string, string | number>) => string;
   /** Carte + distance : prise en charge (fixe) */
   meetPickupCoords?: LngLat;
-  /** Position initiale du chauffeur (démo : se rapproche du point de prise en charge) */
+  /** Position initiale chauffeur (avant premier message broadcast) */
   meetDriverCoordsInitial?: LngLat;
+  /** Rétrocompat (non utilisé pour OSM / MapLibre). */
+  mapboxAccessToken?: string;
 };
 
 function haversineMeters(a: LngLat, b: LngLat): number {
@@ -43,6 +52,7 @@ function moveToward(cur: LngLat, target: LngLat, frac: number): LngLat {
 }
 
 export default function ClientCompteRideMeetDriver({
+  courseId,
   pickupLabel,
   driverName,
   vehicleLabel,
@@ -56,14 +66,19 @@ export default function ClientCompteRideMeetDriver({
 }: ClientCompteRideMeetDriverProps) {
   const [confirmed, setConfirmed] = useState(false);
   const [driverLngLat, setDriverLngLat] = useState<LngLat | null>(meetDriverCoordsInitial ?? null);
+  const [clientLngLat, setClientLngLat] = useState<LngLat | null>(null);
   const mapRef = useRef<MapRef>(null);
+  const geoRoomRef = useRef<{ send: (role: 'client' | 'driver', lng: number, lat: number) => Promise<void>; leave: () => void } | null>(null);
+  const lastClientSendRef = useRef(0);
+
+  const useLiveBroadcast = Boolean(courseId && isRideGeoBroadcastEnabled());
 
   useEffect(() => {
     setDriverLngLat(meetDriverCoordsInitial ?? null);
   }, [meetDriverCoordsInitial?.lng, meetDriverCoordsInitial?.lat]);
 
   useEffect(() => {
-    if (!meetPickupCoords || !meetDriverCoordsInitial || confirmed) return;
+    if (useLiveBroadcast || !meetPickupCoords || !meetDriverCoordsInitial || confirmed) return;
     const id = window.setInterval(() => {
       setDriverLngLat((prev) => {
         if (!prev || !meetPickupCoords) return prev;
@@ -73,6 +88,7 @@ export default function ClientCompteRideMeetDriver({
     }, 3200);
     return () => window.clearInterval(id);
   }, [
+    useLiveBroadcast,
     meetPickupCoords?.lng,
     meetPickupCoords?.lat,
     meetDriverCoordsInitial?.lng,
@@ -80,13 +96,52 @@ export default function ClientCompteRideMeetDriver({
     confirmed,
   ]);
 
+  useEffect(() => {
+    if (!useLiveBroadcast || !courseId || confirmed) return;
+    let cancelled = false;
+    void joinRideGeoRoom(courseId, (p: RideGeoPayload) => {
+      if (p.role !== 'driver') return;
+      setDriverLngLat({ lng: p.lng, lat: p.lat });
+    }).then((room) => {
+      if (cancelled || !room) return;
+      geoRoomRef.current = room;
+    });
+    return () => {
+      cancelled = true;
+      geoRoomRef.current?.leave();
+      geoRoomRef.current = null;
+    };
+  }, [courseId, useLiveBroadcast, confirmed]);
+
+  useEffect(() => {
+    if (!useLiveBroadcast || !courseId || confirmed || !meetPickupCoords) return;
+    if (typeof navigator === 'undefined' || !navigator.geolocation) return;
+
+    const watchId = navigator.geolocation.watchPosition(
+      (pos) => {
+        const lng = pos.coords.longitude;
+        const lat = pos.coords.latitude;
+        setClientLngLat({ lng, lat });
+        const now = Date.now();
+        if (now - lastClientSendRef.current < 4000) return;
+        lastClientSendRef.current = now;
+        void geoRoomRef.current?.send('client', lng, lat);
+      },
+      () => {},
+      { enableHighAccuracy: true, maximumAge: 5000, timeout: 20000 }
+    );
+    return () => navigator.geolocation.clearWatch(watchId);
+  }, [useLiveBroadcast, courseId, confirmed, meetPickupCoords]);
+
   const fitBounds = useCallback(() => {
     const map = mapRef.current?.getMap();
     if (!map || !meetPickupCoords || !driverLngLat) return;
-    let minLng = Math.min(meetPickupCoords.lng, driverLngLat.lng);
-    let maxLng = Math.max(meetPickupCoords.lng, driverLngLat.lng);
-    let minLat = Math.min(meetPickupCoords.lat, driverLngLat.lat);
-    let maxLat = Math.max(meetPickupCoords.lat, driverLngLat.lat);
+    const pts: LngLat[] = [meetPickupCoords, driverLngLat];
+    if (clientLngLat) pts.push(clientLngLat);
+    let minLng = Math.min(...pts.map((p) => p.lng));
+    let maxLng = Math.max(...pts.map((p) => p.lng));
+    let minLat = Math.min(...pts.map((p) => p.lat));
+    let maxLat = Math.max(...pts.map((p) => p.lat));
     const padLng = 0.00035;
     const padLat = 0.0003;
     if (maxLng - minLng < padLng) {
@@ -109,12 +164,12 @@ export default function ClientCompteRideMeetDriver({
     if (!map.isStyleLoaded()) {
       map.once('idle', run);
     }
-  }, [meetPickupCoords, driverLngLat]);
+  }, [meetPickupCoords, driverLngLat, clientLngLat]);
 
   useEffect(() => {
     if (!meetPickupCoords || !driverLngLat) return;
     fitBounds();
-  }, [fitBounds, meetPickupCoords, driverLngLat]);
+  }, [fitBounds, meetPickupCoords, driverLngLat, clientLngLat]);
 
   const hasLiveLocate = Boolean(meetPickupCoords && meetDriverCoordsInitial && driverLngLat);
   const distanceM =
@@ -197,6 +252,14 @@ export default function ClientCompteRideMeetDriver({
                 <Marker longitude={driverLngLat.lng} latitude={driverLngLat.lat} anchor="bottom">
                   <span className="client-compte-ride-flow__map-pin client-compte-ride-flow__map-pin--driver" title={t('clientAccount.rideMeetDriverPin')} />
                 </Marker>
+                {clientLngLat ? (
+                  <Marker longitude={clientLngLat.lng} latitude={clientLngLat.lat} anchor="bottom">
+                    <span
+                      className="client-compte-ride-flow__map-pin client-compte-ride-flow__map-pin--client"
+                      title={t('clientAccount.rideMeetClientPin')}
+                    />
+                  </Marker>
+                ) : null}
               </Map>
             </div>
             {distanceM !== null ? (

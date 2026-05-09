@@ -13,7 +13,16 @@ import {
   CHAUFFEUR_COURSE_COMPLETED_EVENT,
   type ChauffeurNavCourseSnapshot,
 } from '../constants/chauffeurNavCourseStorage'
-import { fetchChauffeurRidesFromApi, postChauffeurRideAction, ridesPersistenceEnabled } from '../services/chauffeurRidesApi'
+import {
+  fetchChauffeurRidesFromApi,
+  postChauffeurRideAction,
+  ridesPersistenceEnabled,
+} from '../services/chauffeurRidesApi'
+import {
+  isRideGeoBroadcastEnabled,
+  joinRideGeoRoom,
+  type RideGeoRole,
+} from '../services/paltoRideLocationRealtime'
 import './DriverNavigationView.css'
 
 const REUNION_PROXIMITY: [number, number] = [55.45, -21.15]
@@ -152,6 +161,11 @@ export default function DriverNavigationView({ courseId, onClose }: Props) {
 
   const finishedRef = useRef(false)
   const phaseRef = useRef<'navigating' | 'recap'>('navigating')
+  const geoRoomRef = useRef<{
+    send: (role: RideGeoRole, lng: number, lat: number) => Promise<void>
+    leave: () => void
+  } | null>(null)
+  const lastDriverGeoSendRef = useRef(0)
   const lastTrackRef = useRef<[number, number] | null>(null)
   const everDeviatedRef = useRef(false)
   const routeCoordsRef = useRef<[number, number][]>([])
@@ -164,6 +178,7 @@ export default function DriverNavigationView({ courseId, onClose }: Props) {
     phaseRef.current = 'navigating'
     setPhase('navigating')
     arrivalStreakRef.current = 0
+    lastDriverGeoSendRef.current = 0
   }, [courseId])
 
   useEffect(() => {
@@ -367,6 +382,20 @@ export default function DriverNavigationView({ courseId, onClose }: Props) {
 
   /** GPS dès que l’itinéraire est prêt : marqueur, arrivée auto, tracé d’écart. */
   useEffect(() => {
+    if (!isRideGeoBroadcastEnabled() || !courseId) return
+    let cancelled = false
+    void joinRideGeoRoom(courseId, () => {}).then((room) => {
+      if (cancelled || !room) return
+      geoRoomRef.current = room
+    })
+    return () => {
+      cancelled = true
+      geoRoomRef.current?.leave()
+      geoRoomRef.current = null
+    }
+  }, [courseId])
+
+  useEffect(() => {
     if (phase !== 'navigating') return
     if (!routeFeature?.geometry?.coordinates?.length || !origin || !destination) return
     if (typeof navigator === 'undefined' || !navigator.geolocation) return
@@ -383,6 +412,15 @@ export default function DriverNavigationView({ courseId, onClose }: Props) {
         lastEmit = now
 
         setLiveGpsPosition({ longitude: lng, latitude: lat })
+
+        if (
+          isRideGeoBroadcastEnabled() &&
+          geoRoomRef.current &&
+          now - lastDriverGeoSendRef.current >= 4000
+        ) {
+          lastDriverGeoSendRef.current = now
+          void geoRoomRef.current.send('driver', lng, lat)
+        }
 
         const dest = destRef.current
         if (dest) {
