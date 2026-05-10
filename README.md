@@ -4,9 +4,9 @@ Application web autour de la **mobilité à La Réunion** : carte **OSM** dans l
 
 Le dépôt reprend une base **React + Vite + TypeScript** : périmètre produit **Palto** (carte, trajets, réservation Go, comptes, dashboard). Les **domaines et URLs d’exemple** dans la doc (`https://votre-domaine.re`, `nom-du-projet.vercel.app`, etc.) sont des **placeholders** à remplacer par ton déploiement réel.
 
-## Clôture du projet (avril 2026)
+## Périmètre livré & évolutions (2026)
 
-Le chantier **Palto** (carte accueil, héros) est **terminé** : livrable dans l’**état actuel** du dépôt (build `npm run build` OK). Les détails d’implémentation vivent dans **Git** ; ce README résume le périmètre et comment relancer le projet. Le **prototype page Go** (`/go`, réservation course) continue d’évoluer dans le même dépôt (`SingleProjectNew.tsx`, services carto/routing OSM, mock chauffeurs). Pour la suite : **DEPLOY.md**, **.env.example**, remplacement de `getNearbyDriversMock()` dans `src/data/nearbyDrivers.ts` par une API réelle si besoin.
+Le cœur **Palto** (accueil carte, **Go**, comptes, dashboard chauffeur) est **maintenu dans ce dépôt** ; le build production cible `npm run build` (voir ci-dessous pour la **PWA**). Les détails d’implémentation vivent dans **Git**. Le parcours **Go** (`/go`) reste un **prototype** front (mock chauffeurs) ; les **courses persistées** passent par l’**API** + **Supabase** lorsque les flags / variables d’environnement sont activés. Pour le déploiement : **DEPLOY.md**, **.env.example** ; pour les chauffeurs sur la carte d’accueil : remplacer à terme `getNearbyDriversMock()` dans `src/data/nearbyDrivers.ts` par un appel API réel (contrat décrit dans `.cursorrules`).
 
 ## Dashboard chauffeur (`/dashboard`)
 
@@ -21,6 +21,14 @@ Le chantier **Palto** (carte accueil, héros) est **terminé** : livrable dans l
   Implémentation : `src/components/DashboardStats.tsx` + `src/components/DashboardStats.css`.
 - **Fond** : **pas de carte** en arrière-plan du dashboard (évite les requêtes tuiles sur une vue où la carte n’apporte pas de valeur). Fonds **sidebar** et **zone principale** opaques (`Dashboard.css` / thème sombre dans `Dashboard.app-theme.css`).
 - **Carte OSM** ailleurs : utilisée là où le produit l’exige — **accueil** (colonne carte), **page Go** (parcours réservation), **navigation course** (`DriverNavigationView`, route `/dashboard/navigation/:id`).
+- **Navigation course + fin de course** : pendant une course **en cours**, le chauffeur peut envoyer sa position en **temps réel** (Supabase Realtime **broadcast** sur `ride_geo:{courseId}`) ; le passager voit le suivi sur la vue **rencontre chauffeur** et, après clôture côté chauffeur, un **récap** (montant, distance, durée) lorsque les données sont fournies par l’API.
+
+## Compte passager (`/compte`)
+
+- **UI** : `ClientCompteDashboard.tsx` (aperçu, cours, lieux, portefeuille simulé local, sécurité, réglages) ; entrée **« Gérer mon compte Palto »** (tuiles style Apple) pour nom, téléphone, e-mail affiché, langue, etc.
+- **Persistance** : profil, lieux, portefeuille, sécurité et préférences sont stockés dans **`localStorage` scoping par e-mail** (ex. `palto_client_account_by_email_v1` pour le profil — voir `src/constants/clientAccountStorage.ts`). Les modifications depuis la modale d’édition appellent **`saveClientAccountSnapshot`** et émettent **`palto:client-session-changed`** pour rafraîchir la **topbar** (nom / photo) sans recharger la page.
+- **Courses** : si le flag API client est actif, liste et détail via **`GET /api/client/rides`** (`api/client/rides.ts`) ; annulation **`POST`** pour les statuts **pending** / **accepted**. Un **abonnement Realtime** optionnel sur la table `courses` (`src/services/paltoCoursesRealtime.ts`) complète le polling.
+- **Rencontre chauffeur** : page dédiée + lien depuis la topbar quand une course est **in_progress** ; positions **broadcast** si `VITE_SUPABASE_*` + token Realtime (`/api/auth/realtime-token`) sont configurés — voir `src/services/paltoRideLocationRealtime.ts`.
 
 ## Fonctionnalités (Palto / carte OSM)
 
@@ -86,22 +94,25 @@ Copier **`.env.example`** vers **`.env.local`** ; **dashboard** : `VITE_DASHBOAR
 | Commande        | Description                                      |
 |-----------------|--------------------------------------------------|
 | `npm run dev`   | Serveur Vite (frontend seul ; `/api/*` limité)  |
-| `npm run build` | Build production dans `dist/`                    |
+| `npm run build` | Build production dans `dist/` (+ **PWA** / Workbox en fin de pipeline) |
+| `npm run lint` / `npm run typecheck` | Qualité (le typecheck complet peut signaler une dépréciation `baseUrl` TS selon la version locale) |
 | `npm run calc-frais` | Exemple CLI distance + barème (`tsx`, voir `scripts/calc-frais-transport.ts`) |
 
 Après un build : `npx vite preview` sert le contenu de `dist/` en local (script npm non défini dans `package.json`, commande Vite standard).
 
 Pour tester les **routes API** comme en production : `vercel dev` (Vercel CLI).
 
+**PWA / service worker** : l’étape finale du build peut parfois échouer sur la génération du SW (Workbox / minification) selon l’environnement (mémoire, sandbox). Dans ce cas, relancer le build sur une machine locale ou ajuster la config `vite-plugin-pwa` si besoin.
+
 ## Structure utile (repères)
 
 ```
 src/
-  components/          # UI — Hero, Dashboard (chauffeur), composant carte accueil, SingleProjectNew, DriverNavigationView, …
-  constants/            # defaultUserOrigin.ts, placeholders, …
-  services/             # géocodage, itinéraires, fraisTransport…
+  components/          # UI — Hero, Dashboard (chauffeur), ClientCompteDashboard, SingleProjectNew, DriverNavigationView, …
+  constants/            # stockages locaux client/chauffeur, defaultUserOrigin, …
+  services/             # géocodage, itinéraires, paltoRideLocationRealtime, paltoCoursesRealtime, clientRidesApi…
   data/                 # nearbyDrivers.ts (mock chauffeurs), destinations, menu, projets…
-api/                    # Serverless — dont geocode.ts (BAN + Nominatim), auth, contact, courses…
+api/                    # Serverless — geocode, auth, client/rides, chauffeur, auth/realtime-token, …
 public/
 ```
 
@@ -136,12 +147,13 @@ Référence arbres **user flow** : implémentation surtout sur la page **Go** (`
 
 ---
 
-### Dernière mise à jour README — **8 mai 2026**
+### Dernière mise à jour README — **9 mai 2026**
 
-- **Géocodage / suggestions** : `/api/geocode` s’appuie sur la **Base Adresse Nationale** (précision numéro + voie, DROM 974) et fusionne avec **Nominatim** ; la page **Go** et les champs adresse compte client en bénéficient.
-- **Authentification / session** : session unifiée client/chauffeur (avec contrôle de rôle côté routes chauffeur).
-- **Compte client** : persistance locale **par email** (profil, lieux enregistrés) + annulation de course autorisée en `pending`/`accepted` avec confirmation.
-- **Dashboard chauffeur** : persistance locale du **profil** (incl. photos) par email + feedback **toast** à l’enregistrement.
-- *(Historique 5 mai 2026)* : périmètre Palto (accueil, **Go**, comptes, dashboard) ; stats `recharts` ; dashboard sans fond carte.
+- **Compte passager** : édition **Nom / Prénom / Téléphone** (et tuiles associées) **persistée** via `saveClientAccountSnapshot` + événement `palto:client-session-changed` pour la topbar.
+- **Courses & temps réel** : API **`/api/client/rides`** ; suivi **`ride_geo:{courseId}`** (broadcast) ; récap client après clôture chauffeur quand les champs API le permettent.
+- **Nettoyage local** : migration ponctuelle des brouillons navigateur via `purgeStaleLocalSnapshotsOnce` (`src/services/purgeStaleLocalSnapshots.ts`).
+- **Géocodage / suggestions** : `/api/geocode` — **BAN** + **Nominatim** (page **Go** et champs adresse).
+- **Session** : unifiée client/chauffeur ; annulation client en `pending` / `accepted`.
+- **Dashboard chauffeur** : profil local par e-mail + stats `recharts` ; navigation course avec envoi position optionnel.
 
-*README à jour : Palto — carte & directions **OSM** ; adresses **BAN + OSM** via **`/api/geocode`** ; **Go** `/go` ; **dashboard** chauffeur avec profil persisté ; mock chauffeurs ; déploiement Vercel (ex. `palto-six.vercel.app`).*
+*Palto — **OSM** + **`/api/geocode`** ; **Go** `/go` ; **compte** `/compte` ; **dashboard** `/dashboard` ; mock chauffeurs accueil ; API + Supabase selon configuration.*

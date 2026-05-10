@@ -865,6 +865,39 @@ export default function ClientCompteDashboard({ onBack, onOpenClientLiveMeet }: 
             .join(' ')
             .trim();
     if (!accountEditModal.key) return;
+
+    if (
+      accountEditModal.key === 'personal-card-1' ||
+      accountEditModal.key === 'personal-card-2' ||
+      accountEditModal.key === 'personal-card-3'
+    ) {
+      const emailKey = activeClientEmail.trim().toLowerCase();
+      let nextProfile: ClientAccountSnapshot = profile;
+      if (accountEditModal.key === 'personal-card-1') {
+        const firstName = accountEditModal.fields.find((f) => f.id === 'firstName')?.value.trim() ?? '';
+        const lastName = accountEditModal.fields.find((f) => f.id === 'lastName')?.value.trim() ?? '';
+        nextProfile = { ...profile, prenom: firstName, nom: lastName };
+      } else if (accountEditModal.key === 'personal-card-2') {
+        nextProfile = { ...profile, telephone: nextValue };
+      } else {
+        nextProfile = { ...profile, email: nextValue.trim().toLowerCase() };
+      }
+      setProfile(nextProfile);
+      setDraft(nextProfile);
+      if (accountEditModal.key === 'personal-card-2') {
+        const parsed = parseStoredPhone(nextValue);
+        setPhoneCountryDraft(parsed.country);
+        setPhoneNationalDraft(parsed.nationalNumber);
+      }
+      if (emailKey) {
+        saveClientAccountSnapshot(nextProfile, emailKey);
+        if (typeof window !== 'undefined') {
+          window.dispatchEvent(new CustomEvent(PALTO_CLIENT_SESSION_CHANGED_EVENT));
+        }
+      }
+      toast.success(isEn ? 'Profile updated.' : 'Profil enregistré.');
+    }
+
     if (accountEditModal.key === 'personal-card-4') {
       const languageChoice = accountEditModal.fields.find((f) => f.id === 'languageChoice')?.value.trim() ?? '';
       const nextLang = languageChoice === 'English' ? 'en' : 'fr';
@@ -881,7 +914,16 @@ export default function ClientCompteDashboard({ onBack, onOpenClientLiveMeet }: 
     setAccountCardOverrides((prev) => ({ ...prev, [accountEditModal.key]: nextValue }));
     setAccountEditModal((prev) => ({ ...prev, open: false }));
     setAccountEditErrors({});
-  }, [accountEditModal, activeClientEmail, security, setLanguage, validateAccountEditFields, formatSecurityDate]);
+  }, [
+    accountEditModal,
+    activeClientEmail,
+    isEn,
+    profile,
+    security,
+    setLanguage,
+    validateAccountEditFields,
+    formatSecurityDate,
+  ]);
 
   const openPaymentModal = useCallback(() => {
     setPaymentErrors({});
