@@ -32,11 +32,11 @@ Le cœur **Palto** (accueil carte, **Go**, comptes, dashboard chauffeur) est **m
 
 ## Fonctionnalités (Palto / carte)
 
-- **Carte** dans la **3e colonne** de l’accueil (`Hero` → `HomeMapboxBackground` en mode `embedded`). Fond tuiles : **OSM / OpenFreeMap Liberty** uniquement (pas de fond Mapbox).
+- **Carte** dans la **3e colonne** de l’accueil (`Hero` → `HomeOsmMapBackground` en mode `embedded`). Fond tuiles : **OSM / OpenFreeMap Liberty** uniquement (pas de fond Mapbox).
 - **Position « utilisateur » (dev)** : `3 Allée Dachau, 97420 Le Port` — `DEFAULT_USER_ORIGIN` / libellé associé dans `src/constants/defaultUserOrigin.ts`.
 - **Pins** départ (bleu), arrivée (orange), chauffeurs (icône moto SVG). **Chauffeurs à proximité** : liste dans la colonne centrale du `Hero` + marqueurs sur la carte ; données `src/data/nearbyDrivers.ts` (`getNearbyDriversMock()`). Sans itinéraire ni destination ciblée, la carte **cadre** départ + chauffeurs pour les garder visibles.
 - **Sélection d’un chauffeur** : état `homeSelectedDriverId` dans `App.tsx` ; pas d’itinéraire vers la position du chauffeur mock (distinct de la destination course).
-- **Tracé d’itinéraire** : calcul routier entre l’origine et la **destination** dans le flux OSM.
+- **Tracé d’itinéraire** : calcul routier **OSRM** (public `router.project-osrm.org`) entre l’origine et la **destination** ; implémentation **`src/services/osrmRouting.ts`** (snap « nearest » + route `driving`). Côté **page Go**, requêtes **débouncées** et **annulables** (`AbortSignal`) pour éviter la saturation navigateur (`net::ERR_INSUFFICIENT_RESOURCES`) quand départ / arrivée changent vite.
 - **Clic sur la carte** : point sur l’île, puis **géocodage inverse** — le champ **Destination** (colonne réservation) affiche l’adresse résolue, ou les coordonnées en secours.
 - **Géocodage direct (adresses)** : barre de recherche header et champs adresse passent par **`/api/geocode`** (`api/geocode.ts`) : **Base Adresse Nationale** ([api-adresse.data.gouv.fr](https://adresse.data.gouv.fr)) en priorité (numéros / voies, **974xx**), complété par **Nominatim** (OSM) et repli **Photon**.
 - **Estimation frais / distance** : `src/services/distanceGeo.ts`, `baremeKilometriqueFiscal.ts`, `fraisTransportEstimation.ts` ; script CLI `npm run calc-frais`.
@@ -52,6 +52,12 @@ Route **`/go`** (projet **Go** dans `projects.ts` / `SingleProjectNew.tsx`). Par
 - **Rechercher** : géocodage **départ + destination** en une fois ; affichage des **chauffeurs** (mock `getNearbyDriversMock()`, rayon **20 km** autour du départ validé) et tracé **itinéraire** sur la carte embarquée.
 - **Clic sur un chauffeur** (desktop) : ouverture d’une **modal « Recap commande »** (détail trajet, chauffeur, prix indicatif) avec bouton **Commandez la course** (fermeture + événement analytics ; pas de paiement).
 - Carte : pin départ après validation, `flyTo` sur le pickup, pins / route OSM comme sur le reste du site.
+
+### Synchro carte **cover** (carousel) ↔ panneau Go (correctif boucle réseau)
+
+La cover du projet **Go** et le panneau de réservation échangent des événements (`palto:cover-map-update`, `palto:go-cover-pickup-sync`, `palto:go-cover-destination-sync`, `palto:go-cover-route-sync`). Une **référence d’objet** `{ longitude, latitude }` recréée à chaque message sans changement de coordonnées pouvait relancer en boucle le **géocodage inverse** et le proxy **`/api/geocode`**, jusqu’à `ERR_INSUFFICIENT_RESOURCES`.
+
+**Correctif** (mai 2026) : ne mettre à jour le state que si les coordonnées **changent réellement** (tolérance float + `setState` fonctionnel qui conserve la référence précédente quand c’est identique) ; effets et dépendances basés sur **`longitude` / `latitude`** plutôt que sur l’objet point entier. Fichiers concernés : **`src/components/SingleProjectNew.tsx`**, **`src/components/ProjectCoverCarousel.tsx`**. La navigation chauffeur annule aussi les requêtes OSRM en cours via le même **`AbortSignal`** (`osrmRouting` + `DriverNavigationView.tsx`).
 
 > **Statut actuel (avril 2026)** : la page **Go** est mise en pause côté évolutions.  
 > Le flux actuel (recherche, sélection chauffeur, recap, checkout simulé) est conservé tel quel ; intégration paiement réel (ex. Stripe Connect) prévue plus tard.
@@ -107,9 +113,9 @@ Pour tester les **routes API** comme en production : `vercel dev` (Vercel CLI).
 
 ```
 src/
-  components/          # UI — Hero, Dashboard (chauffeur), ClientCompteDashboard, SingleProjectNew, DriverNavigationView, …
+  components/          # UI — Hero, Dashboard (chauffeur), ClientCompteDashboard, SingleProjectNew, DriverNavigationView, HomeOsmMapBackground, …
   constants/            # stockages locaux client/chauffeur, defaultUserOrigin, …
-  services/             # géocodage, itinéraires, paltoRideLocationRealtime, paltoCoursesRealtime, clientRidesApi…
+  services/             # addressGeocoding, osrmRouting, paltoRideLocationRealtime, paltoCoursesRealtime, clientRidesApi…
   data/                 # nearbyDrivers.ts (mock chauffeurs), destinations, menu, projets…
 api/                    # Serverless — geocode, auth, client/rides, chauffeur, auth/realtime-token, …
 public/
@@ -154,5 +160,7 @@ Référence arbres **user flow** : implémentation surtout sur la page **Go** (`
 - **Géocodage / suggestions** : `/api/geocode` — **BAN** + **Nominatim** (page **Go** et champs adresse).
 - **Session** : unifiée client/chauffeur ; annulation client en `pending` / `accepted`.
 - **Dashboard chauffeur** : profil local par e-mail + stats `recharts` ; navigation course avec envoi position optionnel.
+- **Stabilité Go / réseau** : plus de boucle infinie **cover ↔ panneau** (égalité des coordonnées + deps sur lat/lng) — voir sous-section *Synchro carte cover ↔ panneau Go* ; **OSRM** avec debounce + annulation (`osrmRouting.ts`, `SingleProjectNew`, `DriverNavigationView`) pour limiter `ERR_INSUFFICIENT_RESOURCES`.
+- **Nommage carte** : composant carte **`HomeOsmMapBackground`** (tuiles OSM uniquement) ; services **`addressGeocoding.ts`** et **`osrmRouting.ts`** (plus de dépendance `mapbox-gl`).
 
 *Palto — **OSM** + **`/api/geocode`** ; **Go** `/go` ; **compte** `/compte` ; **dashboard** `/dashboard` ; mock chauffeurs accueil ; API + Supabase selon configuration.*
