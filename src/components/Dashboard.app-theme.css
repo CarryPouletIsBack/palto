@@ -372,6 +372,7 @@ html[data-app-theme='dark'] .dashboard-filters-bar button {
 }
 
 html[data-app-theme='dark'] .dashboard-overview-mini-card,
+html[data-app-theme='dark'] .dashboard-overview-stack,
 html[data-app-theme='dark'] .dashboard-panel,
 html[data-app-theme='dark'] .dashboard-heatmap-card,
 html[data-app-theme='dark'] .dashboard-recent-item,
@@ -384,6 +385,21 @@ html[data-app-theme='dark'] .dashboard-overview-link-inline {
 
 html[data-app-theme='dark'] .dashboard-overview-mini-card:hover {
   border-color: rgba(255, 255, 255, 0.22);
+}
+
+html[data-app-theme='dark'] .dashboard-overview-stack:hover,
+html[data-app-theme='dark'] .dashboard-container--chauffeur .dashboard-heatmap-card--action:hover,
+html[data-app-theme='dark'] .dashboard-container--chauffeur .dashboard-panel-block > .dashboard-panel:hover {
+  box-shadow: 0 12px 24px rgba(0, 0, 0, 0.28);
+}
+
+html[data-app-theme='dark'] .dashboard-overview-stack .dashboard-panel {
+  background: transparent;
+  border-top-color: var(--app-border-subtle, rgba(255, 255, 255, 0.12));
+}
+
+html[data-app-theme='dark'] .dashboard-overview-stack .dashboard-overview-mini-card:hover {
+  background: rgba(255, 255, 255, 0.06);
 }
 
 html[data-app-theme='dark'] .dashboard-overview-mini-card strong,

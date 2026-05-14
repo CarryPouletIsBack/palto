@@ -1258,6 +1258,14 @@ const Dashboard = ({
     }
   }, [activeView, t]);
 
+  const dashboardTopSubtitle = useMemo(
+    () =>
+      activeView === 'stats'
+        ? t('driverDashboard.statsSubtitle')
+        : t('driverDashboard.mainSubtitle'),
+    [activeView, t]
+  );
+
   useEffect(() => {
     if (!bugReportModalOpen) return;
     setBugMessage('');
@@ -2170,7 +2178,13 @@ const Dashboard = ({
             }`}
           >
             <header
-              className={`dashboard-topbar${topbarLaunchCourse ? '' : ' dashboard-topbar--with-main-subtitle'}`}
+              className={`dashboard-topbar${
+                topbarLaunchCourse || isMobileViewport ? '' : ' dashboard-topbar--with-main-subtitle'
+              }${
+                isMobileViewport && !topbarLaunchCourse
+                  ? ' dashboard-topbar--chauffeur-mobile-toolbar'
+                  : ''
+              }`}
             >
               {topbarLaunchCourse ? (
                 <div className="topbar-ride-wrap" aria-label="Prochaine course acceptee">
@@ -2203,12 +2217,10 @@ const Dashboard = ({
                     </button>
                   </div>
                 </div>
-              ) : (
+              ) : isMobileViewport ? null : (
                 <div className="dashboard-topbar-title-stack">
                   <h2 className="dashboard-chauffeur-main-title">{dashboardTopTitle}</h2>
-                  <p className="dashboard-chauffeur-main-subtitle">
-                    {activeView === 'stats' ? t('driverDashboard.statsSubtitle') : t('driverDashboard.mainSubtitle')}
-                  </p>
+                  <p className="dashboard-chauffeur-main-subtitle">{dashboardTopSubtitle}</p>
                 </div>
               )}
               <div className="dashboard-topbar-right">
@@ -2293,6 +2305,12 @@ const Dashboard = ({
 
             {activeView === 'stats' ? (
               <div className="dashboard-content">
+                {isMobileViewport && !topbarLaunchCourse ? (
+                  <div className="dashboard-topbar-title-stack dashboard-topbar-title-stack--in-content">
+                    <h2 className="dashboard-chauffeur-main-title">{dashboardTopTitle}</h2>
+                    <p className="dashboard-chauffeur-main-subtitle">{dashboardTopSubtitle}</p>
+                  </div>
+                ) : null}
                 <DashboardStats activity={chauffeurActivityStats} heatmap={apiHeatmapStats} />
               </div>
             ) : (
@@ -2303,6 +2321,12 @@ const Dashboard = ({
                     activeView === 'organization' ? ' dashboard-content--org-fullbleed' : ''
                   }`}
                 >
+                  {isMobileViewport && !topbarLaunchCourse ? (
+                    <div className="dashboard-topbar-title-stack dashboard-topbar-title-stack--in-content">
+                      <h2 className="dashboard-chauffeur-main-title">{dashboardTopTitle}</h2>
+                      <p className="dashboard-chauffeur-main-subtitle">{dashboardTopSubtitle}</p>
+                    </div>
+                  ) : null}
                   {coursesBlockedByCompliance ? (
                     <section
                       className="dashboard-compliance-block"
@@ -2376,6 +2400,7 @@ const Dashboard = ({
                       </div>
                       {overviewNextCourse ? (
                         <>
+                          <div className="dashboard-overview-stack">
                           <div className="dashboard-overview-mini-grid">
                             <button
                               type="button"
@@ -2424,6 +2449,7 @@ const Dashboard = ({
                               ) : null}
                             </div>
                           </article>
+                          </div>
                         </>
                       ) : (
                         <article className="dashboard-panel">
@@ -2443,6 +2469,7 @@ const Dashboard = ({
                         <h3>Usage</h3>
                         <span>30 derniers jours</span>
                       </div>
+                      <div className="dashboard-overview-stack">
                       <div className="dashboard-overview-mini-grid">
                         <button
                           type="button"
@@ -2479,6 +2506,7 @@ const Dashboard = ({
                           </div>
                         </div>
                       </article>
+                      </div>
                     </div>
 
                     <div className="dashboard-panel-block">

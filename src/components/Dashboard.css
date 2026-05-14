@@ -708,6 +708,18 @@ html[data-app-theme='dark'] .dashboard-home-topbar-upcoming-btn {
   color: #64748b;
 }
 
+.dashboard-topbar--chauffeur-mobile-toolbar {
+  justify-content: flex-end;
+}
+
+.dashboard-topbar-title-stack--in-content {
+  flex: 0 0 auto;
+  width: 100%;
+  box-sizing: border-box;
+  padding: 10px 8px 4px;
+  gap: 4px;
+}
+
 .dashboard-topbar-right {
   display: flex;
   align-items: center;
@@ -1275,6 +1287,13 @@ html[data-app-theme='dark'] .dashboard-home-topbar-upcoming-btn {
   align-self: stretch;
 }
 
+.dashboard-content.dashboard-content--org-fullbleed > .dashboard-topbar-title-stack--in-content {
+  padding-left: max(12px, env(safe-area-inset-left, 0px));
+  padding-right: max(12px, env(safe-area-inset-right, 0px));
+  padding-top: max(10px, env(safe-area-inset-top, 0px));
+  margin-bottom: 8px;
+}
+
 .dashboard-content.dashboard-content--org-fullbleed > .dashboard-org-layout {
   width: 100%;
   flex: 1 1 auto;
@@ -1350,6 +1369,55 @@ html[data-app-theme='dark'] .dashboard-home-topbar-upcoming-btn {
   display: flex;
   flex-direction: column;
   gap: 8px;
+}
+
+/* Bloc unique (mini-grille + panneau métriques), même hover que les cartes compte client cliquables */
+.dashboard-overview-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  box-sizing: border-box;
+  padding: 14px;
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .dashboard-overview-stack {
+    transition: none;
+  }
+
+  .dashboard-overview-stack:hover {
+    transform: none;
+  }
+}
+
+.dashboard-overview-stack:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 10px 22px rgba(15, 23, 42, 0.08);
+}
+
+.dashboard-overview-stack .dashboard-overview-mini-card {
+  border: none;
+  background: transparent;
+  border-radius: 10px;
+  transition: background 0.15s ease;
+}
+
+.dashboard-overview-stack .dashboard-overview-mini-card:hover {
+  border-color: transparent;
+  background: rgba(15, 23, 42, 0.04);
+}
+
+.dashboard-overview-stack .dashboard-panel {
+  margin: 0;
+  padding: 12px 0 0;
+  border: none;
+  border-radius: 0;
+  background: transparent;
+  border-top: 1px solid #e5e7eb;
 }
 
 .dashboard-panel {
@@ -4277,6 +4345,39 @@ button.dashboard-org-sidebar-brand--home:focus-visible {
   border: none;
 }
 
+/* Cartes overview : bordure lisible malgré l'override chauffeur (div / bouton plein) */
+.dashboard-container--chauffeur .dashboard-overview-stack,
+.dashboard-container--chauffeur .dashboard-heatmap-card,
+.dashboard-container--chauffeur .dashboard-panel-block > .dashboard-panel {
+  border: 1px solid #e5e7eb;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .dashboard-container--chauffeur .dashboard-overview-stack,
+  .dashboard-container--chauffeur .dashboard-heatmap-card,
+  .dashboard-container--chauffeur .dashboard-panel-block > .dashboard-panel {
+    transition: none;
+  }
+
+  .dashboard-container--chauffeur .dashboard-overview-stack:hover,
+  .dashboard-container--chauffeur .dashboard-heatmap-card--action:hover,
+  .dashboard-container--chauffeur .dashboard-panel-block > .dashboard-panel:hover {
+    transform: none;
+  }
+}
+
+.dashboard-container--chauffeur .dashboard-overview-stack:hover,
+.dashboard-container--chauffeur .dashboard-heatmap-card--action:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 10px 22px rgba(15, 23, 42, 0.08);
+}
+
+.dashboard-container--chauffeur .dashboard-panel-block > .dashboard-panel:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 10px 22px rgba(15, 23, 42, 0.08);
+}
+
 /* Mode contraste : restaurer des bordures fortes et lisibles */
 html[data-app-theme='contrast'] .dashboard-container--chauffeur .dashboard-main,
 html[data-app-theme='contrast'] .dashboard-container--chauffeur .dashboard-topbar,
@@ -4294,7 +4395,10 @@ html[data-app-theme='contrast'] .dashboard-container--chauffeur .dashboard-avata
 html[data-app-theme='contrast'] .dashboard-container--chauffeur button,
 html[data-app-theme='contrast'] .dashboard-container--chauffeur input,
 html[data-app-theme='contrast'] .dashboard-container--chauffeur select,
-html[data-app-theme='contrast'] .dashboard-container--chauffeur textarea {
+html[data-app-theme='contrast'] .dashboard-container--chauffeur textarea,
+html[data-app-theme='contrast'] .dashboard-container--chauffeur .dashboard-overview-stack,
+html[data-app-theme='contrast'] .dashboard-container--chauffeur .dashboard-heatmap-card,
+html[data-app-theme='contrast'] .dashboard-container--chauffeur .dashboard-panel-block > .dashboard-panel {
   border: 1px solid #000000;
 }
 
