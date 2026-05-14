@@ -4,11 +4,14 @@ import { Pagination, Autoplay } from 'swiper/modules';
 import type { Feature, LineString } from 'geojson';
 import 'swiper/css';
 import 'swiper/css/pagination';
+import { ArrowLeft } from 'lucide-react';
+import Button from './Button';
 import './ProjectCoverCarousel.css';
-import HomeMapboxBackground from './HomeMapboxBackground';
-import { snapLngLatToMapboxDriving } from '../services/mapboxSnapToRoad';
+import HomeMapboxBackground, { type HomeMapFlyTo } from './HomeMapboxBackground';
+import { resolvePickOnRoad } from '../services/mapboxSnapToRoad';
 import { isLngLatInsideReunionIsland } from '../constants/reunionIsland';
-import { geocodeReverse } from '../services/mapboxGeocoding';
+import { geocodeReverse, reverseGeocodeDisplayFallback } from '../services/mapboxGeocoding';
+import { useLanguage } from '../contexts/LanguageContext';
 
 interface ProjectCoverCarouselProps {
   coverImage: string;
@@ -42,6 +45,7 @@ const ProjectCoverCarousel: React.FC<ProjectCoverCarouselProps> = ({
   isFullscreenModalOpen = false,
   hideCloseOnScroll = false,
 }) => {
+  const { language } = useLanguage();
   const [fullscreenIndex, setFullscreenIndex] = useState(0);
   /** Premier clic carte cover = départ (comme le panneau Go), pas d’origine fictive Dachau. */
   const [mapCoverPickup, setMapCoverPickup] = useState<{ longitude: number; latitude: number } | null>(null);
@@ -49,6 +53,7 @@ const ProjectCoverCarousel: React.FC<ProjectCoverCarouselProps> = ({
   const [mapSelectedDestination, setMapSelectedDestination] = useState<{ longitude: number; latitude: number } | null>(null);
   const [mapRouteFeature, setMapRouteFeature] = useState<Feature<LineString> | null>(null);
   const [mapDestinationLabel, setMapDestinationLabel] = useState('');
+  const [coverFlyToTarget, setCoverFlyToTarget] = useState<HomeMapFlyTo | null>(null);
 
   // Dupliquer l'image pour tester le carousel
   const images = useMemo(() => {
@@ -95,6 +100,31 @@ const ProjectCoverCarousel: React.FC<ProjectCoverCarouselProps> = ({
     setMapSelectedDestination(null);
     setMapRouteFeature(null);
     setMapDestinationLabel('');
+    setCoverFlyToTarget(null);
+  }, [isPaltoMapCover]);
+
+  useEffect(() => {
+    if (!isPaltoMapCover) return;
+    const onFlyTo = (evt: Event) => {
+      const e = evt as CustomEvent<{ longitude?: number; latitude?: number; zoom?: number }>;
+      const d = e.detail;
+      if (
+        !d ||
+        typeof d.longitude !== 'number' ||
+        typeof d.latitude !== 'number' ||
+        !Number.isFinite(d.longitude) ||
+        !Number.isFinite(d.latitude)
+      ) {
+        return;
+      }
+      setCoverFlyToTarget({
+        longitude: d.longitude,
+        latitude: d.latitude,
+        zoom: typeof d.zoom === 'number' && Number.isFinite(d.zoom) ? d.zoom : 13.5,
+      });
+    };
+    window.addEventListener('palto:go-cover-fly-to', onFlyTo as EventListener);
+    return () => window.removeEventListener('palto:go-cover-fly-to', onFlyTo as EventListener);
   }, [isPaltoMapCover]);
 
   useEffect(() => {
@@ -126,28 +156,34 @@ const ProjectCoverCarousel: React.FC<ProjectCoverCarouselProps> = ({
   useEffect(() => {
     if (!isPaltoMapCover) return;
     const onPanelRoute = (evt: Event) => {
-      const e = evt as CustomEvent<{
-        routeFeature?: Feature<LineString> | null;
-        destination?: { longitude: number; latitude: number } | null;
-      }>;
+      const e = evt as CustomEvent<{ routeFeature?: Feature<LineString> | null }>;
       const d = e.detail;
       if (!d) return;
       if ('routeFeature' in d) setMapRouteFeature(d.routeFeature ?? null);
-      if ('destination' in d) {
-        if (d.destination === null) {
-          setMapSelectedDestination(null);
-          setMapDestinationLabel('');
-        } else if (
-          d.destination &&
-          typeof d.destination.longitude === 'number' &&
-          typeof d.destination.latitude === 'number'
-        ) {
-          setMapSelectedDestination(d.destination);
-        }
-      }
     };
     window.addEventListener('palto:go-cover-route-sync', onPanelRoute as EventListener);
     return () => window.removeEventListener('palto:go-cover-route-sync', onPanelRoute as EventListener);
+  }, [isPaltoMapCover]);
+
+  useEffect(() => {
+    if (!isPaltoMapCover) return;
+    const onPanelDestination = (evt: Event) => {
+      const e = evt as CustomEvent<{ destination?: { longitude: number; latitude: number } | null }>;
+      const d = e.detail;
+      if (!d || !('destination' in d)) return;
+      if (d.destination === null) {
+        setMapSelectedDestination(null);
+        setMapDestinationLabel('');
+      } else if (
+        d.destination &&
+        typeof d.destination.longitude === 'number' &&
+        typeof d.destination.latitude === 'number'
+      ) {
+        setMapSelectedDestination(d.destination);
+      }
+    };
+    window.addEventListener('palto:go-cover-destination-sync', onPanelDestination as EventListener);
+    return () => window.removeEventListener('palto:go-cover-destination-sync', onPanelDestination as EventListener);
   }, [isPaltoMapCover]);
 
   useEffect(() => {
@@ -156,21 +192,23 @@ const ProjectCoverCarousel: React.FC<ProjectCoverCarouselProps> = ({
     (async () => {
       try {
         const label =
-          (await geocodeReverse(mapSelectedDestination.longitude, mapSelectedDestination.latitude, mapToken, { language: 'fr' })) ??
-          `${mapSelectedDestination.latitude.toFixed(4)}, ${mapSelectedDestination.longitude.toFixed(4)}`;
+          (await geocodeReverse(
+            mapSelectedDestination.longitude,
+            mapSelectedDestination.latitude,
+            mapToken,
+            { language }
+          )) ?? reverseGeocodeDisplayFallback(language, 'destination');
         if (!cancelled) setMapDestinationLabel(label);
       } catch {
         if (!cancelled) {
-          setMapDestinationLabel(
-            `${mapSelectedDestination.latitude.toFixed(4)}, ${mapSelectedDestination.longitude.toFixed(4)}`
-          );
+          setMapDestinationLabel(reverseGeocodeDisplayFallback(language, 'destination'));
         }
       }
     })();
     return () => {
       cancelled = true;
     };
-  }, [isPaltoMapCover, mapSelectedDestination, mapToken]);
+  }, [isPaltoMapCover, mapSelectedDestination, mapToken, language]);
 
   useEffect(() => {
     if (!isPaltoMapCover) return;
@@ -181,9 +219,10 @@ const ProjectCoverCarousel: React.FC<ProjectCoverCarouselProps> = ({
       destinationText: mapDestinationLabel,
       destinationLng: mapSelectedDestination?.longitude,
       destinationLat: mapSelectedDestination?.latitude,
-      coordsText: mapSelectedDestination
-        ? `${mapSelectedDestination.latitude.toFixed(4)}, ${mapSelectedDestination.longitude.toFixed(4)}`
-        : '',
+      coordsText:
+        mapSelectedDestination && mapDestinationLabel.trim()
+          ? mapDestinationLabel
+          : '',
       durationText: '',
       trafficDurationText: '',
     };
@@ -200,14 +239,13 @@ const ProjectCoverCarousel: React.FC<ProjectCoverCarouselProps> = ({
     if (!mapToken) return;
     if (!isLngLatInsideReunionIsland(longitude, latitude)) return;
     try {
-      const snapped = await snapLngLatToMapboxDriving(mapToken, longitude, latitude, { searchRadiusMeters: 75 });
-      if (!snapped) return;
+      const picked = await resolvePickOnRoad(mapToken, longitude, latitude, { searchRadiusMeters: 150 });
       const placeName =
-        (await geocodeReverse(snapped.longitude, snapped.latitude, mapToken, { language: 'fr' })) ??
-        `${snapped.latitude.toFixed(4)}, ${snapped.longitude.toFixed(4)}`;
+        (await geocodeReverse(picked.longitude, picked.latitude, mapToken, { language })) ??
+        reverseGeocodeDisplayFallback(language, mapCoverPickup === null ? 'pickup' : 'destination');
 
       if (mapCoverPickup === null) {
-        setMapCoverPickup(snapped);
+        setMapCoverPickup(picked);
         setMapCoverPickupLabel(placeName);
         setMapSelectedDestination(null);
         setMapDestinationLabel('');
@@ -215,11 +253,11 @@ const ProjectCoverCarousel: React.FC<ProjectCoverCarouselProps> = ({
         return;
       }
 
-      setMapSelectedDestination(snapped);
+      setMapSelectedDestination(picked);
     } catch {
       // ignore sur clic invalide/réseau
     }
-  }, [mapToken, mapCoverPickup]);
+  }, [language, mapToken, mapCoverPickup]);
 
   return (
     <>
@@ -245,6 +283,7 @@ const ProjectCoverCarousel: React.FC<ProjectCoverCarouselProps> = ({
           <div className="project-cover-map" aria-label="Carte Go">
             <HomeMapboxBackground
               variant="fullscreen"
+              flyToTarget={coverFlyToTarget}
               userOrigin={mapCoverPickup}
               selectedDestination={mapSelectedDestination}
               routeFeature={mapRouteFeature}
@@ -312,19 +351,21 @@ const ProjectCoverCarousel: React.FC<ProjectCoverCarouselProps> = ({
       {/* Couche boutons au premier plan (z-index 2001) pour rester cliquables au scroll */}
       <div className="project-cover-buttons-layer">
         {onClose && (
-          <button
+          <Button
             type="button"
-            className={`project-cover-close-btn${hideCloseOnScroll ? ' project-cover-close-btn--scroll-hidden' : ''}`}
+            variant="secondary"
+            icon
+            iconSize="medium"
+            className={`project-cover-back-btn${
+              hideCloseOnScroll ? ' project-cover-back-btn--scroll-hidden' : ''
+            }`}
             onClick={onClose}
-            aria-label="Fermer"
-            aria-hidden={hideCloseOnScroll}
+            aria-label="Retour"
+            aria-hidden={hideCloseOnScroll ? true : undefined}
             tabIndex={hideCloseOnScroll ? -1 : undefined}
           >
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
-              <line x1="18" y1="6" x2="6" y2="18" />
-              <line x1="6" y1="6" x2="18" y2="18" />
-            </svg>
-          </button>
+            <ArrowLeft size={22} strokeWidth={2.25} aria-hidden />
+          </Button>
         )}
         {(onPreviousProject || onNextProject) && (
           <div className="project-cover-nav-buttons">

@@ -5,6 +5,8 @@ export type GoPrefillPayload = {
   destination: string
   timing?: 'now' | 'later'
   datetime?: string
+  /** Commune d’accueil choisie sur l’accueil (sans préfixe « mairie »). */
+  homeCommune?: string
 }
 
 export function saveGoPrefill(data: GoPrefillPayload): void {

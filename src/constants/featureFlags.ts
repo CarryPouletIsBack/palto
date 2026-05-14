@@ -9,6 +9,15 @@ export function apiBaseUrl(): string {
   return (import.meta.env.VITE_API_BASE_URL as string | undefined)?.trim() || '/api'
 }
 
+/**
+ * En `vite dev`, `/api` est proxifié vers `localhost:3000` (souvent sans `vercel dev`) → ECONNREFUSED + logs bruyants.
+ * Sans `VITE_API_BASE_URL`, le géocodage forward/reverse n’appelle pas ce proxy : BAN / Nominatim côté navigateur uniquement.
+ */
+export function isGeocodeHttpProxyAvailable(): boolean {
+  if (!import.meta.env.DEV) return true
+  return Boolean((import.meta.env.VITE_API_BASE_URL as string | undefined)?.trim())
+}
+
 export function useChauffeurRidesPersist(): boolean {
   const raw = import.meta.env.VITE_CHAUFFEUR_RIDES_PERSIST as string | undefined
   if (typeof raw !== 'string') return true

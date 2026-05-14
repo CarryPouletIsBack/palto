@@ -71,6 +71,13 @@ const TRANSLATIONS: Record<Language, Record<string, unknown>> = {
     nav: {
       contact: 'Contact',
     },
+    geoPrompt: {
+      title: 'Autoriser la localisation ?',
+      body:
+        'Palto peut centrer la carte et proposer des trajets autour de votre position sur La Réunion. Vous pouvez refuser : la saisie manuelle des adresses reste possible.',
+      allow: 'Autoriser',
+      later: 'Pas maintenant',
+    },
     clientMeetDriver: {
       back: 'Retour',
       unavailable:
@@ -124,7 +131,9 @@ const TRANSLATIONS: Record<Language, Record<string, unknown>> = {
       map3DExitAria: 'Revenir à la vue du dessus',
       homeCity: 'Le Port',
       homeCountrySuffix: ', FR',
-      homeChangeCity: 'Changer de ville',
+      homeChangeCity: 'Choisir une commune',
+      communePickerTitle: 'Commune sur La Réunion',
+      communePickerCloseAria: 'Fermer la liste des communes',
       homeTakeChargeNow: 'Prendre en charge maintenant',
       homePickupTimingLabel: 'Prise en charge',
       homeTimingNow: 'Maintenant',
@@ -731,6 +740,13 @@ const TRANSLATIONS: Record<Language, Record<string, unknown>> = {
     nav: {
       contact: 'Contact',
     },
+    geoPrompt: {
+      title: 'Allow location?',
+      body:
+        'Palto can center the map and suggest rides near you in Réunion. You can decline — typing addresses manually still works.',
+      allow: 'Allow',
+      later: 'Not now',
+    },
     clientMeetDriver: {
       back: 'Back',
       unavailable:
@@ -783,7 +799,9 @@ const TRANSLATIONS: Record<Language, Record<string, unknown>> = {
       map3DExitAria: 'Return to flat top-down view',
       homeCity: 'Le Port',
       homeCountrySuffix: ', FR',
-      homeChangeCity: 'Change city',
+      homeChangeCity: 'Choose municipality',
+      communePickerTitle: 'Municipality in Réunion',
+      communePickerCloseAria: 'Close municipality list',
       homeTakeChargeNow: 'Pickup now',
       homePickupTimingLabel: 'Pickup',
       homeTimingNow: 'Now',

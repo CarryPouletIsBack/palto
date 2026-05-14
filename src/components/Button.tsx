@@ -1,7 +1,8 @@
-import { type ReactNode } from 'react'
+import { type ReactNode, type ButtonHTMLAttributes } from 'react'
 import './Button.css'
 
-interface ButtonProps {
+interface ButtonProps
+  extends Pick<ButtonHTMLAttributes<HTMLButtonElement>, 'aria-label' | 'tabIndex' | 'aria-hidden'> {
   children: ReactNode
   variant?: 'primary' | 'secondary'
   onClick?: () => void
@@ -9,25 +10,28 @@ interface ButtonProps {
   type?: 'button' | 'submit' | 'reset'
   icon?: boolean
   iconSize?: 'small' | 'medium' | 'large'
-  'aria-label'?: string
 }
 
-const Button = ({ 
-  children, 
-  variant = 'secondary', 
-  onClick, 
-  className = '', 
+const Button = ({
+  children,
+  variant = 'secondary',
+  onClick,
+  className = '',
   type = 'button',
   icon = false,
   iconSize = 'medium',
   'aria-label': ariaLabel,
+  tabIndex,
+  'aria-hidden': ariaHidden,
 }: ButtonProps) => {
   return (
-    <button 
+    <button
       type={type}
-      className={`btn btn-${variant} ${icon ? `btn-icon btn-icon-${iconSize}` : ''} ${className}`}
+      className={`btn btn-${variant} ${icon ? `btn-icon btn-icon-${iconSize}` : ''} ${className}`.trim()}
       onClick={onClick}
       aria-label={ariaLabel}
+      tabIndex={tabIndex}
+      aria-hidden={ariaHidden}
     >
       {children}
     </button>

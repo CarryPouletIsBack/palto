@@ -16,6 +16,7 @@ import ErrorPage from './components/ErrorPage'
 import Contact from './components/Contact'
 import Menu from './components/Menu'
 import { DestinationSpotlight } from './components/DestinationSpotlight'
+import { GeolocationPromptBanner } from './components/GeolocationPromptBanner'
 import { getDestinationById, type PopularDestination } from './data/popularDestinations'
 import { Toaster } from 'sonner'
 import { isAuthenticated, isClientAuthenticated } from './services/authService'
@@ -1001,6 +1002,7 @@ function App() {
   return (
     <div className={`container ${currentPage === 'menu' ? 'menu-active' : ''}`}>
       <AnalyticsGuard />
+      <GeolocationPromptBanner />
       <Toaster position="bottom-right" theme="light" />
       {currentPage !== 'dashboard' &&
         currentPage !== 'dashboard-navigation' &&

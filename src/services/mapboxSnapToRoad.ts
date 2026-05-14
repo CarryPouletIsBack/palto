@@ -33,3 +33,17 @@ export async function snapLngLatToMapboxDriving(
   if (distMeters > radius * 4) return null
   return { longitude: lng, latitude: lat }
 }
+
+/**
+ * Accroche au réseau si possible ; sinon garde le point cliqué (géocodage inverse + champs texte).
+ */
+export async function resolvePickOnRoad(
+  _accessToken: string,
+  longitude: number,
+  latitude: number,
+  options?: { searchRadiusMeters?: number }
+): Promise<{ longitude: number; latitude: number }> {
+  const snapped = await snapLngLatToMapboxDriving(_accessToken, longitude, latitude, options)
+  if (snapped) return snapped
+  return { longitude, latitude }
+}

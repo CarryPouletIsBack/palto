@@ -1,6 +1,13 @@
 export function simplifyAddressDisplay(raw: string): string {
   const input = raw.trim()
   if (!input) return ''
+  // Libellés de secours carte / hors adresse postale : ne pas « compacter » (sinon "port" dans "Départ", "la carte", etc.)
+  if (
+    !/\b97\d{3}\b/.test(input) &&
+    /sélectionné sur la carte|selected on the map|Location from map|Lieu indiqué sur la carte/i.test(input)
+  ) {
+    return input
+  }
   const normalize = (value: string) =>
     value
       .toLowerCase()
@@ -36,15 +43,16 @@ export function simplifyAddressDisplay(raw: string): string {
 
   const cpPart = effectiveParts.find((p) => /\b97\d{3}\b/.test(p)) ?? ''
   const cityPart =
-    effectiveParts.find((p) => /\bsaint\b|\ble\s+\w+|\bla\s+\w+|port|tampon|possession|etang|saline/i.test(p)) ??
-    (effectiveParts.length > 1 ? effectiveParts[1] : '')
+    effectiveParts.find((p) =>
+      /\bsaint\b|\ble\s+\w+|\bla\s+\w{6,}|\bport\b|tampon|possession|etang|saline/i.test(p)
+    ) ?? (effectiveParts.length > 1 ? effectiveParts[1] : '')
   const streetPart = effectiveParts[0]
   const cp = (cpPart.match(/\b97\d{3}\b/) ?? [])[0] ?? ''
   const city = cityPart.replace(/\b97\d{3}\b/g, '').replace(/\bla reunion\b/gi, '').trim()
 
   // Si le premier segment contient déjà "numéro/voie + CP + ville", on le garde tel quel
   // pour éviter les doublons du type "..., Le Port, 97420".
-  if (/\b97\d{3}\b/.test(streetPart) && /\bsaint\b|\ble\s+\w+|\bla\s+\w+|port|tampon|possession|etang|saline/i.test(streetPart)) {
+  if (/\b97\d{3}\b/.test(streetPart) && /\bsaint\b|\ble\s+\w+|\bla\s+\w{6,}|\bport\b|tampon|possession|etang|saline/i.test(streetPart)) {
     return streetPart.replace(/\s+/g, ' ').trim()
   }
 

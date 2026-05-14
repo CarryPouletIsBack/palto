@@ -6314,13 +6314,21 @@
 /* Mobile: la map reste en cover (ProjectCoverCarousel), pas dans le main */
 @media (max-width: 768px) {
   /*
-   * /go mobile : masquer uniquement la barre Palto / langue / connexion.
-   * Le bandeau courses (ex. « Rejoindre votre chauffeur ») reste dans .single-project-go-topbar-wrap.
+   * /go mobile : même principe que le compte — topbar sans bandeau blanc, mais Palto / langue / compte visibles.
    */
   .single-project-page:has(.palto-ride-main)
     .single-project-go-topbar-wrap
     .dashboard-topbar.dashboard-topbar--home-client {
-    display: none;
+    background: transparent;
+    border-bottom: none;
+    box-shadow: none;
+  }
+
+  html[data-app-theme='dark']
+    .single-project-page:has(.palto-ride-main)
+    .single-project-go-topbar-wrap
+    .dashboard-topbar.dashboard-topbar--home-client {
+    box-shadow: none;
   }
 
   .single-project-page:has(.palto-ride-main) .main-single-project {

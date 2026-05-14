@@ -10,9 +10,12 @@ const REUNION_BOUNDS = {
   maxLat: -20.85,
 }
 
+/** Vercel / Node : les query params peuvent être `string | string[]`. */
+const firstQueryString = z.preprocess((v) => (Array.isArray(v) ? v[0] : v), z.string())
+
 const SearchQuerySchema = z.object({
   mode: z.literal('search'),
-  q: z.string().min(1),
+  q: firstQueryString.pipe(z.string().min(1)),
   language: z.enum(['fr', 'en']).optional(),
   limit: z.coerce.number().int().min(1).max(10).optional(),
   viewbox: z.string().optional(),
@@ -22,8 +25,8 @@ const SearchQuerySchema = z.object({
 
 const ReverseQuerySchema = z.object({
   mode: z.literal('reverse'),
-  lon: z.string().min(1),
-  lat: z.string().min(1),
+  lon: firstQueryString.pipe(z.string().min(1)),
+  lat: firstQueryString.pipe(z.string().min(1)),
   language: z.enum(['fr', 'en']).optional(),
 })
 
@@ -149,6 +152,43 @@ function cleanDisplayName(value: string): string {
     .replace(/\breunion\b/gi, '')
     .replace(/\s+/g, ' ')
     .trim()
+}
+
+/** Libellé court depuis le bloc `address` Nominatim (jsonv2) si `display_name` est absent. */
+function labelFromNominatimAddressRecord(addr: Record<string, unknown> | undefined): string | null {
+  if (!addr || typeof addr !== 'object') return null
+  const s = (k: string) => {
+    const v = addr[k]
+    return typeof v === 'string' ? v.trim() : ''
+  }
+  const house = s('house_number')
+  const road = s('road') || s('pedestrian') || s('path')
+  const streetLine = [house, road].filter(Boolean).join(' ').trim()
+  const locality =
+    s('suburb') ||
+    s('neighbourhood') ||
+    s('village') ||
+    s('town') ||
+    s('city') ||
+    s('municipality') ||
+    ''
+  const postcode = s('postcode')
+  const parts: string[] = []
+  if (streetLine) parts.push(streetLine)
+  if (locality) parts.push(locality)
+  if (postcode && !parts.some((p) => p.includes(postcode))) parts.push(postcode)
+  const built = parts.join(', ').replace(/\s+,/g, ',').trim()
+  return built.length > 0 ? built : null
+}
+
+function reverseDisplayNameFromPayload(payload: {
+  display_name?: string
+  address?: Record<string, unknown>
+}): string {
+  const raw = typeof payload.display_name === 'string' ? payload.display_name.trim() : ''
+  if (raw && !/^-?\d{1,3}\.?\d*\s*,\s*-?\d{1,3}\.?\d*$/.test(raw)) return cleanDisplayName(raw)
+  const fromAddr = labelFromNominatimAddressRecord(payload.address)
+  return fromAddr ? cleanDisplayName(fromAddr) : ''
 }
 
 function addressTokenSignature(label: string): string {
@@ -376,6 +416,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         lon,
         lat,
         format: 'jsonv2',
+        addressdetails: '1',
         'accept-language': language,
         email: 'contact@palto.fr',
       })
@@ -394,12 +435,16 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         const fallback = await reverseFallback()
         return res.status(200).json(fallback)
       }
-      const payload = (await upstream.json()) as { display_name?: string }
-      if (!payload.display_name?.trim()) {
-        const fallback = await reverseFallback()
-        return res.status(200).json(fallback)
+      const payload = (await upstream.json()) as {
+        display_name?: string
+        address?: Record<string, unknown>
       }
-      return res.status(200).json(payload)
+      const primary = reverseDisplayNameFromPayload(payload)
+      if (primary.trim()) {
+        return res.status(200).json({ display_name: primary })
+      }
+      const fallback = await reverseFallback()
+      return res.status(200).json(fallback)
     }
 
     return res.status(400).json({ error: 'mode requis (search|reverse)' })

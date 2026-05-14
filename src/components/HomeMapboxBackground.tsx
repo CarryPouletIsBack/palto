@@ -9,7 +9,6 @@ import Map, {
   type MapRef,
 } from 'react-map-gl/maplibre'
 import type { Feature, LineString } from 'geojson'
-import type { Map as MapLibreMap } from 'maplibre-gl'
 import 'maplibre-gl/dist/maplibre-gl.css'
 import './HomeMapboxBackground.css'
 import { DEFAULT_USER_ORIGIN } from '../constants/defaultUserOrigin'
@@ -37,70 +36,7 @@ export const MAP_OUTDOORS_STYLE_URL = 'https://tiles.openfreemap.org/styles/libe
 export const HOME_OPENSTREET_STYLE_URL = HOME_MAP_STYLE_URL
 export const OPENSTREET_OUTDOORS_STYLE_URL = HOME_OPENSTREET_STYLE_URL
 
-/** Gris clair pour les surfaces « terre » (landcover, landuse, parcs, etc.) — l’eau reste bleue. */
-const MAP_LAND_GRAY_FILL = '#e2e2ea'
-const MAP_LAND_GRAY_BACKGROUND = '#ececf2'
-const MAP_HILLSHADE_HIGHLIGHT = '#f4f4f8'
-const MAP_HILLSHADE_SHADOW = '#c4c4ce'
-const MAP_HILLSHADE_ACCENT = '#d8d8e2'
-
-function isWaterFillLayerId(id: string): boolean {
-  return /water|ocean|river|dock|wave|bathymetry|marine|sea|canal|stream|bay|ferry/i.test(id.toLowerCase())
-}
-
-function isLandFillLayerId(id: string): boolean {
-  const lower = id.toLowerCase()
-  if (isWaterFillLayerId(lower)) return false
-  if (/building|road|rail|bridge|tunnel|boundary|admin|place|poi|label|shield|path|aerialway|structure|transit|cliff/i.test(lower)) {
-    return false
-  }
-  return (
-    lower === 'land' ||
-    lower.startsWith('landuse') ||
-    lower.includes('landcover') ||
-    lower.includes('national-park') ||
-    lower.includes('pitch') ||
-    lower.includes('park') ||
-    lower.includes('grass') ||
-    lower.includes('wood') ||
-    lower.includes('scrub') ||
-    lower.includes('sand') ||
-    lower.includes('cemetery') ||
-    lower.includes('hospital') ||
-    lower.includes('school') ||
-    lower.includes('glacier') ||
-    lower.includes('zoo') ||
-    lower.includes('stadium') ||
-    lower.includes('wetland')
-  )
-}
-
-/** Recolore les masses terrestres en gris (style Streets). */
-function applyGrayLandPaint(map: MapLibreMap) {
-  if (!map.isStyleLoaded()) return
-  const layers = map.getStyle()?.layers
-  if (!layers) return
-
-  for (const layer of layers) {
-    try {
-      if (layer.type === 'background') {
-        map.setPaintProperty(layer.id, 'background-color', MAP_LAND_GRAY_BACKGROUND)
-        continue
-      }
-      if (layer.type === 'hillshade') {
-        map.setPaintProperty(layer.id, 'hillshade-highlight-color', MAP_HILLSHADE_HIGHLIGHT)
-        map.setPaintProperty(layer.id, 'hillshade-shadow-color', MAP_HILLSHADE_SHADOW)
-        map.setPaintProperty(layer.id, 'hillshade-accent-color', MAP_HILLSHADE_ACCENT)
-        continue
-      }
-      if (layer.type !== 'fill') continue
-      if (!isLandFillLayerId(layer.id)) continue
-      map.setPaintProperty(layer.id, 'fill-color', MAP_LAND_GRAY_FILL)
-    } catch {
-      /* paint dynamique ou propriété absente */
-    }
-  }
-}
+const CAMERA_ANIM_MS = 720
 
 export type HomeMapFlyTo = {
   longitude: number
@@ -205,6 +141,14 @@ export default function HomeMapboxBackground({
   const userLeftDefaultView = useRef(false)
   const flyToTargetRef = useRef(flyToTarget)
   flyToTargetRef.current = flyToTarget
+  const routeFeatureRef = useRef(routeFeature)
+  routeFeatureRef.current = routeFeature
+  const nearbyDriversRef = useRef(nearbyDrivers)
+  nearbyDriversRef.current = nearbyDrivers
+  const resolvedUserOriginRef = useRef(resolvedUserOrigin)
+  resolvedUserOriginRef.current = resolvedUserOrigin
+  const selectedDestinationRef = useRef(selectedDestination)
+  selectedDestinationRef.current = selectedDestination
   const view3DRef = useRef(view3D)
   view3DRef.current = view3D
 
@@ -221,9 +165,14 @@ export default function HomeMapboxBackground({
       /* style ou source déjà présente côté carte */
     }
 
+    try {
+      map.stop()
+    } catch {
+      /* pas d’animation en cours */
+    }
     map.easeTo({
       pitch: on ? MAP_PITCH_3D : 0,
-      duration: 900,
+      duration: 520,
       essential: true,
     })
   }, [])
@@ -241,49 +190,144 @@ export default function HomeMapboxBackground({
     }
   }, [view3D, applyTerrainAndPitch])
 
-  const applyFly = useCallback(() => {
+  /** Une seule source de vérité caméra : évite flyTo + fitBounds concurrents (pins « qui sautent »). */
+  const syncMapCamera = useCallback(() => {
     const map = mapRef.current?.getMap()
     if (!map || !map.isStyleLoaded()) return
-    const target = flyToTargetRef.current
+
+    try {
+      map.stop()
+    } catch {
+      /* ignore */
+    }
+
     const pitch = pitchForMode()
-    if (target) {
+    const routeCoords = routeFeatureRef.current?.geometry?.coordinates as [number, number][] | undefined
+
+    if (routeCoords && routeCoords.length >= 2) {
+      let minLng = Infinity
+      let minLat = Infinity
+      let maxLng = -Infinity
+      let maxLat = -Infinity
+      for (const [lng, lat] of routeCoords) {
+        minLng = Math.min(minLng, lng)
+        maxLng = Math.max(maxLng, lng)
+        minLat = Math.min(minLat, lat)
+        maxLat = Math.max(maxLat, lat)
+      }
+      if (Number.isFinite(minLng)) {
+        map.fitBounds(
+          [
+            [minLng, minLat],
+            [maxLng, maxLat],
+          ],
+          { padding: 72, duration: CAMERA_ANIM_MS, maxZoom: 15, essential: true }
+        )
+      }
+      return
+    }
+
+    const target = flyToTargetRef.current
+    if (target && Number.isFinite(target.longitude) && Number.isFinite(target.latitude)) {
       userLeftDefaultView.current = true
-      map.flyTo({
+      map.easeTo({
         center: [target.longitude, target.latitude],
         zoom: target.zoom ?? 14,
         pitch,
-        duration: 1600,
+        bearing: HOME_MAP_INITIAL_VIEW.bearing,
+        duration: CAMERA_ANIM_MS,
         essential: true,
       })
-    } else if (userLeftDefaultView.current) {
-      map.flyTo({
+      return
+    }
+
+    const originPt = resolvedUserOriginRef.current
+    const destPt = selectedDestinationRef.current
+    if (
+      originPt &&
+      destPt &&
+      Number.isFinite(originPt.longitude) &&
+      Number.isFinite(destPt.longitude)
+    ) {
+      const minLng = Math.min(originPt.longitude, destPt.longitude)
+      const maxLng = Math.max(originPt.longitude, destPt.longitude)
+      const minLat = Math.min(originPt.latitude, destPt.latitude)
+      const maxLat = Math.max(originPt.latitude, destPt.latitude)
+      map.fitBounds(
+        [
+          [minLng, minLat],
+          [maxLng, maxLat],
+        ],
+        { padding: 64, duration: CAMERA_ANIM_MS, maxZoom: 14.5, essential: true }
+      )
+      return
+    }
+
+    const drivers = nearbyDriversRef.current
+    const origin = resolvedUserOriginRef.current
+    if (drivers.length > 0) {
+      let minLng = origin?.longitude ?? drivers[0].longitude
+      let maxLng = origin?.longitude ?? drivers[0].longitude
+      let minLat = origin?.latitude ?? drivers[0].latitude
+      let maxLat = origin?.latitude ?? drivers[0].latitude
+      if (origin) {
+        minLng = Math.min(minLng, origin.longitude)
+        maxLng = Math.max(maxLng, origin.longitude)
+        minLat = Math.min(minLat, origin.latitude)
+        maxLat = Math.max(maxLat, origin.latitude)
+      }
+      for (const d of drivers) {
+        minLng = Math.min(minLng, d.longitude)
+        maxLng = Math.max(maxLng, d.longitude)
+        minLat = Math.min(minLat, d.latitude)
+        maxLat = Math.max(maxLat, d.latitude)
+      }
+      map.fitBounds(
+        [
+          [minLng, minLat],
+          [maxLng, maxLat],
+        ],
+        { padding: 88, duration: CAMERA_ANIM_MS, maxZoom: 12.5, essential: true }
+      )
+      return
+    }
+
+    if (userLeftDefaultView.current) {
+      map.easeTo({
         center: [HOME_MAP_INITIAL_VIEW.longitude, HOME_MAP_INITIAL_VIEW.latitude],
         zoom: HOME_MAP_INITIAL_VIEW.zoom,
         pitch,
         bearing: HOME_MAP_INITIAL_VIEW.bearing,
-        duration: 1600,
+        duration: CAMERA_ANIM_MS + 120,
         essential: true,
       })
     }
   }, [pitchForMode])
 
   useEffect(() => {
-    applyFly()
-  }, [flyToTarget, applyFly])
+    syncMapCamera()
+  }, [
+    syncMapCamera,
+    routeFeature,
+    flyToTarget,
+    selectedDestination,
+    nearbyDrivers,
+    resolvedUserOrigin?.latitude,
+    resolvedUserOrigin?.longitude,
+  ])
 
   const handleMapLoad = useCallback(() => {
     const map = mapRef.current?.getMap()
     if (!map) return
 
     const run = () => {
-      applyGrayLandPaint(map)
-      applyFly()
+      syncMapCamera()
       applyTerrainAndPitch()
     }
 
     if (map.isStyleLoaded()) run()
     else map.once('style.load', run)
-  }, [applyFly, applyTerrainAndPitch])
+  }, [syncMapCamera, applyTerrainAndPitch])
 
   /** Colonne embarquée / fond dashboard : recalculer la taille quand le conteneur change. */
   useEffect(() => {
@@ -302,104 +346,6 @@ export default function HomeMapboxBackground({
       ro.disconnect()
     }
   }, [variant])
-
-  /** Cadre sur l’itinéraire lorsque la ligne est disponible. */
-  useEffect(() => {
-    const coords = routeFeature?.geometry?.coordinates
-    if (!coords?.length) return
-
-    const map = mapRef.current?.getMap()
-    if (!map) return
-
-    let minLng = Infinity
-    let minLat = Infinity
-    let maxLng = -Infinity
-    let maxLat = -Infinity
-    for (const [lng, lat] of coords) {
-      minLng = Math.min(minLng, lng)
-      maxLng = Math.max(maxLng, lng)
-      minLat = Math.min(minLat, lat)
-      maxLat = Math.max(maxLat, lat)
-    }
-    if (!Number.isFinite(minLng)) return
-
-    const bounds: [[number, number], [number, number]] = [
-      [minLng, minLat],
-      [maxLng, maxLat],
-    ]
-
-    const fit = () => {
-      if (!map.isStyleLoaded()) return
-      map.fitBounds(bounds, { padding: 72, duration: 1200, maxZoom: 15 })
-    }
-
-    fit()
-    if (!map.isStyleLoaded()) {
-      map.once('idle', fit)
-      return () => {
-        map.off('idle', fit)
-      }
-    }
-    return undefined
-  }, [routeFeature])
-
-  /** Sans itinéraire ni cible fly-to : cadrer départ + chauffeurs pour les rendre visibles (évite pins invisibles au zoom île). */
-  useEffect(() => {
-    const coords = routeFeature?.geometry?.coordinates
-    if (coords?.length) return
-    if (flyToTarget) return
-    if (!nearbyDrivers.length) return
-
-    const map = mapRef.current?.getMap()
-    if (!map) return
-
-    let minLng: number
-    let maxLng: number
-    let minLat: number
-    let maxLat: number
-    if (resolvedUserOrigin) {
-      minLng = resolvedUserOrigin.longitude
-      maxLng = resolvedUserOrigin.longitude
-      minLat = resolvedUserOrigin.latitude
-      maxLat = resolvedUserOrigin.latitude
-    } else {
-      minLng = nearbyDrivers[0].longitude
-      maxLng = nearbyDrivers[0].longitude
-      minLat = nearbyDrivers[0].latitude
-      maxLat = nearbyDrivers[0].latitude
-    }
-    for (const d of nearbyDrivers) {
-      minLng = Math.min(minLng, d.longitude)
-      maxLng = Math.max(maxLng, d.longitude)
-      minLat = Math.min(minLat, d.latitude)
-      maxLat = Math.max(maxLat, d.latitude)
-    }
-
-    const bounds: [[number, number], [number, number]] = [
-      [minLng, minLat],
-      [maxLng, maxLat],
-    ]
-
-    const fit = () => {
-      if (!map.isStyleLoaded()) return
-      map.fitBounds(bounds, { padding: 88, duration: 1400, maxZoom: 12.5 })
-    }
-
-    fit()
-    if (!map.isStyleLoaded()) {
-      map.once('idle', fit)
-      return () => {
-        map.off('idle', fit)
-      }
-    }
-    return undefined
-  }, [
-    routeFeature,
-    flyToTarget,
-    nearbyDrivers,
-    resolvedUserOrigin?.latitude,
-    resolvedUserOrigin?.longitude,
-  ])
 
   const handleMapClick = useCallback(
     (e: MapLayerMouseEvent) => {
@@ -454,6 +400,7 @@ export default function HomeMapboxBackground({
               longitude={resolvedUserOrigin.longitude}
               latitude={resolvedUserOrigin.latitude}
               anchor="bottom"
+              style={{ pointerEvents: 'none' }}
             >
               <div className="home-mapbox-pin home-mapbox-pin--user" title="Départ" aria-label="Position départ" />
             </Marker>
@@ -464,13 +411,20 @@ export default function HomeMapboxBackground({
               longitude={selectedDestination.longitude}
               latitude={selectedDestination.latitude}
               anchor="bottom"
+              style={{ pointerEvents: 'none' }}
             >
               <div className="home-mapbox-pin home-mapbox-pin--dest" title="Arrivée" aria-label="Destination" />
             </Marker>
           ) : null}
 
           {nearbyDrivers.map((d) => (
-            <Marker key={d.id} longitude={d.longitude} latitude={d.latitude} anchor="center">
+            <Marker
+              key={d.id}
+              longitude={d.longitude}
+              latitude={d.latitude}
+              anchor="center"
+              style={{ pointerEvents: 'none' }}
+            >
               <DriverMapMotoIcon
                 title={d.name ?? 'Chauffeur'}
                 ariaLabel={d.name ? `Chauffeur ${d.name}` : 'Chauffeur moto'}
@@ -500,7 +454,6 @@ export default function HomeMapboxBackground({
           <AttributionControl compact position="bottom-left" />
         </Map>
       </div>
-      <div className="home-mapbox-bg__tint" aria-hidden />
     </div>
   )
 }

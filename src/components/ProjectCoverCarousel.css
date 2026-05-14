@@ -40,54 +40,45 @@
   z-index: 2001;
   pointer-events: none;
 }
-.project-cover-buttons-layer .project-cover-close-btn {
+.project-cover-buttons-layer .project-cover-back-btn {
   pointer-events: auto;
 }
 
-/* Bouton fermer (croix) en haut à gauche sur l'image de couverture */
-.project-cover-close-btn {
+/* Retour (DS : .btn .btn-secondary .btn-icon) — position sur la cover */
+.project-cover-back-btn {
   position: absolute;
   top: 24px;
   left: 24px;
   z-index: 10;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 48px;
-  height: 48px;
-  padding: 0;
-  border: none;
-  border-radius: 50%;
-  cursor: pointer;
-  background: rgba(255, 255, 255, 0.25);
-  backdrop-filter: blur(12px) saturate(1.8) brightness(1.1);
-  -webkit-backdrop-filter: blur(12px) saturate(1.8) brightness(1.1);
-  box-shadow:
-    0 8px 32px 0 rgba(31, 38, 135, 0.2),
-    0 2px 16px 0 rgba(31, 38, 135, 0.1),
-    inset 0 1px 0 0 rgba(255, 255, 255, 0.4),
-    inset 0 -1px 0 0 rgba(255, 255, 255, 0.2);
+  color: rgba(255, 255, 255, 0.95) !important;
+  border-color: rgba(255, 255, 255, 0.35) !important;
+  background: rgba(15, 23, 42, 0.45) !important;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
   transition:
     background 0.2s ease,
+    border-color 0.2s ease,
     transform 0.2s ease,
     opacity 0.28s ease,
     visibility 0.28s ease;
-  color: #000;
 }
 
-.project-cover-close-btn.project-cover-close-btn--scroll-hidden {
+.project-cover-back-btn:hover {
+  background: rgba(15, 23, 42, 0.62) !important;
+  border-color: rgba(255, 255, 255, 0.5) !important;
+}
+
+.project-cover-back-btn:active {
+  transform: scale(0.98);
+}
+
+.project-cover-back-btn.project-cover-back-btn--scroll-hidden {
   opacity: 0;
   visibility: hidden;
   pointer-events: none;
 }
-.project-cover-close-btn:hover {
-  background: rgba(255, 255, 255, 0.4);
-  transform: scale(1.05);
-}
-.project-cover-close-btn:active {
-  transform: scale(0.98);
-}
-.project-cover-close-btn svg {
+
+.project-cover-back-btn svg {
   flex-shrink: 0;
 }
 
@@ -237,10 +228,6 @@
   min-height: 100%;
   min-height: 100dvh;
   border-radius: 0;
-}
-
-.project-cover-map .home-mapbox-bg__tint {
-  display: none;
 }
 
 /* Dots de pagination ronds — sous l’image du cover */

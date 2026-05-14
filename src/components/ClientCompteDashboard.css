@@ -914,24 +914,17 @@ body.accueil-page .dashboard-container--home-accueil .dashboard-main {
 
 @media (max-width: 768px) {
   /*
-   * Accueil client + Gérer le compte : même principe que la topbar chauffeur mobile —
-   * pas de bandeau blanc, titre (Palto / retour) et bouton « + » masqués.
+   * Page compte client uniquement : topbar sans bandeau blanc (carte / hero en fond).
+   * L’accueil grand public garde le fond blanc et le titre « Palto » (cf. Dashboard.css).
    */
-  .dashboard-container--home-accueil .dashboard-topbar.dashboard-topbar--home-client,
   .dashboard-container--client-compte .dashboard-topbar.dashboard-topbar--home-client {
     background: transparent;
     border-bottom: none;
     box-shadow: none;
   }
 
-  html[data-app-theme='dark'] .dashboard-container--home-accueil .dashboard-topbar.dashboard-topbar--home-client,
   html[data-app-theme='dark'] .dashboard-container--client-compte .dashboard-topbar.dashboard-topbar--home-client {
     box-shadow: none;
-  }
-
-  .dashboard-container--home-accueil .dashboard-home-topbar-start,
-  .dashboard-container--client-compte .dashboard-home-topbar-start {
-    display: none;
   }
 
   .dashboard-container--client-compte

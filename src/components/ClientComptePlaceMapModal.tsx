@@ -3,8 +3,8 @@ import Map, { Marker, NavigationControl, type MapLayerMouseEvent } from 'react-m
 import 'maplibre-gl/dist/maplibre-gl.css';
 import { HOME_MAP_INITIAL_VIEW, HOME_OPENSTREET_STYLE_URL } from './HomeMapboxBackground';
 import { isLngLatInsideReunionIsland, REUNION_MAP_MAX_BOUNDS } from '../constants/reunionIsland';
-import { geocodeReverse } from '../services/mapboxGeocoding';
-import { snapLngLatToMapboxDriving } from '../services/mapboxSnapToRoad';
+import { geocodeReverse, reverseGeocodeDisplayFallback } from '../services/mapboxGeocoding';
+import { resolvePickOnRoad } from '../services/mapboxSnapToRoad';
 
 export type ClientCompteMapPickResult = {
   lng: number;
@@ -74,12 +74,8 @@ export default function ClientComptePlaceMapModal({
       const ll = e.lngLat;
       if (!ll) return;
       setError(null);
-      const snapped = await snapLngLatToMapboxDriving(accessToken, ll.lng, ll.lat, { searchRadiusMeters: 75 });
-      if (!snapped) {
-        setError(t('clientAccount.placesMapSnapFail'));
-        return;
-      }
-      setMarker({ lng: snapped.longitude, lat: snapped.latitude });
+      const picked = await resolvePickOnRoad(accessToken, ll.lng, ll.lat, { searchRadiusMeters: 75 });
+      setMarker({ lng: picked.longitude, lat: picked.latitude });
     },
     [accessToken, t]
   );
@@ -94,7 +90,7 @@ export default function ClientComptePlaceMapModal({
     try {
       const address =
         (await geocodeReverse(marker.lng, marker.lat, accessToken, { language })) ??
-        `${marker.lat.toFixed(5)}, ${marker.lng.toFixed(5)}`;
+        reverseGeocodeDisplayFallback(language, 'mapPoint');
       onConfirm({ lng: marker.lng, lat: marker.lat, address });
       onClose();
     } catch {

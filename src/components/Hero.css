@@ -1763,19 +1763,159 @@ body.accueil-page .hero-columns-wrap {
 
 .hero-home-booking__change-city {
   margin: 0;
-  padding: 0;
-  border: none;
-  background: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px 6px 14px;
+  border: 1px solid rgba(15, 23, 42, 0.12);
+  border-radius: 999px;
+  background: #ffffff;
   font: inherit;
-  font-size: 14px;
+  font-size: 13px;
   font-weight: 600;
-  color: #2563eb;
-  text-decoration: underline;
-  text-underline-offset: 3px;
+  color: #0f172a;
   cursor: pointer;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.06);
+  transition:
+    background 0.15s ease,
+    border-color 0.15s ease,
+    box-shadow 0.15s ease,
+    color 0.15s ease;
 }
 
 .hero-home-booking__change-city:hover {
+  background: #f8fafc;
+  border-color: rgba(15, 23, 42, 0.18);
+  box-shadow: 0 2px 8px rgba(15, 23, 42, 0.08);
+}
+
+.hero-home-booking__change-city:focus-visible {
+  outline: 2px solid #2563eb;
+  outline-offset: 2px;
+}
+
+.hero-home-booking__change-city-text {
+  line-height: 1.2;
+}
+
+.hero-home-booking__change-city-chevron {
+  flex-shrink: 0;
+  opacity: 0.75;
+}
+
+.hero-commune-picker-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 12000;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  padding: max(12px, env(safe-area-inset-top, 0px)) max(12px, env(safe-area-inset-right, 0px))
+    max(12px, env(safe-area-inset-bottom, 0px)) max(12px, env(safe-area-inset-left, 0px));
+  background: rgba(15, 23, 42, 0.45);
+  backdrop-filter: blur(6px);
+  box-sizing: border-box;
+}
+
+@media (min-width: 560px) {
+  .hero-commune-picker-backdrop {
+    align-items: center;
+  }
+}
+
+.hero-commune-picker-panel {
+  width: 100%;
+  max-width: 520px;
+  max-height: min(78vh, 640px);
+  display: flex;
+  flex-direction: column;
+  border-radius: 16px;
+  background: #ffffff;
+  color: #0f172a;
+  box-shadow: 0 24px 48px rgba(15, 23, 42, 0.2);
+  overflow: hidden;
+  box-sizing: border-box;
+}
+
+.hero-commune-picker-panel__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 16px 16px 12px 20px;
+  border-bottom: 1px solid rgba(15, 23, 42, 0.08);
+  flex-shrink: 0;
+}
+
+.hero-commune-picker-panel__title {
+  margin: 0;
+  font-size: 1.05rem;
+  font-weight: 700;
+  line-height: 1.25;
+}
+
+.hero-commune-picker-panel__close {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  margin: 0;
+  padding: 0;
+  border: none;
+  border-radius: 10px;
+  background: transparent;
+  color: #475569;
+  cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+
+.hero-commune-picker-panel__close:hover {
+  background: #f1f5f9;
+  color: #0f172a;
+}
+
+.hero-commune-picker-panel__grid {
+  padding: 12px 14px 16px;
+  overflow-y: auto;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+@media (min-width: 480px) {
+  .hero-commune-picker-panel__grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+.hero-commune-picker__item {
+  margin: 0;
+  padding: 10px 12px;
+  border: 1px solid rgba(15, 23, 42, 0.1);
+  border-radius: 10px;
+  background: #f8fafc;
+  font-size: 13px;
+  font-weight: 500;
+  text-align: center;
+  color: #0f172a;
+  cursor: pointer;
+  transition:
+    background 0.12s ease,
+    border-color 0.12s ease,
+    box-shadow 0.12s ease;
+}
+
+.hero-commune-picker__item:hover {
+  background: #ffffff;
+  border-color: rgba(37, 99, 235, 0.35);
+  box-shadow: 0 0 0 1px rgba(37, 99, 235, 0.2);
+}
+
+.hero-commune-picker__item--selected {
+  background: #eff6ff;
+  border-color: rgba(37, 99, 235, 0.55);
+  font-weight: 700;
   color: #1d4ed8;
 }
 
@@ -1945,10 +2085,50 @@ body.accueil-page .hero-columns-wrap {
 }
 
 html[data-app-theme='dark'] .hero-home-booking__change-city {
-  color: #93c5fd;
+  background: rgba(30, 41, 59, 0.9);
+  border-color: rgba(148, 163, 184, 0.25);
+  color: #f1f5f9;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
 }
 
 html[data-app-theme='dark'] .hero-home-booking__change-city:hover {
+  background: rgba(51, 65, 85, 0.95);
+  border-color: rgba(148, 163, 184, 0.35);
+}
+
+html[data-app-theme='dark'] .hero-commune-picker-panel {
+  background: #1e293b;
+  color: #f1f5f9;
+  box-shadow: 0 24px 48px rgba(0, 0, 0, 0.45);
+}
+
+html[data-app-theme='dark'] .hero-commune-picker-panel__head {
+  border-bottom-color: rgba(148, 163, 184, 0.15);
+}
+
+html[data-app-theme='dark'] .hero-commune-picker-panel__close {
+  color: #94a3b8;
+}
+
+html[data-app-theme='dark'] .hero-commune-picker-panel__close:hover {
+  background: rgba(255, 255, 255, 0.06);
+  color: #f1f5f9;
+}
+
+html[data-app-theme='dark'] .hero-commune-picker__item {
+  background: rgba(15, 23, 42, 0.5);
+  border-color: rgba(148, 163, 184, 0.15);
+  color: #e2e8f0;
+}
+
+html[data-app-theme='dark'] .hero-commune-picker__item:hover {
+  background: rgba(30, 41, 59, 0.9);
+  border-color: rgba(96, 165, 250, 0.45);
+}
+
+html[data-app-theme='dark'] .hero-commune-picker__item--selected {
+  background: rgba(30, 58, 138, 0.45);
+  border-color: rgba(96, 165, 250, 0.55);
   color: #bfdbfe;
 }
 

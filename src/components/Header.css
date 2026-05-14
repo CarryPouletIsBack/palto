@@ -328,6 +328,15 @@
   z-index: 10002;
 }
 
+.logo-section__brand {
+  font-family: 'Space Grotesk', 'Inter', system-ui, sans-serif;
+  font-size: 1.125rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: var(--app-text-primary);
+  line-height: 1;
+}
+
 .logo-section__chevron {
   display: flex;
   align-items: center;

@@ -10,9 +10,10 @@ import {
   geocodeForward,
   geocodeForwardSuggestions,
   geocodeReverse,
+  reverseGeocodeDisplayFallback,
   type GeocodeSuggestion,
 } from '../services/mapboxGeocoding';
-import { snapLngLatToMapboxDriving } from '../services/mapboxSnapToRoad';
+import { resolvePickOnRoad } from '../services/mapboxSnapToRoad';
 import { REUNION_ISLAND_BBOX_GEOCODE } from '../constants/reunionIsland';
 
 const AUTOCOMPLETE_DEBOUNCE_MS = 220;
@@ -60,13 +61,15 @@ export default function ClientComptePlaceAddressField({
 
   const resolveFromGeocode = useCallback(
     async (longitude: number, latitude: number, fallbackLabel: string) => {
+      if (!mapToken?.trim()) return;
       setResolvingPick(true);
       try {
-        const snapped = await snapLngLatToMapboxDriving(mapToken, longitude, latitude, { searchRadiusMeters: 75 });
-        if (!snapped) return;
-        const label =
-          (await geocodeReverse(snapped.longitude, snapped.latitude, mapToken, { language })) ?? fallbackLabel;
-        onResolvedPlace(label, { lng: snapped.longitude, lat: snapped.latitude });
+        const picked = await resolvePickOnRoad(mapToken, longitude, latitude, { searchRadiusMeters: 75 });
+        const fromReverse = await geocodeReverse(picked.longitude, picked.latitude, mapToken, { language });
+        const display =
+          (fromReverse?.trim() ? fromReverse : null) ??
+          (fallbackLabel.trim() ? fallbackLabel : reverseGeocodeDisplayFallback(language, 'mapPoint'));
+        onResolvedPlace(display, { lng: picked.longitude, lat: picked.latitude });
         setSuggestionOpen(false);
       } finally {
         setResolvingPick(false);

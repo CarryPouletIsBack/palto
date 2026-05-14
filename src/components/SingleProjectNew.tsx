@@ -38,12 +38,13 @@ import ScrollStack, { ScrollStackItem } from './ScrollStack';
 import { DEFAULT_USER_ORIGIN } from '../constants/defaultUserOrigin';
 import HomeMapboxBackground from './HomeMapboxBackground';
 import { isLngLatInsideReunionIsland } from '../constants/reunionIsland';
-import { snapLngLatToMapboxDriving } from '../services/mapboxSnapToRoad';
+import { resolvePickOnRoad } from '../services/mapboxSnapToRoad';
 import { fetchDrivingRouteFeature } from '../services/mapboxDirections';
 import {
   geocodeForward,
   geocodeForwardSuggestions,
   geocodeReverse,
+  reverseGeocodeDisplayFallback,
   type GeocodeSuggestion,
 } from '../services/mapboxGeocoding';
 import { REUNION_ISLAND_BBOX_GEOCODE } from '../constants/reunionIsland';
@@ -56,7 +57,6 @@ import {
   CHAUFFEUR_RIDE_SETTINGS_KEY,
   loadChauffeurRideSettingsSnapshot,
 } from '../constants/chauffeurRideSettingsStorage';
-import { DashboardHomeTopbar } from './DashboardHomeTopbar';
 import { DashboardHomeRidesBanner } from './DashboardHomeRidesBanner';
 import { useClientHomeTopbarRides } from '../hooks/useClientHomeTopbarRides';
 import { simplifyAddressDisplay as simplifyRideAddress } from '../services/addressDisplay';
@@ -65,7 +65,7 @@ import { simplifyAddressDisplay as simplifyRideAddress } from '../services/addre
 const PICKUP_DRIVER_SEARCH_RADIUS_KM = 20;
 const DEFAULT_BASE_FARE_EUR = 4;
 const DEFAULT_PRICE_PER_KM_EUR = 1.35;
-const PICKUP_AUTOCOMPLETE_DEBOUNCE_MS = 120;
+const PICKUP_AUTOCOMPLETE_DEBOUNCE_MS = 65;
 
 const CHAUFFEUR_ACCOUNT_UUID_RE =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
@@ -78,6 +78,20 @@ type GeocodeSnappedResult =
   | { ok: true; snapped: GeoPoint; queryUsed: string }
   | { ok: false; error: string };
 
+/** Rayon de recherche OSRM « nearest » après géocodage direct (adresse → point souvent hors axe de route). */
+const GO_SNAP_SEARCH_RADIUS_M = 150;
+
+function geocodeLang(language: string): 'fr' | 'en' {
+  return language === 'en' ? 'en' : 'fr';
+}
+
+/** Libellés de secours carte : pas une vraie adresse — déclencher un reverse BAN côté panneau. */
+function isGenericMapAddressFallback(text: string | undefined): boolean {
+  const t = (text ?? '').trim();
+  if (!t) return true;
+  return /sélectionné sur la carte|selected on the map|Location from map|Lieu indiqué sur la carte/i.test(t);
+}
+
 async function geocodePickupForRide(
   rawQuery: string,
   mapboxToken: string,
@@ -85,41 +99,47 @@ async function geocodePickupForRide(
 ): Promise<GeocodeSnappedResult> {
   const q = rawQuery.trim();
   if (!q) return { ok: false, error: 'Indiquez une adresse de départ.' };
+  const lang = geocodeLang(language);
   const coords = await geocodeForward(q, mapboxToken, {
-    language,
+    language: lang,
     proximity: [55.45, -21.15],
     bbox: REUNION_ISLAND_BBOX_GEOCODE,
   });
   if (!coords) {
     return { ok: false, error: 'Adresse introuvable sur La Réunion.' };
   }
-  const snapped = await snapLngLatToMapboxDriving(mapboxToken, coords.longitude, coords.latitude, {
-    searchRadiusMeters: 75,
+  const picked = await resolvePickOnRoad(mapboxToken, coords.longitude, coords.latitude, {
+    searchRadiusMeters: GO_SNAP_SEARCH_RADIUS_M,
   });
-  if (!snapped || !isLngLatInsideReunionIsland(snapped.longitude, snapped.latitude)) {
+  if (!isLngLatInsideReunionIsland(picked.longitude, picked.latitude)) {
     return { ok: false, error: 'Point de départ hors zone ou non accessible par la route.' };
   }
-  return { ok: true, snapped, queryUsed: q };
+  return { ok: true, snapped: picked, queryUsed: q };
 }
 
-async function geocodeDestinationForRide(rawQuery: string, mapboxToken: string): Promise<GeocodeSnappedResult> {
+async function geocodeDestinationForRide(
+  rawQuery: string,
+  mapboxToken: string,
+  language: string
+): Promise<GeocodeSnappedResult> {
   const q = rawQuery.trim();
   if (!q) return { ok: false, error: 'Indiquez une destination.' };
+  const lang = geocodeLang(language);
   const coords = await geocodeForward(q, mapboxToken, {
-    language: 'fr',
+    language: lang,
     proximity: [55.45, -21.15],
     bbox: REUNION_ISLAND_BBOX_GEOCODE,
   });
   if (!coords) {
     return { ok: false, error: 'Destination introuvable sur La Réunion.' };
   }
-  const snapped = await snapLngLatToMapboxDriving(mapboxToken, coords.longitude, coords.latitude, {
-    searchRadiusMeters: 75,
+  const picked = await resolvePickOnRoad(mapboxToken, coords.longitude, coords.latitude, {
+    searchRadiusMeters: GO_SNAP_SEARCH_RADIUS_M,
   });
-  if (!snapped || !isLngLatInsideReunionIsland(snapped.longitude, snapped.latitude)) {
+  if (!isLngLatInsideReunionIsland(picked.longitude, picked.latitude)) {
     return { ok: false, error: 'Destination hors zone ou non accessible par la route.' };
   }
-  return { ok: true, snapped, queryUsed: q };
+  return { ok: true, snapped: picked, queryUsed: q };
 }
 
 /** User flow → arbre : tous les enfants en branches (vertical) → Compte, Contact, Page Tâches, Formation, Laboratoire sur la même colonne après Dashboard */
@@ -361,13 +381,6 @@ const SingleProjectNew: FC<SingleProjectProps> = ({
     );
   }, [pickupResolvedPoint, allNearbyDrivers, effectiveDriverSearchRadiusKm]);
 
-  const pickupFlyToTarget = pickupResolvedPoint
-    ? {
-        longitude: pickupResolvedPoint.longitude,
-        latitude: pickupResolvedPoint.latitude,
-        zoom: 15.5,
-      }
-    : null;
   const [paltoMapSelectedDestination, setPaltoMapSelectedDestination] = useState<{
     longitude: number
     latitude: number
@@ -385,6 +398,30 @@ const SingleProjectNew: FC<SingleProjectProps> = ({
   const [destinationSnapLoading, setDestinationSnapLoading] = useState(false);
   const [pickupAutoGeolocAsked, setPickupAutoGeolocAsked] = useState(false);
   const destinationAutocompleteTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const embeddedMapFlyToTarget = useMemo(() => {
+    if (pickupResolvedPoint && paltoMapSelectedDestination && !paltoMapRouteFeature) {
+      return {
+        longitude: (pickupResolvedPoint.longitude + paltoMapSelectedDestination.longitude) / 2,
+        latitude: (pickupResolvedPoint.latitude + paltoMapSelectedDestination.latitude) / 2,
+        zoom: 12.4,
+      };
+    }
+    if (pickupResolvedPoint) {
+      return {
+        longitude: pickupResolvedPoint.longitude,
+        latitude: pickupResolvedPoint.latitude,
+        zoom: 15.5,
+      };
+    }
+    if (paltoMapSelectedDestination) {
+      return {
+        longitude: paltoMapSelectedDestination.longitude,
+        latitude: paltoMapSelectedDestination.latitude,
+        zoom: 13.5,
+      };
+    }
+    return null;
+  }, [pickupResolvedPoint, paltoMapSelectedDestination, paltoMapRouteFeature]);
   const showDriversColumn =
     paltoPickupTiming === 'now' &&
     chauffeursSearchOk &&
@@ -446,6 +483,8 @@ const SingleProjectNew: FC<SingleProjectProps> = ({
     if (!prefill) return;
     if (prefill.pickup.trim()) {
       setPaltoPickupLocation(simplifyRideAddress(prefill.pickup.trim()));
+    } else if (prefill.homeCommune?.trim()) {
+      setPaltoPickupLocation(simplifyRideAddress(`${prefill.homeCommune.trim()}, La Réunion`));
     }
     if (prefill.destination.trim()) {
       setPaltoRideDestination(simplifyRideAddress(prefill.destination.trim()));
@@ -456,7 +495,33 @@ const SingleProjectNew: FC<SingleProjectProps> = ({
     if (prefill.datetime?.trim()) {
       setPaltoPickupDateTime(prefill.datetime.trim());
     }
-  }, [isGoProjectPage]);
+    const destQ = prefill.destination.trim();
+    if (!destQ || !mapboxToken) return;
+    let cancelled = false;
+    void (async () => {
+      try {
+        const res = await geocodeDestinationForRide(destQ, mapboxToken, language);
+        if (cancelled || !res.ok) return;
+        setPaltoMapSelectedDestination(res.snapped);
+        setLastConfirmedDestinationText(simplifyRideAddress(res.queryUsed));
+        setPaltoRecapCoordsText(simplifyRideAddress(res.queryUsed));
+        window.dispatchEvent(
+          new CustomEvent('palto:go-cover-fly-to', {
+            detail: {
+              longitude: res.snapped.longitude,
+              latitude: res.snapped.latitude,
+              zoom: 13.5,
+            },
+          })
+        );
+      } catch {
+        /* réseau / token : laisser le champ texte, l’utilisateur peut lancer « Rechercher » */
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [isGoProjectPage, mapboxToken, language]);
 
   const submitPickupLocationSearch = useCallback(async (queryOverride?: string) => {
     const raw = queryOverride ?? paltoPickupLocation;
@@ -532,7 +597,7 @@ const SingleProjectNew: FC<SingleProjectProps> = ({
       setPickupResolvedPoint(pickupRes.snapped);
       setLastConfirmedPickupText(simplifyRideAddress(pickupRes.queryUsed));
 
-      const destRes = await geocodeDestinationForRide(paltoRideDestination, mapboxToken);
+      const destRes = await geocodeDestinationForRide(paltoRideDestination, mapboxToken, language);
       if (!destRes.ok) {
         setPaltoMapSelectedDestination(null);
         setLastConfirmedDestinationText(null);
@@ -541,9 +606,7 @@ const SingleProjectNew: FC<SingleProjectProps> = ({
         return;
       }
       setPaltoMapSelectedDestination(destRes.snapped);
-      setPaltoRecapCoordsText(
-        `${destRes.snapped.latitude.toFixed(4)}, ${destRes.snapped.longitude.toFixed(4)}`
-      );
+      setPaltoRecapCoordsText(simplifyRideAddress(destRes.queryUsed));
       setLastConfirmedDestinationText(simplifyRideAddress(destRes.queryUsed));
       setChauffeursSearchOk(true);
       setPaltoRideSelectedDriverId(null);
@@ -665,16 +728,16 @@ const SingleProjectNew: FC<SingleProjectProps> = ({
       setPickupGeocodeLoading(true);
       setPickupGeocodeError(null);
       try {
-        const snapped = await snapLngLatToMapboxDriving(mapboxToken, suggestion.longitude, suggestion.latitude, {
-          searchRadiusMeters: 75,
+        const picked = await resolvePickOnRoad(mapboxToken, suggestion.longitude, suggestion.latitude, {
+          searchRadiusMeters: GO_SNAP_SEARCH_RADIUS_M,
         });
-        if (!snapped || !isLngLatInsideReunionIsland(snapped.longitude, snapped.latitude)) {
+        if (!isLngLatInsideReunionIsland(picked.longitude, picked.latitude)) {
           setPickupResolvedPoint(null);
           setLastConfirmedPickupText(null);
           setPickupGeocodeError('Point de départ hors zone ou non accessible par la route.');
           return;
         }
-        setPickupResolvedPoint(snapped);
+        setPickupResolvedPoint(picked);
         setLastConfirmedPickupText(simplifyRideAddress(suggestion.label));
         setPaltoRideSelectedDriverId(null);
         setChauffeursSearchOk(false);
@@ -696,17 +759,17 @@ const SingleProjectNew: FC<SingleProjectProps> = ({
       setDestinationSnapLoading(true);
       setDestinationSearchError(null);
       try {
-        const snapped = await snapLngLatToMapboxDriving(mapboxToken, suggestion.longitude, suggestion.latitude, {
-          searchRadiusMeters: 75,
+        const picked = await resolvePickOnRoad(mapboxToken, suggestion.longitude, suggestion.latitude, {
+          searchRadiusMeters: GO_SNAP_SEARCH_RADIUS_M,
         });
-        if (!snapped || !isLngLatInsideReunionIsland(snapped.longitude, snapped.latitude)) {
+        if (!isLngLatInsideReunionIsland(picked.longitude, picked.latitude)) {
           setPaltoMapSelectedDestination(null);
           setLastConfirmedDestinationText(null);
           setDestinationSearchError('Destination hors zone ou non accessible par la route.');
           return;
         }
-        setPaltoMapSelectedDestination(snapped);
-        setPaltoRecapCoordsText(`${snapped.latitude.toFixed(4)}, ${snapped.longitude.toFixed(4)}`);
+        setPaltoMapSelectedDestination(picked);
+        setPaltoRecapCoordsText(simplifyRideAddress(suggestion.label));
         setLastConfirmedDestinationText(simplifyRideAddress(suggestion.label));
         setChauffeursSearchOk(false);
         setPaltoRideSelectedDriverId(null);
@@ -734,22 +797,22 @@ const SingleProjectNew: FC<SingleProjectProps> = ({
       async (position) => {
         try {
           const { longitude, latitude } = position.coords;
-          const snapped = await snapLngLatToMapboxDriving(mapboxToken, longitude, latitude, {
-            searchRadiusMeters: 75,
+          const picked = await resolvePickOnRoad(mapboxToken, longitude, latitude, {
+            searchRadiusMeters: GO_SNAP_SEARCH_RADIUS_M,
           });
-          if (!snapped || !isLngLatInsideReunionIsland(snapped.longitude, snapped.latitude)) {
+          if (!isLngLatInsideReunionIsland(picked.longitude, picked.latitude)) {
             setPickupResolvedPoint(null);
             setLastConfirmedPickupText(null);
             setPickupGeocodeError('Position hors zone ou non accessible par la route.');
             return;
           }
           const label =
-            (await geocodeReverse(snapped.longitude, snapped.latitude, mapboxToken, { language })) ??
+            (await geocodeReverse(picked.longitude, picked.latitude, mapboxToken, { language: geocodeLang(language) })) ??
             (language === 'en'
               ? 'Pickup selected on the map'
               : 'Départ sélectionné sur la carte');
           setPaltoPickupLocation(simplifyRideAddress(label));
-          setPickupResolvedPoint(snapped);
+          setPickupResolvedPoint(picked);
           setLastConfirmedPickupText(simplifyRideAddress(label));
           setPaltoRideSelectedDriverId(null);
           setChauffeursSearchOk(false);
@@ -864,7 +927,7 @@ const SingleProjectNew: FC<SingleProjectProps> = ({
       setDestinationSnapLoading(true);
       setDestinationSearchError(null);
       try {
-        const res = await geocodeDestinationForRide(query, mapboxToken);
+        const res = await geocodeDestinationForRide(query, mapboxToken, language);
         if (!res.ok) {
           onDestinationInputChange(query.trim());
           setDestinationSearchError(res.error);
@@ -884,7 +947,7 @@ const SingleProjectNew: FC<SingleProjectProps> = ({
         setDestinationSuggestionOpen(false);
       }
     },
-    [mapboxToken, onDestinationInputChange]
+    [mapboxToken, language, onDestinationInputChange]
   );
 
   const destinationStaticSuggestions = useMemo(() => {
@@ -962,6 +1025,7 @@ const SingleProjectNew: FC<SingleProjectProps> = ({
   }, [paltoPickupTiming, paltoPickupDateTime]);
 
   useEffect(() => {
+    if (!isGoProjectPage) return;
     if (pickupAutocompleteTimerRef.current) {
       clearTimeout(pickupAutocompleteTimerRef.current);
       pickupAutocompleteTimerRef.current = null;
@@ -973,33 +1037,38 @@ const SingleProjectNew: FC<SingleProjectProps> = ({
       setPickupSuggestionLoading(false);
       return;
     }
+    const abort = new AbortController();
     pickupAutocompleteTimerRef.current = setTimeout(async () => {
       pickupAutocompleteTimerRef.current = null;
       setPickupSuggestionLoading(true);
       try {
         const suggestions = await geocodeForwardSuggestions(q, mapboxToken, {
-          language: 'fr',
+          language: geocodeLang(language),
           proximity: [55.45, -21.15],
           bbox: REUNION_ISLAND_BBOX_GEOCODE,
-          limit: 5,
+          limit: 10,
+          signal: abort.signal,
         });
+        if (abort.signal.aborted) return;
         setPickupAddressSuggestions(suggestions);
       } catch {
-        setPickupAddressSuggestions([]);
+        if (!abort.signal.aborted) setPickupAddressSuggestions([]);
       } finally {
-        setPickupSuggestionLoading(false);
+        if (!abort.signal.aborted) setPickupSuggestionLoading(false);
       }
     }, PICKUP_AUTOCOMPLETE_DEBOUNCE_MS);
 
     return () => {
+      abort.abort();
       if (pickupAutocompleteTimerRef.current) {
         clearTimeout(pickupAutocompleteTimerRef.current);
         pickupAutocompleteTimerRef.current = null;
       }
     };
-  }, [pickupSuggestionOpen, paltoPickupLocation, mapboxToken]);
+  }, [isGoProjectPage, pickupSuggestionOpen, paltoPickupLocation, mapboxToken, language]);
 
   useEffect(() => {
+    if (!isGoProjectPage) return;
     if (destinationAutocompleteTimerRef.current) {
       clearTimeout(destinationAutocompleteTimerRef.current);
       destinationAutocompleteTimerRef.current = null;
@@ -1011,31 +1080,35 @@ const SingleProjectNew: FC<SingleProjectProps> = ({
       setDestinationSuggestionLoading(false);
       return;
     }
+    const abort = new AbortController();
     destinationAutocompleteTimerRef.current = setTimeout(async () => {
       destinationAutocompleteTimerRef.current = null;
       setDestinationSuggestionLoading(true);
       try {
         const suggestions = await geocodeForwardSuggestions(q, mapboxToken, {
-          language: 'fr',
+          language: geocodeLang(language),
           proximity: [55.45, -21.15],
           bbox: REUNION_ISLAND_BBOX_GEOCODE,
-          limit: 5,
+          limit: 10,
+          signal: abort.signal,
         });
+        if (abort.signal.aborted) return;
         setDestinationAddressSuggestions(suggestions);
       } catch {
-        setDestinationAddressSuggestions([]);
+        if (!abort.signal.aborted) setDestinationAddressSuggestions([]);
       } finally {
-        setDestinationSuggestionLoading(false);
+        if (!abort.signal.aborted) setDestinationSuggestionLoading(false);
       }
     }, PICKUP_AUTOCOMPLETE_DEBOUNCE_MS);
 
     return () => {
+      abort.abort();
       if (destinationAutocompleteTimerRef.current) {
         clearTimeout(destinationAutocompleteTimerRef.current);
         destinationAutocompleteTimerRef.current = null;
       }
     };
-  }, [destinationSuggestionOpen, paltoRideDestination, mapboxToken]);
+  }, [isGoProjectPage, destinationSuggestionOpen, paltoRideDestination, mapboxToken, language]);
 
   useEffect(() => {
     if (!mapboxToken || !paltoMapSelectedDestination) {
@@ -1103,18 +1176,16 @@ const SingleProjectNew: FC<SingleProjectProps> = ({
     if (!mapboxToken) return;
     if (!isLngLatInsideReunionIsland(longitude, latitude)) return;
     try {
-      const snapped = await snapLngLatToMapboxDriving(mapboxToken, longitude, latitude, { searchRadiusMeters: 75 });
-      if (!snapped) return;
+      const picked = await resolvePickOnRoad(mapboxToken, longitude, latitude, { searchRadiusMeters: 75 });
+      /** Uniquement l’absence de point départ résolu : sinon un libellé vide (géocode KO) bloquait tout clic en « départ ». */
+      const shouldPickPickupFirst = pickupResolvedPoint === null;
       const placeName =
-        (await geocodeReverse(snapped.longitude, snapped.latitude, mapboxToken, { language })) ??
-        (language === 'en'
-          ? 'Address selected on the map'
-          : 'Adresse sélectionnée sur la carte');
-      const shouldPickPickupFirst = pickupResolvedPoint === null || !lastConfirmedPickupText?.trim();
+        (await geocodeReverse(picked.longitude, picked.latitude, mapboxToken, { language })) ??
+        reverseGeocodeDisplayFallback(language, shouldPickPickupFirst ? 'pickup' : 'destination');
       if (shouldPickPickupFirst) {
         // Premier clic carte: définir le point de départ utilisateur.
         setPaltoPickupLocation(simplifyRideAddress(placeName));
-        setPickupResolvedPoint(snapped);
+        setPickupResolvedPoint(picked);
         setLastConfirmedPickupText(simplifyRideAddress(placeName));
         setPickupGeocodeError(null);
         // Un clic de départ invalide l'itinéraire en cours: le prochain clic servira pour la destination.
@@ -1125,8 +1196,8 @@ const SingleProjectNew: FC<SingleProjectProps> = ({
         setChauffeursSearchOk(false);
         setPaltoRideSelectedDriverId(null);
       } else {
-        setPaltoMapSelectedDestination(snapped);
-        setPaltoRecapCoordsText(`${snapped.latitude.toFixed(4)}, ${snapped.longitude.toFixed(4)}`);
+        setPaltoMapSelectedDestination(picked);
+        setPaltoRecapCoordsText(simplifyRideAddress(placeName));
         setPaltoRideDestination(simplifyRideAddress(placeName));
         setLastConfirmedDestinationText(simplifyRideAddress(placeName));
       }
@@ -1144,7 +1215,7 @@ const SingleProjectNew: FC<SingleProjectProps> = ({
     } catch {
       // ignore network/snap errors
     }
-  }, [language, mapboxToken, pickupResolvedPoint, lastConfirmedPickupText]);
+  }, [language, mapboxToken, pickupResolvedPoint]);
   const [isClosing, setIsClosing] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
   const [isDesktopViewport, setIsDesktopViewport] = useState(
@@ -1821,25 +1892,27 @@ const SingleProjectNew: FC<SingleProjectProps> = ({
         typeof detail.destinationLat === 'number' &&
         Number.isFinite(detail.destinationLng) &&
         Number.isFinite(detail.destinationLat);
-      const hasPickup = hasPickupCoords || Boolean(detail.pickupText?.trim());
 
       if (hasPickupCoords) {
         setPickupResolvedPoint({ longitude: detail.pickupLng as number, latitude: detail.pickupLat as number });
         setPickupGeocodeError(null);
       }
-      if (detail.pickupText?.trim()) {
-        const p = simplifyRideAddress(detail.pickupText);
+      const pickupRaw = typeof detail.pickupText === 'string' ? detail.pickupText.trim() : '';
+      if (pickupRaw && !isGenericMapAddressFallback(pickupRaw)) {
+        const p = simplifyRideAddress(detail.pickupText!);
         setPaltoPickupLocation(p);
         setLastConfirmedPickupText(p);
         setPaltoRecapPickupText(p);
-      }
-      if (hasPickup && !hasDestCoords) {
-        setPaltoMapSelectedDestination(null);
-        setPaltoRideDestination('');
-        setLastConfirmedDestinationText(null);
-        setDestinationSearchError(null);
-        setChauffeursSearchOk(false);
-        setPaltoRideSelectedDriverId(null);
+      } else if (hasPickupCoords) {
+        const lng = detail.pickupLng as number;
+        const lat = detail.pickupLat as number;
+        void geocodeReverse(lng, lat, mapboxToken, { language: geocodeLang(language) }).then((raw) => {
+          if (!raw) return;
+          const p = simplifyRideAddress(raw);
+          setPaltoPickupLocation(p);
+          setLastConfirmedPickupText(p);
+          setPaltoRecapPickupText(p);
+        });
       }
       if (hasDestCoords) {
         setPaltoMapSelectedDestination({
@@ -1847,10 +1920,20 @@ const SingleProjectNew: FC<SingleProjectProps> = ({
           latitude: detail.destinationLat as number,
         });
       }
-      if (detail.destinationText?.trim()) {
-        const d = simplifyRideAddress(detail.destinationText);
+      const destRaw = typeof detail.destinationText === 'string' ? detail.destinationText.trim() : '';
+      if (destRaw && !isGenericMapAddressFallback(destRaw)) {
+        const d = simplifyRideAddress(detail.destinationText!);
         setPaltoRideDestination(d);
         setLastConfirmedDestinationText(d);
+      } else if (hasDestCoords) {
+        const lng = detail.destinationLng as number;
+        const lat = detail.destinationLat as number;
+        void geocodeReverse(lng, lat, mapboxToken, { language: geocodeLang(language) }).then((raw) => {
+          if (!raw) return;
+          const d = simplifyRideAddress(raw);
+          setPaltoRideDestination(d);
+          setLastConfirmedDestinationText(d);
+        });
       }
       if (detail.coordsText && detail.coordsText.trim()) {
         setPaltoRecapCoordsText(detail.coordsText);
@@ -1867,7 +1950,7 @@ const SingleProjectNew: FC<SingleProjectProps> = ({
     return () => {
       window.removeEventListener('palto:cover-map-update', onCoverMapUpdate as EventListener);
     };
-  }, [isGoProjectPage]);
+  }, [isGoProjectPage, language, mapboxToken]);
 
   useEffect(() => {
     if (!isGoProjectPage) return;
@@ -1892,11 +1975,21 @@ const SingleProjectNew: FC<SingleProjectProps> = ({
       new CustomEvent('palto:go-cover-route-sync', {
         detail: {
           routeFeature: paltoMapRouteFeature,
+        },
+      })
+    );
+  }, [isGoProjectPage, paltoMapRouteFeature]);
+
+  useEffect(() => {
+    if (!isGoProjectPage) return;
+    window.dispatchEvent(
+      new CustomEvent('palto:go-cover-destination-sync', {
+        detail: {
           destination: paltoMapSelectedDestination,
         },
       })
     );
-  }, [isGoProjectPage, paltoMapRouteFeature, paltoMapSelectedDestination]);
+  }, [isGoProjectPage, paltoMapSelectedDestination]);
 
   // JSON-LD CreativeWork pour que les IA et crawlers (avec JS) puissent lire le contenu du projet
   useEffect(() => {
@@ -2128,11 +2221,6 @@ const SingleProjectNew: FC<SingleProjectProps> = ({
         <div className="dashboard-container dashboard-container--home-accueil single-project-go-topbar-wrap">
           {isDesktopViewport ? (
             <div className="dashboard-main single-project-go-topbar-wrap__main">
-              <DashboardHomeTopbar
-                onOpenClientAccountAuth={onOpenClientAccountAuth}
-                onOpenClientAccount={onOpenClientAccount}
-                onNavigateHome={onNavigateHome}
-              />
               <DashboardHomeRidesBanner
                 clientUpcomingRide={clientUpcomingRide}
                 clientLiveMeetActive={clientLiveMeetActive}
@@ -2141,19 +2229,12 @@ const SingleProjectNew: FC<SingleProjectProps> = ({
               />
             </div>
           ) : (
-            <>
-              <DashboardHomeTopbar
-                onOpenClientAccountAuth={onOpenClientAccountAuth}
-                onOpenClientAccount={onOpenClientAccount}
-                onNavigateHome={onNavigateHome}
-              />
-              <DashboardHomeRidesBanner
-                clientUpcomingRide={clientUpcomingRide}
-                clientLiveMeetActive={clientLiveMeetActive}
-                onOpenClientLiveMeet={onOpenClientLiveMeet}
-                analyticsSuffix="go"
-              />
-            </>
+            <DashboardHomeRidesBanner
+              clientUpcomingRide={clientUpcomingRide}
+              clientLiveMeetActive={clientLiveMeetActive}
+              onOpenClientLiveMeet={onOpenClientLiveMeet}
+              analyticsSuffix="go"
+            />
           )}
         </div>
         <div className="palto-ride-main">
@@ -2499,7 +2580,7 @@ const SingleProjectNew: FC<SingleProjectProps> = ({
                 <HomeMapboxBackground
                   variant="embedded"
                   userOrigin={pickupResolvedPoint}
-                  flyToTarget={pickupFlyToTarget}
+                  flyToTarget={embeddedMapFlyToTarget}
                   selectedDestination={paltoMapSelectedDestination}
                   routeFeature={paltoMapRouteFeature}
                   nearbyDrivers={chauffeursSearchOk ? pickupFilteredDrivers : []}
