@@ -234,6 +234,21 @@ type AccountEditModalState = {
   }>;
 };
 
+function ClientAccountBackToOverviewButton(props: {
+  onClick: () => void;
+  label: string;
+  ariaLabel: string;
+}) {
+  return (
+    <div className="client-compte-content-back-row">
+      <button type="button" className="client-compte-content-back-btn" onClick={props.onClick} aria-label={props.ariaLabel}>
+        <ArrowLeft size={18} aria-hidden />
+        <span>{props.label}</span>
+      </button>
+    </div>
+  );
+}
+
 function readCompteNavFromPath(): ClientAccountNavId {
   if (typeof window === 'undefined') return 'overview';
   const path = window.location.pathname.replace(/^\/(fr|en)/, '') || '/';
@@ -1843,6 +1858,11 @@ export default function ClientCompteDashboard({ onBack, onOpenClientLiveMeet }: 
 
             {activeNav === 'account' && (
             <div className="dashboard-content">
+              <ClientAccountBackToOverviewButton
+                onClick={() => goNav('overview')}
+                label={t('clientAccount.navBackOverview')}
+                ariaLabel={t('clientAccount.navBackOverviewAria')}
+              />
               <section className="client-compte-account-layout">
                 <aside className="client-compte-account-sidebar">
                   <div className="client-compte-account-profile">
@@ -2404,6 +2424,11 @@ export default function ClientCompteDashboard({ onBack, onOpenClientLiveMeet }: 
 
             {activeNav === 'courses' && (
             <div className="dashboard-content">
+              <ClientAccountBackToOverviewButton
+                onClick={() => goNav('overview')}
+                label={t('clientAccount.navBackOverview')}
+                ariaLabel={t('clientAccount.navBackOverviewAria')}
+              />
               <p className="dashboard-field-hint" style={{ margin: '0 0 16px' }}>
                 {t('clientAccount.coursesRecapLead')}
               </p>
@@ -2545,6 +2570,11 @@ export default function ClientCompteDashboard({ onBack, onOpenClientLiveMeet }: 
 
             {activeNav === 'places' && (
             <div className="dashboard-content">
+              <ClientAccountBackToOverviewButton
+                onClick={() => goNav('overview')}
+                label={t('clientAccount.navBackOverview')}
+                ariaLabel={t('clientAccount.navBackOverviewAria')}
+              />
               <p className="dashboard-field-hint" style={{ margin: '0 0 16px' }}>
                 {t('clientAccount.placesLead')}
               </p>
@@ -2689,6 +2719,11 @@ export default function ClientCompteDashboard({ onBack, onOpenClientLiveMeet }: 
 
             {activeNav === 'wallet' && (
             <div className="dashboard-content">
+              <ClientAccountBackToOverviewButton
+                onClick={() => goNav('overview')}
+                label={t('clientAccount.navBackOverview')}
+                ariaLabel={t('clientAccount.navBackOverviewAria')}
+              />
               <p className="dashboard-field-hint" style={{ margin: '0 0 16px' }}>
                 {t('clientAccount.walletLead')}
               </p>
@@ -2737,6 +2772,11 @@ export default function ClientCompteDashboard({ onBack, onOpenClientLiveMeet }: 
 
             {activeNav === 'personal' && (
             <div className="dashboard-content">
+              <ClientAccountBackToOverviewButton
+                onClick={() => goNav('overview')}
+                label={t('clientAccount.navBackOverview')}
+                ariaLabel={t('clientAccount.navBackOverviewAria')}
+              />
               <p className="dashboard-field-hint" style={{ margin: '0 0 16px' }}>
                 {t('clientAccount.personalHint')}
               </p>
@@ -2914,6 +2954,11 @@ export default function ClientCompteDashboard({ onBack, onOpenClientLiveMeet }: 
 
             {activeNav === 'security' && (
             <div className="dashboard-content client-compte-security">
+              <ClientAccountBackToOverviewButton
+                onClick={() => goNav('overview')}
+                label={t('clientAccount.navBackOverview')}
+                ariaLabel={t('clientAccount.navBackOverviewAria')}
+              />
               <section className="dashboard-user-card" style={{ marginBottom: 20 }}>
                 <h3 className="client-compte-section-title">{t('clientAccount.securityPasswordTitle')}</h3>
                 <p className="client-compte-masked-pwd" aria-label={t('clientAccount.securityPasswordField')}>
@@ -3050,6 +3095,11 @@ export default function ClientCompteDashboard({ onBack, onOpenClientLiveMeet }: 
 
             {activeNav === 'settings' && (
             <div className="dashboard-content">
+              <ClientAccountBackToOverviewButton
+                onClick={() => goNav('overview')}
+                label={t('clientAccount.navBackOverview')}
+                ariaLabel={t('clientAccount.navBackOverviewAria')}
+              />
               <p className="dashboard-field-hint" style={{ margin: '0 0 16px' }}>
                 {t('clientAccount.settingsLead')}
               </p>
@@ -3154,6 +3204,11 @@ export default function ClientCompteDashboard({ onBack, onOpenClientLiveMeet }: 
 
             {activeNav === 'help' && (
             <div className="dashboard-content">
+              <ClientAccountBackToOverviewButton
+                onClick={() => goNav('overview')}
+                label={t('clientAccount.navBackOverview')}
+                ariaLabel={t('clientAccount.navBackOverviewAria')}
+              />
               <p className="dashboard-field-hint" style={{ margin: '0 0 16px' }}>
                 {t('clientAccount.helpLead')}
               </p>
@@ -3177,6 +3232,11 @@ export default function ClientCompteDashboard({ onBack, onOpenClientLiveMeet }: 
 
             {activeNav === 'privacy' && (
             <div className="dashboard-content">
+              <ClientAccountBackToOverviewButton
+                onClick={() => goNav('overview')}
+                label={t('clientAccount.navBackOverview')}
+                ariaLabel={t('clientAccount.navBackOverviewAria')}
+              />
               <p className="dashboard-field-hint" style={{ margin: 0 }}>
                 {t('clientAccount.sectionPlaceholder')}
               </p>

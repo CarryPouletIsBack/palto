@@ -752,6 +752,29 @@ body.accueil-page .dashboard-container--home-accueil .dashboard-main {
   cursor: pointer;
 }
 
+.client-compte-content-back-row {
+  margin: 0 0 12px;
+}
+
+.client-compte-content-back-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  border-radius: 8px;
+  border: 1px solid #dbe3ee;
+  background: #ffffff;
+  font: inherit;
+  font-size: 14px;
+  font-weight: 600;
+  color: #334155;
+  cursor: pointer;
+}
+
+.client-compte-content-back-btn:hover {
+  background: #f8fafc;
+}
+
 .client-compte-account-menu {
   position: absolute;
   top: calc(100% + 8px);
@@ -978,6 +1001,16 @@ html[data-app-theme='dark'] .client-compte-topbar-sections-btn {
   background: var(--app-surface-elevated, #1e293b);
   border-color: rgba(255, 255, 255, 0.18);
   color: var(--app-text-primary, #f1f5f9);
+}
+
+html[data-app-theme='dark'] .client-compte-content-back-btn {
+  background: var(--app-surface-elevated, #1e293b);
+  border-color: rgba(255, 255, 255, 0.18);
+  color: var(--app-text-primary, #e2e8f0);
+}
+
+html[data-app-theme='dark'] .client-compte-content-back-btn:hover {
+  background: rgba(255, 255, 255, 0.08);
 }
 
 html[data-app-theme='dark'] .client-compte-account-menu {
