@@ -4109,7 +4109,7 @@ button.dashboard-org-sidebar-brand--home:focus-visible {
 
   /* Marque + nav Organisation sur une seule ligne horizontale */
   button.dashboard-org-sidebar-brand--home {
-    flex: 0 1 auto;
+    flex: 0 0 auto;
     width: auto;
     min-width: 0;
     max-width: min(11rem, 38vw);
@@ -4142,27 +4142,45 @@ button.dashboard-org-sidebar-brand--home:focus-visible {
     flex-direction: row;
     flex-wrap: nowrap;
     align-items: stretch;
-    justify-content: space-between;
-    gap: 2px;
-    flex: 1 1 0;
+    justify-content: flex-start;
+    gap: 6px;
+    flex: 1 1 auto;
     min-width: 0;
     width: auto;
     box-sizing: border-box;
+    overflow-x: auto;
+    overflow-y: hidden;
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior-x: contain;
+    scrollbar-width: thin;
+    padding-top: 0;
+    padding-bottom: 4px;
   }
 
-  .dashboard-org-nav-item {
-    flex: 1 1 0;
+  .dashboard-org-nav-sub {
+    display: contents;
+  }
+
+  .dashboard-org-nav-item,
+  .dashboard-org-nav-item.dashboard-org-nav-item--sub {
+    flex: 0 0 auto;
     width: auto;
-    min-width: 0;
-    justify-content: center;
-    padding: 8px 4px;
-    gap: 4px;
-    font-size: 11px;
+    min-width: auto;
+    justify-content: flex-start;
+    padding: 8px 12px;
+    gap: 6px;
+    font-size: 13px;
+    white-space: nowrap;
+  }
+
+  .dashboard-org-nav-item--sub {
+    height: 40px;
+    font-size: 13px;
   }
 
   .dashboard-org-nav-item span {
-    overflow: hidden;
-    text-overflow: ellipsis;
+    overflow: visible;
+    text-overflow: clip;
     white-space: nowrap;
   }
 }
