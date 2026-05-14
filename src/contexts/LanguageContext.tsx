@@ -416,6 +416,9 @@ const TRANSLATIONS: Record<Language, Record<string, unknown>> = {
       settingsMoreHint:
         'Ces préférences sont les mêmes que sur le site (compte passager) : elles s’appliquent à tout Palto sur cet appareil.',
       mainSubtitle: 'Vos courses, votre planning et votre activité au même endroit.',
+      statsSubtitle: 'Vue rapide et lisible de ton activité chauffeur.',
+      statsHeatmapPlaceholder:
+        'Heatmap annuelle et résumés (jour le plus actif, séries) seront affichés lorsque l’API statistiques sera connectée. Les indicateurs du haut restent calculés sur tes courses locales.',
       orgPageLead:
         'Gérez votre flotte localement sur cet appareil. Les invitations sont simulées — branchement API à prévoir.',
       orgFleetCode: 'Code flotte',
@@ -440,6 +443,7 @@ const TRANSLATIONS: Record<Language, Record<string, unknown>> = {
       orgSectionTitle: 'Organisation',
       orgNoOrgHint:
         'Créez une organisation pour devenir administrateur, obtenir un code flotte et inviter d’autres chauffeurs. L’entrée « Organisation » apparaîtra dans le menu latéral.',
+      orgNoOrgSoonLabel: 'Bientôt disponible',
       orgCreateName: 'Nom de l’organisation',
       orgCreateBase: 'Base / zone',
       orgCreateButton: 'Créer l’organisation',
@@ -1070,6 +1074,9 @@ const TRANSLATIONS: Record<Language, Record<string, unknown>> = {
       settingsMoreHint:
         'These preferences match the passenger site account: they apply to all of Palto on this device.',
       mainSubtitle: 'Your rides, schedule and operations in one place.',
+      statsSubtitle: 'A quick, readable view of your driver activity.',
+      statsHeatmapPlaceholder:
+        'The yearly heatmap and summaries (busiest day, streaks) will show when the statistics API is connected. The KPI cards above still reflect your local rides.',
       orgPageLead:
         'Manage your fleet on this device. Invitations are simulated — API integration planned later.',
       orgFleetCode: 'Fleet code',
@@ -1094,6 +1101,7 @@ const TRANSLATIONS: Record<Language, Record<string, unknown>> = {
       orgSectionTitle: 'Organization',
       orgNoOrgHint:
         'Create an organization to become admin, get a fleet code, and invite other drivers. The “Organization” item will appear in the sidebar.',
+      orgNoOrgSoonLabel: 'Coming soon',
       orgCreateName: 'Organization name',
       orgCreateBase: 'Base / area',
       orgCreateButton: 'Create organization',

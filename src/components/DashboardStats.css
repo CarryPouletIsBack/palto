@@ -6,25 +6,6 @@
   gap: 16px;
 }
 
-.stats-header--minimal {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-
-.stats-title {
-  margin: 0;
-  font-size: 15px;
-  font-weight: 600;
-  color: #111827;
-}
-
-.stats-subtitle {
-  margin: 0;
-  font-size: 13px;
-  color: #6b7280;
-}
-
 .stats-kpi-grid {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
@@ -82,7 +63,7 @@
 .stats-chart-head {
   display: flex;
   justify-content: space-between;
-  align-items: baseline;
+  align-items: center;
   gap: 8px;
   margin-bottom: 8px;
 }
@@ -94,9 +75,17 @@
   color: #111827;
 }
 
-.stats-chart-head span {
-  font-size: 11px;
-  color: #9ca3af;
+.stats-chart-head-badge {
+  flex-shrink: 0;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  color: #64748b;
+  background: #f1f5f9;
+  border: 1px solid #e2e8f0;
+  border-radius: 999px;
+  padding: 3px 8px;
 }
 
 .stats-heatmap-scroll {
@@ -179,6 +168,17 @@
   margin-top: 2px;
   font-size: 17px;
   color: #111827;
+}
+
+.stats-heatmap-placeholder {
+  margin: 10px 0 0;
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: #f8fafc;
+  border: 1px dashed #cbd5e1;
+  font-size: 12px;
+  line-height: 1.45;
+  color: #64748b;
 }
 
 .stats-heatmap-legend {

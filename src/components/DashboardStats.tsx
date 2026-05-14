@@ -1,5 +1,6 @@
 import { useMemo } from 'react';
 import { CheckCircle2, Clock3, Star, Wallet } from 'lucide-react';
+import { useLanguage } from '../contexts/LanguageContext';
 import './DashboardStats.css';
 
 /** Agrégats d’activité chauffeur (courses du planning), sans Google Analytics. */
@@ -41,85 +42,71 @@ function formatEur(value: number): string {
 }
 
 const DashboardStats = ({ activity, heatmap }: DashboardStatsProps) => {
+  const { t, language } = useLanguage();
+  const isEn = language === 'en';
+
   const yearlyHeatmap = useMemo(() => {
     const monthLabels = ['J', 'F', 'M', 'A', 'M', 'J', 'J', 'A', 'S', 'O', 'N', 'D'];
     const weekdayLabels = ['L', 'M', 'M', 'J', 'V', 'S', 'D'];
     const totalWeeks = 52;
-    const monthFactors = [0.88, 0.92, 1.02, 0.95, 1.04, 1.1, 1.2, 1.16, 1.06, 1.0, 0.96, 1.12];
-    const weekdayFactors = [0.84, 0.95, 1.0, 1.05, 1.2, 1.12, 0.78];
-    const base = Math.max(1, activity.completed / 90);
-
-    const monthStarts = monthLabels.map((_, idx) => Math.floor((idx / 12) * totalWeeks));
-    const cells = Array.from({ length: totalWeeks }, (_, weekIdx) =>
-      weekdayLabels.map((_, weekdayIdx) => {
-        const monthIdx = Math.min(11, Math.floor((weekIdx / totalWeeks) * 12));
-        const seed = (weekIdx * 17 + weekdayIdx * 13 + activity.completed) % 7;
-        const noise = 0.78 + seed * 0.08;
-        const value = Math.max(0, Math.round(base * monthFactors[monthIdx] * weekdayFactors[weekdayIdx] * noise));
-        return value;
-      })
-    );
-
-    const flat = cells.flat();
-    const max = Math.max(1, ...flat);
-    const min = Math.min(...flat);
-
+    const monthWeekMarkers = monthLabels.map((label, m) => ({
+      week: Math.min(totalWeeks - 1, Math.floor((m * totalWeeks) / 12)),
+      label,
+    }));
     const colors = ['#eef0f3', '#d8efe5', '#b9e0cf', '#82c8a9', '#4ca780'];
+
+    const hasApiHeatmap =
+      heatmap != null &&
+      Array.isArray(heatmap.cells) &&
+      heatmap.cells.length === totalWeeks &&
+      heatmap.cells.every((col) => Array.isArray(col) && col.length === weekdayLabels.length);
+
+    const emptyCells = Array.from({ length: totalWeeks }, () => weekdayLabels.map(() => 0));
+    const colorForEmpty = () => colors[0];
+
+    if (!hasApiHeatmap) {
+      return {
+        monthWeekMarkers,
+        totalWeeks,
+        weekdayLabels,
+        cells: emptyCells,
+        colorFor: colorForEmpty,
+        bestMonth: '—',
+        bestDay: '—',
+        longestStreak: '—',
+        currentStreak: '—',
+        heatmapEmpty: true as const,
+      };
+    }
+
+    const cells = heatmap.cells;
+    const flat = cells.flat();
+    const max = Math.max(0, ...flat);
+    const min = max > 0 ? Math.min(...flat) : 0;
+
     const colorFor = (value: number) => {
-      if (value <= min) return colors[0];
-      const ratio = value / max;
-      if (ratio < 0.3) return colors[1];
+      if (max <= 0) return colors[0];
+      if (value <= 0) return colors[0];
+      const ratio = (value - min) / Math.max(1e-6, max - min);
+      if (ratio < 0.25) return colors[1];
       if (ratio < 0.5) return colors[2];
       if (ratio < 0.75) return colors[3];
       return colors[4];
     };
 
-    const monthTotals = cells.map((col) => col.reduce((sum, v) => sum + v, 0));
-    const bestMonthIdx = monthTotals.indexOf(Math.max(...monthTotals));
-    const dayTotals = weekdayLabels.map((_, dayIdx) => cells.reduce((sum, col) => sum + col[dayIdx], 0));
-    const bestDayIdx = dayTotals.indexOf(Math.max(...dayTotals));
-
-    const binary = flat.map((v) => (v > 0 ? 1 : 0));
-    let longest = 0;
-    let current = 0;
-    let run = 0;
-    for (let i = 0; i < binary.length; i += 1) {
-      if (binary[i] === 1) {
-        run += 1;
-        longest = Math.max(longest, run);
-      } else {
-        run = 0;
-      }
-    }
-    for (let i = binary.length - 1; i >= 0; i -= 1) {
-      if (binary[i] === 1) current += 1;
-      else break;
-    }
-
-    const fallback = {
-      monthLabels,
-      monthStarts,
+    return {
+      monthWeekMarkers,
       totalWeeks,
       weekdayLabels,
       cells,
       colorFor,
-      bestMonth: ['Janvier', 'Fevrier', 'Mars', 'Avril', 'Mai', 'Juin', 'Juillet', 'Aout', 'Septembre', 'Octobre', 'Novembre', 'Decembre'][bestMonthIdx] ?? '—',
-      bestDay: ['Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi', 'Dimanche'][bestDayIdx] ?? '—',
-      longestStreak: `${longest}j`,
-      currentStreak: `${current}j`,
+      bestMonth: heatmap.bestMonth?.trim() || '—',
+      bestDay: heatmap.bestDay?.trim() || '—',
+      longestStreak: heatmap.longestStreak?.trim() || '—',
+      currentStreak: heatmap.currentStreak?.trim() || '—',
+      heatmapEmpty: false as const,
     };
-    if (!heatmap || !Array.isArray(heatmap.cells) || heatmap.cells.length !== totalWeeks) {
-      return fallback;
-    }
-    return {
-      ...fallback,
-      cells: heatmap.cells,
-      bestMonth: heatmap.bestMonth || fallback.bestMonth,
-      bestDay: heatmap.bestDay || fallback.bestDay,
-      longestStreak: heatmap.longestStreak || fallback.longestStreak,
-      currentStreak: heatmap.currentStreak || fallback.currentStreak,
-    };
-  }, [activity.completed, heatmap]);
+  }, [heatmap]);
 
   const summary = [
     {
@@ -154,11 +141,6 @@ const DashboardStats = ({ activity, heatmap }: DashboardStatsProps) => {
 
   return (
     <div className="dashboard-stats-container">
-      <div className="stats-header stats-header--minimal">
-        <h2 className="stats-title">Statistiques</h2>
-        <p className="stats-subtitle">Vue rapide et lisible de ton activité chauffeur</p>
-      </div>
-
       <div className="stats-kpi-grid">
         {summary.map((item) => {
           const Icon = item.icon;
@@ -175,20 +157,20 @@ const DashboardStats = ({ activity, heatmap }: DashboardStatsProps) => {
         })}
       </div>
 
-      <section className="stats-heatmap-card" aria-label="Heatmap annuelle activité">
+      <section className="stats-heatmap-card" aria-label={isEn ? 'Annual activity heatmap' : 'Heatmap annuelle activité'}>
         <div className="stats-chart-head">
-          <h3>Activité annuelle</h3>
-          <span>style contribution</span>
+          <h3>{isEn ? 'Annual activity' : 'Activité annuelle'}</h3>
+          {yearlyHeatmap.heatmapEmpty ? (
+            <span className="stats-chart-head-badge">{isEn ? 'Not connected' : 'Non branché'}</span>
+          ) : null}
         </div>
         <div className="stats-heatmap-scroll">
           <div className="stats-heatmap-grid">
             <div className="stats-heatmap-months">
               {Array.from({ length: yearlyHeatmap.totalWeeks }, (_, weekIdx) => {
-                const monthIdx = yearlyHeatmap.monthStarts.indexOf(weekIdx);
+                const marker = yearlyHeatmap.monthWeekMarkers.find((m) => m.week === weekIdx);
                 return (
-                  <span key={`month-slot-${weekIdx}`}>
-                    {monthIdx >= 0 ? yearlyHeatmap.monthLabels[monthIdx] : ''}
-                  </span>
+                  <span key={`month-slot-${weekIdx}`}>{marker?.label ?? ''}</span>
                 );
               })}
             </div>
@@ -199,14 +181,20 @@ const DashboardStats = ({ activity, heatmap }: DashboardStatsProps) => {
                 ))}
               </div>
               <div className="stats-heatmap-cells">
-                {yearlyHeatmap.cells.map((col, monthIdx) => (
-                  <div key={`col-${monthIdx}`} className="stats-heatmap-col">
+                {yearlyHeatmap.cells.map((col, weekIdx) => (
+                  <div key={`col-${weekIdx}`} className="stats-heatmap-col">
                     {col.map((value, dayIdx) => (
                       <span
-                        key={`cell-${monthIdx}-${dayIdx}`}
+                        key={`cell-${weekIdx}-${dayIdx}`}
                         className="stats-heatmap-cell"
                         style={{ background: yearlyHeatmap.colorFor(value) }}
-                        title={`${value} courses`}
+                        title={
+                          value > 0
+                            ? isEn
+                              ? `${value} ride${value > 1 ? 's' : ''}`
+                              : `${value} course${value > 1 ? 's' : ''}`
+                            : undefined
+                        }
                       />
                     ))}
                   </div>
@@ -217,24 +205,29 @@ const DashboardStats = ({ activity, heatmap }: DashboardStatsProps) => {
         </div>
         <div className="stats-heatmap-meta">
           <article>
-            <p>Mois le plus actif</p>
+            <p>{isEn ? 'Busiest month' : 'Mois le plus actif'}</p>
             <strong>{yearlyHeatmap.bestMonth}</strong>
           </article>
           <article>
-            <p>Jour le plus actif</p>
+            <p>{isEn ? 'Busiest weekday' : 'Jour le plus actif'}</p>
             <strong>{yearlyHeatmap.bestDay}</strong>
           </article>
           <article>
-            <p>Plus longue série</p>
+            <p>{isEn ? 'Longest streak' : 'Plus longue série'}</p>
             <strong>{yearlyHeatmap.longestStreak}</strong>
           </article>
           <article>
-            <p>Série actuelle</p>
+            <p>{isEn ? 'Current streak' : 'Série actuelle'}</p>
             <strong>{yearlyHeatmap.currentStreak}</strong>
           </article>
         </div>
+        {yearlyHeatmap.heatmapEmpty ? (
+          <p className="stats-heatmap-placeholder" role="status">
+            {t('driverDashboard.statsHeatmapPlaceholder')}
+          </p>
+        ) : null}
         <div className="stats-heatmap-legend">
-          <span>Moins</span>
+          <span>{isEn ? 'Less' : 'Moins'}</span>
           <div>
             <i style={{ background: '#eef0f3' }} />
             <i style={{ background: '#d8efe5' }} />
@@ -242,21 +235,21 @@ const DashboardStats = ({ activity, heatmap }: DashboardStatsProps) => {
             <i style={{ background: '#82c8a9' }} />
             <i style={{ background: '#4ca780' }} />
           </div>
-          <span>Plus</span>
+          <span>{isEn ? 'More' : 'Plus'}</span>
         </div>
       </section>
 
       <section className="stats-inline-notes" aria-label="Ratios">
         <article>
-          <p>Taux d’acceptation</p>
+          <p>{isEn ? 'Acceptance rate' : 'Taux d’acceptation'}</p>
           <strong>{activity.acceptanceRate}%</strong>
         </article>
         <article>
-          <p>Taux d’annulation</p>
+          <p>{isEn ? 'Cancellation rate' : 'Taux d’annulation'}</p>
           <strong>{activity.cancellationRate}%</strong>
         </article>
         <article>
-          <p>En cours / attente</p>
+          <p>{isEn ? 'In progress / pending' : 'En cours / attente'}</p>
           <strong>
             {activity.inProgress} / {activity.pending}
           </strong>

@@ -2206,7 +2206,9 @@ const Dashboard = ({
               ) : (
                 <div className="dashboard-topbar-title-stack">
                   <h2 className="dashboard-chauffeur-main-title">{dashboardTopTitle}</h2>
-                  <p className="dashboard-chauffeur-main-subtitle">{t('driverDashboard.mainSubtitle')}</p>
+                  <p className="dashboard-chauffeur-main-subtitle">
+                    {activeView === 'stats' ? t('driverDashboard.statsSubtitle') : t('driverDashboard.mainSubtitle')}
+                  </p>
                 </div>
               )}
               <div className="dashboard-topbar-right">
@@ -3409,9 +3411,6 @@ const Dashboard = ({
                   {activeView === 'user' && (
                     <div className="dashboard-org-layout">
                       <aside className="dashboard-org-sidebar" aria-label={t('driverDashboard.titleUser')}>
-                        <div className="dashboard-org-sidebar-brand dashboard-org-sidebar-brand--label">
-                          <span className="dashboard-org-sidebar-title">{t('driverDashboard.titleUser')}</span>
-                        </div>
                         <nav className="dashboard-org-nav">
                           <button
                             type="button"
@@ -3472,7 +3471,7 @@ const Dashboard = ({
                             <CircleHelp size={16} aria-hidden />
                             <span>{t('driverDashboard.navHelp')}</span>
                           </button>
-                          {userSubView === 'organization' ? (
+                          {userSubView === 'organization' && chauffeurOrg ? (
                             <div className="dashboard-org-nav-sub">
                               <button
                                 type="button"
@@ -3962,7 +3961,12 @@ const Dashboard = ({
                           <div className="dashboard-user-sections">
                             <section className="dashboard-user-subcard">
                               {!chauffeurOrg ? (
-                                <p className="dashboard-field-hint">{t('driverDashboard.orgNoOrgHint')}</p>
+                                <>
+                                  <p className="dashboard-org-no-org-soon" role="status">
+                                    {t('driverDashboard.orgNoOrgSoonLabel')}
+                                  </p>
+                                  <p className="dashboard-field-hint">{t('driverDashboard.orgNoOrgHint')}</p>
+                                </>
                               ) : orgSubView === 'profile' ? (
                                 <div className="dashboard-org-profile">
                                   <div className="dashboard-org-profile-hero-bleed">
