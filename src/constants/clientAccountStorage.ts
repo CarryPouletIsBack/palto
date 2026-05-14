@@ -99,18 +99,20 @@ export function loadClientAccountSnapshot(email?: string): ClientAccountSnapshot
   }
 }
 
-export function saveClientAccountSnapshot(data: ClientAccountSnapshot, email?: string): void {
+/** Persiste le snapshot ; retourne `false` si quota / serialisation (ex. photo trop lourde). */
+export function saveClientAccountSnapshot(data: ClientAccountSnapshot, email?: string): boolean {
   try {
     const snapshot = sanitizeSnapshot(data);
     const emailKey = normalizeEmail(email || snapshot.email);
-    if (!emailKey) return;
+    if (!emailKey) return false;
     const byEmail = readAccountByEmailMap();
     byEmail[emailKey] = snapshot;
     localStorage.setItem(CLIENT_ACCOUNT_BY_EMAIL_STORAGE_KEY, JSON.stringify(byEmail));
     if (normalizeEmail(snapshot.email) === emailKey) {
       localStorage.setItem(CLIENT_ACCOUNT_STORAGE_KEY, JSON.stringify(snapshot));
     }
+    return true;
   } catch {
-    /* ignore */
+    return false;
   }
 }

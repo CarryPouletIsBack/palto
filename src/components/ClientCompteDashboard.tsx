@@ -32,6 +32,7 @@ import { useLanguage } from '../contexts/LanguageContext';
 import LanguageSwitcher from './LanguageSwitcher';
 import { trackEvent } from '../services/googleAnalyticsTracking';
 import { openNativeSelectPicker } from '../dom/openNativeSelectPicker';
+import { fileToCompressedProfilePhotoDataUrl } from '../utils/clientProfilePhotoDataUrl';
 import { useClientHomeTopbarRides } from '../hooks/useClientHomeTopbarRides';
 import './Dashboard.css';
 import './Dashboard.app-theme.css';
@@ -186,15 +187,6 @@ const WALLET_SAMPLE_MOVEMENTS: Array<{
   amountCents: number;
   labelKey: 'clientAccount.walletMov1' | 'clientAccount.walletMov2' | 'clientAccount.walletMov3';
 }> = [];
-
-function readFileAsDataUrl(file: File): Promise<string> {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onload = () => resolve(String(reader.result ?? ''));
-    reader.onerror = () => reject(new Error('Lecture fichier impossible'));
-    reader.readAsDataURL(file);
-  });
-}
 
 function paymentLabel(t: (k: string) => string, p: ClientPreferredPayment): string {
   if (p === 'card') return t('clientAccount.prefCard');
@@ -1041,46 +1033,62 @@ export default function ClientCompteDashboard({ onBack, onOpenClientLiveMeet }: 
         profilePhotoUrl: photoDraftUrl,
         profilePhotoName: photoDraftName,
       };
+      const ok = saveClientAccountSnapshot(next, activeClientEmail);
+      if (!ok) {
+        toast.error(t('clientAccount.photoStorageError'));
+        return;
+      }
       setProfile(next);
-      saveClientAccountSnapshot(next, activeClientEmail);
       setIsEditing(false);
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(new CustomEvent(PALTO_CLIENT_SESSION_CHANGED_EVENT));
+      }
       trackEvent('click', 'client_account', 'save');
     },
-    [activeClientEmail, draft, phoneCountryDraft, phoneNationalDraft, photoDraftName, photoDraftUrl]
+    [activeClientEmail, draft, phoneCountryDraft, phoneNationalDraft, photoDraftName, photoDraftUrl, t]
   );
 
   const onPhotoPick = useCallback(async (file: File | undefined | null) => {
     if (!file) return;
     try {
-      const dataUrl = await readFileAsDataUrl(file);
+      const dataUrl = await fileToCompressedProfilePhotoDataUrl(file);
       setPhotoDraftUrl(dataUrl);
       setPhotoDraftName(file.name);
     } catch {
-      /* ignore */
+      toast.error(t('clientAccount.photoReadError'));
     }
-  }, []);
+  }, [t]);
 
   const onTopbarPhotoPick = useCallback(async (file: File | undefined | null) => {
     if (!file) return;
+    let dataUrl: string;
     try {
-      const dataUrl = await readFileAsDataUrl(file);
-      const next: ClientAccountSnapshot = {
-        ...profile,
-        profilePhotoUrl: dataUrl,
-        profilePhotoName: file.name,
-      };
-      setProfile(next);
-      setDraft(next);
-      setPhotoDraftUrl(dataUrl);
-      setPhotoDraftName(file.name);
-      saveClientAccountSnapshot(next, activeClientEmail);
-      setAccountModalOpen(false);
-      trackEvent('click', 'client_account', 'topbar_photo_updated');
-      toast.success(isEn ? 'Profile photo updated.' : 'Photo de profil mise à jour.');
+      dataUrl = await fileToCompressedProfilePhotoDataUrl(file);
     } catch {
-      toast.error(isEn ? 'Unable to update photo.' : 'Impossible de mettre à jour la photo.');
+      toast.error(t('clientAccount.photoReadError'));
+      return;
     }
-  }, [activeClientEmail, isEn, profile]);
+    const next: ClientAccountSnapshot = {
+      ...profile,
+      profilePhotoUrl: dataUrl,
+      profilePhotoName: file.name,
+    };
+    const ok = saveClientAccountSnapshot(next, activeClientEmail);
+    if (!ok) {
+      toast.error(t('clientAccount.photoStorageError'));
+      return;
+    }
+    setProfile(next);
+    setDraft(next);
+    setPhotoDraftUrl(dataUrl);
+    setPhotoDraftName(file.name);
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new CustomEvent(PALTO_CLIENT_SESSION_CHANGED_EVENT));
+    }
+    setAccountModalOpen(false);
+    trackEvent('click', 'client_account', 'topbar_photo_updated');
+    toast.success(isEn ? 'Profile photo updated.' : 'Photo de profil mise à jour.');
+  }, [activeClientEmail, isEn, profile, t]);
 
   const handleBackSite = useCallback(() => {
     onBack();

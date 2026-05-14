@@ -544,6 +544,9 @@ const TRANSLATIONS: Record<Language, Record<string, unknown>> = {
       edit: 'Modifier',
       photoAlt: 'Photo de profil',
       changeProfilePhotoAria: 'Changer la photo de profil',
+      photoReadError: 'Impossible de lire cette image. Essayez un autre fichier (JPEG ou PNG).',
+      photoStorageError:
+        'Enregistrement impossible (stockage plein). Essayez une image plus petite ou libérez de l’espace sur l’appareil.',
       statusActive: 'Actif',
       firstName: 'Prénom',
       lastName: 'Nom',
@@ -1194,6 +1197,9 @@ const TRANSLATIONS: Record<Language, Record<string, unknown>> = {
       edit: 'Edit',
       photoAlt: 'Profile photo',
       changeProfilePhotoAria: 'Change profile photo',
+      photoReadError: 'Could not read this image. Try another file (JPEG or PNG).',
+      photoStorageError:
+        'Could not save (storage full). Try a smaller image or free space on this device.',
       statusActive: 'Active',
       firstName: 'First name',
       lastName: 'Last name',
