@@ -6,7 +6,6 @@ import 'swiper/css';
 import 'swiper/css/pagination';
 import './ProjectCoverCarousel.css';
 import HomeMapboxBackground from './HomeMapboxBackground';
-import { DEFAULT_USER_ORIGIN } from '../constants/defaultUserOrigin';
 import { fetchDrivingRouteFeature } from '../services/mapboxDirections';
 import { snapLngLatToMapboxDriving } from '../services/mapboxSnapToRoad';
 import { isLngLatInsideReunionIsland } from '../constants/reunionIsland';
@@ -45,6 +44,9 @@ const ProjectCoverCarousel: React.FC<ProjectCoverCarouselProps> = ({
   hideCloseOnScroll = false,
 }) => {
   const [fullscreenIndex, setFullscreenIndex] = useState(0);
+  /** Premier clic carte cover = départ (comme le panneau Go), pas d’origine fictive Dachau. */
+  const [mapCoverPickup, setMapCoverPickup] = useState<{ longitude: number; latitude: number } | null>(null);
+  const [mapCoverPickupLabel, setMapCoverPickupLabel] = useState('');
   const [mapSelectedDestination, setMapSelectedDestination] = useState<{ longitude: number; latitude: number } | null>(null);
   const [mapRouteFeature, setMapRouteFeature] = useState<Feature<LineString> | null>(null);
   const [mapDestinationLabel, setMapDestinationLabel] = useState('');
@@ -90,8 +92,47 @@ const ProjectCoverCarousel: React.FC<ProjectCoverCarouselProps> = ({
     (import.meta.env.VITE_OPENSTREET_ACCESS_TOKEN as string | undefined)?.trim() || 'osm';
 
   useEffect(() => {
+    if (isPaltoMapCover) return;
+    setMapCoverPickup(null);
+    setMapCoverPickupLabel('');
+    setMapSelectedDestination(null);
+    setMapRouteFeature(null);
+    setMapDestinationLabel('');
+    setMapRouteDurationLabel('');
+    setMapRouteTrafficDurationLabel('');
+  }, [isPaltoMapCover]);
+
+  useEffect(() => {
     if (!isPaltoMapCover) return;
-    if (!mapToken || !mapSelectedDestination) {
+    const onPanelPickup = (evt: Event) => {
+      const e = evt as CustomEvent<{ lng?: number; lat?: number; label?: string }>;
+      const d = e.detail;
+      if (!d) return;
+      if (
+        typeof d.lng === 'number' &&
+        typeof d.lat === 'number' &&
+        Number.isFinite(d.lng) &&
+        Number.isFinite(d.lat)
+      ) {
+        setMapCoverPickup({ longitude: d.lng, latitude: d.lat });
+        setMapCoverPickupLabel(typeof d.label === 'string' ? d.label.trim() : '');
+      } else {
+        setMapCoverPickup(null);
+        setMapCoverPickupLabel('');
+        setMapSelectedDestination(null);
+        setMapDestinationLabel('');
+        setMapRouteFeature(null);
+        setMapRouteDurationLabel('');
+        setMapRouteTrafficDurationLabel('');
+      }
+    };
+    window.addEventListener('palto:go-cover-pickup-sync', onPanelPickup as EventListener);
+    return () => window.removeEventListener('palto:go-cover-pickup-sync', onPanelPickup as EventListener);
+  }, [isPaltoMapCover]);
+
+  useEffect(() => {
+    if (!isPaltoMapCover) return;
+    if (!mapToken || !mapSelectedDestination || !mapCoverPickup) {
       setMapRouteFeature(null);
       setMapRouteDurationLabel('');
       setMapRouteTrafficDurationLabel('');
@@ -100,7 +141,7 @@ const ProjectCoverCarousel: React.FC<ProjectCoverCarouselProps> = ({
     let cancelled = false;
     (async () => {
       try {
-        const feature = await fetchDrivingRouteFeature(mapToken, DEFAULT_USER_ORIGIN, mapSelectedDestination);
+        const feature = await fetchDrivingRouteFeature(mapToken, mapCoverPickup, mapSelectedDestination);
         if (!cancelled) {
           setMapRouteFeature(feature);
           const durationSeconds =
@@ -137,7 +178,7 @@ const ProjectCoverCarousel: React.FC<ProjectCoverCarouselProps> = ({
     return () => {
       cancelled = true;
     };
-  }, [isPaltoMapCover, mapToken, mapSelectedDestination]);
+  }, [isPaltoMapCover, mapToken, mapSelectedDestination, mapCoverPickup]);
 
   useEffect(() => {
     if (!isPaltoMapCover || !mapSelectedDestination || !mapToken) return;
@@ -164,7 +205,12 @@ const ProjectCoverCarousel: React.FC<ProjectCoverCarouselProps> = ({
   useEffect(() => {
     if (!isPaltoMapCover) return;
     const detail = {
+      pickupText: mapCoverPickupLabel,
+      pickupLng: mapCoverPickup?.longitude,
+      pickupLat: mapCoverPickup?.latitude,
       destinationText: mapDestinationLabel,
+      destinationLng: mapSelectedDestination?.longitude,
+      destinationLat: mapSelectedDestination?.latitude,
       coordsText: mapSelectedDestination
         ? `${mapSelectedDestination.latitude.toFixed(4)}, ${mapSelectedDestination.longitude.toFixed(4)}`
         : '',
@@ -174,6 +220,8 @@ const ProjectCoverCarousel: React.FC<ProjectCoverCarouselProps> = ({
     window.dispatchEvent(new CustomEvent('palto:cover-map-update', { detail }));
   }, [
     isPaltoMapCover,
+    mapCoverPickup,
+    mapCoverPickupLabel,
     mapDestinationLabel,
     mapSelectedDestination,
     mapRouteDurationLabel,
@@ -186,11 +234,26 @@ const ProjectCoverCarousel: React.FC<ProjectCoverCarouselProps> = ({
     try {
       const snapped = await snapLngLatToMapboxDriving(mapToken, longitude, latitude, { searchRadiusMeters: 75 });
       if (!snapped) return;
+      const placeName =
+        (await geocodeReverse(snapped.longitude, snapped.latitude, mapToken, { language: 'fr' })) ??
+        `${snapped.latitude.toFixed(4)}, ${snapped.longitude.toFixed(4)}`;
+
+      if (mapCoverPickup === null) {
+        setMapCoverPickup(snapped);
+        setMapCoverPickupLabel(placeName);
+        setMapSelectedDestination(null);
+        setMapDestinationLabel('');
+        setMapRouteFeature(null);
+        setMapRouteDurationLabel('');
+        setMapRouteTrafficDurationLabel('');
+        return;
+      }
+
       setMapSelectedDestination(snapped);
     } catch {
       // ignore sur clic invalide/réseau
     }
-  }, [mapToken]);
+  }, [mapToken, mapCoverPickup]);
 
   return (
     <>
@@ -216,7 +279,7 @@ const ProjectCoverCarousel: React.FC<ProjectCoverCarouselProps> = ({
           <div className="project-cover-map" aria-label="Carte Go">
             <HomeMapboxBackground
               variant="fullscreen"
-              userOrigin={null}
+              userOrigin={mapCoverPickup}
               selectedDestination={mapSelectedDestination}
               routeFeature={mapRouteFeature}
               onMapDestinationPick={handleMapDestinationPick}

@@ -1798,7 +1798,12 @@ const SingleProjectNew: FC<SingleProjectProps> = ({
     if (!isGoProjectPage) return;
     const onCoverMapUpdate = (evt: Event) => {
       const customEvt = evt as CustomEvent<{
+        pickupText?: string;
+        pickupLng?: number;
+        pickupLat?: number;
         destinationText?: string;
+        destinationLng?: number;
+        destinationLat?: number;
         coordsText?: string;
         durationText?: string;
         trafficDurationText?: string;
@@ -1806,8 +1811,46 @@ const SingleProjectNew: FC<SingleProjectProps> = ({
       const detail = customEvt.detail;
       if (!detail) return;
 
-      if (detail.destinationText && detail.destinationText.trim()) {
-        setPaltoRideDestination(detail.destinationText);
+      const hasPickupCoords =
+        typeof detail.pickupLng === 'number' &&
+        typeof detail.pickupLat === 'number' &&
+        Number.isFinite(detail.pickupLng) &&
+        Number.isFinite(detail.pickupLat);
+      const hasDestCoords =
+        typeof detail.destinationLng === 'number' &&
+        typeof detail.destinationLat === 'number' &&
+        Number.isFinite(detail.destinationLng) &&
+        Number.isFinite(detail.destinationLat);
+      const hasPickup = hasPickupCoords || Boolean(detail.pickupText?.trim());
+
+      if (hasPickupCoords) {
+        setPickupResolvedPoint({ longitude: detail.pickupLng as number, latitude: detail.pickupLat as number });
+        setPickupGeocodeError(null);
+      }
+      if (detail.pickupText?.trim()) {
+        const p = simplifyRideAddress(detail.pickupText);
+        setPaltoPickupLocation(p);
+        setLastConfirmedPickupText(p);
+        setPaltoRecapPickupText(p);
+      }
+      if (hasPickup && !hasDestCoords) {
+        setPaltoMapSelectedDestination(null);
+        setPaltoRideDestination('');
+        setLastConfirmedDestinationText(null);
+        setDestinationSearchError(null);
+        setChauffeursSearchOk(false);
+        setPaltoRideSelectedDriverId(null);
+      }
+      if (hasDestCoords) {
+        setPaltoMapSelectedDestination({
+          longitude: detail.destinationLng as number,
+          latitude: detail.destinationLat as number,
+        });
+      }
+      if (detail.destinationText?.trim()) {
+        const d = simplifyRideAddress(detail.destinationText);
+        setPaltoRideDestination(d);
+        setLastConfirmedDestinationText(d);
       }
       if (detail.coordsText && detail.coordsText.trim()) {
         setPaltoRecapCoordsText(detail.coordsText);
@@ -1818,18 +1861,6 @@ const SingleProjectNew: FC<SingleProjectProps> = ({
       if (detail.trafficDurationText && detail.trafficDurationText.trim()) {
         setPaltoRecapTrafficDurationText(detail.trafficDurationText);
       }
-
-      const now = new Date();
-      setPaltoRecapPickupText(
-        now.toLocaleString('fr-FR', {
-          year: 'numeric',
-          month: '2-digit',
-          day: '2-digit',
-          hour: '2-digit',
-          minute: '2-digit',
-          second: '2-digit',
-        })
-      );
     };
 
     window.addEventListener('palto:cover-map-update', onCoverMapUpdate as EventListener);
@@ -1837,6 +1868,23 @@ const SingleProjectNew: FC<SingleProjectProps> = ({
       window.removeEventListener('palto:cover-map-update', onCoverMapUpdate as EventListener);
     };
   }, [isGoProjectPage]);
+
+  useEffect(() => {
+    if (!isGoProjectPage) return;
+    if (pickupResolvedPoint) {
+      window.dispatchEvent(
+        new CustomEvent('palto:go-cover-pickup-sync', {
+          detail: {
+            lng: pickupResolvedPoint.longitude,
+            lat: pickupResolvedPoint.latitude,
+            label: lastConfirmedPickupText?.trim() ?? '',
+          },
+        })
+      );
+    } else {
+      window.dispatchEvent(new CustomEvent('palto:go-cover-pickup-sync', { detail: {} }));
+    }
+  }, [isGoProjectPage, pickupResolvedPoint, lastConfirmedPickupText]);
 
   // JSON-LD CreativeWork pour que les IA et crawlers (avec JS) puissent lire le contenu du projet
   useEffect(() => {
