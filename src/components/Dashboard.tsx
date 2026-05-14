@@ -2175,6 +2175,8 @@ const Dashboard = ({
           <div
             className={`dashboard-main${
               activeView === 'organization' ? ' dashboard-main--org-flush' : ''
+            }${
+              isMobileViewport && !topbarLaunchCourse ? ' dashboard-main--chauffeur-mobile-floating-account' : ''
             }`}
           >
             <header
