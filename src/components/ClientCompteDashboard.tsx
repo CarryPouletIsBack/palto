@@ -1866,9 +1866,31 @@ export default function ClientCompteDashboard({ onBack, onOpenClientLiveMeet }: 
               <section className="client-compte-account-layout">
                 <aside className="client-compte-account-sidebar">
                   <div className="client-compte-account-profile">
-                    <div className="dashboard-user-avatar-lg">
-                      {profile.profilePhotoUrl ? <img src={profile.profilePhotoUrl} alt={t('clientAccount.photoAlt')} /> : <User size={22} />}
-                    </div>
+                    <label className="client-compte-account-avatar-uploader">
+                      <span className="client-compte-account-avatar-uploader__visual">
+                        <span className="dashboard-user-avatar-lg">
+                          {profile.profilePhotoUrl ? (
+                            <img src={profile.profilePhotoUrl} alt="" />
+                          ) : (
+                            <User size={22} aria-hidden />
+                          )}
+                        </span>
+                        <span className="client-compte-account-avatar-uploader__overlay" aria-hidden>
+                          <Pencil size={22} strokeWidth={2.25} />
+                        </span>
+                        <input
+                          type="file"
+                          accept="image/*"
+                          aria-label={t('clientAccount.changeProfilePhotoAria')}
+                          className="client-compte-account-avatar-uploader__input"
+                          onChange={(e) => {
+                            const file = e.target.files?.[0];
+                            void onTopbarPhotoPick(file);
+                            e.currentTarget.value = '';
+                          }}
+                        />
+                      </span>
+                    </label>
                     <div className="client-compte-account-profile-meta">
                       <strong>{profile.prenom} {profile.nom}</strong>
                       <span>{profile.email}</span>
