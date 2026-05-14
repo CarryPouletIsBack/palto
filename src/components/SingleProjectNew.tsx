@@ -1339,13 +1339,8 @@ const SingleProjectNew: FC<SingleProjectProps> = ({
   const LIFT_SCROLL_MAX = 200; // Pixels de "scroll" pour que le panneau touche le haut
   const [liftScroll, setLiftScroll] = useState(() => {
     if (typeof window === 'undefined') return 0;
-    const desktop = window.matchMedia('(min-width: 769px)').matches;
-    if (desktop) return LIFT_SCROLL_MAX;
-    const isGo = projectData.title.trim().toLowerCase() === 'go';
-    return isGo ? LIFT_SCROLL_MAX : 0;
+    return window.matchMedia('(min-width: 769px)').matches ? LIFT_SCROLL_MAX : 0;
   });
-  /** Mobile Go : carte OSM dans le flux dès l'ouverture (pas réservée au geste « monter » le panneau). */
-  const showGoMobileMapFullTop = isGoProjectPage && !isDesktopViewport;
   const [contentScrollTop, setContentScrollTop] = useState(0); // scroll du contenu une fois le panneau en haut
   const pageRef = useRef<HTMLDivElement>(null);
   const barRef = useRef<HTMLDivElement>(null);
@@ -1789,7 +1784,7 @@ const SingleProjectNew: FC<SingleProjectProps> = ({
 
   // Remonter en haut de la page et réinitialiser la phase de montée à chaque changement de projet (prev/next)
   useEffect(() => {
-    const nextLift = isDesktopViewport || isGoProjectPage ? LIFT_SCROLL_MAX : 0;
+    const nextLift = isDesktopViewport ? LIFT_SCROLL_MAX : 0;
     setLiftScroll(nextLift);
     setContentScrollTop(0);
     setPanelOffsetY(0);
@@ -1797,7 +1792,7 @@ const SingleProjectNew: FC<SingleProjectProps> = ({
     onLiftProgressChange?.(nextLift >= LIFT_SCROLL_MAX ? 1 : 0);
     const el = pageRef.current;
     if (el) el.scrollTo(0, 0);
-  }, [projectData.id, onLiftProgressChange, y, isDesktopViewport, isGoProjectPage]);
+  }, [projectData.id, onLiftProgressChange, y, isDesktopViewport]);
 
   useEffect(() => {
     if (!isGoProjectPage) return;
@@ -2102,21 +2097,6 @@ const SingleProjectNew: FC<SingleProjectProps> = ({
           )}
         </div>
         <div className="palto-ride-main">
-          {showGoMobileMapFullTop ? (
-            <section className="palto-main-top-map-card" aria-label="Carte en haut du main">
-              <div className="palto-main-top-map-shell">
-                <HomeMapboxBackground
-                  variant="embedded"
-                  userOrigin={pickupResolvedPoint}
-                  flyToTarget={pickupFlyToTarget}
-                  selectedDestination={paltoMapSelectedDestination}
-                  routeFeature={paltoMapRouteFeature}
-                  nearbyDrivers={chauffeursSearchOk ? pickupFilteredDrivers : []}
-                  onMapDestinationPick={handlePaltoMainMapPick}
-                />
-              </div>
-            </section>
-          ) : null}
           <div className={`palto-ride-layout${showDriversColumn ? '' : ' palto-ride-layout--no-drivers'}`}>
           <div className="palto-ride-column palto-ride-column--booking">
           <section className="palto-ride-card">

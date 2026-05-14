@@ -6549,10 +6549,9 @@
     max-width: 100%;
   }
 
-  /* Carte OSM en tête du flux Go (la colonne carte desktop reste masquée sur mobile). */
+  /* Mobile Go : carte OSM uniquement dans la cover (ProjectCoverCarousel), pas dans le main. */
   .single-project-page:has(.palto-ride-main) .palto-main-top-map-card {
-    display: block;
-    flex-shrink: 0;
+    display: none;
   }
 
   .palto-ride-column--map {
