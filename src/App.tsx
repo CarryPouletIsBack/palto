@@ -49,6 +49,9 @@ const DOCUMENT_SCROLL_PAGE_IDS = new Set([
 /** Dernière vue « racine » Palto (accueil / carte), persistée en local. */
 const PALTO_VIEW_STORAGE_KEY = 'palto:view'
 
+/** Pages qu’on peut montrer derrière une vue projet (Go) — doit rester aligné avec `renderCurrentPage`. */
+const PROJECT_BACKDROP_PAGE_IDS = new Set(['accueil', 'accueil-chauffeur', 'contact', 'client-compte'])
+
 function App() {
   const { language, setLanguage } = useLanguage()
   const [currentPage, setCurrentPage] = useState('accueil')
@@ -64,6 +67,8 @@ function App() {
   const [coverFullscreenActive, setCoverFullscreenActive] = useState(false)
   const [coverFullscreenModalOpen, setCoverFullscreenModalOpen] = useState(false)
   const coverFullscreenModalTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  /** Dernière page hors-projet « valide comme fond » — utilisé au popstate /go pour ne pas forcer l’accueil. */
+  const projectBackdropSourcePageRef = useRef<string>('accueil')
   const [error, setError] = useState<Error | null>(null)
   const [isAuthChecked, setIsAuthChecked] = useState(false)
   const [isLoggedIn, setIsLoggedIn] = useState(false)
@@ -116,6 +121,14 @@ function App() {
   useEffect(() => {
     if (!isProjectRoute) setProjectScrollCombined(0)
   }, [isProjectRoute])
+
+  useEffect(() => {
+    if (!currentPage.startsWith('project-') && currentPage !== 'project') {
+      if (PROJECT_BACKDROP_PAGE_IDS.has(currentPage)) {
+        projectBackdropSourcePageRef.current = currentPage
+      }
+    }
+  }, [currentPage])
 
   // Gestion d'erreur globale
   useEffect(() => {
@@ -495,7 +508,8 @@ function App() {
       } else if (pathToMatch === '/menu' || pathToMatch.startsWith('/menu')) {
         setCurrentPage('menu')
       } else if (/^\/go$/i.test(pathToMatch)) {
-        setPreviousPage('accueil')
+        const from = projectBackdropSourcePageRef.current
+        setPreviousPage(PROJECT_BACKDROP_PAGE_IDS.has(from) ? from : 'accueil')
         setCurrentPage('project-Go')
       } else if (pathToMatch.startsWith('/lieu/')) {
         const raw = pathToMatch.replace(/^\/lieu\//, '').split('/')[0] ?? ''
@@ -508,7 +522,8 @@ function App() {
       } else if (pathToMatch.startsWith('/project/')) {
         const id = pathToMatch.replace(/^\/project\//, '').toLowerCase()
         if (id === 'go') {
-          setPreviousPage('accueil')
+          const from = projectBackdropSourcePageRef.current
+          setPreviousPage(PROJECT_BACKDROP_PAGE_IDS.has(from) ? from : 'accueil')
           setCurrentPage('project-Go')
         } else {
           setCurrentPage('404')
