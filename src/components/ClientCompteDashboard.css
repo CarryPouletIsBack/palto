@@ -913,19 +913,39 @@ body.accueil-page .dashboard-container--home-accueil .dashboard-main {
 }
 
 @media (max-width: 768px) {
+  /*
+   * Accueil client + Gérer le compte : même principe que la topbar chauffeur mobile —
+   * pas de bandeau blanc, titre (Palto / retour) et bouton « + » masqués.
+   */
+  .dashboard-container--home-accueil .dashboard-topbar.dashboard-topbar--home-client,
+  .dashboard-container--client-compte .dashboard-topbar.dashboard-topbar--home-client {
+    background: transparent;
+    border-bottom: none;
+    box-shadow: none;
+  }
+
+  html[data-app-theme='dark'] .dashboard-container--home-accueil .dashboard-topbar.dashboard-topbar--home-client,
+  html[data-app-theme='dark'] .dashboard-container--client-compte .dashboard-topbar.dashboard-topbar--home-client {
+    box-shadow: none;
+  }
+
+  .dashboard-container--home-accueil .dashboard-home-topbar-start,
+  .dashboard-container--client-compte .dashboard-home-topbar-start {
+    display: none;
+  }
+
+  .dashboard-container--client-compte
+    .dashboard-home-topbar-right-cluster
+    > .client-compte-topbar-menu-anchor:first-child {
+    display: none;
+  }
+
   /* Alignement typescale / spacing compte chauffeur mobile (gouttières ~20px, sections ~32px, cartes ~16px, corps ~16–17px, KPI ~24px) */
   .dashboard-container--client-compte .dashboard-content {
     margin-inline: max(20px, env(safe-area-inset-left, 0px)) max(20px, env(safe-area-inset-right, 0px));
     display: flex;
     flex-direction: column;
     gap: 32px;
-  }
-
-  .dashboard-container--client-compte .dashboard-client-main-title,
-  .dashboard-container--client-compte .dashboard-topbar button.dashboard-client-main-title {
-    font-size: clamp(28px, 7.5vw, 32px);
-    font-weight: 700;
-    line-height: 1.12;
   }
 
   .dashboard-container--client-compte .client-compte-account-main-head h3 {
@@ -944,12 +964,6 @@ body.accueil-page .dashboard-container--home-accueil .dashboard-main {
   .dashboard-container--client-compte .client-compte-topbar-user-btn__avatar {
     width: 22px;
     height: 22px;
-  }
-
-  .dashboard-container--client-compte .client-compte-topbar-add-btn {
-    width: 40px;
-    height: 40px;
-    min-width: 40px;
   }
 
   .dashboard-container--client-compte .client-compte-bento-grid,
