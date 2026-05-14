@@ -2347,15 +2347,8 @@ const Dashboard = ({
                   ) : null}
                   {activeView === 'overview' && (
                   <section className="dashboard-favorites">
-                    <div className="dashboard-section-title dashboard-section-title-inline">
+                    <div className="dashboard-section-title">
                       <h3>Planning</h3>
-                      <button
-                        type="button"
-                        className="dashboard-overview-link-inline"
-                        onClick={() => handleNavSelect('planning')}
-                      >
-                        Ouvrir
-                      </button>
                     </div>
                     <button
                       type="button"
@@ -2390,15 +2383,8 @@ const Dashboard = ({
                   {activeView === 'overview' && (
                   <section className="dashboard-overview-grid">
                     <div className="dashboard-panel-block">
-                      <div className="dashboard-section-title dashboard-section-title-inline">
+                      <div className="dashboard-section-title">
                         <h3>Prochaine course</h3>
-                        <button
-                          type="button"
-                          className="dashboard-overview-link-inline"
-                          onClick={() => handleNavSelect('courses')}
-                        >
-                          Ouvrir
-                        </button>
                       </div>
                       {overviewNextCourse ? (
                         <>
@@ -2454,11 +2440,15 @@ const Dashboard = ({
                           </div>
                         </>
                       ) : (
-                        <article className="dashboard-panel">
+                        <button
+                          type="button"
+                          className="dashboard-panel dashboard-panel--overview-empty"
+                          onClick={() => handleNavSelect('courses')}
+                        >
                           <p style={{ margin: 0 }}>
                             Aucune course a venir pour le moment.
                           </p>
-                        </article>
+                        </button>
                       )}
                     </div>
                   </section>
@@ -2569,15 +2559,8 @@ const Dashboard = ({
 
                   {activeView === 'overview' && (
                   <section className="dashboard-recent">
-                    <div className="dashboard-section-title dashboard-section-title-inline">
+                    <div className="dashboard-section-title">
                       <h3>Courses récentes</h3>
-                      <button
-                        type="button"
-                        className="dashboard-overview-link-inline"
-                        onClick={() => handleNavSelect('courses')}
-                      >
-                        Ouvrir
-                      </button>
                     </div>
                     <div className="dashboard-recent-list">
                       {overviewFocusCourses.map((course) => (

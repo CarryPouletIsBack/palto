@@ -1427,6 +1427,25 @@ html[data-app-theme='dark'] .dashboard-home-topbar-upcoming-btn {
   padding: 14px;
 }
 
+button.dashboard-panel--overview-empty {
+  display: block;
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+  margin: 0;
+  text-align: left;
+  font: inherit;
+  color: inherit;
+  cursor: pointer;
+  appearance: none;
+  -webkit-appearance: none;
+}
+
+button.dashboard-panel--overview-empty:focus-visible {
+  outline: 2px solid #2563eb;
+  outline-offset: 2px;
+}
+
 .dashboard-metric-list {
   display: flex;
   flex-direction: column;
@@ -4525,12 +4544,24 @@ button.dashboard-org-sidebar-brand--home:focus-visible {
   border: none;
 }
 
-/* Cartes overview : bordure lisible malgré l'override chauffeur (div / bouton plein) */
+/* Cartes overview chauffeur : sans bordure extérieure ; léger relief au survol */
 .dashboard-container--chauffeur .dashboard-overview-stack,
 .dashboard-container--chauffeur .dashboard-heatmap-card,
 .dashboard-container--chauffeur .dashboard-panel-block > .dashboard-panel {
-  border: 1px solid #e5e7eb;
+  border: none;
   transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.dashboard-container--chauffeur .dashboard-overview-stack .dashboard-panel {
+  border-top: none;
+}
+
+.dashboard-container--chauffeur .dashboard-heatmap-cell {
+  border: none;
+}
+
+.dashboard-container--chauffeur .dashboard-recent-item {
+  border: none;
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -4575,11 +4606,17 @@ html[data-app-theme='contrast'] .dashboard-container--chauffeur .dashboard-avata
 html[data-app-theme='contrast'] .dashboard-container--chauffeur button,
 html[data-app-theme='contrast'] .dashboard-container--chauffeur input,
 html[data-app-theme='contrast'] .dashboard-container--chauffeur select,
-html[data-app-theme='contrast'] .dashboard-container--chauffeur textarea,
-html[data-app-theme='contrast'] .dashboard-container--chauffeur .dashboard-overview-stack,
-html[data-app-theme='contrast'] .dashboard-container--chauffeur .dashboard-heatmap-card,
-html[data-app-theme='contrast'] .dashboard-container--chauffeur .dashboard-panel-block > .dashboard-panel {
+html[data-app-theme='contrast'] .dashboard-container--chauffeur textarea {
   border: 1px solid #000000;
+}
+
+html[data-app-theme='contrast'] .dashboard-container--chauffeur .dashboard-overview-stack,
+html[data-app-theme='contrast'] .dashboard-container--chauffeur .dashboard-heatmap-card--action,
+html[data-app-theme='contrast'] .dashboard-container--chauffeur .dashboard-overview-grid .dashboard-panel-block > .dashboard-panel,
+html[data-app-theme='contrast'] .dashboard-container--chauffeur .dashboard-overview-mini-card,
+html[data-app-theme='contrast'] .dashboard-container--chauffeur .dashboard-recent-item {
+  border: none;
+  box-shadow: none;
 }
 
 /* Chauffeur : restaurer uniquement les bordures des champs input */
