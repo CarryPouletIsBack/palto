@@ -78,7 +78,8 @@ html[data-app-theme='dark'] .palto-checkout__payment--active {
 
 /* Go mobile : fond du main — clair #fff dans SingleProject.css ; sombre = surface page. */
 @media (max-width: 768px) {
-  html[data-app-theme='dark'] .single-project-page:has(.palto-ride-main) .main-single-project {
+  html[data-app-theme='dark'] .single-project-page:has(.palto-ride-main) .main-single-project,
+  html[data-app-theme='dark'] .single-project-page:has(.palto-ride-main) .swipe-indicator-bar {
     background: var(--sp-bg);
   }
 }

@@ -1337,8 +1337,15 @@ const SingleProjectNew: FC<SingleProjectProps> = ({
   const [paltoConceptionConceptIndex, setPaltoConceptionConceptIndex] = useState(0);
   const [paltoConceptionSlideIndex, setPaltoConceptionSlideIndex] = useState(0);
   const LIFT_SCROLL_MAX = 200; // Pixels de "scroll" pour que le panneau touche le haut
-  const [liftScroll, setLiftScroll] = useState(0); // 0 à LIFT_SCROLL_MAX : phase où seul le panneau monte
-  const showGoMobileMapFullTop = isGoProjectPage && !isDesktopViewport && liftScroll >= LIFT_SCROLL_MAX;
+  const [liftScroll, setLiftScroll] = useState(() => {
+    if (typeof window === 'undefined') return 0;
+    const desktop = window.matchMedia('(min-width: 769px)').matches;
+    if (desktop) return LIFT_SCROLL_MAX;
+    const isGo = projectData.title.trim().toLowerCase() === 'go';
+    return isGo ? LIFT_SCROLL_MAX : 0;
+  });
+  /** Mobile Go : carte OSM dans le flux dès l'ouverture (pas réservée au geste « monter » le panneau). */
+  const showGoMobileMapFullTop = isGoProjectPage && !isDesktopViewport;
   const [contentScrollTop, setContentScrollTop] = useState(0); // scroll du contenu une fois le panneau en haut
   const pageRef = useRef<HTMLDivElement>(null);
   const barRef = useRef<HTMLDivElement>(null);
@@ -1782,14 +1789,15 @@ const SingleProjectNew: FC<SingleProjectProps> = ({
 
   // Remonter en haut de la page et réinitialiser la phase de montée à chaque changement de projet (prev/next)
   useEffect(() => {
-    setLiftScroll(isDesktopViewport ? LIFT_SCROLL_MAX : 0);
+    const nextLift = isDesktopViewport || isGoProjectPage ? LIFT_SCROLL_MAX : 0;
+    setLiftScroll(nextLift);
     setContentScrollTop(0);
     setPanelOffsetY(0);
     y.set(0);
-    onLiftProgressChange?.(0);
+    onLiftProgressChange?.(nextLift >= LIFT_SCROLL_MAX ? 1 : 0);
     const el = pageRef.current;
     if (el) el.scrollTo(0, 0);
-  }, [projectData.id, onLiftProgressChange, y, isDesktopViewport]);
+  }, [projectData.id, onLiftProgressChange, y, isDesktopViewport, isGoProjectPage]);
 
   useEffect(() => {
     if (!isGoProjectPage) return;

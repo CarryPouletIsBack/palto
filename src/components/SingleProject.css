@@ -6327,6 +6327,10 @@
     background: #ffffff;
   }
 
+  .single-project-page:has(.palto-ride-main) .swipe-indicator-bar {
+    background: #ffffff;
+  }
+
   /*
    * /go mobile : gouttières + typescale / spacing alignés compte client & chauffeur
    * (titres ~clamp(28px,7.5vw,32px), corps ~16–17px, gouttières ~20px + safe area, gaps ~12–16px).
@@ -6545,8 +6549,10 @@
     max-width: 100%;
   }
 
-  .palto-main-top-map-card {
-    display: none;
+  /* Carte OSM en tête du flux Go (la colonne carte desktop reste masquée sur mobile). */
+  .single-project-page:has(.palto-ride-main) .palto-main-top-map-card {
+    display: block;
+    flex-shrink: 0;
   }
 
   .palto-ride-column--map {
