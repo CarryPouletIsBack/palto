@@ -1886,6 +1886,18 @@ const SingleProjectNew: FC<SingleProjectProps> = ({
     }
   }, [isGoProjectPage, pickupResolvedPoint, lastConfirmedPickupText]);
 
+  useEffect(() => {
+    if (!isGoProjectPage) return;
+    window.dispatchEvent(
+      new CustomEvent('palto:go-cover-route-sync', {
+        detail: {
+          routeFeature: paltoMapRouteFeature,
+          destination: paltoMapSelectedDestination,
+        },
+      })
+    );
+  }, [isGoProjectPage, paltoMapRouteFeature, paltoMapSelectedDestination]);
+
   // JSON-LD CreativeWork pour que les IA et crawlers (avec JS) puissent lire le contenu du projet
   useEffect(() => {
     const baseUrl = (import.meta.env.VITE_SITE_URL as string) || (typeof window !== 'undefined' ? window.location.origin : '')

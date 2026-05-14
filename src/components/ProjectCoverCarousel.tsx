@@ -6,7 +6,6 @@ import 'swiper/css';
 import 'swiper/css/pagination';
 import './ProjectCoverCarousel.css';
 import HomeMapboxBackground from './HomeMapboxBackground';
-import { fetchDrivingRouteFeature } from '../services/mapboxDirections';
 import { snapLngLatToMapboxDriving } from '../services/mapboxSnapToRoad';
 import { isLngLatInsideReunionIsland } from '../constants/reunionIsland';
 import { geocodeReverse } from '../services/mapboxGeocoding';
@@ -50,8 +49,6 @@ const ProjectCoverCarousel: React.FC<ProjectCoverCarouselProps> = ({
   const [mapSelectedDestination, setMapSelectedDestination] = useState<{ longitude: number; latitude: number } | null>(null);
   const [mapRouteFeature, setMapRouteFeature] = useState<Feature<LineString> | null>(null);
   const [mapDestinationLabel, setMapDestinationLabel] = useState('');
-  const [mapRouteDurationLabel, setMapRouteDurationLabel] = useState('');
-  const [mapRouteTrafficDurationLabel, setMapRouteTrafficDurationLabel] = useState('');
 
   // Dupliquer l'image pour tester le carousel
   const images = useMemo(() => {
@@ -98,8 +95,6 @@ const ProjectCoverCarousel: React.FC<ProjectCoverCarouselProps> = ({
     setMapSelectedDestination(null);
     setMapRouteFeature(null);
     setMapDestinationLabel('');
-    setMapRouteDurationLabel('');
-    setMapRouteTrafficDurationLabel('');
   }, [isPaltoMapCover]);
 
   useEffect(() => {
@@ -122,8 +117,6 @@ const ProjectCoverCarousel: React.FC<ProjectCoverCarouselProps> = ({
         setMapSelectedDestination(null);
         setMapDestinationLabel('');
         setMapRouteFeature(null);
-        setMapRouteDurationLabel('');
-        setMapRouteTrafficDurationLabel('');
       }
     };
     window.addEventListener('palto:go-cover-pickup-sync', onPanelPickup as EventListener);
@@ -132,53 +125,30 @@ const ProjectCoverCarousel: React.FC<ProjectCoverCarouselProps> = ({
 
   useEffect(() => {
     if (!isPaltoMapCover) return;
-    if (!mapToken || !mapSelectedDestination || !mapCoverPickup) {
-      setMapRouteFeature(null);
-      setMapRouteDurationLabel('');
-      setMapRouteTrafficDurationLabel('');
-      return;
-    }
-    let cancelled = false;
-    (async () => {
-      try {
-        const feature = await fetchDrivingRouteFeature(mapToken, mapCoverPickup, mapSelectedDestination);
-        if (!cancelled) {
-          setMapRouteFeature(feature);
-          const durationSeconds =
-            feature &&
-            feature.properties &&
-            typeof (feature.properties as { durationSeconds?: unknown }).durationSeconds === 'number'
-              ? ((feature.properties as { durationSeconds: number }).durationSeconds)
-              : null;
-          const durationTrafficSeconds =
-            feature &&
-            feature.properties &&
-            typeof (feature.properties as { durationTrafficSeconds?: unknown }).durationTrafficSeconds === 'number'
-              ? ((feature.properties as { durationTrafficSeconds: number }).durationTrafficSeconds)
-              : null;
-          setMapRouteDurationLabel(
-            durationSeconds && Number.isFinite(durationSeconds)
-              ? `~${Math.max(1, Math.round(durationSeconds / 60))} min`
-              : ''
-          );
-          setMapRouteTrafficDurationLabel(
-            durationTrafficSeconds && Number.isFinite(durationTrafficSeconds)
-              ? `~${Math.max(1, Math.round(durationTrafficSeconds / 60))} min`
-              : ''
-          );
-        }
-      } catch {
-        if (!cancelled) {
-          setMapRouteFeature(null);
-          setMapRouteDurationLabel('');
-          setMapRouteTrafficDurationLabel('');
+    const onPanelRoute = (evt: Event) => {
+      const e = evt as CustomEvent<{
+        routeFeature?: Feature<LineString> | null;
+        destination?: { longitude: number; latitude: number } | null;
+      }>;
+      const d = e.detail;
+      if (!d) return;
+      if ('routeFeature' in d) setMapRouteFeature(d.routeFeature ?? null);
+      if ('destination' in d) {
+        if (d.destination === null) {
+          setMapSelectedDestination(null);
+          setMapDestinationLabel('');
+        } else if (
+          d.destination &&
+          typeof d.destination.longitude === 'number' &&
+          typeof d.destination.latitude === 'number'
+        ) {
+          setMapSelectedDestination(d.destination);
         }
       }
-    })();
-    return () => {
-      cancelled = true;
     };
-  }, [isPaltoMapCover, mapToken, mapSelectedDestination, mapCoverPickup]);
+    window.addEventListener('palto:go-cover-route-sync', onPanelRoute as EventListener);
+    return () => window.removeEventListener('palto:go-cover-route-sync', onPanelRoute as EventListener);
+  }, [isPaltoMapCover]);
 
   useEffect(() => {
     if (!isPaltoMapCover || !mapSelectedDestination || !mapToken) return;
@@ -214,8 +184,8 @@ const ProjectCoverCarousel: React.FC<ProjectCoverCarouselProps> = ({
       coordsText: mapSelectedDestination
         ? `${mapSelectedDestination.latitude.toFixed(4)}, ${mapSelectedDestination.longitude.toFixed(4)}`
         : '',
-      durationText: mapRouteDurationLabel,
-      trafficDurationText: mapRouteTrafficDurationLabel,
+      durationText: '',
+      trafficDurationText: '',
     };
     window.dispatchEvent(new CustomEvent('palto:cover-map-update', { detail }));
   }, [
@@ -224,8 +194,6 @@ const ProjectCoverCarousel: React.FC<ProjectCoverCarouselProps> = ({
     mapCoverPickupLabel,
     mapDestinationLabel,
     mapSelectedDestination,
-    mapRouteDurationLabel,
-    mapRouteTrafficDurationLabel,
   ]);
 
   const handleMapDestinationPick = useCallback(async (longitude: number, latitude: number) => {
@@ -244,8 +212,6 @@ const ProjectCoverCarousel: React.FC<ProjectCoverCarouselProps> = ({
         setMapSelectedDestination(null);
         setMapDestinationLabel('');
         setMapRouteFeature(null);
-        setMapRouteDurationLabel('');
-        setMapRouteTrafficDurationLabel('');
         return;
       }
 
