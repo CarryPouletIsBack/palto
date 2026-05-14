@@ -1527,6 +1527,10 @@ html[data-app-theme='dark'] .client-compte-account-edit-modal-input {
   max-width: 420px;
 }
 
+.client-compte-payment-address-card--empty {
+  max-width: 520px;
+}
+
 .client-compte-payment-modal {
   width: min(680px, 100%);
 }
@@ -1659,13 +1663,12 @@ html[data-app-theme='dark'] .client-compte-account-edit-modal-input {
     gap: 16px;
   }
 
-  /* Barre type compte chauffeur (org sidebar) : avatar + nav horizontale scrollable */
+  /* Profil au-dessus, nav horizontale scrollable en dessous (pleine largeur du aside) */
   .client-compte-account-sidebar {
     display: flex;
-    flex-direction: row;
-    flex-wrap: nowrap;
+    flex-direction: column;
     align-items: stretch;
-    gap: 8px;
+    gap: 10px;
     width: 100%;
     min-width: 0;
     box-sizing: border-box;
@@ -1681,7 +1684,8 @@ html[data-app-theme='dark'] .client-compte-account-edit-modal-input {
     align-items: center;
     gap: 10px;
     margin-bottom: 0;
-    max-width: min(12rem, 42vw);
+    width: 100%;
+    max-width: none;
     min-width: 0;
   }
 
@@ -1693,7 +1697,8 @@ html[data-app-theme='dark'] .client-compte-account-edit-modal-input {
     display: flex;
     flex-direction: row;
     flex-wrap: nowrap;
-    flex: 1 1 auto;
+    flex: 0 1 auto;
+    width: 100%;
     min-width: 0;
     overflow-x: auto;
     overflow-y: hidden;

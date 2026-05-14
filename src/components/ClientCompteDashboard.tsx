@@ -1940,17 +1940,19 @@ export default function ClientCompteDashboard({ onBack, onOpenClientLiveMeet }: 
                       </div>
 
                       <h4 className="client-compte-payment-delivery-title">
-                        {isEn ? 'Delivery address' : 'Adresse de livraison'}
+                        {isEn ? 'Billing address' : 'Adresse de facturation'}
                       </h4>
                       <p className="dashboard-field-hint">
                         {isEn
-                          ? 'This address is used for App Store purchases and invoices.'
-                          : 'Cette adresse est utilisee pour les achats App Store et la facturation.'}
+                          ? 'Used for payment receipts and invoicing when you register a payment method. Nothing is pre-filled here — you add your own billing details when you add a card.'
+                          : 'Utilisée pour les reçus de paiement et la facturation lorsque vous enregistrez un moyen de paiement. Rien n’est pré-rempli ici : vous saisissez votre adresse de facturation lors de l’ajout d’une carte.'}
                       </p>
-                      <article className="dashboard-user-card client-compte-payment-address-card">
-                        <strong>{`${profile.prenom} ${profile.nom}`}</strong>
-                        <span>56 rue Jules le Grand</span>
-                        <span>Lorient, 56100</span>
+                      <article className="dashboard-user-card client-compte-payment-address-card client-compte-payment-address-card--empty">
+                        <p className="dashboard-field-hint" style={{ margin: 0 }}>
+                          {isEn
+                            ? 'No billing address saved yet. Use "Add payment method" above to enter your billing address with your card.'
+                            : 'Aucune adresse de facturation enregistrée. Utilisez « Ajouter un mode de paiement » ci-dessus pour saisir votre adresse de facturation avec votre carte.'}
+                        </p>
                       </article>
                     </section>
                   ) : (
