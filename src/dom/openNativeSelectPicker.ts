@@ -4,11 +4,16 @@
  */
 export function openNativeSelectPicker(select: HTMLSelectElement | null): void {
   if (!select) return
-  const withPicker = select as HTMLSelectElement & { showPicker?: () => Promise<void> }
+  const withPicker = select as HTMLSelectElement & { showPicker?: () => unknown }
   if (typeof withPicker.showPicker === 'function') {
-    void withPicker.showPicker.call(select).catch(() => {
+    try {
+      const result = withPicker.showPicker.call(select)
+      void Promise.resolve(result).catch(() => {
+        select.focus()
+      })
+    } catch {
       select.focus()
-    })
+    }
     return
   }
   select.focus()
