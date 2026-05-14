@@ -10,7 +10,7 @@ import './Hero.css'
 import { PLACEHOLDER_COVER } from '../constants/imagePlaceholders'
 import { POPULAR_DESTINATIONS, type PopularDestination } from '../data/popularDestinations'
 import { saveGoPrefill } from '../constants/goPrefillStorage'
-import { geocodeForwardSuggestions, type GeocodeSuggestion } from '../services/mapboxGeocoding'
+import { geocodeForwardSuggestions, type GeocodeSuggestion } from '../services/addressGeocoding'
 import { REUNION_ISLAND_BBOX_GEOCODE } from '../constants/reunionIsland'
 import { CalendarRange, Car, ChevronDown, Wallet, X } from 'lucide-react'
 import { useClientHomeTopbarRides } from '../hooks/useClientHomeTopbarRides'
@@ -98,7 +98,7 @@ const Hero = ({
     }
     pickupTimerRef.current = setTimeout(async () => {
       pickupTimerRef.current = null
-      const list = await geocodeForwardSuggestions(q, 'osm', {
+      const list = await geocodeForwardSuggestions(q, undefined, {
         language,
         bbox: REUNION_ISLAND_BBOX_GEOCODE,
         limit: 5,
@@ -120,7 +120,7 @@ const Hero = ({
     }
     destinationTimerRef.current = setTimeout(async () => {
       destinationTimerRef.current = null
-      const list = await geocodeForwardSuggestions(q, 'osm', {
+      const list = await geocodeForwardSuggestions(q, undefined, {
         language,
         bbox: REUNION_ISLAND_BBOX_GEOCODE,
         limit: 5,

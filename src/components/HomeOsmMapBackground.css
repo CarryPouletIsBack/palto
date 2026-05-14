@@ -1,5 +1,5 @@
 /* Carte plein écran sous le contenu hero ; interactions gérées par la carte */
-.home-mapbox-bg {
+.home-osm-map-bg {
   position: fixed;
   inset: 0;
   width: 100vw;
@@ -10,7 +10,7 @@
   overflow: hidden;
 }
 
-.home-mapbox-bg__map {
+.home-osm-map-bg__map {
   position: absolute;
   inset: 0;
   width: 100%;
@@ -18,22 +18,22 @@
   pointer-events: auto;
 }
 
-/* Contrôles Mapbox au-dessus de la carte */
-.home-mapbox-bg__map .mapboxgl-ctrl-bottom-right,
-.home-mapbox-bg__map .mapboxgl-ctrl-bottom-left,
-.home-mapbox-bg__map .mapboxgl-ctrl-attrib {
+/* Contrôles carte (MapLibre) au-dessus de la carte */
+.home-osm-map-bg__map .mapboxgl-ctrl-bottom-right,
+.home-osm-map-bg__map .mapboxgl-ctrl-bottom-left,
+.home-osm-map-bg__map .mapboxgl-ctrl-attrib {
   pointer-events: auto;
 }
 
-.home-mapbox-bg__map .mapboxgl-map {
+.home-osm-map-bg__map .mapboxgl-map {
   font-family: inherit;
 }
 
 /**
  * Fond dashboard : remplit le parent `position: relative` (ex. `.dashboard-container`),
- * sans capter les clics (sauf attribution Mapbox).
+ * sans capter les clics (sauf zone attribution / contrôles carte).
  */
-.home-mapbox-bg--dashboard-backdrop {
+.home-osm-map-bg--dashboard-backdrop {
   position: absolute;
   inset: 0;
   width: 100%;
@@ -43,15 +43,15 @@
   pointer-events: none;
 }
 
-.home-mapbox-bg--dashboard-backdrop .home-mapbox-bg__map {
+.home-osm-map-bg--dashboard-backdrop .home-osm-map-bg__map {
   pointer-events: none;
 }
 
-.home-mapbox-bg--dashboard-backdrop .mapboxgl-ctrl-bottom-left {
+.home-osm-map-bg--dashboard-backdrop .mapboxgl-ctrl-bottom-left {
   pointer-events: auto;
 }
 
-.home-mapbox-bg--auth-wall {
+.home-osm-map-bg--auth-wall {
   position: fixed;
   inset: 0;
   width: 100vw;
@@ -61,16 +61,16 @@
   pointer-events: none;
 }
 
-.home-mapbox-bg--auth-wall .home-mapbox-bg__map {
+.home-osm-map-bg--auth-wall .home-osm-map-bg__map {
   pointer-events: none;
 }
 
-.home-mapbox-bg--auth-wall .mapboxgl-ctrl-bottom-left {
+.home-osm-map-bg--auth-wall .mapboxgl-ctrl-bottom-left {
   pointer-events: auto;
 }
 
 /* Pins départ / arrivée (au-dessus de la carte, hors capture des clics carte sauf zone pin) */
-.home-mapbox-pin {
+.home-osm-map-pin {
   width: 22px;
   height: 22px;
   border-radius: 50% 50% 50% 0;
@@ -80,15 +80,15 @@
   pointer-events: none;
 }
 
-.home-mapbox-pin--user {
+.home-osm-map-pin--user {
   background: linear-gradient(145deg, #38bdf8, #0284c7);
 }
 
-.home-mapbox-pin--dest {
+.home-osm-map-pin--dest {
   background: linear-gradient(145deg, #fb923c, #ea580c);
 }
 
-.home-mapbox-driver-moto {
+.home-osm-map-driver-moto {
   width: 38px;
   height: 38px;
   display: flex;
@@ -98,14 +98,14 @@
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.35);
 }
 
-.home-mapbox-driver-moto__svg {
+.home-osm-map-driver-moto__svg {
   width: 100%;
   height: 100%;
   display: block;
 }
 
 /* Carte dans une colonne (Hero) : parent .hero-map-embed-shell en flex column → ce bloc remplit la hauteur */
-.home-mapbox-bg--embedded {
+.home-osm-map-bg--embedded {
   position: relative;
   inset: auto;
   width: 100%;
@@ -119,13 +119,13 @@
 }
 
 @media (min-width: 701px) {
-  .home-mapbox-bg--embedded {
+  .home-osm-map-bg--embedded {
     min-height: 280px;
   }
 }
 
 @media (max-width: 700px) {
-  .home-mapbox-bg--embedded {
+  .home-osm-map-bg--embedded {
     min-height: 240px;
     height: 100%;
   }

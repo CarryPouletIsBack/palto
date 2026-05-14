@@ -12,8 +12,8 @@ import {
   geocodeReverse,
   reverseGeocodeDisplayFallback,
   type GeocodeSuggestion,
-} from '../services/mapboxGeocoding';
-import { resolvePickOnRoad } from '../services/mapboxSnapToRoad';
+} from '../services/addressGeocoding';
+import { resolvePickOnRoad } from '../services/osrmRouting';
 import { REUNION_ISLAND_BBOX_GEOCODE } from '../constants/reunionIsland';
 
 const AUTOCOMPLETE_DEBOUNCE_MS = 220;
@@ -25,7 +25,6 @@ export type ClientComptePlaceAddressFieldProps = {
   inputId: string;
   value: string;
   coords: SavedPlaceCoords | null;
-  mapToken: string | undefined;
   language: 'fr' | 'en';
   t: (key: string) => string;
   onUserInput: (next: string) => void;
@@ -41,7 +40,6 @@ export default function ClientComptePlaceAddressField({
   inputId,
   value,
   coords,
-  mapToken,
   language,
   t,
   onUserInput,
@@ -61,11 +59,10 @@ export default function ClientComptePlaceAddressField({
 
   const resolveFromGeocode = useCallback(
     async (longitude: number, latitude: number, fallbackLabel: string) => {
-      if (!mapToken?.trim()) return;
       setResolvingPick(true);
       try {
-        const picked = await resolvePickOnRoad(mapToken, longitude, latitude, { searchRadiusMeters: 75 });
-        const fromReverse = await geocodeReverse(picked.longitude, picked.latitude, mapToken, { language });
+        const picked = await resolvePickOnRoad(longitude, latitude, { searchRadiusMeters: 75 });
+        const fromReverse = await geocodeReverse(picked.longitude, picked.latitude, undefined, { language });
         const display =
           (fromReverse?.trim() ? fromReverse : null) ??
           (fallbackLabel.trim() ? fallbackLabel : reverseGeocodeDisplayFallback(language, 'mapPoint'));
@@ -75,7 +72,7 @@ export default function ClientComptePlaceAddressField({
         setResolvingPick(false);
       }
     },
-    [language, mapToken, onResolvedPlace]
+    [language, onResolvedPlace]
   );
 
   const applyAddressSuggestion = useCallback(
@@ -87,14 +84,14 @@ export default function ClientComptePlaceAddressField({
 
   const applyPopular = useCallback(
     async (d: PopularDestination) => {
-      const coordsFwd = await geocodeForward(d.geocodeQuery, mapToken, {
+      const coordsFwd = await geocodeForward(d.geocodeQuery, undefined, {
         language,
         bbox: REUNION_ISLAND_BBOX_GEOCODE,
       });
       if (!coordsFwd) return;
       await resolveFromGeocode(coordsFwd.longitude, coordsFwd.latitude, d.geocodeQuery);
     },
-    [language, mapToken, resolveFromGeocode]
+    [language, resolveFromGeocode]
   );
 
   useEffect(() => {
@@ -117,7 +114,7 @@ export default function ClientComptePlaceAddressField({
       timerRef.current = null;
       setSuggestionLoading(true);
       try {
-        const list = await geocodeForwardSuggestions(q, mapToken, {
+        const list = await geocodeForwardSuggestions(q, undefined, {
           language,
           proximity: PROXIMITY_REU,
           bbox: REUNION_ISLAND_BBOX_GEOCODE,
@@ -137,15 +134,13 @@ export default function ClientComptePlaceAddressField({
         timerRef.current = null;
       }
     };
-  }, [suggestionOpen, value, mapToken, language]);
+  }, [suggestionOpen, value, language]);
 
   const onBlur = useCallback((e: FocusEvent<HTMLInputElement>) => {
     const next = e.relatedTarget as HTMLElement | null;
     if (next?.dataset?.clientPlaceSuggest === 'true') return;
     setSuggestionOpen(false);
   }, []);
-
-  const hasToken = true;
 
   return (
     <div className="client-compte-place-field-wrap">
@@ -164,7 +159,7 @@ export default function ClientComptePlaceAddressField({
         />
       </label>
 
-      {suggestionOpen && hasToken ? (
+      {suggestionOpen ? (
         <div className="client-compte-place-suggestions" role="listbox" aria-label={t('clientAccount.placesSuggestionsAria')}>
           {filteredPopular.length > 0 ? (
             <>
@@ -217,14 +212,13 @@ export default function ClientComptePlaceAddressField({
           type="button"
           className="dashboard-user-edit-btn"
           onClick={onMarkOnMap}
-          disabled={!hasToken || resolvingPick}
+          disabled={resolvingPick}
         >
           {t('clientAccount.placesMarkOnMap')}
         </button>
         {coords ? (
           <span className="dashboard-field-hint client-compte-place-coords-hint">{t('clientAccount.placesCoordsSaved')}</span>
         ) : null}
-        {!hasToken ? <span className="dashboard-field-hint">{t('clientAccount.placesNoMapToken')}</span> : null}
       </div>
     </div>
   );

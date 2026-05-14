@@ -263,7 +263,6 @@ export default function ClientCompteDashboard({ onBack, onOpenClientLiveMeet }: 
   const { t, language, setLanguage } = useLanguage();
   const isEn = language === 'en';
   const { clientUpcomingRide, clientLiveMeetActive, ridesRefreshEpoch } = useClientHomeTopbarRides(language);
-  const openstreetToken = import.meta.env.VITE_OPENSTREET_ACCESS_TOKEN as string | undefined;
   const [wallet, setWallet] = useState(() => loadClientWalletSnapshot(getCurrentClientUser()?.email));
   const [appPrefs, setAppPrefs] = useState<ClientAppPreferencesSnapshot>(() =>
     loadClientAppPreferences(getCurrentClientUser()?.email)
@@ -2484,7 +2483,6 @@ export default function ClientCompteDashboard({ onBack, onOpenClientLiveMeet }: 
                           departTime={selectedRide.departTime}
                           meetPickupCoords={selectedRide.meetPickupCoords}
                           meetDriverCoordsInitial={selectedRide.meetDriverCoordsInitial}
-                          mapboxAccessToken={openstreetToken}
                           t={t}
                         />
                       ) : null}
@@ -2572,7 +2570,6 @@ export default function ClientCompteDashboard({ onBack, onOpenClientLiveMeet }: 
                       inputId="client-place-domicile"
                       value={placesDraft.domicile}
                       coords={placesDraft.domicileCoords}
-                      mapToken={openstreetToken}
                       language={language}
                       t={t}
                       onUserInput={(v) =>
@@ -2590,7 +2587,6 @@ export default function ClientCompteDashboard({ onBack, onOpenClientLiveMeet }: 
                       inputId="client-place-travail"
                       value={placesDraft.travail}
                       coords={placesDraft.travailCoords}
-                      mapToken={openstreetToken}
                       language={language}
                       t={t}
                       onUserInput={(v) =>
@@ -2667,7 +2663,6 @@ export default function ClientCompteDashboard({ onBack, onOpenClientLiveMeet }: 
                               inputId={`client-place-extra-${row.id}`}
                               value={row.address}
                               coords={row.coords}
-                              mapToken={openstreetToken}
                               language={language}
                               t={t}
                               onUserInput={(v) =>
@@ -3253,7 +3248,6 @@ export default function ClientCompteDashboard({ onBack, onOpenClientLiveMeet }: 
             <ClientComptePlaceMapModal
               open
               onClose={() => setMapPickTarget(null)}
-              accessToken={openstreetToken ?? ''}
               language={language}
               initialMarker={pickInitialMarkerForMap(mapPickTarget, placesDraft)}
               onConfirm={(r) => {

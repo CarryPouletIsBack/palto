@@ -435,7 +435,7 @@
   box-shadow: none;
 }
 
-/* Fond opaque quand la search bar est active (voir --search-panel-solid-bg ; pas de blur sur Mapbox) */
+/* Fond opaque quand la search bar est active (voir --search-panel-solid-bg ; pas de blur sur WebGL) */
 .mobile-search-bar.search-active .search-bar,
 .mobile-search-bar.search-active .search-bar:focus-within,
 .mobile-search-bar.search-active .search-bar.has-results {

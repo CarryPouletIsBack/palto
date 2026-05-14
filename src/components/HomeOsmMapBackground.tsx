@@ -10,7 +10,7 @@ import Map, {
 } from 'react-map-gl/maplibre'
 import type { Feature, LineString } from 'geojson'
 import 'maplibre-gl/dist/maplibre-gl.css'
-import './HomeMapboxBackground.css'
+import './HomeOsmMapBackground.css'
 import { DEFAULT_USER_ORIGIN } from '../constants/defaultUserOrigin'
 import {
   isLngLatInsideReunionIsland,
@@ -28,13 +28,20 @@ export const HOME_MAP_INITIAL_VIEW = {
   bearing: 0,
 } as const
 
-/** Style principal OSM (vector tiles). */
-export const HOME_MAP_STYLE_URL = 'https://basemaps.cartocdn.com/gl/voyager-gl-style/style.json' as const
+/**
+ * Fond carte **uniquement OSM** (MapLibre GL) : **OpenFreeMap Liberty**
+ * — pas de style / tuiles propriétaires (hors OSM), pas de Carto CDN (`basemaps.cartocdn.com`).
+ */
+export const OSM_MAP_STYLE_DEFAULT = 'https://tiles.openfreemap.org/styles/liberty' as const
 
-/** Style OSM orienté navigation. */
-export const MAP_OUTDOORS_STYLE_URL = 'https://tiles.openfreemap.org/styles/liberty' as const
-export const HOME_OPENSTREET_STYLE_URL = HOME_MAP_STYLE_URL
-export const OPENSTREET_OUTDOORS_STYLE_URL = HOME_OPENSTREET_STYLE_URL
+export function getDefaultMapStyleUrl(): string {
+  return OSM_MAP_STYLE_DEFAULT
+}
+
+export const HOME_MAP_STYLE_URL = OSM_MAP_STYLE_DEFAULT
+export const MAP_OUTDOORS_STYLE_URL = OSM_MAP_STYLE_DEFAULT
+export const HOME_OPENSTREET_STYLE_URL = OSM_MAP_STYLE_DEFAULT
+export const OPENSTREET_OUTDOORS_STYLE_URL = OSM_MAP_STYLE_DEFAULT
 
 const CAMERA_ANIM_MS = 720
 
@@ -59,9 +66,9 @@ const MAP_PITCH_3D = 60
 /** Icône moto (vue de profil) pour les chauffeurs sur la carte. */
 function DriverMapMotoIcon({ title, ariaLabel }: { title?: string; ariaLabel: string }) {
   return (
-    <div className="home-mapbox-driver-moto" title={title} role="img" aria-label={ariaLabel}>
+    <div className="home-osm-map-driver-moto" title={title} role="img" aria-label={ariaLabel}>
       <svg
-        className="home-mapbox-driver-moto__svg"
+        className="home-osm-map-driver-moto__svg"
         viewBox="0 0 32 32"
         xmlns="http://www.w3.org/2000/svg"
         aria-hidden
@@ -121,7 +128,7 @@ type HomeMapBackgroundProps = {
 /**
  * Carte GL : plein écran, colonne embarquée, ou fond dashboard (`dashboardBackdrop`).
  */
-export default function HomeMapboxBackground({
+export default function HomeOsmMapBackground({
   variant = 'fullscreen',
   flyToTarget = null,
   userOrigin: userOriginProp,
@@ -359,16 +366,16 @@ export default function HomeMapboxBackground({
 
   const rootClass =
     variant === 'embedded'
-      ? 'home-mapbox-bg home-mapbox-bg--embedded'
+      ? 'home-osm-map-bg home-osm-map-bg--embedded'
       : variant === 'dashboardBackdrop'
-        ? 'home-mapbox-bg home-mapbox-bg--dashboard-backdrop'
+        ? 'home-osm-map-bg home-osm-map-bg--dashboard-backdrop'
         : variant === 'authWall'
-          ? 'home-mapbox-bg home-mapbox-bg--auth-wall'
-          : 'home-mapbox-bg'
+          ? 'home-osm-map-bg home-osm-map-bg--auth-wall'
+          : 'home-osm-map-bg'
 
   return (
     <div ref={containerRef} className={rootClass}>
-      <div className="home-mapbox-bg__map">
+      <div className="home-osm-map-bg__map">
         <Map
           ref={mapRef}
           initialViewState={HOME_MAP_INITIAL_VIEW}
@@ -402,7 +409,7 @@ export default function HomeMapboxBackground({
               anchor="bottom"
               style={{ pointerEvents: 'none' }}
             >
-              <div className="home-mapbox-pin home-mapbox-pin--user" title="Départ" aria-label="Position départ" />
+              <div className="home-osm-map-pin home-osm-map-pin--user" title="Départ" aria-label="Position départ" />
             </Marker>
           ) : null}
 
@@ -413,7 +420,7 @@ export default function HomeMapboxBackground({
               anchor="bottom"
               style={{ pointerEvents: 'none' }}
             >
-              <div className="home-mapbox-pin home-mapbox-pin--dest" title="Arrivée" aria-label="Destination" />
+              <div className="home-osm-map-pin home-osm-map-pin--dest" title="Arrivée" aria-label="Destination" />
             </Marker>
           ) : null}
 

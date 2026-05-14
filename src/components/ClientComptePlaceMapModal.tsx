@@ -1,10 +1,10 @@
 import { useCallback, useEffect, useState } from 'react';
 import Map, { Marker, NavigationControl, type MapLayerMouseEvent } from 'react-map-gl/maplibre';
 import 'maplibre-gl/dist/maplibre-gl.css';
-import { HOME_MAP_INITIAL_VIEW, HOME_OPENSTREET_STYLE_URL } from './HomeMapboxBackground';
+import { HOME_MAP_INITIAL_VIEW, HOME_OPENSTREET_STYLE_URL } from './HomeOsmMapBackground';
 import { isLngLatInsideReunionIsland, REUNION_MAP_MAX_BOUNDS } from '../constants/reunionIsland';
-import { geocodeReverse, reverseGeocodeDisplayFallback } from '../services/mapboxGeocoding';
-import { resolvePickOnRoad } from '../services/mapboxSnapToRoad';
+import { geocodeReverse, reverseGeocodeDisplayFallback } from '../services/addressGeocoding';
+import { resolvePickOnRoad } from '../services/osrmRouting';
 
 export type ClientCompteMapPickResult = {
   lng: number;
@@ -17,7 +17,6 @@ type MarkerCoords = { lng: number; lat: number };
 export type ClientComptePlaceMapModalProps = {
   open: boolean;
   onClose: () => void;
-  accessToken: string;
   language: 'fr' | 'en';
   /** Centre initial du repère (ex. lieu déjà enregistré). Sinon centre île. */
   initialMarker: MarkerCoords | null;
@@ -38,7 +37,6 @@ const DEFAULT_MARKER: MarkerCoords = {
 export default function ClientComptePlaceMapModal({
   open,
   onClose,
-  accessToken,
   language,
   initialMarker,
   onConfirm,
@@ -74,10 +72,10 @@ export default function ClientComptePlaceMapModal({
       const ll = e.lngLat;
       if (!ll) return;
       setError(null);
-      const picked = await resolvePickOnRoad(accessToken, ll.lng, ll.lat, { searchRadiusMeters: 75 });
+      const picked = await resolvePickOnRoad(ll.lng, ll.lat, { searchRadiusMeters: 75 });
       setMarker({ lng: picked.longitude, lat: picked.latitude });
     },
-    [accessToken, t]
+    []
   );
 
   const handleConfirm = useCallback(async () => {
@@ -89,7 +87,7 @@ export default function ClientComptePlaceMapModal({
     setError(null);
     try {
       const address =
-        (await geocodeReverse(marker.lng, marker.lat, accessToken, { language })) ??
+        (await geocodeReverse(marker.lng, marker.lat, undefined, { language })) ??
         reverseGeocodeDisplayFallback(language, 'mapPoint');
       onConfirm({ lng: marker.lng, lat: marker.lat, address });
       onClose();
@@ -98,7 +96,7 @@ export default function ClientComptePlaceMapModal({
     } finally {
       setConfirming(false);
     }
-  }, [accessToken, language, marker, onClose, onConfirm, outsideIslandError, t]);
+  }, [language, marker, onClose, onConfirm, outsideIslandError, t]);
 
   if (!open) return null;
 

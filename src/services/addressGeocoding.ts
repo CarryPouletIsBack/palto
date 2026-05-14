@@ -1,4 +1,4 @@
-/** Résultat du géocodage forward (OpenStreetMap). */
+/** Géocodage adresses (BAN, proxy `/api/geocode`, OSM / Nominatim en repli). */
 import { apiBaseUrl, isGeocodeHttpProxyAvailable } from '../constants/featureFlags'
 import { isLngLatInsideReunionIsland, REUNION_ISLAND_BBOX } from '../constants/reunionIsland'
 
@@ -562,6 +562,10 @@ export async function geocodeReverse(
 
   const banLabel = sanitizeReverseGeocodeLabel(await reverseGeocodeBanPublic(longitude, latitude))
   if (banLabel) return banLabel
+
+  if (!isGeocodeHttpProxyAvailable()) {
+    return null
+  }
 
   try {
     const q = new URLSearchParams({

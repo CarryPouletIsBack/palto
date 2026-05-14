@@ -231,7 +231,7 @@ body.document-scroll-page .page.active:not(.single-project-page):has(.dashboard-
   flex-shrink: 0;
 }
 
-/* Laisser la carte Mapbox recevoir souris / molette : le contenu hero est « traversant » sauf la zone colonnes (cartes cliquables) */
+/* Laisser la carte OSM / MapLibre recevoir souris / molette : le contenu hero est « traversant » sauf la zone colonnes (cartes cliquables) */
 body.accueil-page .main-accueil {
   pointer-events: none;
 }
@@ -940,7 +940,7 @@ body.accueil-page .hero-columns-wrap {
   border: none;
 }
 
-/* Colonne 3 — carte Mapbox (pins, trajet, clic) */
+/* Colonne 3 — carte (pins, trajet, clic) */
 .hero-map-embed-card {
   border: 1px solid rgba(0, 0, 0, 0.12);
   background: #fff8f5;

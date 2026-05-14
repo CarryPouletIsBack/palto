@@ -3,7 +3,7 @@ import { MapPin, Phone } from 'lucide-react';
 import Map, { AttributionControl, Marker, type MapRef } from 'react-map-gl/maplibre';
 import 'maplibre-gl/dist/maplibre-gl.css';
 import { trackEvent } from '../services/googleAnalyticsTracking';
-import { HOME_OPENSTREET_STYLE_URL } from './HomeMapboxBackground';
+import { HOME_OPENSTREET_STYLE_URL } from './HomeOsmMapBackground';
 import { REUNION_MAP_MAX_BOUNDS } from '../constants/reunionIsland';
 import {
   isRideGeoBroadcastEnabled,
@@ -28,8 +28,6 @@ export type ClientCompteRideMeetDriverProps = {
   meetPickupCoords?: LngLat;
   /** Position initiale chauffeur (avant premier message broadcast) */
   meetDriverCoordsInitial?: LngLat;
-  /** Rétrocompat (non utilisé pour OSM / MapLibre). */
-  mapboxAccessToken?: string;
 };
 
 function haversineMeters(a: LngLat, b: LngLat): number {

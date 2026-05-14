@@ -5429,7 +5429,7 @@
   background: var(--sp-warm-surface);
 }
 
-.palto-main-top-map-shell .home-mapbox-bg--embedded {
+.palto-main-top-map-shell .home-osm-map-bg--embedded {
   width: 100%;
   height: 100%;
   min-height: 100%;
@@ -5854,7 +5854,7 @@
   background: var(--sp-warm-surface);
 }
 
-.palto-ride-map-shell .home-mapbox-bg--embedded {
+.palto-ride-map-shell .home-osm-map-bg--embedded {
   width: 100%;
   height: 100%;
   min-height: 320px;
@@ -6115,14 +6115,14 @@
     height: 100%;
   }
 
-  .palto-ride-column--map .palto-ride-map-shell .home-mapbox-bg--embedded {
+  .palto-ride-column--map .palto-ride-map-shell .home-osm-map-bg--embedded {
     min-height: 100%;
     height: 100%;
   }
 }
 
 /*
- * Go (/go) : le min-height 100dvh sur la grille dépasse le panneau fixe → Mapbox sous le bord (Chrome).
+ * Go (/go) : le min-height 100dvh sur la grille dépasse le panneau fixe → carte sous le bord (Chrome).
  * Chaîne flex + min-height:0 pour que la colonne carte reste dans la hauteur dispo.
  */
 .single-project-page:has(.palto-ride-main) {
@@ -6187,7 +6187,7 @@
   gap: 0 !important;
 }
 
-/* /go : espace entre la topbar (Palto) et le bloc carte + Mapbox. */
+/* /go : espace entre la topbar (Palto) et le bloc carte + carte embarquée. */
 .single-project-page:has(.single-project-go-topbar-wrap):has(.palto-ride-main) .main-single-project {
   gap: var(--sp-space-md, 16px) !important;
 }
@@ -6207,7 +6207,7 @@
 @media (min-width: 997px) {
   /*
    * Ne pas mettre overflow:hidden sur le layout / booking : ça rogne la carte « Commandez une course »
-   * et les panneaux (suggestions). La colonne carte garde overflow hidden pour le cadre Mapbox.
+   * et les panneaux (suggestions). La colonne carte garde overflow hidden pour le cadre WebGL.
    */
   .single-project-page:has(.palto-ride-main) .main-single-project {
     overflow-x: hidden;
@@ -6238,7 +6238,7 @@
     min-height: 0;
   }
 
-  .single-project-page:has(.palto-ride-main) .palto-ride-column--map .palto-ride-map-shell .home-mapbox-bg--embedded {
+  .single-project-page:has(.palto-ride-main) .palto-ride-column--map .palto-ride-map-shell .home-osm-map-bg--embedded {
     min-height: 0;
   }
 

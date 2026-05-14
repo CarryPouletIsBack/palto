@@ -20,7 +20,7 @@ Le cœur **Palto** (accueil carte, **Go**, comptes, dashboard chauffeur) est **m
   - bloc ratios (acceptation, annulation, en cours/attente).  
   Implémentation : `src/components/DashboardStats.tsx` + `src/components/DashboardStats.css`.
 - **Fond** : **pas de carte** en arrière-plan du dashboard (évite les requêtes tuiles sur une vue où la carte n’apporte pas de valeur). Fonds **sidebar** et **zone principale** opaques (`Dashboard.css` / thème sombre dans `Dashboard.app-theme.css`).
-- **Carte OSM** ailleurs : utilisée là où le produit l’exige — **accueil** (colonne carte), **page Go** (parcours réservation), **navigation course** (`DriverNavigationView`, route `/dashboard/navigation/:id`).
+- **Carte** ailleurs : **MapLibre GL** (`react-map-gl`) — fond **OpenStreetMap** via **OpenFreeMap Liberty** (tuiles publiques, sans Mapbox ni Carto CDN). Même logique sur **accueil**, **page Go**, **navigation** (`DriverNavigationView`), **compte** (carte lieux).
 - **Navigation course + fin de course** : pendant une course **en cours**, le chauffeur peut envoyer sa position en **temps réel** (Supabase Realtime **broadcast** sur `ride_geo:{courseId}`) ; le passager voit le suivi sur la vue **rencontre chauffeur** et, après clôture côté chauffeur, un **récap** (montant, distance, durée) lorsque les données sont fournies par l’API.
 
 ## Compte passager (`/compte`)
@@ -30,10 +30,9 @@ Le cœur **Palto** (accueil carte, **Go**, comptes, dashboard chauffeur) est **m
 - **Courses** : si le flag API client est actif, liste et détail via **`GET /api/client/rides`** (`api/client/rides.ts`) ; annulation **`POST`** pour les statuts **pending** / **accepted**. Un **abonnement Realtime** optionnel sur la table `courses` (`src/services/paltoCoursesRealtime.ts`) complète le polling.
 - **Rencontre chauffeur** : page dédiée + lien depuis la topbar quand une course est **in_progress** ; positions **broadcast** si `VITE_SUPABASE_*` + token Realtime (`/api/auth/realtime-token`) sont configurés — voir `src/services/paltoRideLocationRealtime.ts`.
 
-## Fonctionnalités (Palto / carte OSM)
+## Fonctionnalités (Palto / carte)
 
-- **Carte OSM** dans la **3e colonne** de l’accueil (`Hero` → composant carte en mode `embedded`).
-- **Vue 3D** : non utilisée dans le flux OSM actuel.
+- **Carte** dans la **3e colonne** de l’accueil (`Hero` → `HomeMapboxBackground` en mode `embedded`). Fond tuiles : **OSM / OpenFreeMap Liberty** uniquement (pas de fond Mapbox).
 - **Position « utilisateur » (dev)** : `3 Allée Dachau, 97420 Le Port` — `DEFAULT_USER_ORIGIN` / libellé associé dans `src/constants/defaultUserOrigin.ts`.
 - **Pins** départ (bleu), arrivée (orange), chauffeurs (icône moto SVG). **Chauffeurs à proximité** : liste dans la colonne centrale du `Hero` + marqueurs sur la carte ; données `src/data/nearbyDrivers.ts` (`getNearbyDriversMock()`). Sans itinéraire ni destination ciblée, la carte **cadre** départ + chauffeurs pour les garder visibles.
 - **Sélection d’un chauffeur** : état `homeSelectedDriverId` dans `App.tsx` ; pas d’itinéraire vers la position du chauffeur mock (distinct de la destination course).

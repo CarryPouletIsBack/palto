@@ -59,7 +59,7 @@
 }
 
 /*
- * Pas de backdrop-filter sur la search active : au-dessus de Mapbox/WebGL, le blur
+ * Pas de backdrop-filter sur la search active : au-dessus de la carte WebGL, le blur
  * se recompose à chaque frame carte → clignotement des vignettes / du panneau.
  * Le fond opaque est défini dans MobileSearchBar.css (.search-active .search-bar).
  */

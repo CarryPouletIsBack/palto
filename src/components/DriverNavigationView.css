@@ -513,8 +513,8 @@ html[data-app-theme='dark'] .driver-recap-footnote {
   box-shadow: inset 0 0 0 1px rgba(42, 48, 56, 0.35);
 }
 
-/* Surcharge du plein ecran Mapbox : rester dans la colonne sous le header chauffeur */
-.driver-navigation-map-wrap .home-mapbox-bg {
+/* Surcharge du plein écran carte : rester dans la colonne sous le header chauffeur */
+.driver-navigation-map-wrap .home-osm-map-bg {
   position: absolute !important;
   inset: 0 !important;
   width: 100% !important;
@@ -523,7 +523,7 @@ html[data-app-theme='dark'] .driver-recap-footnote {
   z-index: 0;
 }
 
-.driver-navigation-map-wrap .home-mapbox-bg__map {
+.driver-navigation-map-wrap .home-osm-map-bg__map {
   height: 100%;
 }
 

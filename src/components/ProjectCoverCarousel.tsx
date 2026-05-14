@@ -7,10 +7,10 @@ import 'swiper/css/pagination';
 import { ArrowLeft } from 'lucide-react';
 import Button from './Button';
 import './ProjectCoverCarousel.css';
-import HomeMapboxBackground, { type HomeMapFlyTo } from './HomeMapboxBackground';
-import { resolvePickOnRoad } from '../services/mapboxSnapToRoad';
+import HomeOsmMapBackground, { type HomeMapFlyTo } from './HomeOsmMapBackground';
+import { resolvePickOnRoad } from '../services/osrmRouting';
 import { isLngLatInsideReunionIsland } from '../constants/reunionIsland';
-import { geocodeReverse, reverseGeocodeDisplayFallback } from '../services/mapboxGeocoding';
+import { geocodeReverse, reverseGeocodeDisplayFallback } from '../services/addressGeocoding';
 import { useLanguage } from '../contexts/LanguageContext';
 
 interface ProjectCoverCarouselProps {
@@ -90,8 +90,6 @@ const ProjectCoverCarousel: React.FC<ProjectCoverCarouselProps> = ({
   const hasVideoExtension = (src: string) => /\.(mp4|webm|mov|avi|mkv)$/i.test(src);
   const isMpAudioProject = projectName.toLowerCase().includes('mp audio');
   const isPaltoMapCover = projectName.trim().toLowerCase() === 'go';
-  const mapToken =
-    (import.meta.env.VITE_OPENSTREET_ACCESS_TOKEN as string | undefined)?.trim() || 'osm';
 
   useEffect(() => {
     if (isPaltoMapCover) return;
@@ -187,7 +185,7 @@ const ProjectCoverCarousel: React.FC<ProjectCoverCarouselProps> = ({
   }, [isPaltoMapCover]);
 
   useEffect(() => {
-    if (!isPaltoMapCover || !mapSelectedDestination || !mapToken) return;
+    if (!isPaltoMapCover || !mapSelectedDestination) return;
     let cancelled = false;
     (async () => {
       try {
@@ -195,7 +193,7 @@ const ProjectCoverCarousel: React.FC<ProjectCoverCarouselProps> = ({
           (await geocodeReverse(
             mapSelectedDestination.longitude,
             mapSelectedDestination.latitude,
-            mapToken,
+            undefined,
             { language }
           )) ?? reverseGeocodeDisplayFallback(language, 'destination');
         if (!cancelled) setMapDestinationLabel(label);
@@ -208,7 +206,7 @@ const ProjectCoverCarousel: React.FC<ProjectCoverCarouselProps> = ({
     return () => {
       cancelled = true;
     };
-  }, [isPaltoMapCover, mapSelectedDestination, mapToken, language]);
+  }, [isPaltoMapCover, mapSelectedDestination, language]);
 
   useEffect(() => {
     if (!isPaltoMapCover) return;
@@ -236,12 +234,11 @@ const ProjectCoverCarousel: React.FC<ProjectCoverCarouselProps> = ({
   ]);
 
   const handleMapDestinationPick = useCallback(async (longitude: number, latitude: number) => {
-    if (!mapToken) return;
     if (!isLngLatInsideReunionIsland(longitude, latitude)) return;
     try {
-      const picked = await resolvePickOnRoad(mapToken, longitude, latitude, { searchRadiusMeters: 150 });
+      const picked = await resolvePickOnRoad(longitude, latitude, { searchRadiusMeters: 150 });
       const placeName =
-        (await geocodeReverse(picked.longitude, picked.latitude, mapToken, { language })) ??
+        (await geocodeReverse(picked.longitude, picked.latitude, undefined, { language })) ??
         reverseGeocodeDisplayFallback(language, mapCoverPickup === null ? 'pickup' : 'destination');
 
       if (mapCoverPickup === null) {
@@ -257,7 +254,7 @@ const ProjectCoverCarousel: React.FC<ProjectCoverCarouselProps> = ({
     } catch {
       // ignore sur clic invalide/réseau
     }
-  }, [language, mapToken, mapCoverPickup]);
+  }, [language, mapCoverPickup]);
 
   return (
     <>
@@ -281,7 +278,7 @@ const ProjectCoverCarousel: React.FC<ProjectCoverCarouselProps> = ({
         ) : null}
         {isPaltoMapCover ? (
           <div className="project-cover-map" aria-label="Carte Go">
-            <HomeMapboxBackground
+            <HomeOsmMapBackground
               variant="fullscreen"
               flyToTarget={coverFlyToTarget}
               userOrigin={mapCoverPickup}

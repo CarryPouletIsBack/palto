@@ -1,11 +1,10 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { ArrowLeft, CheckCircle, LocateFixed, Navigation } from 'lucide-react'
 import type { Feature, LineString } from 'geojson'
-import HomeMapboxBackground, { OPENSTREET_OUTDOORS_STYLE_URL } from './HomeMapboxBackground'
-import type { HomeMapFlyTo } from './HomeMapboxBackground'
-import { fetchDrivingRouteFeature } from '../services/mapboxDirections'
-import { geocodeForward } from '../services/mapboxGeocoding'
-import { snapLngLatToMapboxDriving } from '../services/mapboxSnapToRoad'
+import HomeOsmMapBackground, { OPENSTREET_OUTDOORS_STYLE_URL } from './HomeOsmMapBackground'
+import type { HomeMapFlyTo } from './HomeOsmMapBackground'
+import { fetchDrivingRouteFeature, snapLngLatToOsmRoad } from '../services/osrmRouting'
+import { geocodeForward } from '../services/addressGeocoding'
 import { REUNION_ISLAND_BBOX_GEOCODE } from '../constants/reunionIsland'
 import { haversineDistanceMeters } from '../services/distanceGeo'
 import {
@@ -172,6 +171,7 @@ export default function DriverNavigationView({ courseId, onClose }: Props) {
   const destRef = useRef<{ longitude: number; latitude: number } | null>(null)
   const requestFinishRef = useRef<() => void>(() => {})
   const arrivalStreakRef = useRef(0)
+  const osrmRouteAbortRef = useRef<AbortController | null>(null)
 
   useEffect(() => {
     finishedRef.current = false
@@ -223,6 +223,11 @@ export default function DriverNavigationView({ courseId, onClose }: Props) {
   }, [courseId])
 
   const resolveRoute = useCallback(async (snap: ChauffeurNavCourseSnapshot) => {
+    osrmRouteAbortRef.current?.abort()
+    const ac = new AbortController()
+    osrmRouteAbortRef.current = ac
+    const { signal } = ac
+
     setLoadingRoute(true)
     setGeoError(null)
     setRouteFeature(null)
@@ -232,30 +237,36 @@ export default function DriverNavigationView({ courseId, onClose }: Props) {
       const rawO =
         typeof snap.pickupLng === 'number' && typeof snap.pickupLat === 'number'
           ? { longitude: snap.pickupLng, latitude: snap.pickupLat }
-          : await geocodeForward(`${snap.depart}, La Reunion`, '', {
+          : await geocodeForward(`${snap.depart}, La Reunion`, undefined, {
               language: 'fr',
               proximity: REUNION_PROXIMITY,
               bbox: REUNION_ISLAND_BBOX_GEOCODE,
             })
+      if (signal.aborted) return
       const rawD =
         typeof snap.dropoffLng === 'number' && typeof snap.dropoffLat === 'number'
           ? { longitude: snap.dropoffLng, latitude: snap.dropoffLat }
-          : await geocodeForward(`${snap.arrivee}, La Reunion`, '', {
+          : await geocodeForward(`${snap.arrivee}, La Reunion`, undefined, {
               language: 'fr',
               proximity: REUNION_PROXIMITY,
               bbox: REUNION_ISLAND_BBOX_GEOCODE,
             })
+      if (signal.aborted) return
       if (!rawO || !rawD) {
         setGeoError('Impossible de localiser le depart ou la destination sur la carte.')
         setLoadingRoute(false)
         return
       }
-      const snappedO = await snapLngLatToMapboxDriving('', rawO.longitude, rawO.latitude, {
+      const snappedO = await snapLngLatToOsmRoad(rawO.longitude, rawO.latitude, {
         searchRadiusMeters: 80,
+        signal,
       })
-      const snappedD = await snapLngLatToMapboxDriving('', rawD.longitude, rawD.latitude, {
+      if (signal.aborted) return
+      const snappedD = await snapLngLatToOsmRoad(rawD.longitude, rawD.latitude, {
         searchRadiusMeters: 80,
+        signal,
       })
+      if (signal.aborted) return
       if (!snappedO || !snappedD) {
         setGeoError('Accrochage au reseau routier impossible.')
         setLoadingRoute(false)
@@ -265,9 +276,10 @@ export default function DriverNavigationView({ courseId, onClose }: Props) {
       setDestination(snappedD)
       setFlyTo(null)
 
-      const feature = await fetchDrivingRouteFeature('', snappedO, snappedD)
+      const feature = await fetchDrivingRouteFeature(snappedO, snappedD, { signal })
+      if (signal.aborted) return
       if (!feature) {
-        setGeoError('Itineraire indisponible (Directions Mapbox).')
+        setGeoError('Itineraire indisponible (OSRM / OpenStreetMap).')
         setLoadingRoute(false)
         return
       }
@@ -282,6 +294,7 @@ export default function DriverNavigationView({ courseId, onClose }: Props) {
         setDurationLabel(base)
       }
     } catch {
+      if (signal.aborted) return
       setGeoError('Erreur reseau lors du calcul de l’itineraire.')
     } finally {
       setLoadingRoute(false)
@@ -291,6 +304,9 @@ export default function DriverNavigationView({ courseId, onClose }: Props) {
   useEffect(() => {
     if (!snapshot) return
     void resolveRoute(snapshot)
+    return () => {
+      osrmRouteAbortRef.current?.abort()
+    }
   }, [snapshot, resolveRoute])
 
   useEffect(() => {
@@ -622,7 +638,7 @@ export default function DriverNavigationView({ courseId, onClose }: Props) {
         {loadingRoute && !routeFeature ? (
           <div className="driver-navigation-status">Calcul de l’itineraire…</div>
         ) : (
-          <HomeMapboxBackground
+          <HomeOsmMapBackground
             variant="fullscreen"
             flyToTarget={flyTo}
             userOrigin={origin}
