@@ -510,6 +510,7 @@ function App() {
       } else if (/^\/go$/i.test(pathToMatch)) {
         const from = projectBackdropSourcePageRef.current
         setPreviousPage(PROJECT_BACKDROP_PAGE_IDS.has(from) ? from : 'accueil')
+        setCurrentProjectImage(PROJECT_COVER_IMAGES.Go ?? null)
         setCurrentPage('project-Go')
       } else if (pathToMatch.startsWith('/lieu/')) {
         const raw = pathToMatch.replace(/^\/lieu\//, '').split('/')[0] ?? ''
@@ -524,6 +525,7 @@ function App() {
         if (id === 'go') {
           const from = projectBackdropSourcePageRef.current
           setPreviousPage(PROJECT_BACKDROP_PAGE_IDS.has(from) ? from : 'accueil')
+          setCurrentProjectImage(PROJECT_COVER_IMAGES.Go ?? null)
           setCurrentPage('project-Go')
         } else {
           setCurrentPage('404')
@@ -639,6 +641,21 @@ function App() {
     const pageTitle = getPageTitle(currentPage)
     trackPageView(`/${currentPage}`, pageTitle)
   }, [currentPage, previousPage, language])
+
+  useEffect(() => {
+    const lock = currentPage.startsWith('project-')
+    if (lock) {
+      document.documentElement.classList.add('project-page-open')
+      document.body.classList.add('project-page-open')
+    } else {
+      document.documentElement.classList.remove('project-page-open')
+      document.body.classList.remove('project-page-open')
+    }
+    return () => {
+      document.documentElement.classList.remove('project-page-open')
+      document.body.classList.remove('project-page-open')
+    }
+  }, [currentPage])
 
   const handlePageChange = (page: string, projectImage?: string, projectCategory?: string) => {
     // Si on navigue vers un projet, toujours sauvegarder la page actuelle comme page précédente

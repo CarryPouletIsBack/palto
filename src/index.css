@@ -47,6 +47,15 @@ body {
   position: relative;
 }
 
+/* Panneau projet (fixed) : évite le scroll du backdrop / du document derrière (mobile surtout). */
+html.project-page-open,
+body.project-page-open {
+  overflow: hidden;
+  overscroll-behavior: none;
+  height: 100%;
+  max-height: 100dvh;
+}
+
 /* Fond lorsque le menu est ouvert */
 body.menu-active {
   background: var(--app-menu-active-bg);
