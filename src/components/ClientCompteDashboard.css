@@ -932,8 +932,131 @@ body.accueil-page .dashboard-container--home-accueil .dashboard-main {
 }
 
 @media (max-width: 768px) {
+  /* Alignement typescale / spacing compte chauffeur mobile (gouttières ~20px, sections ~32px, cartes ~16px, corps ~16–17px, KPI ~24px) */
   .dashboard-container--client-compte .dashboard-content {
-    margin-inline: clamp(16px, 5vw, 32px);
+    margin-inline: max(20px, env(safe-area-inset-left, 0px)) max(20px, env(safe-area-inset-right, 0px));
+    display: flex;
+    flex-direction: column;
+    gap: 32px;
+  }
+
+  .dashboard-container--client-compte .dashboard-client-main-title,
+  .dashboard-container--client-compte .dashboard-topbar button.dashboard-client-main-title {
+    font-size: clamp(28px, 7.5vw, 32px);
+    font-weight: 700;
+    line-height: 1.12;
+  }
+
+  .dashboard-container--client-compte .client-compte-account-main-head h3 {
+    font-size: clamp(28px, 7.5vw, 32px);
+    line-height: 1.12;
+  }
+
+  .dashboard-container--client-compte .client-compte-topbar-user-btn {
+    height: 40px;
+    padding: 0 14px;
+    font-size: 16px;
+    font-weight: 600;
+    box-shadow: 0 2px 12px rgba(15, 23, 42, 0.08);
+  }
+
+  .dashboard-container--client-compte .client-compte-topbar-user-btn__avatar {
+    width: 22px;
+    height: 22px;
+  }
+
+  .dashboard-container--client-compte .client-compte-topbar-add-btn,
+  .dashboard-container--client-compte .client-compte-topbar-sections-btn {
+    width: 40px;
+    height: 40px;
+    min-width: 40px;
+  }
+
+  .dashboard-container--client-compte .client-compte-bento-grid,
+  .dashboard-container--client-compte .client-compte-manage-grid {
+    gap: 12px;
+  }
+
+  .dashboard-container--client-compte .dashboard-user-card {
+    padding: 16px;
+  }
+
+  .dashboard-container--client-compte .client-compte-profile-name {
+    font-size: clamp(28px, 7.5vw, 32px);
+  }
+
+  .dashboard-container--client-compte .client-compte-wallet-balance {
+    font-size: 24px;
+    font-weight: 600;
+  }
+
+  .dashboard-container--client-compte .client-compte-section-title {
+    font-size: 14px;
+    font-weight: 600;
+  }
+
+  .dashboard-container--client-compte .dashboard-field-hint {
+    font-size: 14px;
+    line-height: 1.45;
+  }
+
+  .dashboard-container--client-compte .client-compte-overview-rides-list__route {
+    font-size: 16px;
+    font-weight: 500;
+  }
+
+  .dashboard-container--client-compte .client-compte-overview-rides-list__meta {
+    font-size: 14px;
+  }
+
+  .dashboard-container--client-compte .client-compte-overview-rides-list__item {
+    padding: 12px 10px;
+  }
+
+  .dashboard-container--client-compte .client-compte-overview-places-list__label {
+    font-size: 14px;
+  }
+
+  .dashboard-container--client-compte .client-compte-overview-places-list__text {
+    font-size: 16px;
+  }
+
+  .dashboard-container--client-compte .client-compte-overview-places-list__item {
+    padding-block: 12px;
+  }
+
+  .dashboard-container--client-compte .client-compte-wallet-mini-list {
+    gap: 8px;
+  }
+
+  .dashboard-container--client-compte .client-compte-wallet-mini-list__item {
+    padding: 12px 12px;
+    font-size: 16px;
+  }
+
+  .dashboard-container--client-compte .client-compte-wallet-mini-list__amount {
+    font-size: 14px;
+    font-weight: 600;
+  }
+
+  .dashboard-container--client-compte .client-compte-content-back-btn {
+    min-height: 44px;
+    padding: 10px 14px;
+    font-size: 16px;
+  }
+
+  .dashboard-container--client-compte .client-compte-overview-empty-cta {
+    min-height: 44px;
+    padding: 10px 16px;
+    font-size: 16px;
+  }
+
+  .dashboard-container--client-compte .dashboard-user-card-head h4 {
+    font-size: 16px;
+  }
+
+  .dashboard-container--client-compte .dashboard-user-card-head p {
+    font-size: 14px;
   }
 
   .client-compte-bento-grid {
