@@ -17,7 +17,6 @@ import {
   Route,
   MapPin,
   Plus,
-  ChevronDown,
   Trash2,
   Shield,
   FileLock,
@@ -273,9 +272,6 @@ export default function ClientCompteDashboard({ onBack, onOpenClientLiveMeet }: 
   const [isMobileViewport, setIsMobileViewport] = useState(() =>
     typeof window !== 'undefined' ? window.innerWidth <= 768 : false
   );
-  const [isCompactAccountViewport, setIsCompactAccountViewport] = useState(() =>
-    typeof window !== 'undefined' ? window.innerWidth <= 980 : false
-  );
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
   const [activeNav, setActiveNav] = useState<ClientAccountNavId>(() => readCompteNavFromPath());
   const [accountManageSection, setAccountManageSection] = useState<AccountManageSectionId>('personal');
@@ -436,7 +432,6 @@ export default function ClientCompteDashboard({ onBack, onOpenClientLiveMeet }: 
   const [photoDraftName, setPhotoDraftName] = useState(profile.profilePhotoName ?? '');
   const [accountModalOpen, setAccountModalOpen] = useState(false);
   const [createRideMenuOpen, setCreateRideMenuOpen] = useState(false);
-  const [accountSectionsMenuOpen, setAccountSectionsMenuOpen] = useState(false);
   const accountMenuRef = useRef<HTMLDivElement | null>(null);
   const topbarPhotoInputRef = useRef<HTMLInputElement | null>(null);
   const accountRoleSelectRef = useRef<HTMLSelectElement | null>(null);
@@ -444,9 +439,7 @@ export default function ClientCompteDashboard({ onBack, onOpenClientLiveMeet }: 
   useEffect(() => {
     const onResize = () => {
       const mobile = window.innerWidth <= 768;
-      const compact = window.innerWidth <= 980;
       setIsMobileViewport(mobile);
-      setIsCompactAccountViewport(compact);
       if (!mobile) setMobileSidebarOpen(false);
     };
     onResize();
@@ -455,17 +448,16 @@ export default function ClientCompteDashboard({ onBack, onOpenClientLiveMeet }: 
   }, []);
 
   useEffect(() => {
-    if (!accountModalOpen && !createRideMenuOpen && !accountSectionsMenuOpen) return;
+    if (!accountModalOpen && !createRideMenuOpen) return;
     const onDocMouseDown = (e: MouseEvent) => {
       if (!accountMenuRef.current) return;
       if (accountMenuRef.current.contains(e.target as Node)) return;
       setAccountModalOpen(false);
       setCreateRideMenuOpen(false);
-      setAccountSectionsMenuOpen(false);
     };
     document.addEventListener('mousedown', onDocMouseDown);
     return () => document.removeEventListener('mousedown', onDocMouseDown);
-  }, [accountModalOpen, createRideMenuOpen, accountSectionsMenuOpen]);
+  }, [accountModalOpen, createRideMenuOpen]);
 
   useEffect(() => {
     const bump = () => setRidesSyncTick((n) => n + 1);
@@ -1437,44 +1429,6 @@ export default function ClientCompteDashboard({ onBack, onOpenClientLiveMeet }: 
                       ) : null}
                     </div>
 
-                    {activeNav === 'account' && isCompactAccountViewport ? (
-                    <div className="client-compte-topbar-menu-anchor client-compte-topbar-sections-anchor">
-                      <button
-                        type="button"
-                        className="client-compte-topbar-sections-btn"
-                        onClick={() => {
-                          setAccountSectionsMenuOpen((prev) => !prev);
-                          setCreateRideMenuOpen(false);
-                          setAccountModalOpen(false);
-                        }}
-                        aria-label={isEn ? 'Open account sections menu' : 'Ouvrir le menu des sections'}
-                      >
-                        <ChevronDown size={16} aria-hidden />
-                      </button>
-                      {accountSectionsMenuOpen ? (
-                        <div className="client-compte-account-menu client-compte-account-menu--sections" role="menu" aria-label={isEn ? 'Sections' : 'Sections'}>
-                          <div className="client-compte-account-menu__actions">
-                            <button type="button" className="client-compte-account-menu__item" onClick={() => { openManageAccount('personal'); setAccountSectionsMenuOpen(false); }}>
-                              {isEn ? 'Personal info' : 'Infos personnel'}
-                            </button>
-                            <button type="button" className="client-compte-account-menu__item" onClick={() => { openManageAccount('security'); setAccountSectionsMenuOpen(false); }}>
-                              {isEn ? 'Security' : 'Securite'}
-                            </button>
-                            <button type="button" className="client-compte-account-menu__item" onClick={() => { openManageAccount('payment'); setAccountSectionsMenuOpen(false); }}>
-                              {isEn ? 'Payment' : 'Paiement'}
-                            </button>
-                            <button type="button" className="client-compte-account-menu__item" onClick={() => { openManageAccount('privacy'); setAccountSectionsMenuOpen(false); }}>
-                              {isEn ? 'Data privacy' : 'Confidentialite de donnee'}
-                            </button>
-                            <button type="button" className="client-compte-account-menu__item" onClick={() => { openManageAccount('help'); setAccountSectionsMenuOpen(false); }}>
-                              {isEn ? 'Help' : 'Aides'}
-                            </button>
-                          </div>
-                        </div>
-                      ) : null}
-                    </div>
-                    ) : null}
-
                     <div className="client-compte-topbar-menu-anchor">
                       <button
                         type="button"
@@ -1904,24 +1858,24 @@ export default function ClientCompteDashboard({ onBack, onOpenClientLiveMeet }: 
                       <span>{profile.email}</span>
                     </div>
                   </div>
-                  <nav className="client-compte-account-nav" aria-label="Sections du compte">
-                    <button type="button" className={`client-compte-account-nav-item${accountManageSection === 'personal' ? ' is-active' : ''}`} onClick={() => setAccountManageSection('personal')}>
+                  <nav className="client-compte-account-nav" aria-label={isEn ? 'Account sections' : 'Sections du compte'}>
+                    <button type="button" className={`client-compte-account-nav-item${accountManageSection === 'personal' ? ' is-active' : ''}`} onClick={() => openManageAccount('personal')}>
                       <span className="nav-icon" aria-hidden><IdCard size={16} /></span>
                       <span>{isEn ? 'Personal info' : 'Infos personnel'}</span>
                     </button>
-                    <button type="button" className={`client-compte-account-nav-item${accountManageSection === 'security' ? ' is-active' : ''}`} onClick={() => setAccountManageSection('security')}>
+                    <button type="button" className={`client-compte-account-nav-item${accountManageSection === 'security' ? ' is-active' : ''}`} onClick={() => openManageAccount('security')}>
                       <span className="nav-icon" aria-hidden><Shield size={16} /></span>
                       <span>{isEn ? 'Security' : 'Securite'}</span>
                     </button>
-                    <button type="button" className={`client-compte-account-nav-item${accountManageSection === 'payment' ? ' is-active' : ''}`} onClick={() => setAccountManageSection('payment')}>
+                    <button type="button" className={`client-compte-account-nav-item${accountManageSection === 'payment' ? ' is-active' : ''}`} onClick={() => openManageAccount('payment')}>
                       <span className="nav-icon" aria-hidden><Wallet size={16} /></span>
                       <span>{isEn ? 'Payment' : 'Paiement'}</span>
                     </button>
-                    <button type="button" className={`client-compte-account-nav-item${accountManageSection === 'privacy' ? ' is-active' : ''}`} onClick={() => setAccountManageSection('privacy')}>
+                    <button type="button" className={`client-compte-account-nav-item${accountManageSection === 'privacy' ? ' is-active' : ''}`} onClick={() => openManageAccount('privacy')}>
                       <span className="nav-icon" aria-hidden><FileLock size={16} /></span>
                       <span>{isEn ? 'Data privacy' : 'Confidentialite de donnee'}</span>
                     </button>
-                    <button type="button" className={`client-compte-account-nav-item${accountManageSection === 'help' ? ' is-active' : ''}`} onClick={() => setAccountManageSection('help')}>
+                    <button type="button" className={`client-compte-account-nav-item${accountManageSection === 'help' ? ' is-active' : ''}`} onClick={() => openManageAccount('help')}>
                       <span className="nav-icon" aria-hidden><CircleHelp size={16} /></span>
                       <span>{isEn ? 'Help' : 'Aides'}</span>
                     </button>
