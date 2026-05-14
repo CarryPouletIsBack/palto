@@ -137,7 +137,11 @@ const ProjectCoverCarousel: React.FC<ProjectCoverCarouselProps> = ({
         Number.isFinite(d.lng) &&
         Number.isFinite(d.lat)
       ) {
-        setMapCoverPickup({ longitude: d.lng, latitude: d.lat });
+        setMapCoverPickup((prev) =>
+          prev && Math.abs(prev.longitude - d.lng) < 1e-7 && Math.abs(prev.latitude - d.lat) < 1e-7
+            ? prev
+            : { longitude: d.lng, latitude: d.lat }
+        );
         setMapCoverPickupLabel(typeof d.label === 'string' ? d.label.trim() : '');
       } else {
         setMapCoverPickup(null);
@@ -177,7 +181,13 @@ const ProjectCoverCarousel: React.FC<ProjectCoverCarouselProps> = ({
         typeof d.destination.longitude === 'number' &&
         typeof d.destination.latitude === 'number'
       ) {
-        setMapSelectedDestination(d.destination);
+        const lng = d.destination.longitude;
+        const lat = d.destination.latitude;
+        setMapSelectedDestination((prev) =>
+          prev && Math.abs(prev.longitude - lng) < 1e-7 && Math.abs(prev.latitude - lat) < 1e-7
+            ? prev
+            : d.destination ?? null
+        );
       }
     };
     window.addEventListener('palto:go-cover-destination-sync', onPanelDestination as EventListener);
@@ -206,7 +216,7 @@ const ProjectCoverCarousel: React.FC<ProjectCoverCarouselProps> = ({
     return () => {
       cancelled = true;
     };
-  }, [isPaltoMapCover, mapSelectedDestination, language]);
+  }, [isPaltoMapCover, mapSelectedDestination?.longitude, mapSelectedDestination?.latitude, language]);
 
   useEffect(() => {
     if (!isPaltoMapCover) return;
@@ -227,10 +237,12 @@ const ProjectCoverCarousel: React.FC<ProjectCoverCarouselProps> = ({
     window.dispatchEvent(new CustomEvent('palto:cover-map-update', { detail }));
   }, [
     isPaltoMapCover,
-    mapCoverPickup,
+    mapCoverPickup?.longitude,
+    mapCoverPickup?.latitude,
     mapCoverPickupLabel,
     mapDestinationLabel,
-    mapSelectedDestination,
+    mapSelectedDestination?.longitude,
+    mapSelectedDestination?.latitude,
   ]);
 
   const handleMapDestinationPick = useCallback(async (longitude: number, latitude: number) => {

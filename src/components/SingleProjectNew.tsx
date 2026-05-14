@@ -1905,7 +1905,13 @@ const SingleProjectNew: FC<SingleProjectProps> = ({
         Number.isFinite(detail.destinationLat);
 
       if (hasPickupCoords) {
-        setPickupResolvedPoint({ longitude: detail.pickupLng as number, latitude: detail.pickupLat as number });
+        const pLng = detail.pickupLng as number;
+        const pLat = detail.pickupLat as number;
+        setPickupResolvedPoint((prev) =>
+          prev && Math.abs(prev.longitude - pLng) < 1e-7 && Math.abs(prev.latitude - pLat) < 1e-7
+            ? prev
+            : { longitude: pLng, latitude: pLat }
+        );
         setPickupGeocodeError(null);
       }
       const pickupRaw = typeof detail.pickupText === 'string' ? detail.pickupText.trim() : '';
@@ -1926,10 +1932,13 @@ const SingleProjectNew: FC<SingleProjectProps> = ({
         });
       }
       if (hasDestCoords) {
-        setPaltoMapSelectedDestination({
-          longitude: detail.destinationLng as number,
-          latitude: detail.destinationLat as number,
-        });
+        const dLng = detail.destinationLng as number;
+        const dLat = detail.destinationLat as number;
+        setPaltoMapSelectedDestination((prev) =>
+          prev && Math.abs(prev.longitude - dLng) < 1e-7 && Math.abs(prev.latitude - dLat) < 1e-7
+            ? prev
+            : { longitude: dLng, latitude: dLat }
+        );
       }
       const destRaw = typeof detail.destinationText === 'string' ? detail.destinationText.trim() : '';
       if (destRaw && !isGenericMapAddressFallback(destRaw)) {
@@ -1978,7 +1987,7 @@ const SingleProjectNew: FC<SingleProjectProps> = ({
     } else {
       window.dispatchEvent(new CustomEvent('palto:go-cover-pickup-sync', { detail: {} }));
     }
-  }, [isGoProjectPage, pickupResolvedPoint, lastConfirmedPickupText]);
+  }, [isGoProjectPage, pickupResolvedPoint?.longitude, pickupResolvedPoint?.latitude, lastConfirmedPickupText]);
 
   useEffect(() => {
     if (!isGoProjectPage) return;
@@ -2000,7 +2009,7 @@ const SingleProjectNew: FC<SingleProjectProps> = ({
         },
       })
     );
-  }, [isGoProjectPage, paltoMapSelectedDestination]);
+  }, [isGoProjectPage, paltoMapSelectedDestination?.longitude, paltoMapSelectedDestination?.latitude]);
 
   // JSON-LD CreativeWork pour que les IA et crawlers (avec JS) puissent lire le contenu du projet
   useEffect(() => {
