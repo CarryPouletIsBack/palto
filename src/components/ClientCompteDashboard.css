@@ -780,6 +780,7 @@ body.accueil-page .dashboard-container--home-accueil .dashboard-main {
 }
 
 .client-compte-account-menu__head {
+  position: relative;
   display: flex;
   flex-direction: column;
   gap: 2px;
@@ -798,22 +799,33 @@ body.accueil-page .dashboard-container--home-accueil .dashboard-main {
 }
 
 .client-compte-account-menu__head-identity {
+  position: relative;
   display: flex;
   flex-direction: column;
   gap: 2px;
   margin: 0;
-  padding: 0;
+  padding: 6px 8px;
   width: 100%;
   border: none;
   background: transparent;
   font: inherit;
   text-align: left;
   cursor: pointer;
-  border-radius: 8px;
+  border-radius: 10px;
 }
 
-.client-compte-account-menu__head-identity:hover {
-  opacity: 0.92;
+.client-compte-account-menu__head-identity::before {
+  content: '';
+  position: absolute;
+  inset: 1px 0;
+  border-radius: 8px;
+  background: transparent;
+  z-index: 0;
+  pointer-events: none;
+}
+
+.client-compte-account-menu__head-identity:hover::before {
+  background: rgba(15, 23, 42, 0.05);
 }
 
 .client-compte-account-menu__head-identity:focus-visible {
@@ -821,14 +833,10 @@ body.accueil-page .dashboard-container--home-accueil .dashboard-main {
   outline-offset: 2px;
 }
 
-.client-compte-account-menu__role-label {
-  display: grid;
-  gap: 4px;
-  margin-top: 8px;
-  font-size: 11px;
-  letter-spacing: 0.02em;
-  text-transform: uppercase;
-  color: #64748b;
+.client-compte-account-menu__head-identity strong,
+.client-compte-account-menu__head-identity span {
+  position: relative;
+  z-index: 1;
 }
 
 .client-compte-account-menu__role-select {
@@ -840,6 +848,20 @@ body.accueil-page .dashboard-container--home-accueil .dashboard-main {
   font-weight: 600;
   color: #0f172a;
   background: #ffffff;
+}
+
+.client-compte-account-menu__role-select.client-compte-account-menu__role-select--sr-only {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  border: 0;
+  white-space: nowrap;
 }
 
 .client-compte-account-menu__actions {
@@ -975,15 +997,15 @@ html[data-app-theme='dark'] .client-compte-account-menu__head span {
   color: var(--app-text-muted, #94a3b8);
 }
 
+html[data-app-theme='dark'] .client-compte-account-menu__head-identity:hover::before {
+  background: rgba(255, 255, 255, 0.06);
+}
+
 html[data-app-theme='dark'] .client-compte-account-menu__head-identity:focus-visible {
   outline-color: #60a5fa;
 }
 
-html[data-app-theme='dark'] .client-compte-account-menu__role-label {
-  color: var(--app-text-muted, #94a3b8);
-}
-
-html[data-app-theme='dark'] .client-compte-account-menu__role-select {
+html[data-app-theme='dark'] .client-compte-account-menu__role-select:not(.client-compte-account-menu__role-select--sr-only) {
   border-color: rgba(255, 255, 255, 0.18);
   color: var(--app-text-primary, #f1f5f9);
   background: rgba(15, 23, 42, 0.75);
@@ -2578,7 +2600,7 @@ html[data-app-theme='dark'] .client-compte-ride-flow__toast {
   z-index: 1;
 }
 
-/* Page compte client : retirer bordures hover/header/cartes */
+/* Page compte client : retirer bordures sur shell topbar / cartes / listes (menu compte et boutons topbar : même traitement que l’accueil) */
 .dashboard-container--client-compte .dashboard-topbar,
 .dashboard-container--client-compte .dashboard-user-card,
 .dashboard-container--client-compte .client-compte-bento-card,
@@ -2586,12 +2608,7 @@ html[data-app-theme='dark'] .client-compte-ride-flow__toast {
 .dashboard-container--client-compte .client-compte-bento-card--clickable:hover,
 .dashboard-container--client-compte .client-compte-overview-ride-list > li,
 .dashboard-container--client-compte .client-compte-overview-rides-list > li,
-.dashboard-container--client-compte .client-compte-overview-places-list > li,
-.dashboard-container--client-compte .client-compte-topbar-user-btn,
-.dashboard-container--client-compte .client-compte-topbar-add-btn,
-.dashboard-container--client-compte .client-compte-topbar-sections-btn,
-.dashboard-container--client-compte .client-compte-account-menu,
-.dashboard-container--client-compte .client-compte-account-menu__item {
+.dashboard-container--client-compte .client-compte-overview-places-list > li {
   border: none;
   box-shadow: none;
 }

@@ -2252,18 +2252,16 @@ const Dashboard = ({
                           </>
                         )}
                         {hasLinkedClientAccount ? (
-                          <label className="client-compte-account-menu__role-label">
-                            {language === 'en' ? 'Account' : 'Compte'}
-                            <select
-                              ref={topbarAccountRoleSelectRef}
-                              className="client-compte-account-menu__role-select"
-                              value="chauffeur"
-                              onChange={(e) => handleTopbarRoleSelect(e.target.value as 'chauffeur' | 'client')}
-                            >
-                              <option value="chauffeur">{language === 'en' ? 'Driver account' : 'Compte chauffeur'}</option>
-                              <option value="client">{language === 'en' ? 'Client account' : 'Compte client'}</option>
-                            </select>
-                          </label>
+                          <select
+                            ref={topbarAccountRoleSelectRef}
+                            className="client-compte-account-menu__role-select client-compte-account-menu__role-select--sr-only"
+                            aria-label={language === 'en' ? 'Account' : 'Compte'}
+                            value="chauffeur"
+                            onChange={(e) => handleTopbarRoleSelect(e.target.value as 'chauffeur' | 'client')}
+                          >
+                            <option value="chauffeur">{language === 'en' ? 'Driver account' : 'Compte chauffeur'}</option>
+                            <option value="client">{language === 'en' ? 'Client account' : 'Compte client'}</option>
+                          </select>
                         ) : null}
                       </div>
                       <div className="client-compte-account-menu__actions">

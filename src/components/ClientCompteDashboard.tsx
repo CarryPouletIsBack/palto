@@ -1511,20 +1511,18 @@ export default function ClientCompteDashboard({ onBack, onOpenClientLiveMeet }: 
                               </>
                             )}
                             {chauffeurLinkContext.hasLinkedChauffeurAccount ? (
-                              <label className="client-compte-account-menu__role-label">
-                                {isEn ? 'Account' : 'Compte'}
-                                <select
-                                  ref={accountRoleSelectRef}
-                                  className="client-compte-account-menu__role-select"
-                                  value="client"
-                                  onChange={(e) => handleAccountRoleSelect(e.target.value as 'client' | 'chauffeur')}
-                                >
-                                  <option value="client">{isEn ? 'Client account' : 'Compte client'}</option>
-                                  <option value="chauffeur">
-                                    {isEn ? 'Driver account' : 'Compte chauffeur'} ({chauffeurLinkContext.scopeLabel})
-                                  </option>
-                                </select>
-                              </label>
+                              <select
+                                ref={accountRoleSelectRef}
+                                className="client-compte-account-menu__role-select client-compte-account-menu__role-select--sr-only"
+                                aria-label={isEn ? 'Account' : 'Compte'}
+                                value="client"
+                                onChange={(e) => handleAccountRoleSelect(e.target.value as 'client' | 'chauffeur')}
+                              >
+                                <option value="client">{isEn ? 'Client account' : 'Compte client'}</option>
+                                <option value="chauffeur">
+                                  {isEn ? 'Driver account' : 'Compte chauffeur'} ({chauffeurLinkContext.scopeLabel})
+                                </option>
+                              </select>
                             ) : null}
                           </div>
                           <div className="client-compte-account-menu__actions">

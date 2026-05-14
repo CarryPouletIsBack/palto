@@ -191,20 +191,18 @@ export function DashboardHomeTopbar({
                         </>
                       )}
                       {hasLinkedChauffeurAccount ? (
-                        <label className="client-compte-account-menu__role-label">
-                          {language === 'en' ? 'Account' : 'Compte'}
-                          <select
-                            ref={accountRoleSelectRef}
-                            className="client-compte-account-menu__role-select"
-                            value="client"
-                            onChange={(e) => {
-                              if (e.target.value === 'chauffeur') handleDriverDashboard()
-                            }}
-                          >
-                            <option value="client">{language === 'en' ? 'Client account' : 'Compte client'}</option>
-                            <option value="chauffeur">{language === 'en' ? 'Driver account' : 'Compte chauffeur'}</option>
-                          </select>
-                        </label>
+                        <select
+                          ref={accountRoleSelectRef}
+                          className="client-compte-account-menu__role-select client-compte-account-menu__role-select--sr-only"
+                          aria-label={language === 'en' ? 'Account' : 'Compte'}
+                          value="client"
+                          onChange={(e) => {
+                            if (e.target.value === 'chauffeur') handleDriverDashboard()
+                          }}
+                        >
+                          <option value="client">{language === 'en' ? 'Client account' : 'Compte client'}</option>
+                          <option value="chauffeur">{language === 'en' ? 'Driver account' : 'Compte chauffeur'}</option>
+                        </select>
                       ) : null}
                     </div>
                     <div className="client-compte-account-menu__actions">
