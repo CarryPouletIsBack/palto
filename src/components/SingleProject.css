@@ -6324,6 +6324,7 @@
 
   .single-project-page:has(.palto-ride-main) .main-single-project {
     gap: 0 !important;
+    background: #ffffff;
   }
 
   /*
