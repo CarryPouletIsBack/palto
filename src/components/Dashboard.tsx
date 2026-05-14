@@ -76,6 +76,7 @@ import {
 } from '../constants/clientAppPreferencesStorage';
 import { loadClientAccountSnapshot } from '../constants/clientAccountStorage';
 import { trackEvent } from '../services/googleAnalyticsTracking';
+import { openNativeSelectPicker } from '../dom/openNativeSelectPicker';
 import { toast } from 'sonner';
 import './Dashboard.css';
 import './Dashboard.app-theme.css';
@@ -672,6 +673,7 @@ const Dashboard = ({
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
   const paltoMenuRef = useRef<HTMLDivElement | null>(null);
   const topbarAccountMenuRef = useRef<HTMLDivElement | null>(null);
+  const topbarAccountRoleSelectRef = useRef<HTMLSelectElement | null>(null);
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
@@ -2233,12 +2235,27 @@ const Dashboard = ({
                   {topbarAccountMenuOpen ? (
                     <div className="client-compte-account-menu" role="menu" aria-label="Menu compte">
                       <div className="client-compte-account-menu__head">
-                        <strong>{paltoIdentity.fullName}</strong>
-                        <span>{paltoIdentity.email}</span>
+                        {hasLinkedClientAccount ? (
+                          <button
+                            type="button"
+                            className="client-compte-account-menu__head-identity"
+                            onClick={() => openNativeSelectPicker(topbarAccountRoleSelectRef.current)}
+                            aria-label={language === 'en' ? 'Open account switcher' : 'Ouvrir le sélecteur de compte'}
+                          >
+                            <strong>{paltoIdentity.fullName}</strong>
+                            <span>{paltoIdentity.email}</span>
+                          </button>
+                        ) : (
+                          <>
+                            <strong>{paltoIdentity.fullName}</strong>
+                            <span>{paltoIdentity.email}</span>
+                          </>
+                        )}
                         {hasLinkedClientAccount ? (
                           <label className="client-compte-account-menu__role-label">
                             {language === 'en' ? 'Account' : 'Compte'}
                             <select
+                              ref={topbarAccountRoleSelectRef}
                               className="client-compte-account-menu__role-select"
                               value="chauffeur"
                               onChange={(e) => handleTopbarRoleSelect(e.target.value as 'chauffeur' | 'client')}

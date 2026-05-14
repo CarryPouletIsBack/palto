@@ -13,6 +13,7 @@ import {
   type User as AuthUser,
 } from '../services/authService'
 import LanguageSwitcher from './LanguageSwitcher'
+import { openNativeSelectPicker } from '../dom/openNativeSelectPicker'
 import './Dashboard.css'
 import './Dashboard.app-theme.css'
 
@@ -40,6 +41,7 @@ export function DashboardHomeTopbar({
   const [authTick, setAuthTick] = useState(0)
   const [accountModalOpen, setAccountModalOpen] = useState(false)
   const accountMenuRef = useRef<HTMLDivElement | null>(null)
+  const accountRoleSelectRef = useRef<HTMLSelectElement | null>(null)
 
   useEffect(() => {
     const refresh = () => setAuthTick((n) => n + 1)
@@ -172,12 +174,27 @@ export function DashboardHomeTopbar({
                 {accountModalOpen ? (
                   <div className="client-compte-account-menu" role="menu" aria-label="Menu compte">
                     <div className="client-compte-account-menu__head">
-                      <strong>{accountDisplayName}</strong>
-                      <span>{session.user?.email ?? ''}</span>
+                      {hasLinkedChauffeurAccount ? (
+                        <button
+                          type="button"
+                          className="client-compte-account-menu__head-identity"
+                          onClick={() => openNativeSelectPicker(accountRoleSelectRef.current)}
+                          aria-label={language === 'en' ? 'Open account switcher' : 'Ouvrir le sélecteur de compte'}
+                        >
+                          <strong>{accountDisplayName}</strong>
+                          <span>{session.user?.email ?? ''}</span>
+                        </button>
+                      ) : (
+                        <>
+                          <strong>{accountDisplayName}</strong>
+                          <span>{session.user?.email ?? ''}</span>
+                        </>
+                      )}
                       {hasLinkedChauffeurAccount ? (
                         <label className="client-compte-account-menu__role-label">
                           {language === 'en' ? 'Account' : 'Compte'}
                           <select
+                            ref={accountRoleSelectRef}
                             className="client-compte-account-menu__role-select"
                             value="client"
                             onChange={(e) => {

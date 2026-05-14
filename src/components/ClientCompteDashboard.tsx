@@ -31,6 +31,7 @@ import { toast } from 'sonner';
 import { useLanguage } from '../contexts/LanguageContext';
 import LanguageSwitcher from './LanguageSwitcher';
 import { trackEvent } from '../services/googleAnalyticsTracking';
+import { openNativeSelectPicker } from '../dom/openNativeSelectPicker';
 import { useClientHomeTopbarRides } from '../hooks/useClientHomeTopbarRides';
 import './Dashboard.css';
 import './Dashboard.app-theme.css';
@@ -431,6 +432,7 @@ export default function ClientCompteDashboard({ onBack, onOpenClientLiveMeet }: 
   const [accountSectionsMenuOpen, setAccountSectionsMenuOpen] = useState(false);
   const accountMenuRef = useRef<HTMLDivElement | null>(null);
   const topbarPhotoInputRef = useRef<HTMLInputElement | null>(null);
+  const accountRoleSelectRef = useRef<HTMLSelectElement | null>(null);
 
   useEffect(() => {
     const onResize = () => {
@@ -1488,14 +1490,31 @@ export default function ClientCompteDashboard({ onBack, onOpenClientLiveMeet }: 
                       {accountModalOpen ? (
                         <div className="client-compte-account-menu" role="menu" aria-label="Menu compte">
                           <div className="client-compte-account-menu__head">
-                            <strong>
-                              {profile.prenom} {profile.nom}
-                            </strong>
-                            <span>{profile.email}</span>
+                            {chauffeurLinkContext.hasLinkedChauffeurAccount ? (
+                              <button
+                                type="button"
+                                className="client-compte-account-menu__head-identity"
+                                onClick={() => openNativeSelectPicker(accountRoleSelectRef.current)}
+                                aria-label={isEn ? 'Open account switcher' : 'Ouvrir le sélecteur de compte'}
+                              >
+                                <strong>
+                                  {profile.prenom} {profile.nom}
+                                </strong>
+                                <span>{profile.email}</span>
+                              </button>
+                            ) : (
+                              <>
+                                <strong>
+                                  {profile.prenom} {profile.nom}
+                                </strong>
+                                <span>{profile.email}</span>
+                              </>
+                            )}
                             {chauffeurLinkContext.hasLinkedChauffeurAccount ? (
                               <label className="client-compte-account-menu__role-label">
                                 {isEn ? 'Account' : 'Compte'}
                                 <select
+                                  ref={accountRoleSelectRef}
                                   className="client-compte-account-menu__role-select"
                                   value="client"
                                   onChange={(e) => handleAccountRoleSelect(e.target.value as 'client' | 'chauffeur')}
