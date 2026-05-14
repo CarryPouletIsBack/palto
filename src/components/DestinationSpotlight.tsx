@@ -85,6 +85,17 @@ export function DestinationSpotlight({
   const y = useMotionValue(0)
   const screenHeight = useMemo(() => (typeof window !== 'undefined' ? window.innerHeight : 800), [])
   const [liftScroll] = useState(LIFT_SCROLL_MAX)
+  const [isDesktopViewport, setIsDesktopViewport] = useState(
+    () => (typeof window !== 'undefined' ? window.matchMedia('(min-width: 769px)').matches : false)
+  )
+
+  useEffect(() => {
+    const mq = window.matchMedia('(min-width: 769px)')
+    const onChange = () => setIsDesktopViewport(mq.matches)
+    onChange()
+    mq.addEventListener('change', onChange)
+    return () => mq.removeEventListener('change', onChange)
+  }, [])
 
   const initialTop = useMemo(() => screenHeight * 0.48 + 100, [screenHeight])
   const topPosition = useMemo(() => {
@@ -242,19 +253,35 @@ export function DestinationSpotlight({
 
       <div className="main-single-project">
         <div className="dashboard-container dashboard-container--home-accueil single-project-go-topbar-wrap">
-          <div className="dashboard-main single-project-go-topbar-wrap__main">
-            <DashboardHomeTopbar
-              onOpenClientAccountAuth={onOpenClientAccountAuth}
-              onOpenClientAccount={onOpenClientAccount}
-              onNavigateHome={onNavigateHome}
-            />
-            <DashboardHomeRidesBanner
-              clientUpcomingRide={clientUpcomingRide}
-              clientLiveMeetActive={clientLiveMeetActive}
-              onOpenClientLiveMeet={onOpenClientLiveMeet}
-              analyticsSuffix="destination"
-            />
-          </div>
+          {isDesktopViewport ? (
+            <div className="dashboard-main single-project-go-topbar-wrap__main">
+              <DashboardHomeTopbar
+                onOpenClientAccountAuth={onOpenClientAccountAuth}
+                onOpenClientAccount={onOpenClientAccount}
+                onNavigateHome={onNavigateHome}
+              />
+              <DashboardHomeRidesBanner
+                clientUpcomingRide={clientUpcomingRide}
+                clientLiveMeetActive={clientLiveMeetActive}
+                onOpenClientLiveMeet={onOpenClientLiveMeet}
+                analyticsSuffix="destination"
+              />
+            </div>
+          ) : (
+            <>
+              <DashboardHomeTopbar
+                onOpenClientAccountAuth={onOpenClientAccountAuth}
+                onOpenClientAccount={onOpenClientAccount}
+                onNavigateHome={onNavigateHome}
+              />
+              <DashboardHomeRidesBanner
+                clientUpcomingRide={clientUpcomingRide}
+                clientLiveMeetActive={clientLiveMeetActive}
+                onOpenClientLiveMeet={onOpenClientLiveMeet}
+                analyticsSuffix="destination"
+              />
+            </>
+          )}
         </div>
 
         <div className="project-top-block">

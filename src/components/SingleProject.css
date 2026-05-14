@@ -6162,13 +6162,15 @@
   margin-left: 0;
   margin-right: 0;
   box-sizing: border-box;
+  display: flex;
   flex-direction: column;
+  gap: 0;
   overflow: visible !important;
   position: relative;
 }
 
 .single-project-page .main-single-project > .single-project-go-topbar-wrap .single-project-go-topbar-wrap__main.dashboard-main {
-  /* Ne pas forcer min-height:0 ici : ça surcharge ClientCompteDashboard (min-content) et casse Safari. */
+  /* Desktop : wrapper intermédiaire (inchangé). Ne pas forcer min-height:0 — casse Safari sur accueil. */
   min-height: min-content !important;
   flex: 0 0 auto !important;
   gap: 0 !important;
@@ -6325,12 +6327,69 @@
   }
 
   /*
-   * /go mobile : la gouttière globale (--sp-padding-x-fluid, min ~24px) est trop large dans le panneau.
-   * On remplace par un resserrement + encoches (le contenu des cartes garde son padding interne).
+   * /go mobile : gouttières + typescale / spacing alignés compte client & chauffeur
+   * (titres ~clamp(28px,7.5vw,32px), corps ~16–17px, gouttières ~20px + safe area, gaps ~12–16px).
    */
   .single-project-page:has(.palto-ride-main) .main-single-project > .palto-ride-main {
-    padding-left: max(8px, env(safe-area-inset-left, 0px));
-    padding-right: max(8px, env(safe-area-inset-right, 0px));
+    padding-left: max(20px, env(safe-area-inset-left, 0px));
+    padding-right: max(20px, env(safe-area-inset-right, 0px));
+    padding-bottom: max(32px, env(safe-area-inset-bottom, 0px));
+  }
+
+  .single-project-page:has(.palto-ride-main) .dashboard-home-rides-banner {
+    padding-left: max(20px, env(safe-area-inset-left, 0px));
+    padding-right: max(20px, env(safe-area-inset-right, 0px));
+  }
+
+  .single-project-page:has(.palto-ride-main) .palto-ride-layout {
+    gap: 16px;
+  }
+
+  .single-project-page:has(.palto-ride-main) .palto-ride-card {
+    padding: 16px;
+    gap: 16px;
+    border-radius: 12px;
+  }
+
+  .single-project-page:has(.palto-ride-main) .palto-ride-card--map {
+    padding: 16px;
+  }
+
+  /* Mobile Go : carte réservation sans fond ni bordure « panneau ». */
+  .single-project-page:has(.palto-ride-main) .palto-ride-column--booking > .palto-ride-card {
+    background: transparent;
+    border: none;
+    box-shadow: none;
+  }
+
+  .single-project-page:has(.palto-ride-main) .palto-ride-column--booking > .palto-ride-card > .palto-ride-card__title {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: clamp(28px, 7.5vw, 32px);
+    font-weight: 700;
+    line-height: 1.12;
+    letter-spacing: -0.02em;
+    text-transform: none;
+  }
+
+  .single-project-page:has(.palto-ride-main) .palto-ride-column--booking > .palto-ride-card > .palto-ride-card__lead {
+    font-size: 17px;
+    line-height: 1.4;
+    font-weight: 400;
+  }
+
+  .single-project-page:has(.palto-ride-main) .palto-ride-card--drivers .palto-ride-card__title {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: clamp(22px, 5.5vw, 28px);
+    font-weight: 700;
+    line-height: 1.15;
+    letter-spacing: -0.02em;
+    text-transform: none;
+  }
+
+  .single-project-page:has(.palto-ride-main) .palto-ride-card--drivers .palto-ride-card__lead {
+    font-size: 16px;
+    line-height: 1.45;
+    font-weight: 400;
   }
 
   .single-project-page:has(.palto-ride-main) .palto-ride-field {
@@ -6338,6 +6397,140 @@
     width: 100%;
     max-width: 100%;
     box-sizing: border-box;
+    gap: 8px;
+  }
+
+  .single-project-page:has(.palto-ride-main) .palto-ride-field__label {
+    font-size: 14px;
+    font-weight: 600;
+  }
+
+  .single-project-page:has(.palto-ride-main) .palto-ride-input {
+    font-size: 16px;
+    padding: 12px 14px;
+    border-radius: 10px;
+  }
+
+  .single-project-page:has(.palto-ride-main) .palto-ride-field-hint,
+  .single-project-page:has(.palto-ride-main) .palto-ride-field-error {
+    font-size: 14px;
+    line-height: 1.45;
+  }
+
+  .single-project-page:has(.palto-ride-main) .palto-ride-drivers-empty {
+    font-size: 16px;
+    line-height: 1.45;
+    padding: 14px 12px;
+  }
+
+  .single-project-page:has(.palto-ride-main) .palto-ride-timing-toggle {
+    gap: 10px;
+  }
+
+  .single-project-page:has(.palto-ride-main) .palto-ride-timing-choice {
+    font-size: 15px;
+    padding: 12px 14px;
+    border-radius: 10px;
+  }
+
+  .single-project-page:has(.palto-ride-main) .palto-ride-search-btn.btn {
+    font-size: 16px;
+    min-height: 48px;
+    border-radius: 12px;
+  }
+
+  .single-project-page:has(.palto-ride-main) .palto-ride-drivers-list {
+    gap: 12px;
+  }
+
+  .single-project-page:has(.palto-ride-main) .palto-ride-driver-item {
+    padding: 14px 16px;
+    border-radius: 10px;
+    gap: 12px;
+  }
+
+  .single-project-page:has(.palto-ride-main) .palto-ride-driver-item__name {
+    font-size: 17px;
+  }
+
+  .single-project-page:has(.palto-ride-main) .palto-ride-driver-item__meta {
+    font-size: 13px;
+  }
+
+  .single-project-page:has(.palto-ride-main) .palto-ride-driver-item__price {
+    font-size: 20px;
+  }
+
+  .single-project-page:has(.palto-ride-main) .palto-pickup-suggestions__title {
+    font-size: 13px;
+  }
+
+  .single-project-page:has(.palto-ride-main) .palto-pickup-suggestions__item {
+    font-size: 14px;
+    padding: 10px 12px;
+  }
+
+  .single-project-page:has(.palto-ride-main) .palto-pickup-suggestions__hint {
+    font-size: 13px;
+    line-height: 1.45;
+  }
+
+  .single-project-page:has(.palto-ride-main) .palto-ride-recap-open-btn {
+    font-size: 15px;
+    padding: 12px 14px;
+    border-radius: 12px;
+  }
+
+  .single-project-page:has(.palto-ride-main) .palto-ride-recap p,
+  .single-project-page:has(.palto-ride-main) .palto-ride-recap-row {
+    font-size: 15px;
+    line-height: 1.45;
+  }
+
+  .single-project-page:has(.palto-ride-main) .palto-ride-recap-price-row {
+    font-size: 16px;
+  }
+
+  .single-project-page:has(.palto-ride-main) .palto-ride-recap-modal__content .palto-ride-card__title {
+    font-size: clamp(22px, 5.5vw, 28px);
+    font-weight: 700;
+    line-height: 1.15;
+    letter-spacing: -0.02em;
+    text-transform: none;
+    font-family: 'Space Grotesk', sans-serif;
+  }
+
+  .single-project-page:has(.palto-ride-main) .palto-checkout {
+    gap: 16px;
+  }
+
+  .single-project-page:has(.palto-ride-main) .palto-checkout__lead {
+    font-size: 16px;
+    line-height: 1.45;
+  }
+
+  .single-project-page:has(.palto-ride-main) .palto-checkout__summary p {
+    font-size: 14px;
+    line-height: 1.45;
+  }
+
+  .single-project-page:has(.palto-ride-main) .palto-checkout__field > span {
+    font-size: 14px;
+    font-weight: 600;
+    text-transform: none;
+    letter-spacing: 0;
+  }
+
+  .single-project-page:has(.palto-ride-main) .palto-checkout__payment {
+    font-size: 15px;
+    min-height: 44px;
+    border-radius: 12px;
+  }
+
+  .single-project-page:has(.palto-ride-main) .palto-checkout__error,
+  .single-project-page:has(.palto-ride-main) .palto-checkout__success {
+    font-size: 14px;
+    line-height: 1.45;
   }
 
   .single-project-page:has(.palto-ride-main) .palto-ride-datetime-local-wrap .palto-ride-input--datetime-local {

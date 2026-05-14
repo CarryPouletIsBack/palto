@@ -2063,19 +2063,35 @@ const SingleProjectNew: FC<SingleProjectProps> = ({
         {isGoProjectPage ? (
         <>
         <div className="dashboard-container dashboard-container--home-accueil single-project-go-topbar-wrap">
-          <div className="dashboard-main single-project-go-topbar-wrap__main">
-            <DashboardHomeTopbar
-              onOpenClientAccountAuth={onOpenClientAccountAuth}
-              onOpenClientAccount={onOpenClientAccount}
-              onNavigateHome={onNavigateHome}
-            />
-            <DashboardHomeRidesBanner
-              clientUpcomingRide={clientUpcomingRide}
-              clientLiveMeetActive={clientLiveMeetActive}
-              onOpenClientLiveMeet={onOpenClientLiveMeet}
-              analyticsSuffix="go"
-            />
-          </div>
+          {isDesktopViewport ? (
+            <div className="dashboard-main single-project-go-topbar-wrap__main">
+              <DashboardHomeTopbar
+                onOpenClientAccountAuth={onOpenClientAccountAuth}
+                onOpenClientAccount={onOpenClientAccount}
+                onNavigateHome={onNavigateHome}
+              />
+              <DashboardHomeRidesBanner
+                clientUpcomingRide={clientUpcomingRide}
+                clientLiveMeetActive={clientLiveMeetActive}
+                onOpenClientLiveMeet={onOpenClientLiveMeet}
+                analyticsSuffix="go"
+              />
+            </div>
+          ) : (
+            <>
+              <DashboardHomeTopbar
+                onOpenClientAccountAuth={onOpenClientAccountAuth}
+                onOpenClientAccount={onOpenClientAccount}
+                onNavigateHome={onNavigateHome}
+              />
+              <DashboardHomeRidesBanner
+                clientUpcomingRide={clientUpcomingRide}
+                clientLiveMeetActive={clientLiveMeetActive}
+                onOpenClientLiveMeet={onOpenClientLiveMeet}
+                analyticsSuffix="go"
+              />
+            </>
+          )}
         </div>
         <div className="palto-ride-main">
           {showGoMobileMapFullTop ? (
