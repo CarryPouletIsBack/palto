@@ -101,6 +101,7 @@ import {
 } from '../services/authService';
 import { buildClientLiveMeetRideFromRideItem } from '../constants/clientLiveMeetRide';
 import { cancelClientRide, clientRidesApiEnabled, fetchClientRides, type ClientRideItem } from '../services/clientRidesApi';
+import { scheduleClientProfilePush, syncClientProfileWithServer } from '../services/clientProfileSync';
 
 type ClientPlaceMapTarget =
   | { kind: 'domicile' }
@@ -516,41 +517,54 @@ export default function ClientCompteDashboard({ onBack, onOpenClientLiveMeet }: 
   }, [ridesSyncTick, ridesRefreshEpoch]);
 
   useEffect(() => {
-    const sessionUser = getCurrentClientUser();
-    const sessionEmail = (sessionUser?.email ?? '').trim().toLowerCase();
-    if (sessionEmail) {
-      migrateLegacySavedPlacesIfOwnedByEmail(sessionEmail);
-      migrateLegacyWalletIfOwnedByEmail(sessionEmail);
-      migrateLegacySecurityIfOwnedByEmail(sessionEmail);
-    }
-    const snap = loadClientAccountSnapshot(sessionEmail);
-    const needsEmailHydration = sessionEmail.length > 0 && snap.email.trim().toLowerCase() !== sessionEmail;
-    const needsNameHydration = !snap.prenom.trim() && !snap.nom.trim() && sessionEmail.length > 0;
-    const inferred = inferClientIdentityFromEmail(sessionEmail);
-    const hydrated = {
-      ...snap,
-      email: needsEmailHydration ? sessionEmail : snap.email,
-      prenom: needsNameHydration ? inferred.prenom : snap.prenom,
-      nom: needsNameHydration ? inferred.nom : snap.nom,
-    };
-    if (needsEmailHydration || needsNameHydration) {
-      saveClientAccountSnapshot(hydrated, sessionEmail);
-    }
-    setProfile(hydrated);
-    setDraft(hydrated);
-    const parsed = parseStoredPhone(hydrated.telephone);
-    setPhoneCountryDraft(parsed.country);
-    setPhoneNationalDraft(parsed.nationalNumber);
-    setPhotoDraftUrl(hydrated.profilePhotoUrl ?? null);
-    setPhotoDraftName(hydrated.profilePhotoName ?? '');
-    if (sessionEmail) {
+    let cancelled = false;
+
+    const applyLocalProfile = (sessionEmail: string) => {
+      const snap = loadClientAccountSnapshot(sessionEmail);
+      const needsEmailHydration = sessionEmail.length > 0 && snap.email.trim().toLowerCase() !== sessionEmail;
+      const needsNameHydration = !snap.prenom.trim() && !snap.nom.trim() && sessionEmail.length > 0;
+      const inferred = inferClientIdentityFromEmail(sessionEmail);
+      const hydrated = {
+        ...snap,
+        email: needsEmailHydration ? sessionEmail : snap.email,
+        prenom: needsNameHydration ? inferred.prenom : snap.prenom,
+        nom: needsNameHydration ? inferred.nom : snap.nom,
+      };
+      if (needsEmailHydration || needsNameHydration) {
+        saveClientAccountSnapshot(hydrated, sessionEmail);
+      }
+      setProfile(hydrated);
+      setDraft(hydrated);
+      const parsed = parseStoredPhone(hydrated.telephone);
+      setPhoneCountryDraft(parsed.country);
+      setPhoneNationalDraft(parsed.nationalNumber);
+      setPhotoDraftUrl(hydrated.profilePhotoUrl ?? null);
+      setPhotoDraftName(hydrated.profilePhotoName ?? '');
+      setPlacesDraft(loadClientSavedPlaces(sessionEmail));
       const prefs = loadClientAppPreferences(sessionEmail);
       setAppPrefs(prefs);
       applyAppThemeToDocument(prefs.theme);
       applyUserFontScaleToDocument(prefs.fontScalePercent);
       setWallet(loadClientWalletSnapshot(sessionEmail));
       setSecurity(loadClientSecuritySnapshot(sessionEmail));
-    }
+    };
+
+    void (async () => {
+      const sessionUser = getCurrentClientUser();
+      const sessionEmail = (sessionUser?.email ?? '').trim().toLowerCase();
+      if (sessionEmail) {
+        migrateLegacySavedPlacesIfOwnedByEmail(sessionEmail);
+        migrateLegacyWalletIfOwnedByEmail(sessionEmail);
+        migrateLegacySecurityIfOwnedByEmail(sessionEmail);
+        await syncClientProfileWithServer(sessionEmail);
+      }
+      if (cancelled) return;
+      applyLocalProfile(sessionEmail);
+    })();
+
+    return () => {
+      cancelled = true;
+    };
   }, [authSessionTick]);
 
   useEffect(() => {
@@ -593,7 +607,7 @@ export default function ClientCompteDashboard({ onBack, onOpenClientLiveMeet }: 
     if (activeNav === 'places') {
       setPlacesDraft(loadClientSavedPlaces(activeClientEmail));
     }
-  }, [activeClientEmail, activeNav]);
+  }, [activeClientEmail, activeNav, authSessionTick]);
 
   useEffect(() => {
     if (activeNav === 'places') {
@@ -891,6 +905,7 @@ export default function ClientCompteDashboard({ onBack, onOpenClientLiveMeet }: 
       }
       if (emailKey) {
         saveClientAccountSnapshot(nextProfile, emailKey);
+        scheduleClientProfilePush(emailKey);
         if (typeof window !== 'undefined') {
           window.dispatchEvent(new CustomEvent(PALTO_CLIENT_SESSION_CHANGED_EVENT));
         }
@@ -963,6 +978,7 @@ export default function ClientCompteDashboard({ onBack, onOpenClientLiveMeet }: 
     (e: FormEvent) => {
       e.preventDefault();
       saveClientSavedPlaces(placesDraft, activeClientEmail);
+      scheduleClientProfilePush(activeClientEmail);
       trackEvent('click', 'client_account', 'places_save');
       toast.success(isEn ? 'Saved places updated.' : 'Lieux enregistrés avec succès.');
       goNav('overview');
@@ -1029,6 +1045,7 @@ export default function ClientCompteDashboard({ onBack, onOpenClientLiveMeet }: 
         toast.error(t('clientAccount.photoStorageError'));
         return;
       }
+      scheduleClientProfilePush(activeClientEmail);
       setProfile(next);
       setIsEditing(false);
       if (typeof window !== 'undefined') {
@@ -1069,6 +1086,7 @@ export default function ClientCompteDashboard({ onBack, onOpenClientLiveMeet }: 
       toast.error(t('clientAccount.photoStorageError'));
       return;
     }
+    scheduleClientProfilePush(activeClientEmail);
     setProfile(next);
     setDraft(next);
     setPhotoDraftUrl(dataUrl);

@@ -1,5 +1,5 @@
 import type { FC, KeyboardEvent, FocusEvent } from 'react';
-import { ArrowUpDown, MapPin, MoreHorizontal } from 'lucide-react';
+import { MapPin, X } from 'lucide-react';
 
 export type PaltoGoStaticSuggestion = {
   id: string;
@@ -19,8 +19,10 @@ export type PaltoGoMobileRouteCardProps = {
   onPickupBlur: (e: FocusEvent<HTMLInputElement>) => void;
   onDestinationFocus: (e: FocusEvent<HTMLInputElement>) => void;
   onDestinationBlur: (e: FocusEvent<HTMLInputElement>) => void;
-  onSwapEndpoints: () => void;
-  onPickupMenuClick: () => void;
+  onClearPickup: () => void;
+  onClearDestination: () => void;
+  clearPickupAriaLabel: string;
+  clearDestinationAriaLabel: string;
   pickupGeocodeLoading: boolean;
   destinationSuggestionLoading: boolean;
   destinationSnapLoading: boolean;
@@ -40,8 +42,10 @@ const PaltoGoMobileRouteCard: FC<PaltoGoMobileRouteCardProps> = ({
   onPickupBlur,
   onDestinationFocus,
   onDestinationBlur,
-  onSwapEndpoints,
-  onPickupMenuClick,
+  onClearPickup,
+  onClearDestination,
+  clearPickupAriaLabel,
+  clearDestinationAriaLabel,
   pickupGeocodeLoading,
   destinationSuggestionLoading,
   destinationSnapLoading,
@@ -49,6 +53,8 @@ const PaltoGoMobileRouteCard: FC<PaltoGoMobileRouteCardProps> = ({
   destinationSuggestionOpen,
 }) => {
   const suggestionsPanelId = 'palto-mobile-suggestions-panel';
+  const showPickupClear = pickupValue.trim().length > 0;
+  const showDestinationClear = destinationValue.trim().length > 0;
 
   return (
     <div className="palto-ride-route-card" role="group" aria-label="Départ et destination">
@@ -75,15 +81,17 @@ const PaltoGoMobileRouteCard: FC<PaltoGoMobileRouteCardProps> = ({
               aria-controls={pickupSuggestionOpen ? suggestionsPanelId : undefined}
             />
           </div>
-          <button
-            type="button"
-            className="palto-ride-route-card__action"
-            aria-label="Options de départ"
-            onMouseDown={(e) => e.preventDefault()}
-            onClick={onPickupMenuClick}
-          >
-            <MoreHorizontal size={22} strokeWidth={2} aria-hidden />
-          </button>
+          {showPickupClear ? (
+            <button
+              type="button"
+              className="palto-ride-route-card__action palto-ride-route-card__action--clear"
+              aria-label={clearPickupAriaLabel}
+              onMouseDown={(e) => e.preventDefault()}
+              onClick={onClearPickup}
+            >
+              <X size={20} strokeWidth={2.25} aria-hidden />
+            </button>
+          ) : null}
         </div>
         <div className="palto-ride-route-card__row">
           <div className="palto-ride-route-card__field">
@@ -102,15 +110,17 @@ const PaltoGoMobileRouteCard: FC<PaltoGoMobileRouteCardProps> = ({
               aria-controls={destinationSuggestionOpen ? suggestionsPanelId : undefined}
             />
           </div>
-          <button
-            type="button"
-            className="palto-ride-route-card__action"
-            aria-label="Inverser départ et destination"
-            onMouseDown={(e) => e.preventDefault()}
-            onClick={onSwapEndpoints}
-          >
-            <ArrowUpDown size={20} strokeWidth={2.25} aria-hidden />
-          </button>
+          {showDestinationClear ? (
+            <button
+              type="button"
+              className="palto-ride-route-card__action palto-ride-route-card__action--clear"
+              aria-label={clearDestinationAriaLabel}
+              onMouseDown={(e) => e.preventDefault()}
+              onClick={onClearDestination}
+            >
+              <X size={20} strokeWidth={2.25} aria-hidden />
+            </button>
+          ) : null}
         </div>
       </div>
     </div>

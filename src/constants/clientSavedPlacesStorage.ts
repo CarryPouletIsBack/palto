@@ -95,6 +95,18 @@ export function loadClientSavedPlaces(email?: string): ClientSavedPlacesSnapshot
     if (emailKey) {
       const byEmail = readPlacesByEmailMap();
       if (byEmail[emailKey]) return sanitizeSnapshot(byEmail[emailKey]);
+
+      const legacyRaw = localStorage.getItem(CLIENT_SAVED_PLACES_STORAGE_KEY);
+      if (legacyRaw) {
+        const legacy = sanitizeSnapshot(
+          JSON.parse(legacyRaw) as Partial<ClientSavedPlacesSnapshot> & { extras?: unknown[] }
+        );
+        if (!isPlacesSnapshotEmpty(legacy) && clientAccountRowExistsForEmail(emailKey)) {
+          saveClientSavedPlaces(legacy, emailKey);
+          localStorage.removeItem(CLIENT_SAVED_PLACES_STORAGE_KEY);
+          return legacy;
+        }
+      }
       return { ...DEFAULT_CLIENT_SAVED_PLACES };
     }
     const raw = localStorage.getItem(CLIENT_SAVED_PLACES_STORAGE_KEY);

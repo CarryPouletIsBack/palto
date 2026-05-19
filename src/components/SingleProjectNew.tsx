@@ -56,9 +56,17 @@ import {
 import { REUNION_ISLAND_BBOX_GEOCODE } from '../constants/reunionIsland';
 import { haversineDistanceKm, type GeoPoint } from '../services/distanceGeo';
 import { consumeGoPrefill } from '../constants/goPrefillStorage';
-import { loadClientSavedPlaces } from '../constants/clientSavedPlacesStorage';
+import {
+  loadClientSavedPlaces,
+  migrateLegacySavedPlacesIfOwnedByEmail,
+} from '../constants/clientSavedPlacesStorage';
 import { loadClientAccountSnapshot } from '../constants/clientAccountStorage';
-import { getCurrentClientUser, isClientAuthenticated } from '../services/authService';
+import { syncClientProfileWithServer } from '../services/clientProfileSync';
+import {
+  getCurrentClientUser,
+  isClientAuthenticated,
+  PALTO_CLIENT_SESSION_CHANGED_EVENT,
+} from '../services/authService';
 import {
   CHAUFFEUR_RIDE_SETTINGS_KEY,
   loadChauffeurRideSettingsSnapshot,
@@ -935,6 +943,33 @@ const SingleProjectNew: FC<SingleProjectProps> = ({
     [isMobileGoViewport]
   );
 
+  const [clientSessionTick, setClientSessionTick] = useState(0);
+  const [clientProfileSyncTick, setClientProfileSyncTick] = useState(0);
+
+  useEffect(() => {
+    const refreshClientSession = () => setClientSessionTick((n) => n + 1);
+    window.addEventListener(PALTO_CLIENT_SESSION_CHANGED_EVENT, refreshClientSession);
+    window.addEventListener('storage', refreshClientSession);
+    return () => {
+      window.removeEventListener(PALTO_CLIENT_SESSION_CHANGED_EVENT, refreshClientSession);
+      window.removeEventListener('storage', refreshClientSession);
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!isGoProjectPage) return;
+    const sessionEmail = getCurrentClientUser()?.email?.trim();
+    if (!sessionEmail) return;
+    migrateLegacySavedPlacesIfOwnedByEmail(sessionEmail);
+    let cancelled = false;
+    void syncClientProfileWithServer(sessionEmail).then(() => {
+      if (!cancelled) setClientProfileSyncTick((n) => n + 1);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [isGoProjectPage, clientSessionTick]);
+
   const clientEmailForSavedPlaces = getCurrentClientUser()?.email ?? '';
   const savedPlacesChoices = useMemo(() => {
     const snapshot = loadClientSavedPlaces(clientEmailForSavedPlaces || undefined);
@@ -955,7 +990,7 @@ const SingleProjectNew: FC<SingleProjectProps> = ({
       });
     }
     return entries;
-  }, [clientEmailForSavedPlaces]);
+  }, [clientEmailForSavedPlaces, clientSessionTick, clientProfileSyncTick]);
 
   const pickupStaticSuggestions = useMemo(() => {
     const items: Array<{ id: string; label: string; action: () => void }> = [
@@ -2570,8 +2605,10 @@ const SingleProjectNew: FC<SingleProjectProps> = ({
                 onPickupBlur={onPickupLocationBlur}
                 onDestinationFocus={onDestinationFocus}
                 onDestinationBlur={onDestinationBlur}
-                onSwapEndpoints={swapRideEndpoints}
-                onPickupMenuClick={onPickupRouteMenuClick}
+                onClearPickup={clearPickupLocationField}
+                onClearDestination={clearDestinationField}
+                clearPickupAriaLabel="Effacer le départ"
+                clearDestinationAriaLabel="Effacer la destination"
                 pickupGeocodeLoading={pickupGeocodeLoading}
                 destinationSuggestionLoading={destinationSuggestionLoading}
                 destinationSnapLoading={destinationSnapLoading}

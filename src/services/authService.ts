@@ -1,4 +1,5 @@
 import { apiBaseUrl } from '../constants/featureFlags'
+import { syncClientProfileWithServer } from './clientProfileSync'
 import type { RegisterChauffeurPayload } from '../constants/chauffeurRegistrationStorage'
 
 const AUTH_STORAGE_KEY = 'dashboard_auth'
@@ -154,6 +155,7 @@ export async function registerClient(credentials: LoginCredentials): Promise<{ s
   if (!result.success || !result.token || !result.user) return { success: false, error: result.error }
   persistUnifiedSession(result.token, result.user)
   notifyClientSessionChanged()
+  void syncClientProfileWithServer(result.user.email)
   return { success: true }
 }
 
@@ -164,6 +166,7 @@ export async function loginClient(
   if (!result.success || !result.token || !result.user) return { success: false, error: result.error }
   persistUnifiedSession(result.token, result.user)
   notifyClientSessionChanged()
+  void syncClientProfileWithServer(result.user.email)
   return { success: true, user: result.user }
 }
 

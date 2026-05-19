@@ -7303,6 +7303,10 @@ html[data-app-theme='dark'] .palto-ride-timing-expand__option:hover {
     outline-offset: 1px;
   }
 
+  .single-project-page:has(.palto-ride-main) .palto-ride-route-card__action--clear {
+    color: #5f6368;
+  }
+
   .single-project-page:has(.palto-ride-main) .palto-pickup-suggestions--route-below {
     position: relative;
     top: auto;

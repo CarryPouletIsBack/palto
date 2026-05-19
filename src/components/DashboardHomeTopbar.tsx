@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
+import { syncClientProfileWithServer } from '../services/clientProfileSync'
 import { User } from 'lucide-react'
 import { useLanguage } from '../contexts/LanguageContext'
 import { trackEvent } from '../services/googleAnalyticsTracking'
@@ -39,9 +40,11 @@ export function DashboardHomeTopbar({
 }: DashboardHomeTopbarProps) {
   const { t, language } = useLanguage()
   const [authTick, setAuthTick] = useState(0)
+  const [profileSyncTick, setProfileSyncTick] = useState(0)
   const [accountModalOpen, setAccountModalOpen] = useState(false)
   const accountMenuRef = useRef<HTMLDivElement | null>(null)
   const accountRoleSelectRef = useRef<HTMLSelectElement | null>(null)
+  const profileSyncedForEmailRef = useRef<string | null>(null)
 
   useEffect(() => {
     const refresh = () => setAuthTick((n) => n + 1)
@@ -65,6 +68,23 @@ export function DashboardHomeTopbar({
     }
   }, [authTick])
 
+  useEffect(() => {
+    if (!session.clientLogged) {
+      profileSyncedForEmailRef.current = null
+      return
+    }
+    const email = session.user?.email?.trim().toLowerCase() ?? ''
+    if (!email || profileSyncedForEmailRef.current === email) return
+    profileSyncedForEmailRef.current = email
+    let cancelled = false
+    void syncClientProfileWithServer(email).then(() => {
+      if (!cancelled) setProfileSyncTick((n) => n + 1)
+    })
+    return () => {
+      cancelled = true
+    }
+  }, [session.clientLogged, session.user?.email])
+
   const accountDisplayName = useMemo(() => {
     const pretty = (value: string) => value.slice(0, 1).toUpperCase() + value.slice(1).toLowerCase()
     const inferFromEmail = (emailRaw: string) => {
@@ -87,7 +107,7 @@ export function DashboardHomeTopbar({
     if (user?.displayName?.trim()) return user.displayName.trim()
     if (user?.email?.trim()) return inferFromEmail(user.email.trim())
     return ''
-  }, [session.clientLogged, session.user, authTick])
+  }, [session.clientLogged, session.user, authTick, profileSyncTick])
 
   const accountPhotoUrl = useMemo(() => {
     if (!session.clientLogged) return null
@@ -95,7 +115,7 @@ export function DashboardHomeTopbar({
     const clientProfile = loadClientAccountSnapshot(sessionEmail || undefined)
     const photo = clientProfile.profilePhotoUrl
     return typeof photo === 'string' && photo.trim() ? photo : null
-  }, [session.clientLogged, session.user, authTick])
+  }, [session.clientLogged, session.user, authTick, profileSyncTick])
 
   const hasLinkedChauffeurAccount = useMemo(() => {
     const email = session.user?.email?.trim() ?? ''
