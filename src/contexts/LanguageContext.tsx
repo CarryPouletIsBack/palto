@@ -212,6 +212,13 @@ const TRANSLATIONS: Record<Language, Record<string, unknown>> = {
     },
     search: {
       destinationPlaceholder: 'Indiquez votre destination',
+      bookingSearch: 'Rechercher',
+      bookingSearchLoading: 'Recherche…',
+      bookingReserve: 'Réserver',
+      bookingReserveLoading: 'Réservation…',
+      bookingHintScheduled:
+        'Renseignez le départ, la destination et l’heure, puis appuyez sur Réserver pour voir le récapitulatif.',
+      bookingRecapConfirmScheduled: 'Finaliser la réservation',
       goTimingNow: 'Partir maintenant',
       goTimingLater: 'Programmer le départ',
       goTimingPickerTitle: 'Quand partez-vous ?',
@@ -884,6 +891,13 @@ const TRANSLATIONS: Record<Language, Record<string, unknown>> = {
     },
     search: {
       destinationPlaceholder: 'Enter your destination',
+      bookingSearch: 'Search',
+      bookingSearchLoading: 'Searching…',
+      bookingReserve: 'Book',
+      bookingReserveLoading: 'Booking…',
+      bookingHintScheduled:
+        'Enter pickup, destination and time, then tap Book to see your summary.',
+      bookingRecapConfirmScheduled: 'Complete booking',
       goTimingNow: 'Leave now',
       goTimingLater: 'Schedule pickup',
       goTimingPickerTitle: 'When do you leave?',

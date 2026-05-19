@@ -76,21 +76,20 @@ const PaltoGoPickupTimingSelect: FC<PaltoGoPickupTimingSelectProps> = ({
             </button>
           </div>
         </div>
-        <div
-          className="palto-ride-timing-expand__panel palto-ride-timing-expand__panel--schedule"
-          aria-hidden={!showScheduleField}
-        >
-          <div className="palto-ride-timing-expand__panel-inner palto-ride-timing-expand__schedule-inner">
-            <input
-              type="datetime-local"
-              className="palto-ride-input palto-ride-input--datetime-local palto-ride-timing-expand__datetime"
-              min={minDateTimeLocal}
-              value={pickupDateTime}
-              onChange={(e) => onPickupDateTimeChange(e.target.value)}
-              aria-label={scheduleInputAriaLabel}
-            />
+        {showScheduleField ? (
+          <div className="palto-ride-timing-expand__panel palto-ride-timing-expand__panel--schedule">
+            <div className="palto-ride-timing-expand__panel-inner palto-ride-timing-expand__schedule-inner palto-ride-datetime-local-wrap">
+              <input
+                type="datetime-local"
+                className="palto-ride-input palto-ride-input--datetime-local palto-ride-timing-expand__datetime"
+                min={minDateTimeLocal}
+                value={pickupDateTime}
+                onChange={(e) => onPickupDateTimeChange(e.target.value)}
+                aria-label={scheduleInputAriaLabel}
+              />
+            </div>
           </div>
-        </div>
+        ) : null}
       </div>
     </div>
   );

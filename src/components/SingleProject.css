@@ -5717,11 +5717,14 @@
 /* Prise en charge : select extensible (s’allonge vers le bas, repousse le contenu) */
 .palto-ride-field--timing {
   gap: 10px;
+  min-width: 0;
+  max-width: 100%;
 }
 
 .palto-ride-timing-expand {
   width: 100%;
   max-width: 100%;
+  min-width: 0;
   border-radius: 999px;
   background: #ffffff;
   box-shadow: 0 1px 2px rgba(15, 23, 42, 0.06);
@@ -5788,6 +5791,8 @@
 .palto-ride-timing-expand__panel {
   display: grid;
   grid-template-rows: 0fr;
+  min-width: 0;
+  max-width: 100%;
   transition: grid-template-rows 0.28s ease;
 }
 
@@ -5805,7 +5810,15 @@
 }
 
 .palto-ride-timing-expand__schedule-inner {
-  padding: 10px 12px 12px;
+  padding: 0 12px 12px;
+  box-sizing: border-box;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+}
+
+.palto-ride-timing-expand__schedule-inner.palto-ride-datetime-local-wrap {
+  overflow: hidden;
 }
 
 .palto-ride-timing-expand__datetime {
@@ -5813,33 +5826,46 @@
   box-sizing: border-box;
   display: block;
   margin: 0;
-  padding: 12px 14px;
-  border: 1px solid rgba(15, 23, 42, 0.08);
-  border-radius: 10px;
-  background: #fafbfc;
-  box-shadow:
-    0 1px 2px rgba(15, 23, 42, 0.06),
-    0 3px 10px rgba(15, 23, 42, 0.08);
+  padding: 10px 0 2px;
+  border: none;
+  border-top: 1px solid rgba(15, 23, 42, 0.08);
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
   font-family: 'Inter', sans-serif;
-  font-size: 14px;
+  font-size: 16px;
   font-weight: 500;
   line-height: 1.25;
   color: #0f172a;
   min-width: 0;
   max-width: 100%;
+  -webkit-min-logical-width: 0;
   transition:
-    box-shadow 0.2s ease,
     border-color 0.2s ease,
     background 0.2s ease;
 }
 
+.palto-ride-timing-expand__datetime::-webkit-datetime-edit {
+  display: block;
+  min-width: 0;
+  max-width: 100%;
+  overflow: hidden;
+}
+
+.palto-ride-timing-expand__datetime::-webkit-date-and-time-value {
+  display: block;
+  min-width: 0;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  text-align: left;
+}
+
 .palto-ride-timing-expand__datetime:focus {
   outline: none;
-  background: #ffffff;
-  border-color: rgba(37, 99, 235, 0.25);
-  box-shadow:
-    0 1px 2px rgba(15, 23, 42, 0.06),
-    0 4px 14px rgba(37, 99, 235, 0.12);
+  background: transparent;
+  border-top-color: rgba(37, 99, 235, 0.35);
+  box-shadow: none;
 }
 
 .palto-ride-timing-expand__datetime:focus-visible {
@@ -5887,20 +5913,16 @@ html[data-app-theme='dark'] .palto-ride-timing-expand--scheduled {
 }
 
 html[data-app-theme='dark'] .palto-ride-timing-expand__datetime {
-  border-color: rgba(255, 255, 255, 0.12);
-  background: rgba(255, 255, 255, 0.06);
+  border-top-color: rgba(255, 255, 255, 0.12);
+  background: transparent;
   color: var(--sp-text, #f1f5f9);
-  box-shadow:
-    0 1px 2px rgba(0, 0, 0, 0.2),
-    0 3px 10px rgba(0, 0, 0, 0.28);
+  box-shadow: none;
 }
 
 html[data-app-theme='dark'] .palto-ride-timing-expand__datetime:focus {
-  background: rgba(255, 255, 255, 0.1);
-  border-color: rgba(96, 165, 250, 0.35);
-  box-shadow:
-    0 1px 2px rgba(0, 0, 0, 0.22),
-    0 4px 14px rgba(37, 99, 235, 0.2);
+  background: transparent;
+  border-top-color: rgba(96, 165, 250, 0.35);
+  box-shadow: none;
 }
 
 html[data-app-theme='dark'] .palto-ride-timing-expand__trigger {
@@ -6313,10 +6335,13 @@ html[data-app-theme='dark'] .palto-ride-timing-expand__option:hover {
 }
 
 .single-project-page:has(.palto-ride-main) .main-single-project {
-  flex: 1 1 auto;
-  min-height: 0 !important;
+  flex: 0 0 auto;
+  min-height: auto !important;
+  height: auto;
   display: flex;
   flex-direction: column;
+  align-items: stretch;
+  overflow: visible;
   /* /go: le conteneur ne doit pas hériter du cadre centré global (max-width + margin auto). */
   max-width: none !important;
   width: 100% !important;
@@ -6325,11 +6350,13 @@ html[data-app-theme='dark'] .palto-ride-timing-expand__option:hover {
 }
 
 .single-project-page:has(.palto-ride-main) .palto-ride-main {
-  flex: 1 1 auto;
-  min-height: 0;
+  flex: 0 0 auto;
+  min-height: auto;
+  height: auto;
   min-width: 0;
   display: flex;
   flex-direction: column;
+  overflow: visible;
 }
 
 /* Barre d’accueil : largeur du main uniquement (évite le dépassement 100vw + marges dans le panneau fixed). */
@@ -6391,11 +6418,15 @@ html[data-app-theme='dark'] .palto-ride-timing-expand__option:hover {
    * et les panneaux (suggestions). La colonne carte garde overflow hidden pour le cadre WebGL.
    */
   .single-project-page:has(.palto-ride-main) .main-single-project {
+    flex: 1 1 auto;
+    min-height: 0 !important;
     overflow-x: hidden;
     overflow-y: visible;
   }
 
   .single-project-page:has(.palto-ride-main) .palto-ride-main {
+    flex: 1 1 auto;
+    min-height: 0;
     overflow-x: hidden;
     overflow-y: visible;
   }
@@ -6512,9 +6543,29 @@ html[data-app-theme='dark'] .palto-ride-timing-expand__option:hover {
     box-shadow: none;
   }
 
+  /*
+   * Panneau /go : toujours jusqu’en bas (pas de carte visible sous le sheet).
+   * Le main remplit le reste en blanc quand le contenu est court.
+   */
+  .single-project-page:has(.palto-ride-main) {
+    bottom: 0;
+    display: flex;
+    flex-direction: column;
+    overscroll-behavior-y: none;
+  }
+
+  .single-project-page:has(.palto-ride-main) .swipe-indicator-bar {
+    flex: 0 0 auto;
+  }
+
   .single-project-page:has(.palto-ride-main) .main-single-project {
     gap: 0 !important;
     background: #ffffff;
+    flex: 1 1 auto;
+    min-height: 0;
+    height: auto;
+    align-self: stretch;
+    overflow: visible;
   }
 
   .single-project-page:has(.palto-ride-main) .swipe-indicator-bar {
@@ -6525,10 +6576,29 @@ html[data-app-theme='dark'] .palto-ride-timing-expand__option:hover {
    * /go mobile : gouttières + typescale / spacing alignés compte client & chauffeur
    * (titres ~clamp(28px,7.5vw,32px), corps ~16–17px, gouttières ~20px + safe area, gaps ~12–16px).
    */
+  /*
+   * Un seul scroll : le panneau .single-project-page (évite que le scroll « remonte »
+   * dans main-single-project quand palto-ride-main est déjà en haut).
+   */
   .single-project-page:has(.palto-ride-main) .main-single-project > .palto-ride-main {
     padding-left: max(20px, env(safe-area-inset-left, 0px));
     padding-right: max(20px, env(safe-area-inset-right, 0px));
     padding-bottom: max(32px, env(safe-area-inset-bottom, 0px));
+    flex: 0 0 auto;
+    min-height: auto;
+    height: auto;
+    overflow: visible;
+  }
+
+  .single-project-page:has(.palto-ride-main) .palto-ride-layout,
+  .single-project-page:has(.palto-ride-main) .palto-ride-column--booking,
+  .single-project-page:has(.palto-ride-main) .palto-ride-card--mobile-route {
+    flex: 0 0 auto;
+    height: auto;
+    min-height: auto;
+    overflow: visible;
+    min-width: 0;
+    max-width: 100%;
   }
 
   .single-project-page:has(.palto-ride-main) .dashboard-home-rides-banner {
@@ -6636,31 +6706,48 @@ html[data-app-theme='dark'] .palto-ride-timing-expand__option:hover {
     font-size: 15px;
   }
 
+  .single-project-page:has(.palto-ride-main) .palto-ride-mobile-floating-booking .palto-ride-field--timing,
+  .single-project-page:has(.palto-ride-main) .palto-ride-mobile-floating-booking .palto-ride-timing-expand,
+  .single-project-page:has(.palto-ride-main) .palto-ride-mobile-floating-booking .palto-ride-timing-expand__panel--schedule {
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+    box-sizing: border-box;
+  }
+
   .single-project-page:has(.palto-ride-main) .palto-ride-mobile-floating-booking .palto-ride-field--timing {
     gap: 0;
   }
 
   .single-project-page:has(.palto-ride-main) .palto-ride-mobile-floating-booking .palto-ride-timing-expand__schedule-inner {
-    padding: 10px 12px 12px;
+    padding: 8px 10px 10px;
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+    overflow: hidden;
   }
 
   .single-project-page:has(.palto-ride-main) .palto-ride-mobile-floating-booking .palto-ride-timing-expand__datetime {
-    padding: 14px 16px;
-    font-size: 15px;
-    border-radius: 12px;
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+    padding: 10px 0 2px;
+    font-size: 16px;
+    border-radius: 0;
   }
 
   .single-project-page:has(.palto-ride-main) .palto-ride-floating-booking-spacer {
-    height: var(--palto-floating-booking-height, 148px);
-    min-height: 96px;
-    flex-shrink: 0;
-    pointer-events: none;
+    display: none;
   }
 
   .single-project-page:has(.palto-ride-main) .palto-ride-search-btn.btn {
     font-size: 16px;
     min-height: 48px;
     border-radius: 12px;
+  }
+
+  .single-project-page:has(.palto-ride-main) .palto-ride-card--mobile-route > .palto-ride-search-btn.btn {
+    margin-top: 16px;
   }
 
   .single-project-page:has(.palto-ride-main) .palto-ride-drivers-list {
@@ -6692,6 +6779,99 @@ html[data-app-theme='dark'] .palto-ride-timing-expand__option:hover {
   .single-project-page:has(.palto-ride-main) .palto-pickup-suggestions__item {
     font-size: 14px;
     padding: 10px 12px;
+    max-width: 100%;
+    white-space: normal;
+    overflow-wrap: anywhere;
+    word-break: break-word;
+  }
+
+  .single-project-page:has(.palto-ride-main) .palto-pickup-suggestions__list {
+    min-width: 0;
+    max-width: 100%;
+  }
+
+  .single-project-page:has(.palto-ride-main) .palto-pickup-suggestions__list--rows {
+    gap: 0;
+  }
+
+  .single-project-page:has(.palto-ride-main) .palto-pickup-suggestions__item--row {
+    position: relative;
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    width: 100%;
+    max-width: 100%;
+    padding: 18px 4px;
+    background: transparent;
+    border: none;
+    border-radius: 0;
+    box-shadow: none;
+    text-align: left;
+    cursor: pointer;
+    font-family: 'Inter', sans-serif;
+    font-size: 14px;
+    line-height: 1.35;
+    white-space: normal;
+    overflow-wrap: anywhere;
+    word-break: break-word;
+  }
+
+  /* Séparateur droit (ne suit pas le radius du hover) */
+  .single-project-page:has(.palto-ride-main) .palto-pickup-suggestions__item--row:not(:last-child)::after {
+    content: '';
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    height: 1px;
+    background: #ebebeb;
+    border-radius: 0;
+    pointer-events: none;
+  }
+
+  .single-project-page:has(.palto-ride-main) .palto-pickup-suggestions__item--row:hover,
+  .single-project-page:has(.palto-ride-main) .palto-pickup-suggestions__item--row:focus-visible {
+    border-radius: 10px;
+    background: rgba(0, 0, 0, 0.03);
+  }
+
+  .single-project-page:has(.palto-ride-main) .palto-pickup-suggestions__item--row-muted {
+    opacity: 0.55;
+    cursor: default;
+  }
+
+  .single-project-page:has(.palto-ride-main) .palto-pickup-suggestions__item--row-muted:hover,
+  .single-project-page:has(.palto-ride-main) .palto-pickup-suggestions__item--row-muted:focus-visible {
+    border-radius: 0;
+    background: transparent;
+  }
+
+  .single-project-page:has(.palto-ride-main) .palto-pickup-suggestions__item-icon {
+    flex-shrink: 0;
+    margin-top: 1px;
+    color: #0f172a;
+    stroke: #0f172a;
+  }
+
+  .single-project-page:has(.palto-ride-main) .palto-pickup-suggestions__item-label {
+    flex: 1 1 auto;
+    min-width: 0;
+  }
+
+  html[data-app-theme='dark']
+    .single-project-page:has(.palto-ride-main)
+    .palto-pickup-suggestions__item--row:not(:last-child)::after {
+    background: var(--sp-edge, rgba(255, 255, 255, 0.12));
+  }
+
+  html[data-app-theme='dark'] .single-project-page:has(.palto-ride-main) .palto-pickup-suggestions__item--row:hover,
+  html[data-app-theme='dark'] .single-project-page:has(.palto-ride-main) .palto-pickup-suggestions__item--row:focus-visible {
+    background: rgba(255, 255, 255, 0.04);
+  }
+
+  html[data-app-theme='dark'] .single-project-page:has(.palto-ride-main) .palto-pickup-suggestions__item-icon {
+    color: #f8fafc;
+    stroke: #f8fafc;
   }
 
   .single-project-page:has(.palto-ride-main) .palto-pickup-suggestions__hint {
@@ -6778,21 +6958,170 @@ html[data-app-theme='dark'] .palto-ride-timing-expand__option:hover {
   }
 
   /* Carte départ / destination flottante (style apps GPS) — mobile /go uniquement */
+  .single-project-page:has(.palto-ride-main) .palto-ride-card--mobile-route {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 8px;
+    min-width: 0;
+    flex: 0 0 auto;
+    height: auto;
+    margin-top: -16px;
+    padding: 0 16px 16px;
+  }
+
   .single-project-page:has(.palto-ride-main) .palto-ride-card--mobile-route .palto-ride-card__title,
   .single-project-page:has(.palto-ride-main) .palto-ride-card--mobile-route .palto-ride-card__lead {
     display: none;
   }
 
+  .single-project-page:has(.palto-ride-main) .palto-ride-mobile-suggestions-sheet,
+  .single-project-page:has(.palto-ride-main) .palto-ride-mobile-suggestions-block,
+  .single-project-page:has(.palto-ride-main) .palto-pickup-suggestions--route-below {
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+    box-sizing: border-box;
+    overflow-x: visible;
+    overflow-y: visible;
+  }
+
+  .single-project-page:has(.palto-ride-main) .palto-ride-mobile-suggestions-sheet {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    flex: 0 0 auto;
+  }
+
+  .single-project-page:has(.palto-ride-main) .palto-ride-mobile-suggestions-block__heading {
+    margin: 0 0 6px;
+    padding: 0 4px;
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: var(--sp-text-subtle);
+  }
+
+  .single-project-page:has(.palto-ride-main) .palto-ride-mobile-suggestions-block__below {
+    margin-top: 10px;
+    padding-top: 10px;
+    border-top: 1px solid var(--sp-edge, #ebebeb);
+  }
+
+  .single-project-page:has(.palto-ride-main)
+    .palto-ride-mobile-suggestions-block__above
+    + .palto-ride-mobile-suggestions-block__preselect {
+    margin-top: 10px;
+    padding-top: 10px;
+    border-top: 1px solid var(--sp-edge, #ebebeb);
+  }
+
+  .single-project-page:has(.palto-ride-main) .palto-ride-mobile-suggestions-block__above--autocomplete {
+    margin-top: 8px;
+  }
+
+  .single-project-page:has(.palto-ride-main) .palto-go-mobile-popular__row {
+    display: flex;
+    flex-wrap: nowrap;
+    gap: 10px;
+    overflow-x: auto;
+    overflow-y: hidden;
+    max-width: 100%;
+    padding: 2px 0 8px;
+    margin: 8px 0 0;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: thin;
+  }
+
+  .single-project-page:has(.palto-ride-main) .palto-go-mobile-popular-card {
+    flex: 0 0 auto;
+    width: min(132px, 38vw);
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 8px;
+    padding: 0;
+    border: 1px solid var(--sp-edge, #ebebeb);
+    border-radius: 12px;
+    background: #fff;
+    overflow: hidden;
+    text-align: left;
+    cursor: pointer;
+    box-shadow: 0 1px 3px rgba(15, 23, 42, 0.06);
+  }
+
+  .single-project-page:has(.palto-ride-main) .palto-go-mobile-popular-card:active {
+    transform: scale(0.98);
+  }
+
+  .single-project-page:has(.palto-ride-main) .palto-go-mobile-popular-card__img {
+    display: block;
+    aspect-ratio: 4 / 3;
+    background: #f1f5f9;
+    overflow: hidden;
+  }
+
+  .single-project-page:has(.palto-ride-main) .palto-go-mobile-popular-card__img img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+  }
+
+  .single-project-page:has(.palto-ride-main) .palto-go-mobile-popular-card__title {
+    padding: 0 8px 10px;
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 12px;
+    font-weight: 600;
+    line-height: 1.25;
+    color: #0f172a;
+  }
+
+  html[data-app-theme='dark'] .single-project-page:has(.palto-ride-main) .palto-go-mobile-popular-card {
+    background: var(--sp-surface, #1e293b);
+    border-color: var(--sp-edge, #334155);
+  }
+
+  html[data-app-theme='dark'] .single-project-page:has(.palto-ride-main) .palto-go-mobile-popular-card__title {
+    color: #f8fafc;
+  }
+
+  .single-project-page:has(.palto-ride-main) .palto-ride-column--booking {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0;
+  }
+
   .single-project-page:has(.palto-ride-main) .palto-ride-mobile-floating-booking {
-    position: fixed;
-    top: calc(env(safe-area-inset-top, 0px) + 56px);
-    left: max(16px, env(safe-area-inset-left, 0px));
-    right: max(16px, env(safe-area-inset-right, 0px));
+    position: sticky;
+    top: 0;
     z-index: 2000;
+    overscroll-behavior: contain;
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+    box-sizing: border-box;
     display: flex;
     flex-direction: column;
     gap: 10px;
+    flex-shrink: 0;
+    margin: 0;
+    padding-bottom: 0;
+    background: #ffffff;
     pointer-events: none;
+    isolation: isolate;
+    overflow: visible;
+  }
+
+  html[data-app-theme='dark'] .single-project-page:has(.palto-ride-main) .palto-ride-mobile-floating-booking {
+    background: var(--sp-card-surface, #1c1c1e);
+  }
+
+  .single-project-page:has(.palto-ride-main) .palto-ride-mobile-floating-booking .palto-ride-route-card {
+    margin-bottom: 4px;
   }
 
   .single-project-page:has(.palto-ride-main) .palto-ride-mobile-floating-booking__title {
@@ -6831,6 +7160,7 @@ html[data-app-theme='dark'] .palto-ride-timing-expand__option:hover {
     align-items: stretch;
     gap: 0;
     padding: 0;
+    border: 1px solid #ebebeb;
     border-radius: 16px;
     background: #ffffff;
     box-shadow:
@@ -6840,6 +7170,7 @@ html[data-app-theme='dark'] .palto-ride-timing-expand__option:hover {
   }
 
   html[data-app-theme='dark'] .single-project-page:has(.palto-ride-main) .palto-ride-route-card {
+    border-color: var(--sp-edge, rgba(255, 255, 255, 0.12));
     background: var(--sp-card-surface, #1c1c1e);
     box-shadow:
       0 2px 8px rgba(0, 0, 0, 0.35),
@@ -6908,7 +7239,6 @@ html[data-app-theme='dark'] .palto-ride-timing-expand__option:hover {
   .single-project-page:has(.palto-ride-main) .palto-ride-route-card__field {
     flex: 1 1 auto;
     min-width: 0;
-    position: relative;
     padding: 10px 8px 10px 0;
   }
 
@@ -6973,9 +7303,30 @@ html[data-app-theme='dark'] .palto-ride-timing-expand__option:hover {
     outline-offset: 1px;
   }
 
-  .single-project-page:has(.palto-ride-main) .palto-pickup-suggestions--route-card {
-    z-index: 2100;
-    max-height: min(42vh, 280px);
+  .single-project-page:has(.palto-ride-main) .palto-pickup-suggestions--route-below {
+    position: relative;
+    top: auto;
+    left: auto;
+    right: auto;
+    z-index: 1;
+    max-height: none;
+    margin: 12px 0 0;
+    padding-top: 0;
+    border: none;
+    border-radius: 0;
+    box-shadow: none;
+    overflow: visible;
+  }
+
+  .single-project-page:has(.palto-ride-main) #palto-mobile-suggestions-panel {
+    position: relative;
+    z-index: 1;
+    margin-top: 0;
+    padding-top: 0;
+  }
+
+  html[data-app-theme='dark'] .single-project-page:has(.palto-ride-main) .palto-pickup-suggestions--route-below {
+    box-shadow: none;
   }
 
 }
