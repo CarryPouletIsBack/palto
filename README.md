@@ -121,6 +121,19 @@ api/                    # Serverless — geocode, auth, client/rides, chauffeur,
 public/
 ```
 
+## Backstage (catalogue logiciel)
+
+Ce dépôt est enregistré dans **Backstage** via **[catalog-info.yaml](./catalog-info.yaml)** (format Software Catalog `backstage.io/v1alpha1`, entité `Component` **palto**).
+
+| Point | Détail |
+|-------|--------|
+| **Effet sur Palto en prod** | **Aucun** — le fichier n’est pas lu par Vite, Vercel ni `npm run build`. |
+| **Effet sur Backstage** | Métadonnées (titre, description, lien GitHub, owner, tags) affichées dans votre portail une fois la **location** catalogue pointée vers ce repo (branche `main`). |
+| **Design system** | Page **`/go`** (case study Go), section **`#design-system`** — contenu dans `src/data/projects.ts`, rendu `SingleProjectNew.tsx` / `SingleProject.css`. L’annotation `palto.backstage.io/design-system-path` vaut **`/go#design-system`** (à préfixer par l’URL de prod, ex. `https://votre-domaine.re/fr/go#design-system`). |
+| **Routes produit** | `/` accueil · `/go` réservation · `/compte` passager · `/dashboard` chauffeur · `/compte/course` rencontre chauffeur |
+
+Après un **push** sur GitHub : déclencher la **synchro** du catalogue Backstage (refresh de la location ou du plugin GitHub) pour voir les changements. Aucune action sur Vercel n’est nécessaire pour le catalogue.
+
 ## Déploiement
 
 - Fichier **`vercel.json`** pour le routage SPA.
@@ -139,6 +152,7 @@ Les fichiers ci-dessous décrivent des intégrations (SEO, OAuth, email, etc.) a
 | [GOOGLE_CLOUD_CONSOLE_CONFIG.md](./GOOGLE_CLOUD_CONSOLE_CONFIG.md) | URIs de redirection |
 | [RESEND_CONTACT.md](./RESEND_CONTACT.md) | Email contact |
 | [.cursorrules](./.cursorrules) | Règles Cursor (MUI MCP, arbres user flow) |
+| [catalog-info.yaml](./catalog-info.yaml) | Fiche **Backstage** (Software Catalog) — voir section [Backstage](#backstage-catalogue-logiciel) |
 
 ## Règles produit / design (arbres)
 
@@ -154,6 +168,7 @@ Référence arbres **user flow** : implémentation surtout sur la page **Go** (`
 
 ### Dernière mise à jour README — **9 mai 2026**
 
+- **Backstage** : section dédiée + **`catalog-info.yaml`** corrigé (`/go#design-system`, tags, liens GitHub) ; sans impact déploiement Vercel.
 - **Compte passager** : édition **Nom / Prénom / Téléphone** (et tuiles associées) **persistée** via `saveClientAccountSnapshot` + événement `palto:client-session-changed` pour la topbar.
 - **Courses & temps réel** : API **`/api/client/rides`** ; suivi **`ride_geo:{courseId}`** (broadcast) ; récap client après clôture chauffeur quand les champs API le permettent.
 - **Nettoyage local** : migration ponctuelle des brouillons navigateur via `purgeStaleLocalSnapshotsOnce` (`src/services/purgeStaleLocalSnapshots.ts`).
