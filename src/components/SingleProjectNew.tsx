@@ -29,6 +29,8 @@ import UserFlowChart from './UserFlowChart';
 import { TreeNode } from './flow/FlowTree';
 import type { FlowNodeData } from '../data/flowData';
 import Button from './Button';
+import PaltoGoMobileRouteCard from './PaltoGoMobileRouteCard';
+import PaltoGoPickupTimingSelect from './PaltoGoPickupTimingSelect';
 import ContactModal from './ContactModal';
 import { PaltoPaletteTable, PaltoTypescaleTable } from './PaltoDesignSystemTables';
 import CardSwap, { Card } from './CardSwap';
@@ -691,6 +693,44 @@ const SingleProjectNew: FC<SingleProjectProps> = ({
     setDestinationSnapLoading(false);
   }, []);
 
+  const swapRideEndpoints = useCallback(() => {
+    const nextPickup = paltoRideDestination;
+    const nextDestination = paltoPickupLocation;
+    setPaltoPickupLocation(nextPickup);
+    setPaltoRideDestination(nextDestination);
+
+    const confirmedPickup = lastConfirmedPickupText;
+    const confirmedDestination = lastConfirmedDestinationText;
+    setLastConfirmedPickupText(confirmedDestination);
+    setLastConfirmedDestinationText(confirmedPickup);
+
+    if (pickupResolvedPoint && paltoMapSelectedDestination) {
+      setPickupResolvedPoint(paltoMapSelectedDestination);
+      setPaltoMapSelectedDestination(pickupResolvedPoint);
+    } else {
+      setPickupResolvedPoint(null);
+      setPaltoMapSelectedDestination(null);
+    }
+    setPaltoRideSelectedDriverId(null);
+    setChauffeursSearchOk(false);
+    setPickupGeocodeError(null);
+    setDestinationSearchError(null);
+    setDestinationSuggestionOpen(false);
+    setPickupSuggestionOpen(false);
+  }, [
+    paltoPickupLocation,
+    paltoRideDestination,
+    lastConfirmedPickupText,
+    lastConfirmedDestinationText,
+    pickupResolvedPoint,
+    paltoMapSelectedDestination,
+  ]);
+
+  const onPickupRouteMenuClick = useCallback(() => {
+    setPickupSuggestionOpen((open) => !open);
+    setDestinationSuggestionOpen(false);
+  }, []);
+
   const onPickupLocationKeyDown = useCallback(
     (e: KeyboardEvent<HTMLInputElement>) => {
       if (e.key !== 'Enter') return;
@@ -1232,6 +1272,9 @@ const SingleProjectNew: FC<SingleProjectProps> = ({
   const [isDesktopViewport, setIsDesktopViewport] = useState(
     typeof window !== 'undefined' ? window.matchMedia('(min-width: 769px)').matches : false
   );
+  const [isMobileGoViewport, setIsMobileGoViewport] = useState(
+    typeof window !== 'undefined' ? window.matchMedia('(max-width: 768px)').matches : false
+  );
   const [isRecapPopupOpen, setIsRecapPopupOpen] = useState(false);
   const [isCheckoutPopupOpen, setIsCheckoutPopupOpen] = useState(false);
   const [checkoutCustomerName, setCheckoutCustomerName] = useState('');
@@ -1431,16 +1474,40 @@ const SingleProjectNew: FC<SingleProjectProps> = ({
   const userflowTreeWrapperRef = useRef<HTMLDivElement>(null);
   /** Hauteur de la zone image centrale → contraint graduations + carrousel vertical (scroll interne) */
   const paltoConceptionStageInnerRef = useRef<HTMLDivElement>(null);
+  const mobileFloatingBookingRef = useRef<HTMLDivElement>(null);
+  const floatingBookingSpacerRef = useRef<HTMLDivElement>(null);
   const [paltoConceptionSideMaxPx, setPaltoConceptionSideMaxPx] = useState<number | null>(null);
 
   useEffect(() => {
     const onResize = () => {
       setIsDesktopViewport(window.matchMedia('(min-width: 769px)').matches);
+      setIsMobileGoViewport(window.matchMedia('(max-width: 768px)').matches);
     };
     onResize();
     window.addEventListener('resize', onResize);
     return () => window.removeEventListener('resize', onResize);
   }, []);
+
+  useEffect(() => {
+    if (!isGoProjectPage || !isMobileGoViewport) return;
+    const floating = mobileFloatingBookingRef.current;
+    const spacer = floatingBookingSpacerRef.current;
+    if (!floating || !spacer) return;
+
+    const syncSpacerHeight = () => {
+      const h = Math.ceil(floating.getBoundingClientRect().height);
+      spacer.style.height = `${h}px`;
+      document.documentElement.style.setProperty('--palto-floating-booking-height', `${h}px`);
+    };
+
+    syncSpacerHeight();
+    const ro = new ResizeObserver(syncSpacerHeight);
+    ro.observe(floating);
+    return () => {
+      ro.disconnect();
+      spacer.style.height = '';
+    };
+  }, [isGoProjectPage, isMobileGoViewport]);
 
   const introText =
     isEn && projectData.translations?.en?.summary ? projectData.translations.en.summary : projectData.summary;
@@ -2198,7 +2265,7 @@ const SingleProjectNew: FC<SingleProjectProps> = ({
 
   return (
     <>
-      <motion.div 
+      <motion.div
         ref={pageRef}
         className={`page active single-project-page ${isClosing ? 'closing' : ''} ${isDragging ? 'dragging' : ''} ${coverFullscreenActive ? 'cover-fullscreen-active' : ''}`}
         style={
@@ -2260,9 +2327,23 @@ const SingleProjectNew: FC<SingleProjectProps> = ({
         <div className="palto-ride-main">
           <div className={`palto-ride-layout${showDriversColumn ? '' : ' palto-ride-layout--no-drivers'}`}>
           <div className="palto-ride-column palto-ride-column--booking">
-          <section className="palto-ride-card">
+          <section
+            className={`palto-ride-card${isMobileGoViewport ? ' palto-ride-card--mobile-route' : ''}`}
+          >
+            {!isMobileGoViewport ? (
+              <>
             <h2 className="palto-ride-card__title">Commandez une course</h2>
             <p className="palto-ride-card__lead">Indiquez votre départ et votre arrivée sur La Réunion.</p>
+            <PaltoGoPickupTimingSelect
+              timing={paltoPickupTiming}
+              onTimingChange={setPaltoPickupTiming}
+              pickupDateTime={paltoPickupDateTime}
+              onPickupDateTimeChange={setPaltoPickupDateTime}
+              minDateTimeLocal={nowForDateTimeLocal()}
+              labelNow={t('search.goTimingNow')}
+              labelLater={t('search.goTimingLater')}
+              scheduleInputAriaLabel={t('clientAccount.rideDepartTime')}
+            />
             <label className="palto-ride-field">
               <span className="palto-ride-field__label">Localisation (départ)</span>
               <div className="palto-ride-input-row">
@@ -2441,6 +2522,76 @@ const SingleProjectNew: FC<SingleProjectProps> = ({
                 </p>
               ) : null}
             </label>
+              </>
+            ) : (
+              <>
+                <div ref={mobileFloatingBookingRef} className="palto-ride-mobile-floating-booking">
+                  <h2 className="palto-ride-mobile-floating-booking__title">{t('clientAccount.bookRide')}</h2>
+                  <PaltoGoPickupTimingSelect
+                    timing={paltoPickupTiming}
+                    onTimingChange={setPaltoPickupTiming}
+                    pickupDateTime={paltoPickupDateTime}
+                    onPickupDateTimeChange={setPaltoPickupDateTime}
+                    minDateTimeLocal={nowForDateTimeLocal()}
+                    labelNow={t('search.goTimingNow')}
+                    labelLater={t('search.goTimingLater')}
+                    scheduleInputAriaLabel={t('clientAccount.rideDepartTime')}
+                  />
+                  <PaltoGoMobileRouteCard
+                  pickupValue={paltoPickupLocation}
+                  destinationValue={paltoRideDestination}
+                  destinationPlaceholder={t('search.destinationPlaceholder')}
+                  onPickupChange={onPickupLocationInputChange}
+                  onDestinationChange={onDestinationInputChange}
+                  onPickupKeyDown={onPickupLocationKeyDown}
+                  onDestinationKeyDown={onDestinationKeyDown}
+                  onPickupFocus={onPickupLocationFocus}
+                  onPickupBlur={onPickupLocationBlur}
+                  onDestinationFocus={onDestinationFocus}
+                  onDestinationBlur={onDestinationBlur}
+                  onSwapEndpoints={swapRideEndpoints}
+                  onPickupMenuClick={onPickupRouteMenuClick}
+                  pickupGeocodeLoading={pickupGeocodeLoading}
+                  destinationSuggestionLoading={destinationSuggestionLoading}
+                  destinationSnapLoading={destinationSnapLoading}
+                  pickupSuggestionOpen={pickupSuggestionOpen}
+                  destinationSuggestionOpen={destinationSuggestionOpen}
+                  pickupQueryLength={paltoPickupLocation.trim().length}
+                  destinationQueryLength={paltoRideDestination.trim().length}
+                  pickupAddressSuggestions={pickupAddressSuggestions}
+                  destinationAddressSuggestions={destinationAddressSuggestions}
+                  pickupStaticSuggestions={pickupStaticSuggestions}
+                  destinationStaticSuggestions={destinationStaticSuggestions}
+                  pickupSuggestionLoading={pickupSuggestionLoading}
+                  destinationSuggestionLoadingFlag={destinationSuggestionLoading}
+                  onApplyPickupSuggestion={applyPickupFromSuggestion}
+                  onApplyDestinationSuggestion={applyDestinationFromSuggestion}
+                  simplifyAddress={simplifyRideAddress}
+                />
+                </div>
+                <div ref={floatingBookingSpacerRef} className="palto-ride-floating-booking-spacer" aria-hidden />
+                {pickupGeocodeError ? (
+                  <p className="palto-ride-field-error" role="alert">
+                    {pickupGeocodeError}
+                  </p>
+                ) : null}
+                {pickupGeocodeLoading ? (
+                  <p className="palto-ride-field-hint" aria-live="polite">
+                    Vérification du départ, de la destination et des chauffeurs…
+                  </p>
+                ) : null}
+                {destinationSnapLoading ? (
+                  <p className="palto-ride-field-hint" aria-live="polite">
+                    Mise à jour de la destination sur la carte…
+                  </p>
+                ) : null}
+                {destinationSearchError ? (
+                  <p className="palto-ride-field-error" role="alert">
+                    {destinationSearchError}
+                  </p>
+                ) : null}
+              </>
+            )}
             {!pickupGeocodeLoading &&
             !pickupGeocodeError &&
             !destinationSearchError &&
@@ -2451,46 +2602,6 @@ const SingleProjectNew: FC<SingleProjectProps> = ({
                 chauffeurs.
               </p>
             ) : null}
-            <div className="palto-ride-field">
-              <span className="palto-ride-field__label">Heure de prise en charge</span>
-              <div className="palto-ride-timing-toggle" role="radiogroup" aria-label="Heure de prise en charge">
-                <button
-                  type="button"
-                  className={
-                    'palto-ride-timing-choice' +
-                    (paltoPickupTiming === 'now' ? ' palto-ride-timing-choice--active' : '')
-                  }
-                  role="radio"
-                  aria-checked={paltoPickupTiming === 'now'}
-                  onClick={() => setPaltoPickupTiming('now')}
-                >
-                  Maintenant
-                </button>
-                <button
-                  type="button"
-                  className={
-                    'palto-ride-timing-choice' +
-                    (paltoPickupTiming === 'later' ? ' palto-ride-timing-choice--active' : '')
-                  }
-                  role="radio"
-                  aria-checked={paltoPickupTiming === 'later'}
-                  onClick={() => setPaltoPickupTiming('later')}
-                >
-                  Plus tard
-                </button>
-              </div>
-              {paltoPickupTiming === 'later' ? (
-                <div className="palto-ride-datetime-local-wrap">
-                  <input
-                    type="datetime-local"
-                    className="palto-ride-input palto-ride-input--datetime-local"
-                    min={nowForDateTimeLocal()}
-                    value={paltoPickupDateTime}
-                    onChange={(e) => setPaltoPickupDateTime(e.target.value)}
-                  />
-                </div>
-              ) : null}
-            </div>
             <Button
               variant="primary"
               type="button"

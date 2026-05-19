@@ -212,6 +212,10 @@ const TRANSLATIONS: Record<Language, Record<string, unknown>> = {
     },
     search: {
       destinationPlaceholder: 'Indiquez votre destination',
+      goTimingNow: 'Partir maintenant',
+      goTimingLater: 'Programmer le départ',
+      goTimingPickerTitle: 'Quand partez-vous ?',
+      goTimingPickerCloseAria: 'Fermer',
       popularPlacesTitle: 'Lieux les plus demandés',
       sectorsTitle: 'Sur l’île',
     },
@@ -880,6 +884,10 @@ const TRANSLATIONS: Record<Language, Record<string, unknown>> = {
     },
     search: {
       destinationPlaceholder: 'Enter your destination',
+      goTimingNow: 'Leave now',
+      goTimingLater: 'Schedule pickup',
+      goTimingPickerTitle: 'When do you leave?',
+      goTimingPickerCloseAria: 'Close',
       popularPlacesTitle: 'Most requested places',
       sectorsTitle: 'On the island',
     },
