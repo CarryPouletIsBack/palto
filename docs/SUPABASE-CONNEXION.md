@@ -15,7 +15,8 @@ Tables principales déjà en place : `app_accounts`, `app_sessions`, `clients`, 
 
 - **Heartbeat chauffeur** : `POST /api/chauffeur?resource=presence` (même fonction Vercel `api/chauffeur/index.ts`, pas de 13ᵉ route).
 - **Liste à proximité** : `GET /api/client/rides?mode=nearby&lat=…&lng=…&radiusKm=20` (même fonction `api/client/rides.ts`).
-- Le dashboard chauffeur envoie le GPS toutes les ~20 s ; présence valide **3 minutes**.
+- Le dashboard chauffeur envoie le GPS toutes les ~20 s (indépendant de `VITE_CHAUFFEUR_RIDES_PERSIST`) ; présence valide **3 minutes**.
+- Si la liste Go est vide : vérifier dans Supabase que `chauffeur_presence` a une ligne récente pour le compte chauffeur (sinon reconnecter au **dashboard** avec la géoloc autorisée).
 
 **La production** (`palto-six.vercel.app`) utilise Supabase via les variables Vercel `SUPABASE_URL` + `SUPABASE_SERVICE_ROLE_KEY` (les routes `/api/*` répondent, ex. `/api/client/profile` → 401 sans token = base joignable).
 

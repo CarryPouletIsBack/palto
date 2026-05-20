@@ -111,7 +111,8 @@ export async function registerChauffeur(payload: RegisterChauffeurPayload): Prom
   return { success: true }
 }
 
-export const isAuthenticated = (): boolean => {
+/** Session valide pour le dashboard / API chauffeur (rôle chauffeur ou legacy sans rôle). */
+export const isChauffeurSession = (): boolean => {
   if (typeof window === 'undefined') return false
   if (!hasValidSessionToken()) {
     clearInvalidSession()
@@ -121,6 +122,9 @@ export const isAuthenticated = (): boolean => {
   if (!role) return true
   return role === 'chauffeur'
 }
+
+/** @alias isChauffeurSession */
+export const isAuthenticated = isChauffeurSession
 
 /**
  * Connexion depuis n’importe quel écran : essaie d’abord le rôle attendu (page passager ou chauffeur),

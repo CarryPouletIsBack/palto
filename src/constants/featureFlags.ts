@@ -26,6 +26,17 @@ export function useChauffeurRidesPersist(): boolean {
   return true
 }
 
+/** GPS chauffeur → page Go (indépendant de VITE_CHAUFFEUR_RIDES_PERSIST). */
+export function useChauffeurPresenceApi(): boolean {
+  const raw = import.meta.env.VITE_CHAUFFEUR_PRESENCE_API as string | undefined
+  if (typeof raw === 'string') {
+    const v = raw.trim().toLowerCase()
+    if (v === '0' || v === 'false' || v === 'no' || v === 'off') return false
+    return true
+  }
+  return useClientRidesApi()
+}
+
 export function useOrgApi(): boolean {
   return isEnabled(import.meta.env.VITE_USE_ORG_API as string | undefined)
 }

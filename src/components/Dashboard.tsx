@@ -640,7 +640,7 @@ const Dashboard = ({
 }: DashboardProps) => {
   const { t, language } = useLanguage();
   const persistRides = ridesPersistenceEnabled();
-  useChauffeurPresenceHeartbeat(persistRides);
+  useChauffeurPresenceHeartbeat(true);
   /** Couverture Picsum (id aléatoire une fois au montage) si l’org n’a pas d’URL. */
   const orgProfileCoverFallbackRef = useRef(
     `https://picsum.photos/id/${Math.floor(Math.random() * 80) + 20}/1200/400`

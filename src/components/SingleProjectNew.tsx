@@ -400,20 +400,27 @@ const SingleProjectNew: FC<SingleProjectProps> = ({
       return;
     }
     let cancelled = false;
-    setNearbyDriversLoading(true);
-    void getNearbyDrivers({
-      origin: pickupResolvedPoint,
-      radiusKm: effectiveDriverSearchRadiusKm,
-      limit: 9,
-    })
-      .then((drivers) => {
-        if (!cancelled) setAllNearbyDrivers(drivers);
+
+    const load = () => {
+      setNearbyDriversLoading(true);
+      void getNearbyDrivers({
+        origin: pickupResolvedPoint,
+        radiusKm: effectiveDriverSearchRadiusKm,
+        limit: 9,
       })
-      .finally(() => {
-        if (!cancelled) setNearbyDriversLoading(false);
-      });
+        .then((drivers) => {
+          if (!cancelled) setAllNearbyDrivers(drivers);
+        })
+        .finally(() => {
+          if (!cancelled) setNearbyDriversLoading(false);
+        });
+    };
+
+    load();
+    const pollId = window.setInterval(load, 20_000);
     return () => {
       cancelled = true;
+      window.clearInterval(pollId);
     };
   }, [chauffeursSearchOk, pickupResolvedPoint, effectiveDriverSearchRadiusKm]);
 
@@ -2935,9 +2942,12 @@ const SingleProjectNew: FC<SingleProjectProps> = ({
               Chauffeurs disponibles dans un rayon de {effectiveDriverSearchRadiusKm} km autour de votre départ.
             </p>
             <div className="palto-ride-drivers-list">
-              {pickupFilteredDrivers.length === 0 ? (
+              {nearbyDriversLoading && pickupFilteredDrivers.length === 0 ? (
+                <p className="palto-ride-drivers-empty">Recherche de chauffeurs en ligne…</p>
+              ) : pickupFilteredDrivers.length === 0 ? (
                 <p className="palto-ride-drivers-empty">
-                  Aucun chauffeur dans ce rayon. Essayez une autre adresse de départ.
+                  Aucun chauffeur en ligne dans ce rayon. Le chauffeur doit être connecté au dashboard avec la
+                  localisation activée (position mise à jour toutes les ~20 s).
                 </p>
               ) : (
                 pickupFilteredDrivers.map((driver) => {
