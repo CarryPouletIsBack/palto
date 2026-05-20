@@ -9,6 +9,9 @@ export function apiBaseUrl(): string {
   return (import.meta.env.VITE_API_BASE_URL as string | undefined)?.trim() || '/api'
 }
 
+/** Vercel Hobby : max 12 fichiers sous `api/` = 12 Serverless Functions. Fusionner les routes avant d’en ajouter. */
+export const VERCEL_HOBBY_MAX_SERVERLESS_FUNCTIONS = 12
+
 /**
  * En `vite dev`, `/api` est proxifié vers `localhost:3000` (souvent sans `vercel dev`) → ECONNREFUSED + logs bruyants.
  * Sans `VITE_API_BASE_URL`, le géocodage forward/reverse n’appelle pas ce proxy : BAN / Nominatim côté navigateur uniquement.

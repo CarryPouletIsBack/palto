@@ -159,7 +159,10 @@ function persistChauffeurSession(token: string, user: User): void {
 }
 
 export async function registerChauffeur(payload: RegisterChauffeurPayload): Promise<{ success: boolean; error?: string }> {
-  const result = await postAuth('/auth/chauffeur/register', payload as unknown as Record<string, unknown>)
+  const result = await postAuth(
+    '/auth?role=chauffeur&action=register',
+    payload as unknown as Record<string, unknown>
+  )
   if (!result.success || !result.token || !result.user) return { success: false, error: result.error }
   persistChauffeurSession(result.token, result.user)
   notifyChauffeurSessionChanged()
@@ -195,14 +198,14 @@ export async function loginWithHint(
 export async function loginChauffeurOnly(
   credentials: LoginCredentials
 ): Promise<{ success: boolean; user?: User; error?: string; role?: AccountRole }> {
-  const result = await postAuth('/auth/chauffeur/login', credentials)
+  const result = await postAuth('/auth?role=chauffeur&action=login', credentials)
   if (result.success && result.token && result.user) {
     persistChauffeurSession(result.token, result.user)
     notifyChauffeurSessionChanged()
     return { success: true, user: result.user, role: 'chauffeur' }
   }
 
-  const clientProbe = await postAuth('/auth/client/login', credentials)
+  const clientProbe = await postAuth('/auth?role=client&action=login', credentials)
   if (clientProbe.success) {
     return {
       success: false,
@@ -255,7 +258,10 @@ function persistClientSession(token: string, user: User): void {
 }
 
 export async function registerClient(payload: RegisterClientPayload): Promise<{ success: boolean; error?: string }> {
-  const result = await postAuth('/auth/client/register', payload as unknown as Record<string, unknown>)
+  const result = await postAuth(
+    '/auth?role=client&action=register',
+    payload as unknown as Record<string, unknown>
+  )
   if (!result.success || !result.token || !result.user) return { success: false, error: result.error }
   persistClientSession(result.token, result.user)
   notifyClientSessionChanged()
@@ -280,7 +286,7 @@ export async function registerClient(payload: RegisterClientPayload): Promise<{ 
 export async function loginClient(
   credentials: LoginCredentials
 ): Promise<{ success: boolean; user?: User; error?: string; role?: AccountRole }> {
-  const result = await postAuth('/auth/client/login', credentials)
+  const result = await postAuth('/auth?role=client&action=login', credentials)
   if (result.success && result.token && result.user) {
     persistClientSession(result.token, result.user)
     notifyClientSessionChanged()
@@ -288,7 +294,7 @@ export async function loginClient(
     return { success: true, user: result.user, role: 'client' }
   }
 
-  const chauffeurProbe = await postAuth('/auth/chauffeur/login', credentials)
+  const chauffeurProbe = await postAuth('/auth?role=chauffeur&action=login', credentials)
   if (chauffeurProbe.success) {
     return {
       success: false,

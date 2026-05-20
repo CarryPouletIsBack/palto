@@ -49,7 +49,7 @@ function getBrowserSupabase(): SupabaseClient {
 async function fetchRealtimeAccessToken(): Promise<string | null> {
   const bearer = getPaltoBearerForRealtime()
   if (!bearer) return null
-  const res = await fetch(`${apiBaseUrl()}/auth/realtime-token`, {
+  const res = await fetch(`${apiBaseUrl()}/auth?action=realtime-token`, {
     method: 'GET',
     headers: { Authorization: `Bearer ${bearer}` },
   })

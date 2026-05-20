@@ -35,7 +35,7 @@ async function fetchRealtimeAccessToken(): Promise<string | null> {
   const client = localStorage.getItem(CLIENT_AUTH_TOKEN_KEY)?.trim()
   const bearer = dash || client
   if (!bearer) return null
-  const res = await fetch(`${apiBaseUrl()}/auth/realtime-token`, {
+  const res = await fetch(`${apiBaseUrl()}/auth?action=realtime-token`, {
     method: 'GET',
     headers: { Authorization: `Bearer ${bearer}` },
   })

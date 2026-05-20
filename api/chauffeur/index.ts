@@ -1,6 +1,24 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node'
 import { z } from 'zod'
 import { expireStaleInstantPendingCourses } from '../../server/lib/expireStaleInstantPendingCourses.js'
+
+async function handleCronExpireInstant(req: VercelRequest, res: VercelResponse) {
+  const secret = process.env.CRON_SECRET?.trim()
+  if (secret) {
+    const auth = req.headers.authorization?.trim() ?? ''
+    if (auth !== `Bearer ${secret}`) {
+      return res.status(401).json({ error: 'Non autorise' })
+    }
+  }
+  try {
+    const supabase = getSupabaseAdmin()
+    const result = await expireStaleInstantPendingCourses(supabase)
+    return res.status(200).json({ ok: true, ...result })
+  } catch (e) {
+    console.error('[chauffeur/cron-expire-instant]', e)
+    return res.status(500).json({ error: 'Expiration impossible' })
+  }
+}
 import { getSupabaseAdmin } from '../../server/lib/supabaseAdmin.js'
 import { getVerifiedChauffeurSession } from '../../server/lib/chauffeurAuth.js'
 import { sameDriverExternalKey } from '../../server/lib/driverIdentity.js'
@@ -456,6 +474,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   const resourceRaw = Array.isArray(req.query.resource) ? req.query.resource[0] : req.query.resource
   const resource = typeof resourceRaw === 'string' ? resourceRaw.trim().toLowerCase() : ''
   if (!resource) return res.status(400).json({ error: 'resource requis' })
+
+  if (resource === 'cron-expire-instant' && (req.method === 'GET' || req.method === 'POST')) {
+    return handleCronExpireInstant(req, res)
+  }
 
   const session = await getVerifiedChauffeurSession(req)
   if (!session) return res.status(401).json({ error: 'Non autorise' })
