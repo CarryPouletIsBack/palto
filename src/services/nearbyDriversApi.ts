@@ -4,6 +4,23 @@ import type { GeoPoint } from './distanceGeo'
 
 const API_BASE_URL = apiBaseUrl()
 
+function normalizeNearbyDriver(raw: unknown): NearbyDriver {
+  const d = (raw ?? {}) as Record<string, unknown>
+  return {
+    id: String(d.id ?? ''),
+    name: String(d.name ?? ''),
+    moto: String(d.moto ?? ''),
+    distance: String(d.distance ?? ''),
+    price: String(d.price ?? ''),
+    longitude: Number(d.longitude),
+    latitude: Number(d.latitude),
+    petFriendly: d.petFriendly === true || d.pet_friendly === true,
+    luggageAssistance: d.luggageAssistance === true || d.luggage_assistance === true,
+    insulatedBag: d.insulatedBag === true || d.insulated_bag === true,
+    deliveryEquipped: d.deliveryEquipped === true || d.delivery_equipped === true,
+  }
+}
+
 export function nearbyDriversApiEnabled(): boolean {
   return useClientRidesApi()
 }
@@ -29,7 +46,8 @@ export async function fetchNearbyDriversFromApi(params: {
       console.warn('[nearbyDriversApi]', data.error ?? res.status)
       return []
     }
-    return Array.isArray(data.drivers) ? data.drivers : []
+    if (!Array.isArray(data.drivers)) return []
+    return data.drivers.map((raw) => normalizeNearbyDriver(raw))
   } catch (e) {
     console.warn('[nearbyDriversApi] fetch failed', e)
     return []

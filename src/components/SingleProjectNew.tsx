@@ -78,7 +78,7 @@ import { DashboardHomeRidesBanner } from './DashboardHomeRidesBanner';
 import { useClientHomeTopbarRides } from '../hooks/useClientHomeTopbarRides';
 import { simplifyAddressDisplay as simplifyRideAddress } from '../services/addressDisplay';
 import { getNearbyDrivers } from '../services/getNearbyDrivers';
-import { driverServiceBadges } from '../lib/driverServiceBadges';
+import { formatDriverMetaLine } from '../lib/formatDriverMetaLine';
 
 /** Rayon d’affichage des chauffeurs autour du point de départ validé (page Go). */
 const PICKUP_DRIVER_SEARCH_RADIUS_KM = 20;
@@ -546,18 +546,7 @@ const SingleProjectNew: FC<SingleProjectProps> = ({
           <p className="palto-ride-drivers-empty">{t('search.driversEmpty')}</p>
         ) : (
           pickupFilteredDrivers.map((driver) => {
-            const kmFromPickup =
-              pickupResolvedPoint !== null
-                ? haversineDistanceKm(pickupResolvedPoint, {
-                    latitude: driver.latitude,
-                    longitude: driver.longitude,
-                  })
-                : 0;
-            const minEst = Math.max(1, Math.round((kmFromPickup / 22) * 60));
-            const serviceBadges = driverServiceBadges(driver);
-            const meta = `${kmFromPickup.toFixed(1).replace('.', ',')} km · ~${minEst} min${
-              serviceBadges.length > 0 ? ` · ${serviceBadges.join(' · ')}` : ''
-            }`;
+            const meta = formatDriverMetaLine(driver, pickupResolvedPoint);
             const dynamicDriverTtc = computeDriverPriceTtc(driver);
             return (
               <button
@@ -2790,9 +2779,6 @@ const SingleProjectNew: FC<SingleProjectProps> = ({
                     </button>
                   </div>
                   <h2 className="palto-ride-mobile-floating-booking__title">{t('search.chooseRideTitle')}</h2>
-                  <p className="palto-ride-mobile-floating-booking__lead">
-                    {t('search.chooseRideRadiusLead', { km: effectiveDriverSearchRadiusKm })}
-                  </p>
                   {renderPaltoDriversList(true)}
                 </>
               ) : (
@@ -3159,12 +3145,14 @@ const SingleProjectNew: FC<SingleProjectProps> = ({
                   <>
                     <div className="palto-go-driver-confirm-bar__summary">
                       <p className="palto-go-driver-confirm-bar__name">{paltoSelectedDriver.name}</p>
-                      <p className="palto-go-driver-confirm-bar__meta">{paltoSelectedDriver.moto}</p>
+                      <p className="palto-go-driver-confirm-bar__meta">
+                        {formatDriverMetaLine(paltoSelectedDriver, pickupResolvedPoint)}
+                      </p>
                     </div>
                     <Button
                       variant="primary"
                       type="button"
-                      className="palto-go-driver-confirm-bar__cta"
+                      className="palto-go-driver-confirm-bar__cta palto-ride-search-btn"
                       onClick={confirmSelectedDriverOnMobile}
                     >
                       {(() => {

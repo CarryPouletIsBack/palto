@@ -7541,6 +7541,24 @@ html[data-app-theme='dark'] .palto-go-driver-confirm-bar__meta {
   white-space: nowrap;
 }
 
+.palto-go-driver-confirm-bar__cta.btn.palto-ride-search-btn.btn-primary {
+  background: #111;
+  color: #fff;
+  border: none;
+  border-radius: 12px;
+  font-weight: 600;
+}
+
+.palto-go-driver-confirm-bar__cta.btn.palto-ride-search-btn.btn-primary:hover {
+  background: #1a1a1a;
+  color: #fff;
+}
+
+.palto-go-driver-confirm-bar__cta.btn.palto-ride-search-btn.btn-primary:focus-visible {
+  outline: 2px solid #f1582a;
+  outline-offset: 2px;
+}
+
 .palto-go-driver-confirm-bar__hint {
   margin: 0;
   width: 100%;
