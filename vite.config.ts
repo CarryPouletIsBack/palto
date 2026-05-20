@@ -21,6 +21,8 @@ export default defineConfig({
       manifest: false,
       includeAssets: ['manifest.json', 'images/placeholder-app-icon.svg', 'images/placeholder-cover.svg'],
       workbox: {
+        /** Contourne le crash terser en build (Vercel / CI) ; le SW reste fonctionnel. */
+        mode: 'development',
         globPatterns: ['**/*.{js,css,html,ico,svg,png,webp,woff2,json,webmanifest}'],
         /** Bundle principal > 2 Mo ; image OG souvent lourde — hors precache SW. */
         maximumFileSizeToCacheInBytes: 3 * 1024 * 1024,
