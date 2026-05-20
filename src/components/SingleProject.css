@@ -6206,11 +6206,6 @@ html[data-app-theme='dark'] .palto-ride-timing-expand__option:hover {
   width: 100%;
 }
 
-/* Modale récap/checkout Go : masquer le panneau derrière (évite superposition iOS) */
-body.palto-go-ride-modal-open .single-project-page {
-  pointer-events: none;
-}
-
 .palto-checkout {
   display: grid;
   gap: 12px;
@@ -6566,6 +6561,9 @@ body.palto-go-ride-modal-open .single-project-page {
     display: flex;
     flex-direction: column;
     overscroll-behavior-y: none;
+    /* translateZ(0) casse position:sticky sur iOS — le panneau /go scroll correctement */
+    transform: none;
+    -webkit-transform: none;
   }
 
   .single-project-page:has(.palto-ride-main) .swipe-indicator-bar {
@@ -6613,11 +6611,6 @@ body.palto-go-ride-modal-open .single-project-page {
     overflow: visible;
     min-width: 0;
     max-width: 100%;
-  }
-
-  .single-project-page:has(.palto-ride-main) .dashboard-home-rides-banner {
-    padding-left: max(20px, env(safe-area-inset-left, 0px));
-    padding-right: max(20px, env(safe-area-inset-right, 0px));
   }
 
   .single-project-page:has(.palto-ride-main) .palto-ride-layout {
@@ -6777,7 +6770,7 @@ body.palto-go-ride-modal-open .single-project-page {
 
   .single-project-page:has(.palto-ride-main) .palto-ride-column--drivers {
     position: relative;
-    z-index: 10;
+    z-index: 1;
     pointer-events: auto;
   }
 
@@ -6926,17 +6919,22 @@ body.palto-go-ride-modal-open .single-project-page {
     font-size: 16px;
   }
 
-  .palto-ride-recap-modal {
+  /* Modale récap/checkout Go — plein écran + portal (mobile uniquement) */
+  body.palto-go-ride-modal-open .single-project-page {
+    pointer-events: none;
+  }
+
+  .palto-ride-recap-modal--mobile {
     align-items: stretch;
     justify-content: stretch;
     padding: 0;
   }
 
-  .palto-ride-recap-modal__backdrop {
+  .palto-ride-recap-modal--mobile .palto-ride-recap-modal__backdrop {
     background: rgba(15, 23, 42, 0.72);
   }
 
-  .palto-ride-recap-modal__content {
+  .palto-ride-recap-modal--mobile .palto-ride-recap-modal__content {
     width: 100%;
     max-width: 100%;
     flex: 1 1 auto;
@@ -6951,11 +6949,11 @@ body.palto-go-ride-modal-open .single-project-page {
       max(20px, env(safe-area-inset-bottom, 0px)) max(16px, env(safe-area-inset-left, 0px));
   }
 
-  html[data-app-theme='dark'] .palto-ride-recap-modal__content {
+  html[data-app-theme='dark'] .palto-ride-recap-modal--mobile .palto-ride-recap-modal__content {
     background: var(--sp-card-surface, #1c1c1e);
   }
 
-  .single-project-page:has(.palto-ride-main) .palto-ride-recap-modal__content .palto-ride-card__title {
+  .palto-ride-recap-modal--mobile .palto-ride-recap-modal__content .palto-ride-card__title {
     font-size: clamp(22px, 5.5vw, 28px);
     font-weight: 700;
     line-height: 1.15;
@@ -7155,7 +7153,9 @@ body.palto-go-ride-modal-open .single-project-page {
     gap: 0;
   }
 
+  /* Bandeau titre + timing + carte route : sticky en haut du panneau /go (mobile seulement) */
   .single-project-page:has(.palto-ride-main) .palto-ride-mobile-floating-booking {
+    position: -webkit-sticky;
     position: sticky;
     top: 0;
     z-index: 2000;
@@ -7163,17 +7163,19 @@ body.palto-go-ride-modal-open .single-project-page {
     width: 100%;
     max-width: 100%;
     min-width: 0;
+    align-self: stretch;
     box-sizing: border-box;
     display: flex;
     flex-direction: column;
     gap: 10px;
     flex-shrink: 0;
     margin: 0;
-    padding-bottom: 0;
+    padding-bottom: 10px;
     background: #ffffff;
     pointer-events: none;
     isolation: isolate;
     overflow: visible;
+    box-shadow: 0 1px 0 rgba(15, 23, 42, 0.06);
   }
 
   html[data-app-theme='dark'] .single-project-page:has(.palto-ride-main) .palto-ride-mobile-floating-booking {
@@ -7181,7 +7183,11 @@ body.palto-go-ride-modal-open .single-project-page {
   }
 
   .single-project-page:has(.palto-ride-main) .palto-ride-mobile-floating-booking .palto-ride-route-card {
+    width: 100%;
+    max-width: 100%;
+    align-self: stretch;
     margin-bottom: 4px;
+    box-sizing: border-box;
   }
 
   .single-project-page:has(.palto-ride-main) .palto-ride-mobile-floating-booking__title {
@@ -7203,13 +7209,6 @@ body.palto-go-ride-modal-open .single-project-page {
 
   .single-project-page:has(.palto-ride-main) .palto-ride-mobile-floating-booking > * {
     pointer-events: auto;
-  }
-
-  /* Bandeau réservation : ne pas rester sticky quand la liste chauffeurs est affichée (recouvrement au scroll) */
-  .single-project-page:has(.palto-ride-main) .palto-ride-layout--has-drivers .palto-ride-mobile-floating-booking {
-    position: relative;
-    top: auto;
-    z-index: auto;
   }
 
   .single-project-page:has(.palto-ride-main) .palto-ride-mobile-floating-booking .palto-ride-field--timing {

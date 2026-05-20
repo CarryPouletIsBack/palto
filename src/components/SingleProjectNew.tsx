@@ -10,6 +10,7 @@ import {
   type MouseEvent,
   type TouchEvent,
   type RefObject,
+  type ReactNode,
 } from 'react';
 import { createPortal } from 'react-dom';
 import { useLanguage } from '../contexts/LanguageContext';
@@ -1594,8 +1595,9 @@ const SingleProjectNew: FC<SingleProjectProps> = ({
     setCheckoutError(null);
   }, []);
 
+  /** Modale récap/checkout plein écran + portal : mobile Go uniquement. */
   useEffect(() => {
-    if (!isRecapPopupOpen && !isCheckoutPopupOpen) return;
+    if (!isMobileGoViewport || (!isRecapPopupOpen && !isCheckoutPopupOpen)) return;
     const prevOverflow = document.body.style.overflow;
     document.body.style.overflow = 'hidden';
     document.body.classList.add('palto-go-ride-modal-open');
@@ -1603,7 +1605,18 @@ const SingleProjectNew: FC<SingleProjectProps> = ({
       document.body.style.overflow = prevOverflow;
       document.body.classList.remove('palto-go-ride-modal-open');
     };
-  }, [isRecapPopupOpen, isCheckoutPopupOpen]);
+  }, [isMobileGoViewport, isRecapPopupOpen, isCheckoutPopupOpen]);
+
+  const mountGoRideOverlay = useCallback(
+    (node: ReactNode) => {
+      if (!node) return null;
+      if (isMobileGoViewport && typeof document !== 'undefined') {
+        return createPortal(node, document.body);
+      }
+      return node;
+    },
+    [isMobileGoViewport]
+  );
   const handleRecapModalConfirmOrder = useCallback(() => {
     if (paltoPickupTiming === 'now' && !paltoSelectedDriver) {
       return;
@@ -2617,25 +2630,18 @@ const SingleProjectNew: FC<SingleProjectProps> = ({
         <div className="main-single-project">
         {isGoProjectPage ? (
         <>
+        {isDesktopViewport ? (
         <div className="dashboard-container dashboard-container--home-accueil single-project-go-topbar-wrap">
-          {isDesktopViewport ? (
-            <div className="dashboard-main single-project-go-topbar-wrap__main">
-              <DashboardHomeRidesBanner
-                clientUpcomingRide={clientUpcomingRide}
-                clientLiveMeetActive={clientLiveMeetActive}
-                onOpenClientLiveMeet={onOpenClientLiveMeet}
-                analyticsSuffix="go"
-              />
-            </div>
-          ) : (
+          <div className="dashboard-main single-project-go-topbar-wrap__main">
             <DashboardHomeRidesBanner
               clientUpcomingRide={clientUpcomingRide}
               clientLiveMeetActive={clientLiveMeetActive}
               onOpenClientLiveMeet={onOpenClientLiveMeet}
               analyticsSuffix="go"
             />
-          )}
+          </div>
         </div>
+        ) : null}
         <div className="palto-ride-main">
           <div
             className={`palto-ride-layout${showDriversColumn ? ' palto-ride-layout--has-drivers' : ' palto-ride-layout--no-drivers'}`}
@@ -3043,9 +3049,16 @@ const SingleProjectNew: FC<SingleProjectProps> = ({
           </div>
           ) : null}
           </div>
-          {isRecapPopupOpen && typeof document !== 'undefined'
-            ? createPortal(
-            <div className="palto-ride-recap-modal" role="dialog" aria-modal="true" aria-label="Recap commande">
+          {mountGoRideOverlay(
+            isRecapPopupOpen ? (
+            <div
+              className={
+                'palto-ride-recap-modal' + (isMobileGoViewport ? ' palto-ride-recap-modal--mobile' : '')
+              }
+              role="dialog"
+              aria-modal="true"
+              aria-label="Recap commande"
+            >
               <div className="palto-ride-recap-modal__backdrop" onClick={closeRecapPopup} />
               <div className="palto-ride-recap-modal__content" onClick={(e) => e.stopPropagation()}>
                 <button
@@ -3159,13 +3172,19 @@ const SingleProjectNew: FC<SingleProjectProps> = ({
                   </Button>
                 </div>
               </div>
-            </div>,
-            document.body
-          )
-            : null}
-          {isCheckoutPopupOpen && typeof document !== 'undefined'
-            ? createPortal(
-            <div className="palto-ride-recap-modal" role="dialog" aria-modal="true" aria-label="Checkout commande">
+            </div>
+            ) : null
+          )}
+          {mountGoRideOverlay(
+            isCheckoutPopupOpen ? (
+            <div
+              className={
+                'palto-ride-recap-modal' + (isMobileGoViewport ? ' palto-ride-recap-modal--mobile' : '')
+              }
+              role="dialog"
+              aria-modal="true"
+              aria-label="Checkout commande"
+            >
               <div className="palto-ride-recap-modal__backdrop" onClick={closeCheckoutPopup} />
               <div className="palto-ride-recap-modal__content" onClick={(e) => e.stopPropagation()}>
                 <button
@@ -3283,10 +3302,9 @@ const SingleProjectNew: FC<SingleProjectProps> = ({
                   </Button>
                 </div>
               </div>
-            </div>,
-            document.body
-          )
-            : null}
+            </div>
+            ) : null
+          )}
         </div>
         </>
         ) : (
