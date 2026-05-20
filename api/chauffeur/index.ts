@@ -356,6 +356,43 @@ async function handleCompliancePost(req: VercelRequest, res: VercelResponse, das
   return res.status(200).json({ snapshot: current })
 }
 
+const RideProfileBodySchema = z.object({
+  petFriendly: z.boolean(),
+  luggageAssistance: z.boolean(),
+  insulatedBag: z.boolean(),
+})
+
+async function handleRideProfilePut(req: VercelRequest, res: VercelResponse, accountId: string) {
+  let body: unknown = req.body
+  if (typeof req.body === 'string') {
+    try {
+      body = JSON.parse(req.body)
+    } catch {
+      return res.status(400).json({ error: 'Payload JSON invalide' })
+    }
+  }
+  const parsed = RideProfileBodySchema.safeParse(body)
+  if (!parsed.success) return res.status(400).json({ error: 'Payload invalide', details: parsed.error.flatten() })
+
+  const supabase = getSupabaseAdmin()
+  const { error } = await supabase
+    .from('app_accounts')
+    .update({
+      pet_friendly: parsed.data.petFriendly,
+      luggage_assistance: parsed.data.luggageAssistance,
+      insulated_bag: parsed.data.insulatedBag,
+      updated_at: new Date().toISOString(),
+    })
+    .eq('id', accountId)
+    .eq('role', 'chauffeur')
+
+  if (error) {
+    console.error('[chauffeur/ride-profile]', error)
+    return res.status(500).json({ error: 'Enregistrement profil course impossible' })
+  }
+  return res.status(200).json({ ok: true })
+}
+
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   res.setHeader('Access-Control-Allow-Origin', '*')
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, OPTIONS')
@@ -370,6 +407,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (!session) return res.status(401).json({ error: 'Non autorise' })
   const { email: dashboardEmail, accountId: driverKey } = session
 
+  if (req.method === 'PUT' && resource === 'ride-profile') return handleRideProfilePut(req, res, driverKey)
   if (req.method === 'POST' && resource === 'presence') return handlePresencePost(req, res, driverKey)
   if (req.method === 'GET' && resource === 'rides') return handleRidesGet(res, driverKey)
   if (req.method === 'POST' && resource === 'rides-action') return handleRidesActionPost(req, res, driverKey, dashboardEmail)

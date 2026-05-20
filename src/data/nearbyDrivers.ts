@@ -14,6 +14,11 @@ export type NearbyDriver = {
   price: string
   longitude: number
   latitude: number
+  /** Préférences compte chauffeur (API présence / nearby). */
+  petFriendly?: boolean
+  luggageAssistance?: boolean
+  insulatedBag?: boolean
+  deliveryEquipped?: boolean
 }
 
 export type NearbyDriversQuery = {

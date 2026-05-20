@@ -47,6 +47,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       phone: parsed.data.phoneInternational,
       vehicle_type: parsed.data.vehicleType,
       delivery_equipped: parsed.data.deliveryEquipped,
+      pet_friendly: true,
+      luggage_assistance: true,
+      insulated_bag: parsed.data.deliveryEquipped,
     })
     .select('id,email')
     .single()

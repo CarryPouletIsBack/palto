@@ -138,6 +138,7 @@ import {
   complianceApiEnabled,
   fetchChauffeurComplianceSnapshotFromApi,
 } from '../services/chauffeurComplianceApi';
+import { syncChauffeurRideProfileToServer } from '../services/chauffeurRideProfileApi';
 import ChauffeurDocumentsChecklist from './ChauffeurDocumentsChecklist';
 
 interface DashboardProps {
@@ -1941,7 +1942,21 @@ const Dashboard = ({
   const saveRideSettingsEdit = useCallback(() => {
     setChauffeurRideSettings(rideSettingsDraft);
     saveChauffeurRideSettingsSnapshot(rideSettingsDraft);
+    void syncChauffeurRideProfileToServer({
+      petFriendly: rideSettingsDraft.petFriendly,
+      luggageAssistance: rideSettingsDraft.luggageAssistance,
+      insulatedBag: rideSettingsDraft.insulatedBag,
+    });
   }, [rideSettingsDraft]);
+
+  useEffect(() => {
+    const snap = loadChauffeurRideSettingsSnapshot();
+    void syncChauffeurRideProfileToServer({
+      petFriendly: snap.petFriendly,
+      luggageAssistance: snap.luggageAssistance,
+      insulatedBag: snap.insulatedBag,
+    });
+  }, []);
 
   const isRideSettingsDirty = useMemo(
     () =>

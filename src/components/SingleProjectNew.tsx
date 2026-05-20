@@ -78,6 +78,7 @@ import { DashboardHomeRidesBanner } from './DashboardHomeRidesBanner';
 import { useClientHomeTopbarRides } from '../hooks/useClientHomeTopbarRides';
 import { simplifyAddressDisplay as simplifyRideAddress } from '../services/addressDisplay';
 import { getNearbyDrivers } from '../services/getNearbyDrivers';
+import { driverServiceBadges } from '../lib/driverServiceBadges';
 
 /** Rayon d’affichage des chauffeurs autour du point de départ validé (page Go). */
 const PICKUP_DRIVER_SEARCH_RADIUS_KM = 20;
@@ -553,11 +554,7 @@ const SingleProjectNew: FC<SingleProjectProps> = ({
                   })
                 : 0;
             const minEst = Math.max(1, Math.round((kmFromPickup / 22) * 60));
-            const serviceBadges = [
-              chauffeurRideSettings.petFriendly ? 'Animaux' : null,
-              chauffeurRideSettings.luggageAssistance ? 'Bagages' : null,
-              chauffeurRideSettings.insulatedBag ? 'Sac isotherme' : null,
-            ].filter((v): v is string => Boolean(v));
+            const serviceBadges = driverServiceBadges(driver);
             const meta = `${kmFromPickup.toFixed(1).replace('.', ',')} km · ~${minEst} min${
               serviceBadges.length > 0 ? ` · ${serviceBadges.join(' · ')}` : ''
             }`;
@@ -596,9 +593,6 @@ const SingleProjectNew: FC<SingleProjectProps> = ({
     nearbyDriversLoading,
     pickupFilteredDrivers,
     pickupResolvedPoint,
-    chauffeurRideSettings.petFriendly,
-    chauffeurRideSettings.luggageAssistance,
-    chauffeurRideSettings.insulatedBag,
     computeDriverPriceTtc,
     paltoRideSelectedDriverId,
     t,
@@ -1603,6 +1597,9 @@ const SingleProjectNew: FC<SingleProjectProps> = ({
 
   const handlePaltoMainMapPick = useCallback(async (longitude: number, latitude: number) => {
     if (!isLngLatInsideReunionIsland(longitude, latitude)) return;
+    if (isMobileGoViewport && chauffeursSearchOk) {
+      goBackToRideQueryMobile();
+    }
     try {
       const picked = await resolvePickOnRoad(longitude, latitude, { searchRadiusMeters: 75 });
       /** Uniquement l’absence de point départ résolu : sinon un libellé vide (géocode KO) bloquait tout clic en « départ ». */
@@ -1643,7 +1640,7 @@ const SingleProjectNew: FC<SingleProjectProps> = ({
     } catch {
       // ignore network/snap errors
     }
-  }, [language, pickupResolvedPoint]);
+  }, [language, pickupResolvedPoint, isMobileGoViewport, chauffeursSearchOk, goBackToRideQueryMobile]);
   const [isClosing, setIsClosing] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
   const [isDesktopViewport, setIsDesktopViewport] = useState(
@@ -2367,6 +2364,19 @@ const SingleProjectNew: FC<SingleProjectProps> = ({
       document.body.classList.remove('palto-go-driver-confirm-bar-open');
     };
   }, [isMobileGoViewport, mobileShowChooseRideStep]);
+
+  useEffect(() => {
+    if (!isGoProjectPage) return;
+    const onGoMapUserPick = () => {
+      if (isMobileGoViewport && chauffeursSearchOk) {
+        goBackToRideQueryMobile();
+      }
+    };
+    window.addEventListener('palto:go-map-user-pick', onGoMapUserPick);
+    return () => {
+      window.removeEventListener('palto:go-map-user-pick', onGoMapUserPick);
+    };
+  }, [isGoProjectPage, isMobileGoViewport, chauffeursSearchOk, goBackToRideQueryMobile]);
 
   useEffect(() => {
     if (!isGoProjectPage) return;

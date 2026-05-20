@@ -11,6 +11,7 @@ import HomeOsmMapBackground, { type HomeMapFlyTo, type NearbyDriverMapPoint } fr
 import { resolvePickOnRoad } from '../services/osrmRouting';
 import { isLngLatInsideReunionIsland } from '../constants/reunionIsland';
 import { geocodeReverse, reverseGeocodeDisplayFallback } from '../services/addressGeocoding';
+import { haversineDistanceKm } from '../services/distanceGeo';
 import { useLanguage } from '../contexts/LanguageContext';
 
 interface ProjectCoverCarouselProps {
@@ -260,13 +261,22 @@ const ProjectCoverCarousel: React.FC<ProjectCoverCarouselProps> = ({
 
   const handleMapDestinationPick = useCallback(async (longitude: number, latitude: number) => {
     if (!isLngLatInsideReunionIsland(longitude, latitude)) return;
+    if (isPaltoMapCover) {
+      window.dispatchEvent(new CustomEvent('palto:go-map-user-pick'));
+    }
     try {
       const picked = await resolvePickOnRoad(longitude, latitude, { searchRadiusMeters: 150 });
+      const nearerToPickup =
+        mapCoverPickup !== null &&
+        mapSelectedDestination !== null &&
+        haversineDistanceKm(picked, mapCoverPickup) <= haversineDistanceKm(picked, mapSelectedDestination);
+      const role: 'pickup' | 'destination' =
+        mapCoverPickup === null || nearerToPickup ? 'pickup' : 'destination';
       const placeName =
         (await geocodeReverse(picked.longitude, picked.latitude, undefined, { language })) ??
-        reverseGeocodeDisplayFallback(language, mapCoverPickup === null ? 'pickup' : 'destination');
+        reverseGeocodeDisplayFallback(language, role);
 
-      if (mapCoverPickup === null) {
+      if (role === 'pickup') {
         setMapCoverPickup(picked);
         setMapCoverPickupLabel(placeName);
         setMapSelectedDestination(null);
@@ -276,10 +286,11 @@ const ProjectCoverCarousel: React.FC<ProjectCoverCarouselProps> = ({
       }
 
       setMapSelectedDestination(picked);
+      setMapDestinationLabel(placeName);
     } catch {
       // ignore sur clic invalide/réseau
     }
-  }, [language, mapCoverPickup]);
+  }, [language, mapCoverPickup, mapSelectedDestination, isPaltoMapCover]);
 
   return (
     <>

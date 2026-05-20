@@ -1,6 +1,7 @@
 import type { SupabaseClient } from '@supabase/supabase-js'
 import { CHAUFFEUR_PRESENCE_VISIBILITY_MS } from './chauffeurPresence.js'
 import { haversineKm, type GeoPoint } from './haversineKm.js'
+import { vehicleTypeLabel } from './vehicleTypeLabel.js'
 
 export type NearbyDriverApiItem = {
   id: string
@@ -11,6 +12,10 @@ export type NearbyDriverApiItem = {
   longitude: number
   latitude: number
   distanceKm: number
+  petFriendly: boolean
+  luggageAssistance: boolean
+  insulatedBag: boolean
+  deliveryEquipped: boolean
 }
 
 const PRESENCE_MAX_AGE_MS = CHAUFFEUR_PRESENCE_VISIBILITY_MS
@@ -23,11 +28,6 @@ function displayName(fullName: string | null | undefined, email: string | null |
   if (parts.length === 0) return 'Chauffeur'
   const pretty = (s: string) => s.slice(0, 1).toUpperCase() + s.slice(1).toLowerCase()
   return parts.map(pretty).join(' ')
-}
-
-function vehicleLabel(vehicleType: string | null | undefined): string {
-  const v = (vehicleType ?? '').trim()
-  return v || 'Moto'
 }
 
 function estimatePriceEur(distanceKm: number): number {
@@ -53,7 +53,9 @@ export async function listNearbyDriversFromPresence(
   const accountIds = presenceRows.map((r) => String(r.account_id))
   const { data: accounts, error: accErr } = await supabase
     .from('app_accounts')
-    .select('id, email, full_name, vehicle_type')
+    .select(
+      'id, email, full_name, vehicle_type, pet_friendly, luggage_assistance, insulated_bag, delivery_equipped'
+    )
     .eq('role', 'chauffeur')
     .in('id', accountIds)
 
@@ -76,12 +78,16 @@ export async function listNearbyDriversFromPresence(
       return {
         id: String(acc.id),
         name: displayName(acc.full_name as string | null, acc.email as string | null),
-        moto: vehicleLabel(acc.vehicle_type as string | null),
+        moto: vehicleTypeLabel(acc.vehicle_type as string | null),
         distance: `${distanceKm.toFixed(1).replace('.', ',')} km · ~${minutes} min`,
         price: `${price} EUR`,
         longitude: lng,
         latitude: lat,
         distanceKm,
+        petFriendly: acc.pet_friendly !== false,
+        luggageAssistance: acc.luggage_assistance !== false,
+        insulatedBag: acc.insulated_bag === true,
+        deliveryEquipped: acc.delivery_equipped === true,
       } satisfies NearbyDriverApiItem
     })
     .filter((x): x is NearbyDriverApiItem => x !== null)
