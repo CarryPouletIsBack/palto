@@ -1,14 +1,6 @@
 /**
- * Chauffeurs à proximité — **mock** pour l’UI (carte + liste page Go).
- *
- * **Intégration backend (à faire plus tard sous direction produit)** :
- * - Remplacer la source mock par un appel API en conservant la même logique d’entrée :
- *   `{ origin: GeoPoint, radiusKm: number, limit?: number }` (voir {@link NearbyDriversQuery}).
- * - L’UI (`SingleProjectNew`, filtres, marqueurs) peut alors appeler un service du type
- *   `getNearbyDrivers()` dans `src/services/` qui délègue au backend avec fallback mock si besoin,
- *   sans changer les props carte / la structure `NearbyDriver`.
- *
- * Fichier actuel : données fictives + génération autour de `origin` dans `radiusKm`.
+ * Types et mock local pour chauffeurs à proximité.
+ * La page Go utilise `getNearbyDrivers()` (`src/services/`) → API présence live uniquement.
  */
 import { DEFAULT_USER_ORIGIN } from '../constants/defaultUserOrigin'
 import type { GeoPoint } from '../services/distanceGeo'

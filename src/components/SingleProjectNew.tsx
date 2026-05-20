@@ -380,23 +380,6 @@ const SingleProjectNew: FC<SingleProjectProps> = ({
     }
     return hour >= 20 || hour < 6;
   }, [paltoPickupTiming, paltoPickupDateTime]);
-  const allNearbyDrivers = useMemo(() => {
-    if (!pickupResolvedPoint) return [];
-    return getNearbyDrivers({
-      origin: pickupResolvedPoint,
-      radiusKm: effectiveDriverSearchRadiusKm,
-      limit: 9,
-    });
-  }, [pickupResolvedPoint, effectiveDriverSearchRadiusKm]);
-
-  const pickupFilteredDrivers = useMemo(() => {
-    if (!pickupResolvedPoint) return [];
-    return allNearbyDrivers.filter(
-      (d) =>
-        haversineDistanceKm(pickupResolvedPoint, { latitude: d.latitude, longitude: d.longitude }) <=
-        effectiveDriverSearchRadiusKm
-    );
-  }, [pickupResolvedPoint, allNearbyDrivers, effectiveDriverSearchRadiusKm]);
 
   const [paltoMapSelectedDestination, setPaltoMapSelectedDestination] = useState<{
     longitude: number
@@ -407,6 +390,42 @@ const SingleProjectNew: FC<SingleProjectProps> = ({
   const [paltoRouteDeniveleEstimateM, setPaltoRouteDeniveleEstimateM] = useState<number | null>(null);
   /** Après un « Rechercher » réussi : départ + destination géocodés → affichage des chauffeurs. */
   const [chauffeursSearchOk, setChauffeursSearchOk] = useState(false);
+  const [allNearbyDrivers, setAllNearbyDrivers] = useState<import('../data/nearbyDrivers').NearbyDriver[]>([]);
+  const [nearbyDriversLoading, setNearbyDriversLoading] = useState(false);
+
+  useEffect(() => {
+    if (!chauffeursSearchOk || !pickupResolvedPoint) {
+      setAllNearbyDrivers([]);
+      setNearbyDriversLoading(false);
+      return;
+    }
+    let cancelled = false;
+    setNearbyDriversLoading(true);
+    void getNearbyDrivers({
+      origin: pickupResolvedPoint,
+      radiusKm: effectiveDriverSearchRadiusKm,
+      limit: 9,
+    })
+      .then((drivers) => {
+        if (!cancelled) setAllNearbyDrivers(drivers);
+      })
+      .finally(() => {
+        if (!cancelled) setNearbyDriversLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [chauffeursSearchOk, pickupResolvedPoint, effectiveDriverSearchRadiusKm]);
+
+  const pickupFilteredDrivers = useMemo(() => {
+    if (!pickupResolvedPoint) return [];
+    return allNearbyDrivers.filter(
+      (d) =>
+        haversineDistanceKm(pickupResolvedPoint, { latitude: d.latitude, longitude: d.longitude }) <=
+        effectiveDriverSearchRadiusKm
+    );
+  }, [pickupResolvedPoint, allNearbyDrivers, effectiveDriverSearchRadiusKm]);
+
   const [lastConfirmedDestinationText, setLastConfirmedDestinationText] = useState<string | null>(null);
   const [destinationSearchError, setDestinationSearchError] = useState<string | null>(null);
   const [destinationSuggestionOpen, setDestinationSuggestionOpen] = useState(false);

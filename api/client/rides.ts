@@ -1,11 +1,20 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node'
 import { z } from 'zod'
 import { getSupabaseAdmin } from '../../server/lib/supabaseAdmin.js'
+import { listNearbyDriversFromPresence } from '../../server/lib/nearbyDriversFromPresence.js'
 
 const QuerySchema = z.object({
   email: z.string().email(),
   status: z.enum(['upcoming', 'completed', 'cancelled', 'all']).optional(),
   limit: z.coerce.number().int().min(1).max(100).optional(),
+})
+
+const NearbyQuerySchema = z.object({
+  mode: z.literal('nearby'),
+  lat: z.coerce.number().finite(),
+  lng: z.coerce.number().finite(),
+  radiusKm: z.coerce.number().finite().min(1).max(50).optional(),
+  limit: z.coerce.number().int().min(1).max(20).optional(),
 })
 
 const CancelBodySchema = z.object({
@@ -147,6 +156,22 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       return
     }
     res.status(200).json({ ok: true, status: updated.status })
+    return
+  }
+
+  const nearbyParsed = NearbyQuerySchema.safeParse(req.query)
+  if (nearbyParsed.success) {
+    let supabase
+    try {
+      supabase = getSupabaseAdmin()
+    } catch (e) {
+      console.error('[client/rides nearby]', e)
+      res.status(503).json({ error: 'Service indisponible' })
+      return
+    }
+    const { lat, lng, radiusKm = 20, limit = 9 } = nearbyParsed.data
+    const drivers = await listNearbyDriversFromPresence(supabase, { lng, lat }, radiusKm, limit)
+    res.status(200).json({ drivers })
     return
   }
 

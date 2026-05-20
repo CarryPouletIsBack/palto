@@ -22,6 +22,7 @@ import {
   joinRideGeoRoom,
   type RideGeoRole,
 } from '../services/paltoRideLocationRealtime'
+import { chauffeurPresenceApiEnabled, pushChauffeurPresence } from '../services/chauffeurPresenceApi'
 import './DriverNavigationView.css'
 
 const REUNION_PROXIMITY: [number, number] = [55.45, -21.15]
@@ -165,6 +166,7 @@ export default function DriverNavigationView({ courseId, onClose }: Props) {
     leave: () => void
   } | null>(null)
   const lastDriverGeoSendRef = useRef(0)
+  const lastPresencePushRef = useRef(0)
   const lastTrackRef = useRef<[number, number] | null>(null)
   const everDeviatedRef = useRef(false)
   const routeCoordsRef = useRef<[number, number][]>([])
@@ -436,6 +438,10 @@ export default function DriverNavigationView({ courseId, onClose }: Props) {
         ) {
           lastDriverGeoSendRef.current = now
           void geoRoomRef.current.send('driver', lng, lat)
+        }
+        if (chauffeurPresenceApiEnabled() && now - lastPresencePushRef.current >= 15_000) {
+          lastPresencePushRef.current = now
+          void pushChauffeurPresence({ lng, lat, isAvailable: true })
         }
 
         const dest = destRef.current

@@ -47,6 +47,12 @@ const OrgSchema = z.object({
 })
 const OrganizationBodySchema = z.object({ organization: OrgSchema.nullable() })
 
+const PresenceBodySchema = z.object({
+  lng: z.coerce.number().finite(),
+  lat: z.coerce.number().finite(),
+  isAvailable: z.boolean().optional(),
+})
+
 type CourseRow = {
   id: string
   external_code: string | null
@@ -303,6 +309,41 @@ async function handleComplianceGet(req: VercelRequest, res: VercelResponse, dash
   return res.status(200).json({ snapshot })
 }
 
+async function handlePresencePost(
+  req: VercelRequest,
+  res: VercelResponse,
+  accountId: string
+) {
+  let body: unknown = req.body
+  if (typeof req.body === 'string') {
+    try {
+      body = JSON.parse(req.body)
+    } catch {
+      return res.status(400).json({ error: 'Payload JSON invalide' })
+    }
+  }
+  const parsed = PresenceBodySchema.safeParse(body)
+  if (!parsed.success) return res.status(400).json({ error: 'Payload invalide', details: parsed.error.flatten() })
+
+  const supabase = getSupabaseAdmin()
+  const nowIso = new Date().toISOString()
+  const { error } = await supabase.from('chauffeur_presence').upsert(
+    {
+      account_id: accountId,
+      lng: parsed.data.lng,
+      lat: parsed.data.lat,
+      is_available: parsed.data.isAvailable ?? true,
+      updated_at: nowIso,
+    },
+    { onConflict: 'account_id' }
+  )
+  if (error) {
+    console.error('[chauffeur/presence]', error)
+    return res.status(500).json({ error: 'Enregistrement position impossible' })
+  }
+  return res.status(200).json({ ok: true, updatedAt: nowIso })
+}
+
 async function handleCompliancePost(req: VercelRequest, res: VercelResponse, dashboardEmail: string) {
   const parsed = ComplianceBodySchema.safeParse(req.body)
   if (!parsed.success) return res.status(400).json({ error: 'Payload invalide', details: parsed.error.flatten() })
@@ -329,6 +370,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (!session) return res.status(401).json({ error: 'Non autorise' })
   const { email: dashboardEmail, accountId: driverKey } = session
 
+  if (req.method === 'POST' && resource === 'presence') return handlePresencePost(req, res, driverKey)
   if (req.method === 'GET' && resource === 'rides') return handleRidesGet(res, driverKey)
   if (req.method === 'POST' && resource === 'rides-action') return handleRidesActionPost(req, res, driverKey, dashboardEmail)
   if (req.method === 'GET' && resource === 'stats') return handleStatsGet(res, driverKey)

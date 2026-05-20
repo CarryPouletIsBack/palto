@@ -76,6 +76,7 @@ import {
 } from '../constants/clientAppPreferencesStorage';
 import { loadClientAccountSnapshot } from '../constants/clientAccountStorage';
 import { trackEvent } from '../services/googleAnalyticsTracking';
+import { useChauffeurPresenceHeartbeat } from '../hooks/useChauffeurPresenceHeartbeat';
 import { openNativeSelectPicker } from '../dom/openNativeSelectPicker';
 import { toast } from 'sonner';
 import './Dashboard.css';
@@ -639,6 +640,7 @@ const Dashboard = ({
 }: DashboardProps) => {
   const { t, language } = useLanguage();
   const persistRides = ridesPersistenceEnabled();
+  useChauffeurPresenceHeartbeat(persistRides);
   /** Couverture Picsum (id aléatoire une fois au montage) si l’org n’a pas d’URL. */
   const orgProfileCoverFallbackRef = useRef(
     `https://picsum.photos/id/${Math.floor(Math.random() * 80) + 20}/1200/400`

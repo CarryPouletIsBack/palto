@@ -9,7 +9,13 @@
 | URL API | `https://uzjplpdpbxvzhisxgwfz.supabase.co` |
 | Dashboard | [Ouvrir le projet](https://supabase.com/dashboard/project/uzjplpdpbxvzhisxgwfz) |
 
-Tables principales déjà en place : `app_accounts`, `app_sessions`, `clients`, `courses`, `course_events`, `client_profile_data`.
+Tables principales déjà en place : `app_accounts`, `app_sessions`, `clients`, `courses`, `course_events`, `client_profile_data`, `chauffeur_presence` (GPS chauffeurs en ligne pour la page Go).
+
+## Chauffeurs en ligne (page Go)
+
+- **Heartbeat chauffeur** : `POST /api/chauffeur?resource=presence` (même fonction Vercel `api/chauffeur/index.ts`, pas de 13ᵉ route).
+- **Liste à proximité** : `GET /api/client/rides?mode=nearby&lat=…&lng=…&radiusKm=20` (même fonction `api/client/rides.ts`).
+- Le dashboard chauffeur envoie le GPS toutes les ~20 s ; présence valide **3 minutes**.
 
 **La production** (`palto-six.vercel.app`) utilise Supabase via les variables Vercel `SUPABASE_URL` + `SUPABASE_SERVICE_ROLE_KEY` (les routes `/api/*` répondent, ex. `/api/client/profile` → 401 sans token = base joignable).
 

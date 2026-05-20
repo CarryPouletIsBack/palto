@@ -45,7 +45,8 @@ Pour plus d'informations, consultez : https://mui.com/x/introduction/mcp/
 
 ## Chauffeurs à proximité (page Go / Palto)
 
-- **État actuel** : `getNearbyDriversMock()` dans `src/data/nearbyDrivers.ts` — entrée alignée backend : `origin`, `radiusKm`, `limit` (`NearbyDriversQuery`).
-- **Évolution prévue** : remplacer le mock par un appel API réel en gardant le même contrat d’entrée pour ne pas casser l’UI ; optionnel : service `getNearbyDrivers()` dans `src/services/` avec fallback mock (plug-and-play).
+- **Production** : `getNearbyDrivers()` dans `src/services/getNearbyDrivers.ts` → `GET /api/client/rides?mode=nearby` (table `chauffeur_presence`). Pas de fallback mock.
+- **Heartbeat chauffeur** : `POST /api/chauffeur?resource=presence` (dashboard + navigation).
+- **Mock** : `getNearbyDriversMock()` dans `src/data/nearbyDrivers.ts` — réservé aux tests / démos locales, non utilisé par la page Go.
 
 
