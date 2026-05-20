@@ -6002,6 +6002,8 @@ html[data-app-theme='dark'] .palto-ride-timing-expand__option:hover {
   justify-content: space-between;
   gap: 12px;
   cursor: pointer;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: rgba(0, 0, 0, 0.06);
 }
 
 .palto-ride-driver-item:hover {
@@ -6752,6 +6754,23 @@ html[data-app-theme='dark'] .palto-ride-timing-expand__option:hover {
 
   .single-project-page:has(.palto-ride-main) .palto-ride-drivers-list {
     gap: 12px;
+    position: relative;
+    z-index: 10;
+    pointer-events: auto;
+    /* Pas de scroll imbriqué : sur iOS les taps sur les boutons ne partent pas (liste « non cliquable ») */
+    max-height: none;
+    overflow-y: visible;
+    touch-action: manipulation;
+  }
+
+  .single-project-page:has(.palto-ride-main) .palto-ride-column--drivers {
+    position: relative;
+    z-index: 10;
+    pointer-events: auto;
+  }
+
+  .single-project-page:has(.palto-ride-main) .palto-ride-card--drivers {
+    pointer-events: auto;
   }
 
   .single-project-page:has(.palto-ride-main) .palto-ride-driver-item {
@@ -7143,6 +7162,13 @@ html[data-app-theme='dark'] .palto-ride-timing-expand__option:hover {
 
   .single-project-page:has(.palto-ride-main) .palto-ride-mobile-floating-booking > * {
     pointer-events: auto;
+  }
+
+  /* Bandeau réservation : ne pas rester sticky quand la liste chauffeurs est affichée (recouvrement au scroll) */
+  .single-project-page:has(.palto-ride-main) .palto-ride-layout--has-drivers .palto-ride-mobile-floating-booking {
+    position: relative;
+    top: auto;
+    z-index: auto;
   }
 
   .single-project-page:has(.palto-ride-main) .palto-ride-mobile-floating-booking .palto-ride-field--timing {

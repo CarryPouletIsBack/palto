@@ -2366,6 +2366,18 @@ const SingleProjectNew: FC<SingleProjectProps> = ({
     );
   }, [isGoProjectPage, paltoMapSelectedDestination?.longitude, paltoMapSelectedDestination?.latitude]);
 
+  /** Mobile : carte en cover (ProjectCoverCarousel) — synchroniser les pins chauffeurs comme sur desktop. */
+  useEffect(() => {
+    if (!isGoProjectPage) return;
+    window.dispatchEvent(
+      new CustomEvent('palto:go-cover-nearby-drivers-sync', {
+        detail: {
+          drivers: chauffeursSearchOk ? pickupFilteredDrivers : [],
+        },
+      })
+    );
+  }, [isGoProjectPage, chauffeursSearchOk, pickupFilteredDrivers]);
+
   // JSON-LD CreativeWork pour que les IA et crawlers (avec JS) puissent lire le contenu du projet
   useEffect(() => {
     const baseUrl = (import.meta.env.VITE_SITE_URL as string) || (typeof window !== 'undefined' ? window.location.origin : '')
@@ -2613,7 +2625,9 @@ const SingleProjectNew: FC<SingleProjectProps> = ({
           )}
         </div>
         <div className="palto-ride-main">
-          <div className={`palto-ride-layout${showDriversColumn ? '' : ' palto-ride-layout--no-drivers'}`}>
+          <div
+            className={`palto-ride-layout${showDriversColumn ? ' palto-ride-layout--has-drivers' : ' palto-ride-layout--no-drivers'}`}
+          >
           <div className="palto-ride-column palto-ride-column--booking">
           {isMobileGoViewport ? (
             <div className="palto-ride-mobile-floating-booking">
@@ -2978,7 +2992,13 @@ const SingleProjectNew: FC<SingleProjectProps> = ({
                       }
                       onClick={() => {
                         setPaltoRideSelectedDriverId(driver.id);
-                        if (isDesktopViewport) setIsRecapPopupOpen(true);
+                        if (isDesktopViewport) {
+                          setIsRecapPopupOpen(true);
+                          return;
+                        }
+                        document
+                          .querySelector('.palto-ride-card--map')
+                          ?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
                       }}
                     >
                       <span className="palto-ride-driver-item__left">

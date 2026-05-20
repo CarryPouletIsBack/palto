@@ -7,7 +7,7 @@ import 'swiper/css/pagination';
 import { ArrowLeft } from 'lucide-react';
 import Button from './Button';
 import './ProjectCoverCarousel.css';
-import HomeOsmMapBackground, { type HomeMapFlyTo } from './HomeOsmMapBackground';
+import HomeOsmMapBackground, { type HomeMapFlyTo, type NearbyDriverMapPoint } from './HomeOsmMapBackground';
 import { resolvePickOnRoad } from '../services/osrmRouting';
 import { isLngLatInsideReunionIsland } from '../constants/reunionIsland';
 import { geocodeReverse, reverseGeocodeDisplayFallback } from '../services/addressGeocoding';
@@ -54,6 +54,7 @@ const ProjectCoverCarousel: React.FC<ProjectCoverCarouselProps> = ({
   const [mapRouteFeature, setMapRouteFeature] = useState<Feature<LineString> | null>(null);
   const [mapDestinationLabel, setMapDestinationLabel] = useState('');
   const [coverFlyToTarget, setCoverFlyToTarget] = useState<HomeMapFlyTo | null>(null);
+  const [coverNearbyDrivers, setCoverNearbyDrivers] = useState<NearbyDriverMapPoint[]>([]);
 
   // Dupliquer l'image pour tester le carousel
   const images = useMemo(() => {
@@ -165,6 +166,18 @@ const ProjectCoverCarousel: React.FC<ProjectCoverCarouselProps> = ({
     };
     window.addEventListener('palto:go-cover-route-sync', onPanelRoute as EventListener);
     return () => window.removeEventListener('palto:go-cover-route-sync', onPanelRoute as EventListener);
+  }, [isPaltoMapCover]);
+
+  useEffect(() => {
+    if (!isPaltoMapCover) return;
+    const onNearbyDrivers = (evt: Event) => {
+      const e = evt as CustomEvent<{ drivers?: NearbyDriverMapPoint[] }>;
+      const list = e.detail?.drivers;
+      setCoverNearbyDrivers(Array.isArray(list) ? list : []);
+    };
+    window.addEventListener('palto:go-cover-nearby-drivers-sync', onNearbyDrivers as EventListener);
+    return () =>
+      window.removeEventListener('palto:go-cover-nearby-drivers-sync', onNearbyDrivers as EventListener);
   }, [isPaltoMapCover]);
 
   useEffect(() => {
@@ -296,6 +309,7 @@ const ProjectCoverCarousel: React.FC<ProjectCoverCarouselProps> = ({
               userOrigin={mapCoverPickup}
               selectedDestination={mapSelectedDestination}
               routeFeature={mapRouteFeature}
+              nearbyDrivers={coverNearbyDrivers}
               onMapDestinationPick={handleMapDestinationPick}
             />
           </div>

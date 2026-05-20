@@ -100,6 +100,12 @@ npm run reset-password -- chauffeur pauzatoceane@gmail.com NouveauMotDePasse
 npm run reset-password -- client pauzatnathan980@gmail.com NouveauMotDePasse
 ```
 
+## GPS chauffeur iOS (à reprendre)
+
+Sur iPhone, la position dashboard peut rester bloquée après autorisation dans Réglages : il faut souvent **réappuyer** sur « Activer ma position » (geste utilisateur obligatoire). Ce n’est en général **pas** lié à l’URL Vercel preview ni au mode privé seul. Voir fil de debug session 2026-05.
+
+---
+
 ## Dépannage rapide
 
 | Symptôme | Cause probable |
