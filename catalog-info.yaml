@@ -1,0 +1,10 @@
+apiVersion: backstage.io/v1alpha1
+kind: Component
+metadata:
+  name: palto
+  annotations:
+    github.com/project-slug: CarryPouletIsBack/palto
+spec:
+  type: other
+  lifecycle: unknown
+  owner: my-group
