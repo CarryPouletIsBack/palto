@@ -2311,7 +2311,7 @@ const Dashboard = ({
             <ChauffeurPresenceGeoBar
               onActivate={chauffeurPresence.startTracking}
               error={chauffeurPresence.geoError}
-              active={chauffeurPresence.tracking}
+              hide={!chauffeurPresence.needsActivationPrompt}
             />
 
             {activeView === 'stats' ? (

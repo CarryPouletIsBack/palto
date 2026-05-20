@@ -22,8 +22,8 @@ export async function queryGeolocationPermission(): Promise<GeolocationPermissio
 export function geolocationErrorMessage(code: number, language: 'fr' | 'en'): string {
   if (code === 1) {
     return language === 'en'
-      ? 'Location blocked. Allow it in browser settings for this site.'
-      : 'Localisation bloquée. Autorisez-la dans les réglages du navigateur pour ce site.'
+      ? 'Location blocked. Safari: Settings → Apps → Safari → Location → While Using. Then return here and tap « Enable my location » again.'
+      : 'Localisation bloquée. Réglages → Apps → Safari → Localisation → « Lors de l’utilisation de l’app ». Revenez sur Palto et appuyez à nouveau sur « Activer ma position ».'
   }
   if (code === 2) {
     return language === 'en' ? 'Position unavailable.' : 'Position indisponible.'

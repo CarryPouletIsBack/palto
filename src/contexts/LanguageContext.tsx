@@ -81,7 +81,7 @@ const TRANSLATIONS: Record<Language, Record<string, unknown>> = {
     chauffeurGeo: {
       title: 'Visible sur les courses (page Go)',
       body:
-        'Sur téléphone, appuyez sur le bouton pour que le navigateur demande votre position. Sans cela, les passagers ne vous voient pas à proximité.',
+        'Sur iPhone, appuyez sur le bouton, autorisez la position, puis réappuyez si vous venez des Réglages Safari. Sans envoi GPS, les passagers ne vous voient pas.',
       activate: 'Activer ma position',
       active: 'Position envoyée — vous êtes visible pour les courses à proximité.',
     },
@@ -768,7 +768,7 @@ const TRANSLATIONS: Record<Language, Record<string, unknown>> = {
     chauffeurGeo: {
       title: 'Visible for nearby rides (Go page)',
       body:
-        'On your phone, tap the button so the browser can request your location. Otherwise passengers will not see you nearby.',
+        'On iPhone, tap the button, allow location, then tap again if you just changed Safari settings. Without GPS, passengers will not see you nearby.',
       activate: 'Enable my location',
       active: 'Location shared — you are visible for nearby ride requests.',
     },

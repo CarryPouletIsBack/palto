@@ -6,14 +6,15 @@ import './ChauffeurPresenceGeoBar.css'
 type Props = {
   onActivate: () => void
   error?: string | null
-  active?: boolean
+  /** Masquer seulement quand une position a bien été envoyée au serveur. */
+  hide?: boolean
 }
 
 /** Bannière dashboard : activer le GPS chauffeur (requis sur mobile après un clic). */
-export function ChauffeurPresenceGeoBar({ onActivate, error, active }: Props) {
+export function ChauffeurPresenceGeoBar({ onActivate, error, hide }: Props) {
   const { t } = useLanguage()
 
-  if (active) return null
+  if (hide) return null
 
   return (
     <div className="chauffeur-presence-geo" role="region" aria-labelledby="chauffeur-presence-geo-title">
