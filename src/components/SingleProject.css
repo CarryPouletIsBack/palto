@@ -7202,6 +7202,78 @@ html[data-app-theme='dark'] .palto-ride-timing-expand__option:hover {
     text-shadow: none;
   }
 
+  .single-project-page:has(.palto-ride-main) .palto-ride-mobile-choose-ride__header {
+    display: flex;
+    align-items: center;
+    width: 100%;
+    min-width: 0;
+    margin: 0 0 4px;
+  }
+
+  .single-project-page:has(.palto-ride-main) .palto-ride-mobile-choose-ride__prev {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    margin: 0;
+    padding: 8px 4px 8px 0;
+    border: none;
+    background: none;
+    font-size: 16px;
+    font-weight: 600;
+    line-height: 1.25;
+    color: #1a73e8;
+    cursor: pointer;
+    pointer-events: auto;
+  }
+
+  .single-project-page:has(.palto-ride-main) .palto-ride-mobile-choose-ride__prev svg {
+    flex-shrink: 0;
+  }
+
+  .single-project-page:has(.palto-ride-main) .palto-ride-mobile-floating-booking__lead {
+    margin: 0;
+    padding: 0 4px 4px;
+    font-size: 15px;
+    line-height: 1.45;
+    font-weight: 400;
+    color: #475569;
+  }
+
+  html[data-app-theme='dark'] .single-project-page:has(.palto-ride-main) .palto-ride-mobile-floating-booking__lead {
+    color: #94a3b8;
+  }
+
+  .single-project-page:has(.palto-ride-main) .palto-ride-mobile-floating-booking--choose-ride {
+    gap: 12px;
+    padding-bottom: 16px;
+  }
+
+  .single-project-page:has(.palto-ride-main) .palto-ride-mobile-floating-booking--choose-ride .palto-ride-drivers-list {
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+  }
+
+  .single-project-page:has(.palto-ride-main) .palto-ride-layout--mobile-choose-ride {
+    gap: 0;
+  }
+
+  .single-project-page:has(.palto-ride-main) .palto-ride-layout--mobile-choose-ride .palto-ride-column--booking {
+    gap: 0;
+  }
+
+  body.palto-go-driver-confirm-bar-open .single-project-page:has(.palto-ride-main) .main-single-project {
+    padding-bottom: calc(96px + env(safe-area-inset-bottom, 0px));
+  }
+
+  .palto-go-driver-confirm-bar {
+    flex-wrap: wrap;
+  }
+
+  .palto-go-driver-confirm-bar__cta.btn {
+    width: 100%;
+  }
+
   html[data-app-theme='dark'] .single-project-page:has(.palto-ride-main) .palto-ride-mobile-floating-booking__title {
     color: #0f172a;
     text-shadow: none;
@@ -7399,6 +7471,83 @@ html[data-app-theme='dark'] .palto-ride-timing-expand__option:hover {
     box-shadow: none;
   }
 
+}
+
+/* Bandeau fixe confirmation chauffeur — /go mobile, portal body (au-dessus du panneau main) */
+.palto-go-driver-confirm-bar {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 10050;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px max(16px, env(safe-area-inset-left, 0px)) max(12px, env(safe-area-inset-bottom, 0px))
+    max(16px, env(safe-area-inset-right, 0px));
+  box-sizing: border-box;
+  background: #ffffff;
+  border-top: 1px solid rgba(15, 23, 42, 0.08);
+  box-shadow: 0 -8px 28px rgba(15, 23, 42, 0.12);
+  pointer-events: auto;
+}
+
+html[data-app-theme='dark'] .palto-go-driver-confirm-bar {
+  background: var(--sp-card-surface, #1c1c1e);
+  border-top-color: rgba(255, 255, 255, 0.1);
+  box-shadow: 0 -8px 28px rgba(0, 0, 0, 0.45);
+}
+
+.palto-go-driver-confirm-bar__summary {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.palto-go-driver-confirm-bar__name {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 700;
+  line-height: 1.25;
+  color: #0f172a;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.palto-go-driver-confirm-bar__meta {
+  margin: 2px 0 0;
+  font-size: 13px;
+  line-height: 1.3;
+  color: #64748b;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+html[data-app-theme='dark'] .palto-go-driver-confirm-bar__name {
+  color: #f8fafc;
+}
+
+html[data-app-theme='dark'] .palto-go-driver-confirm-bar__meta {
+  color: #94a3b8;
+}
+
+.palto-go-driver-confirm-bar__cta.btn {
+  flex: 0 0 auto;
+  min-height: 48px;
+  padding-left: 16px;
+  padding-right: 16px;
+  font-size: 15px;
+  white-space: nowrap;
+}
+
+.palto-go-driver-confirm-bar__hint {
+  margin: 0;
+  width: 100%;
+  text-align: center;
+  font-size: 15px;
+  line-height: 1.4;
+  color: #64748b;
 }
 
 @media (min-width: 769px) {

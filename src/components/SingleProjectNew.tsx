@@ -31,6 +31,7 @@ import UserFlowChart from './UserFlowChart';
 import { TreeNode } from './flow/FlowTree';
 import type { FlowNodeData } from '../data/flowData';
 import Button from './Button';
+import { ChevronLeft } from 'lucide-react';
 import PaltoGoMobileRouteCard from './PaltoGoMobileRouteCard';
 import PaltoGoMobileSuggestionsPanel, {
   type PaltoGoMobileHistoryItem,
@@ -521,6 +522,87 @@ const SingleProjectNew: FC<SingleProjectProps> = ({
       ttc: totalTtc.toFixed(2),
     };
   }, [paltoSelectedDriver, computeDriverPriceTtc]);
+
+  const mobileShowChooseRideStep = isMobileGoViewport && showDriversColumn;
+
+  const goBackToRideQueryMobile = useCallback(() => {
+    setChauffeursSearchOk(false);
+    setPaltoRideSelectedDriverId(null);
+    setIsRecapPopupOpen(false);
+  }, []);
+
+  const confirmSelectedDriverOnMobile = useCallback(() => {
+    if (!paltoSelectedDriver) return;
+    setIsRecapPopupOpen(true);
+  }, [paltoSelectedDriver]);
+
+  const renderPaltoDriversList = useCallback((selectionOnly = false): ReactNode => {
+    return (
+      <div className="palto-ride-drivers-list">
+        {nearbyDriversLoading && pickupFilteredDrivers.length === 0 ? (
+          <p className="palto-ride-drivers-empty">{t('search.driversLoading')}</p>
+        ) : pickupFilteredDrivers.length === 0 ? (
+          <p className="palto-ride-drivers-empty">{t('search.driversEmpty')}</p>
+        ) : (
+          pickupFilteredDrivers.map((driver) => {
+            const kmFromPickup =
+              pickupResolvedPoint !== null
+                ? haversineDistanceKm(pickupResolvedPoint, {
+                    latitude: driver.latitude,
+                    longitude: driver.longitude,
+                  })
+                : 0;
+            const minEst = Math.max(1, Math.round((kmFromPickup / 22) * 60));
+            const serviceBadges = [
+              chauffeurRideSettings.petFriendly ? 'Animaux' : null,
+              chauffeurRideSettings.luggageAssistance ? 'Bagages' : null,
+              chauffeurRideSettings.insulatedBag ? 'Sac isotherme' : null,
+            ].filter((v): v is string => Boolean(v));
+            const meta = `${kmFromPickup.toFixed(1).replace('.', ',')} km · ~${minEst} min${
+              serviceBadges.length > 0 ? ` · ${serviceBadges.join(' · ')}` : ''
+            }`;
+            const dynamicDriverTtc = computeDriverPriceTtc(driver);
+            return (
+              <button
+                key={driver.id}
+                type="button"
+                className={
+                  'palto-ride-driver-item' +
+                  (paltoRideSelectedDriverId === driver.id ? ' palto-ride-driver-item--selected' : '')
+                }
+                onClick={() => {
+                  setPaltoRideSelectedDriverId(driver.id);
+                  if (!selectionOnly) {
+                    setIsRecapPopupOpen(true);
+                  }
+                }}
+              >
+                <span className="palto-ride-driver-item__left">
+                  <span className="palto-ride-driver-item__name">{driver.name}</span>
+                  <span className="palto-ride-driver-item__meta">
+                    {driver.moto} · {meta}
+                  </span>
+                </span>
+                <span className="palto-ride-driver-item__price">
+                  {dynamicDriverTtc !== null ? `${dynamicDriverTtc.toFixed(2)} EUR` : driver.price}
+                </span>
+              </button>
+            );
+          })
+        )}
+      </div>
+    );
+  }, [
+    nearbyDriversLoading,
+    pickupFilteredDrivers,
+    pickupResolvedPoint,
+    chauffeurRideSettings.petFriendly,
+    chauffeurRideSettings.luggageAssistance,
+    chauffeurRideSettings.insulatedBag,
+    computeDriverPriceTtc,
+    paltoRideSelectedDriverId,
+    t,
+  ]);
 
   useEffect(() => {
     if (!isGoProjectPage) return;
@@ -2256,6 +2338,36 @@ const SingleProjectNew: FC<SingleProjectProps> = ({
     destinationAddressSuggestions.length,
   ]);
 
+  /** /go mobile : après Rechercher, le bandeau affiche la liste chauffeurs — remonter le panneau. */
+  useEffect(() => {
+    if (!isGoProjectPage || !mobileShowChooseRideStep) return;
+    const page = pageRef.current;
+    if (!page) return;
+    const resetScroll = () => {
+      page.scrollTop = 0;
+    };
+    resetScroll();
+    const frame = requestAnimationFrame(resetScroll);
+    return () => cancelAnimationFrame(frame);
+  }, [isGoProjectPage, mobileShowChooseRideStep]);
+
+  /** /go mobile : présélection du premier chauffeur (modifiable si plusieurs). */
+  useEffect(() => {
+    if (!mobileShowChooseRideStep || pickupFilteredDrivers.length === 0) return;
+    setPaltoRideSelectedDriverId((prev) => {
+      if (prev && pickupFilteredDrivers.some((d) => d.id === prev)) return prev;
+      return pickupFilteredDrivers[0]?.id ?? null;
+    });
+  }, [mobileShowChooseRideStep, pickupFilteredDrivers]);
+
+  useEffect(() => {
+    if (!isMobileGoViewport || !mobileShowChooseRideStep) return;
+    document.body.classList.add('palto-go-driver-confirm-bar-open');
+    return () => {
+      document.body.classList.remove('palto-go-driver-confirm-bar-open');
+    };
+  }, [isMobileGoViewport, mobileShowChooseRideStep]);
+
   useEffect(() => {
     if (!isGoProjectPage) return;
     const onCoverMapUpdate = (evt: Event) => {
@@ -2644,46 +2756,75 @@ const SingleProjectNew: FC<SingleProjectProps> = ({
         ) : null}
         <div className="palto-ride-main">
           <div
-            className={`palto-ride-layout${showDriversColumn ? ' palto-ride-layout--has-drivers' : ' palto-ride-layout--no-drivers'}`}
+            className={`palto-ride-layout${showDriversColumn ? ' palto-ride-layout--has-drivers' : ' palto-ride-layout--no-drivers'}${mobileShowChooseRideStep ? ' palto-ride-layout--mobile-choose-ride' : ''}`}
           >
           <div className="palto-ride-column palto-ride-column--booking">
           {isMobileGoViewport ? (
-            <div className="palto-ride-mobile-floating-booking">
-              <h2 className="palto-ride-mobile-floating-booking__title">{t('clientAccount.bookRide')}</h2>
-              <PaltoGoPickupTimingSelect
-                timing={paltoPickupTiming}
-                onTimingChange={handlePickupTimingChange}
-                pickupDateTime={paltoPickupDateTime}
-                onPickupDateTimeChange={setPaltoPickupDateTime}
-                minDateTimeLocal={nowForDateTimeLocal()}
-                labelNow={t('search.goTimingNow')}
-                labelLater={t('search.goTimingLater')}
-                scheduleInputAriaLabel={t('clientAccount.rideDepartTime')}
-              />
-              <PaltoGoMobileRouteCard
-                pickupValue={paltoPickupLocation}
-                destinationValue={paltoRideDestination}
-                destinationPlaceholder={t('search.destinationPlaceholder')}
-                onPickupChange={onPickupLocationInputChange}
-                onDestinationChange={onDestinationInputChange}
-                onPickupKeyDown={onPickupLocationKeyDown}
-                onDestinationKeyDown={onDestinationKeyDown}
-                onPickupFocus={onPickupLocationFocus}
-                onPickupBlur={onPickupLocationBlur}
-                onDestinationFocus={onDestinationFocus}
-                onDestinationBlur={onDestinationBlur}
-                onClearPickup={clearPickupLocationField}
-                onClearDestination={clearDestinationField}
-                clearPickupAriaLabel="Effacer le départ"
-                clearDestinationAriaLabel="Effacer la destination"
-                pickupGeocodeLoading={pickupGeocodeLoading}
-                destinationSuggestionLoading={destinationSuggestionLoading}
-                destinationSnapLoading={destinationSnapLoading}
-                pickupSuggestionOpen={pickupSuggestionOpen}
-                destinationSuggestionOpen={destinationSuggestionOpen}
-              />
+            <div
+              className={
+                'palto-ride-mobile-floating-booking' +
+                (mobileShowChooseRideStep ? ' palto-ride-mobile-floating-booking--choose-ride' : '')
+              }
+            >
+              {mobileShowChooseRideStep ? (
+                <>
+                  <div className="palto-ride-mobile-choose-ride__header">
+                    <button
+                      type="button"
+                      className="palto-ride-mobile-choose-ride__prev"
+                      onClick={goBackToRideQueryMobile}
+                      aria-label={t('search.goPreviousStep')}
+                    >
+                      <ChevronLeft size={22} strokeWidth={2.25} aria-hidden />
+                      <span>{t('search.goPreviousStep')}</span>
+                    </button>
+                  </div>
+                  <h2 className="palto-ride-mobile-floating-booking__title">{t('search.chooseRideTitle')}</h2>
+                  <p className="palto-ride-mobile-floating-booking__lead">
+                    {t('search.chooseRideRadiusLead', { km: effectiveDriverSearchRadiusKm })}
+                  </p>
+                  {renderPaltoDriversList(true)}
+                </>
+              ) : (
+                <>
+                  <h2 className="palto-ride-mobile-floating-booking__title">{t('clientAccount.bookRide')}</h2>
+                  <PaltoGoPickupTimingSelect
+                    timing={paltoPickupTiming}
+                    onTimingChange={handlePickupTimingChange}
+                    pickupDateTime={paltoPickupDateTime}
+                    onPickupDateTimeChange={setPaltoPickupDateTime}
+                    minDateTimeLocal={nowForDateTimeLocal()}
+                    labelNow={t('search.goTimingNow')}
+                    labelLater={t('search.goTimingLater')}
+                    scheduleInputAriaLabel={t('clientAccount.rideDepartTime')}
+                  />
+                  <PaltoGoMobileRouteCard
+                    pickupValue={paltoPickupLocation}
+                    destinationValue={paltoRideDestination}
+                    destinationPlaceholder={t('search.destinationPlaceholder')}
+                    onPickupChange={onPickupLocationInputChange}
+                    onDestinationChange={onDestinationInputChange}
+                    onPickupKeyDown={onPickupLocationKeyDown}
+                    onDestinationKeyDown={onDestinationKeyDown}
+                    onPickupFocus={onPickupLocationFocus}
+                    onPickupBlur={onPickupLocationBlur}
+                    onDestinationFocus={onDestinationFocus}
+                    onDestinationBlur={onDestinationBlur}
+                    onClearPickup={clearPickupLocationField}
+                    onClearDestination={clearDestinationField}
+                    clearPickupAriaLabel="Effacer le départ"
+                    clearDestinationAriaLabel="Effacer la destination"
+                    pickupGeocodeLoading={pickupGeocodeLoading}
+                    destinationSuggestionLoading={destinationSuggestionLoading}
+                    destinationSnapLoading={destinationSnapLoading}
+                    pickupSuggestionOpen={pickupSuggestionOpen}
+                    destinationSuggestionOpen={destinationSuggestionOpen}
+                  />
+                </>
+              )}
             </div>
           ) : null}
+          {!(isMobileGoViewport && mobileShowChooseRideStep) ? (
           <section
             className={`palto-ride-card${isMobileGoViewport ? ' palto-ride-card--mobile-route' : ''}`}
           >
@@ -2964,69 +3105,17 @@ const SingleProjectNew: FC<SingleProjectProps> = ({
               </Button>
             ) : null}
           </section>
+          ) : null}
           </div>
 
-          {showDriversColumn ? (
+          {showDriversColumn && !isMobileGoViewport ? (
           <div className="palto-ride-column palto-ride-column--drivers">
           <section className="palto-ride-card palto-ride-card--drivers">
-            <h2 className="palto-ride-card__title">Choisissez une course</h2>
+            <h2 className="palto-ride-card__title">{t('search.chooseRideTitle')}</h2>
             <p className="palto-ride-card__lead">
-              Chauffeurs disponibles dans un rayon de {effectiveDriverSearchRadiusKm} km autour de votre départ.
+              {t('search.chooseRideRadiusLead', { km: effectiveDriverSearchRadiusKm })}
             </p>
-            <div className="palto-ride-drivers-list">
-              {nearbyDriversLoading && pickupFilteredDrivers.length === 0 ? (
-                <p className="palto-ride-drivers-empty">Recherche de chauffeurs en ligne…</p>
-              ) : pickupFilteredDrivers.length === 0 ? (
-                <p className="palto-ride-drivers-empty">
-                  Aucun chauffeur disponible dans ce rayon. La position d’un chauffeur reste visible environ 2 h
-                  après sa dernière mise à jour (dashboard ou bouton « Actualiser ma localisation »).
-                </p>
-              ) : (
-                pickupFilteredDrivers.map((driver) => {
-                  const kmFromPickup =
-                    pickupResolvedPoint !== null
-                      ? haversineDistanceKm(pickupResolvedPoint, {
-                          latitude: driver.latitude,
-                          longitude: driver.longitude,
-                        })
-                      : 0;
-                  const minEst = Math.max(1, Math.round((kmFromPickup / 22) * 60));
-                  const serviceBadges = [
-                    chauffeurRideSettings.petFriendly ? 'Animaux' : null,
-                    chauffeurRideSettings.luggageAssistance ? 'Bagages' : null,
-                    chauffeurRideSettings.insulatedBag ? 'Sac isotherme' : null,
-                  ].filter((v): v is string => Boolean(v));
-                  const meta = `${kmFromPickup.toFixed(1).replace('.', ',')} km · ~${minEst} min${
-                    serviceBadges.length > 0 ? ` · ${serviceBadges.join(' · ')}` : ''
-                  }`;
-                  const dynamicDriverTtc = computeDriverPriceTtc(driver);
-                  return (
-                    <button
-                      key={driver.id}
-                      type="button"
-                      className={
-                        'palto-ride-driver-item' +
-                        (paltoRideSelectedDriverId === driver.id ? ' palto-ride-driver-item--selected' : '')
-                      }
-                      onClick={() => {
-                        setPaltoRideSelectedDriverId(driver.id);
-                        setIsRecapPopupOpen(true);
-                      }}
-                    >
-                      <span className="palto-ride-driver-item__left">
-                        <span className="palto-ride-driver-item__name">{driver.name}</span>
-                        <span className="palto-ride-driver-item__meta">
-                          {driver.moto} · {meta}
-                        </span>
-                      </span>
-                      <span className="palto-ride-driver-item__price">
-                        {dynamicDriverTtc !== null ? `${dynamicDriverTtc.toFixed(2)} EUR` : driver.price}
-                      </span>
-                    </button>
-                  );
-                })
-              )}
-            </div>
+            {renderPaltoDriversList()}
           </section>
           </div>
           ) : null}
@@ -3049,6 +3138,41 @@ const SingleProjectNew: FC<SingleProjectProps> = ({
           </div>
           ) : null}
           </div>
+          {mountGoRideOverlay(
+            mobileShowChooseRideStep && !isRecapPopupOpen && !isCheckoutPopupOpen ? (
+              <div
+                className="palto-go-driver-confirm-bar"
+                role="region"
+                aria-label={t('search.chooseDriverCta')}
+              >
+                {paltoSelectedDriver ? (
+                  <>
+                    <div className="palto-go-driver-confirm-bar__summary">
+                      <p className="palto-go-driver-confirm-bar__name">{paltoSelectedDriver.name}</p>
+                      <p className="palto-go-driver-confirm-bar__meta">{paltoSelectedDriver.moto}</p>
+                    </div>
+                    <Button
+                      variant="primary"
+                      type="button"
+                      className="palto-go-driver-confirm-bar__cta"
+                      onClick={confirmSelectedDriverOnMobile}
+                    >
+                      {(() => {
+                        const ttc = computeDriverPriceTtc(paltoSelectedDriver);
+                        const priceLabel =
+                          ttc !== null
+                            ? `${ttc.toFixed(2).replace('.', ',')} €`
+                            : paltoSelectedDriver.price;
+                        return `${t('search.chooseDriverCta')} · ${priceLabel}`;
+                      })()}
+                    </Button>
+                  </>
+                ) : (
+                  <p className="palto-go-driver-confirm-bar__hint">{t('search.chooseDriverHint')}</p>
+                )}
+              </div>
+            ) : null
+          )}
           {mountGoRideOverlay(
             isRecapPopupOpen ? (
             <div

@@ -8,6 +8,8 @@ import { VitePWA } from 'vite-plugin-pwa'
 const vercelDev = process.env.VERCEL === '1'
 
 export default defineConfig({
+  /** Routes SPA (/go, /fr/…) : évite un index vide si le navigateur demande un chemin hors racine. */
+  appType: 'spa',
   plugins: [
     // The React and Tailwind plugins are both required for Make, even if
     // Tailwind is not being actively used – do not remove them
