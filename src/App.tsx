@@ -368,10 +368,12 @@ function App() {
 
   /** Après connexion : ouvrir le dashboard chauffeur ou le compte passager selon le rôle détecté. */
   const redirectAfterAuth = useCallback(
-    (role: AccountRole) => {
+    (role: AccountRole, options?: { preferDashboard?: boolean }) => {
       const prefix = language === 'en' ? '/en' : '/fr'
       setAuthUiTick((n) => n + 1)
-      if (role === 'chauffeur') {
+      const openDashboard =
+        role === 'chauffeur' || (options?.preferDashboard && role === 'client')
+      if (openDashboard) {
         window.history.pushState({}, '', `${prefix}/dashboard?dashboardView=user`)
         setCurrentPage('dashboard')
       } else {
@@ -852,7 +854,7 @@ function App() {
                     setCurrentPage('accueil-chauffeur')
                     window.history.pushState({}, '', getPathFromPage('accueil-chauffeur'))
                   }}
-                  onAuthSuccess={redirectAfterAuth}
+                  onAuthSuccess={(role) => redirectAfterAuth(role, { preferDashboard: true })}
                 />
               )
             )}
@@ -860,7 +862,7 @@ function App() {
               isAuthenticated() ? (
                 <DriverNavigationView courseId={navigationCourseId} onClose={closeDriverNavigation} />
               ) : (
-                <ChauffeurAuthPage onAuthSuccess={redirectAfterAuth} />
+                <ChauffeurAuthPage onAuthSuccess={(role) => redirectAfterAuth(role, { preferDashboard: true })} />
               )
             )}
           </>

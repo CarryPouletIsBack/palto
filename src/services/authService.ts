@@ -111,7 +111,11 @@ export async function registerChauffeur(payload: RegisterChauffeurPayload): Prom
   return { success: true }
 }
 
-/** Session valide pour le dashboard / API chauffeur (rôle chauffeur ou legacy sans rôle). */
+/**
+ * Session valide pour le dashboard / heartbeat GPS.
+ * Inclut le rôle passager : bascule « Compte chauffeur » depuis l’accueil (comme avant),
+ * l’API chauffeur identifie le compte par email de session.
+ */
 export const isChauffeurSession = (): boolean => {
   if (typeof window === 'undefined') return false
   if (!hasValidSessionToken()) {
@@ -120,7 +124,7 @@ export const isChauffeurSession = (): boolean => {
   }
   const role = getSessionRole()
   if (!role) return true
-  return role === 'chauffeur'
+  return role === 'chauffeur' || role === 'client'
 }
 
 /** @alias isChauffeurSession */
@@ -167,15 +171,14 @@ export async function loginChauffeurOnly(
   }
 
   const clientProbe = await postAuth('/auth/client/login', credentials)
-  if (clientProbe.success) {
-    return {
-      success: false,
-      error:
-        'Ce mot de passe correspond à votre compte passager. Sur le dashboard, utilisez le mot de passe du compte chauffeur (souvent différent).',
-    }
+  if (clientProbe.success && clientProbe.token && clientProbe.user) {
+    persistUnifiedSession(clientProbe.token, clientProbe.user, 'client')
+    notifyClientSessionChanged()
+    void syncClientProfileWithServer(clientProbe.user.email)
+    return { success: true, user: clientProbe.user, role: 'client' }
   }
 
-  return { success: false, error: result.error ?? 'Email ou mot de passe chauffeur incorrect' }
+  return { success: false, error: result.error ?? 'Email ou mot de passe incorrect' }
 }
 
 export const login = loginChauffeurOnly
