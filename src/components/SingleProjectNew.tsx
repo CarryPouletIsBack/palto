@@ -59,6 +59,7 @@ import {
 import { REUNION_ISLAND_BBOX_GEOCODE } from '../constants/reunionIsland';
 import { haversineDistanceKm, type GeoPoint } from '../services/distanceGeo';
 import { consumeGoPrefill } from '../constants/goPrefillStorage';
+import { getHeroDepartmentGeocodeArea } from '../data/heroDepartments';
 import {
   loadClientSavedPlaces,
   migrateLegacySavedPlacesIfOwnedByEmail,
@@ -591,8 +592,12 @@ const SingleProjectNew: FC<SingleProjectProps> = ({
     if (!prefill) return;
     if (prefill.pickup.trim()) {
       setPaltoPickupLocation(simplifyRideAddress(prefill.pickup.trim()));
-    } else if (prefill.homeCommune?.trim()) {
-      setPaltoPickupLocation(simplifyRideAddress(`${prefill.homeCommune.trim()}, La Réunion`));
+    } else if (prefill.homeDepartmentId?.trim() || prefill.homeCommune?.trim()) {
+      const area = prefill.homeDepartmentId?.trim()
+        ? getHeroDepartmentGeocodeArea(prefill.homeDepartmentId.trim())
+        : 'La Réunion';
+      const label = prefill.homeCommune?.trim() || area;
+      setPaltoPickupLocation(simplifyRideAddress(`${label}, ${area}`));
     }
     if (prefill.destination.trim()) {
       setPaltoRideDestination(simplifyRideAddress(prefill.destination.trim()));

@@ -12,9 +12,14 @@ import { POPULAR_DESTINATIONS, type PopularDestination } from '../data/popularDe
 import { saveGoPrefill } from '../constants/goPrefillStorage'
 import { geocodeForwardSuggestions, type GeocodeSuggestion } from '../services/addressGeocoding'
 import { REUNION_ISLAND_BBOX_GEOCODE } from '../constants/reunionIsland'
-import { CalendarRange, Car, ChevronDown, Wallet, X } from 'lucide-react'
+import { CalendarRange, Car, Wallet } from 'lucide-react'
 import { useClientHomeTopbarRides } from '../hooks/useClientHomeTopbarRides'
-import { DEFAULT_HERO_COMMUNE, REUNION_COMMUNES_SORTED } from '../data/reunionCommunes'
+import {
+  DEFAULT_HERO_DEPARTMENT_ID,
+  getHeroDepartmentLabel,
+  HERO_DEPARTMENTS,
+  type HeroDepartmentId,
+} from '../data/heroDepartments'
 
 interface HeroProps {
   onPageChange: (page: string, projectImage?: string, projectCategory?: string) => void
@@ -52,8 +57,8 @@ const Hero = ({
   const pickupTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const destinationTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const { clientUpcomingRide, clientLiveMeetActive } = useClientHomeTopbarRides(language)
-  const [homeCommune, setHomeCommune] = useState<string>(DEFAULT_HERO_COMMUNE)
-  const [communePickerOpen, setCommunePickerOpen] = useState(false)
+  const [homeDepartmentId, setHomeDepartmentId] = useState<HeroDepartmentId>(DEFAULT_HERO_DEPARTMENT_ID)
+  const homeDepartmentLabel = getHeroDepartmentLabel(homeDepartmentId, language)
 
   const handleVoirLesPrix = useCallback(() => {
     saveGoPrefill({
@@ -61,7 +66,7 @@ const Hero = ({
       destination: destinationDraft.trim(),
       timing: pickupTiming,
       datetime: '',
-      homeCommune,
+      homeDepartmentId,
     })
     trackEvent(
       'click',
@@ -69,7 +74,7 @@ const Hero = ({
       `${destinationDraft.trim() ? 'with_dest' : 'empty_dest'}_${pickupTiming}`
     )
     onPageChange('project-Go', PLACEHOLDER_COVER, 'Application')
-  }, [destinationDraft, homeCommune, onPageChange, pickupDraft, pickupTiming])
+  }, [destinationDraft, homeDepartmentId, onPageChange, pickupDraft, pickupTiming])
 
   const destTitle = (d: PopularDestination) => (language === 'en' ? d.titleEn : d.titleFr)
 
@@ -80,12 +85,12 @@ const Hero = ({
         destination: d.geocodeQuery,
         timing: pickupTiming,
         datetime: '',
-        homeCommune,
+        homeDepartmentId,
       })
       trackEvent('click', 'hero_home_suggestion_go', d.id)
       onPageChange('project-Go', PLACEHOLDER_COVER, 'Application')
     },
-    [homeCommune, onPageChange, pickupDraft, pickupTiming]
+    [homeDepartmentId, onPageChange, pickupDraft, pickupTiming]
   )
 
   useEffect(() => {
@@ -132,24 +137,6 @@ const Hero = ({
     }
   }, [destinationOpen, destinationDraft, language])
 
-  useEffect(() => {
-    if (!communePickerOpen) return
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') setCommunePickerOpen(false)
-    }
-    window.addEventListener('keydown', onKey)
-    return () => window.removeEventListener('keydown', onKey)
-  }, [communePickerOpen])
-
-  useEffect(() => {
-    if (!communePickerOpen) return
-    const prev = document.body.style.overflow
-    document.body.style.overflow = 'hidden'
-    return () => {
-      document.body.style.overflow = prev
-    }
-  }, [communePickerOpen])
-
   return (
     <div className="hero-accueil-root">
       <div className="main-accueil">
@@ -172,69 +159,31 @@ const Hero = ({
                 <div className="hero-home-booking__grid">
                   <div className="hero-home-booking__col hero-home-booking__col--left">
                     <p className="hero-home-booking__cityline">
-                      <span className="hero-home-booking__city">{homeCommune}</span>
+                      <span className="hero-home-booking__city">{homeDepartmentLabel}</span>
                       <span className="hero-home-booking__fr">{t('hero.homeCountrySuffix')}</span>
-                      <button
-                        type="button"
-                        className="hero-home-booking__change-city"
-                        onClick={() => {
-                          setCommunePickerOpen(true)
-                          trackEvent('click', 'hero_change_city', 'open_commune_picker')
-                        }}
-                        aria-haspopup="dialog"
-                        aria-expanded={communePickerOpen}
-                      >
-                        <span className="hero-home-booking__change-city-text">{t('hero.homeChangeCity')}</span>
-                        <ChevronDown className="hero-home-booking__change-city-chevron" size={16} strokeWidth={2.25} aria-hidden />
-                      </button>
-                    </p>
-                    {communePickerOpen ? (
-                      <div
-                        className="hero-commune-picker-backdrop"
-                        role="presentation"
-                        onClick={() => setCommunePickerOpen(false)}
-                      >
-                        <div
-                          className="hero-commune-picker-panel"
-                          role="dialog"
-                          aria-modal="true"
-                          aria-labelledby="hero-commune-picker-title"
-                          onClick={(e) => e.stopPropagation()}
+                      <label className="hero-home-booking__department-select-wrap">
+                        <span className="hero-home-booking__department-select-sr">
+                          {t('hero.homeDepartmentSelectAria')}
+                        </span>
+                        <select
+                          className="hero-home-booking__department-select"
+                          value={homeDepartmentId}
+                          onChange={(e) => {
+                            const next = e.target.value as HeroDepartmentId
+                            setHomeDepartmentId(next)
+                            trackEvent('click', 'hero_select_department', next)
+                          }}
+                          tabIndex={-1}
+                          aria-hidden
                         >
-                          <div className="hero-commune-picker-panel__head">
-                            <h2 id="hero-commune-picker-title" className="hero-commune-picker-panel__title">
-                              {t('hero.communePickerTitle')}
-                            </h2>
-                            <button
-                              type="button"
-                              className="hero-commune-picker-panel__close"
-                              onClick={() => setCommunePickerOpen(false)}
-                              aria-label={t('hero.communePickerCloseAria')}
-                            >
-                              <X size={20} strokeWidth={2} aria-hidden />
-                            </button>
-                          </div>
-                          <div className="hero-commune-picker-panel__grid">
-                            {REUNION_COMMUNES_SORTED.map((name) => (
-                              <button
-                                key={name}
-                                type="button"
-                                className={
-                                  'hero-commune-picker__item' + (name === homeCommune ? ' hero-commune-picker__item--selected' : '')
-                                }
-                                onClick={() => {
-                                  setHomeCommune(name)
-                                  setCommunePickerOpen(false)
-                                  trackEvent('click', 'hero_select_commune', name)
-                                }}
-                              >
-                                {name}
-                              </button>
-                            ))}
-                          </div>
-                        </div>
-                      </div>
-                    ) : null}
+                          {HERO_DEPARTMENTS.map((d) => (
+                            <option key={d.id} value={d.id}>
+                              {language === 'en' ? d.labelEn : d.labelFr}
+                            </option>
+                          ))}
+                        </select>
+                      </label>
+                    </p>
                     <h2 id="hero-home-booking-title" className="hero-home-booking__title">
                       {t('hero.orderRideTitle')}
                     </h2>

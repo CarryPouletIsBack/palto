@@ -5,8 +5,10 @@ export type GoPrefillPayload = {
   destination: string
   timing?: 'now' | 'later'
   datetime?: string
-  /** Commune d’accueil choisie sur l’accueil (sans préfixe « mairie »). */
+  /** @deprecated Préférer `homeDepartmentId`. */
   homeCommune?: string
+  /** Département / zone d’accueil (`heroDepartments`). */
+  homeDepartmentId?: string
 }
 
 export function saveGoPrefill(data: GoPrefillPayload): void {

@@ -1761,6 +1761,39 @@ body.accueil-page .hero-columns-wrap {
   color: var(--app-text-muted, #475569);
 }
 
+/* Select département : présent pour la logique, masqué visuellement pour l’instant */
+.hero-home-booking__department-select-wrap {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.hero-home-booking__department-select-sr {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.hero-home-booking__department-select {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+  pointer-events: none;
+}
+
 .hero-home-booking__change-city {
   margin: 0;
   display: inline-flex;
