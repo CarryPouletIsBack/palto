@@ -6143,11 +6143,12 @@ html[data-app-theme='dark'] .palto-ride-timing-expand__option:hover {
 .palto-ride-recap-modal {
   position: fixed;
   inset: 0;
-  z-index: 2500;
+  z-index: 4000;
   display: flex;
   align-items: center;
   justify-content: center;
   padding: 16px;
+  box-sizing: border-box;
 }
 
 .palto-ride-recap-modal__backdrop {
@@ -6912,6 +6913,20 @@ html[data-app-theme='dark'] .palto-ride-timing-expand__option:hover {
 
   .single-project-page:has(.palto-ride-main) .palto-ride-recap-price-row {
     font-size: 16px;
+  }
+
+  .palto-ride-recap-modal {
+    align-items: flex-end;
+    padding: 0;
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
+
+  .palto-ride-recap-modal__content {
+    width: 100%;
+    max-width: 100%;
+    max-height: min(88vh, 720px);
+    border-radius: 16px 16px 0 0;
+    border-bottom: none;
   }
 
   .single-project-page:has(.palto-ride-main) .palto-ride-recap-modal__content .palto-ride-card__title {

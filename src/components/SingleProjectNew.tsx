@@ -11,6 +11,7 @@ import {
   type TouchEvent,
   type RefObject,
 } from 'react';
+import { createPortal } from 'react-dom';
 import { useLanguage } from '../contexts/LanguageContext';
 import { trackEvent } from '../services/googleAnalyticsTracking';
 import { createRideOrder } from '../services/createRideOrder';
@@ -2992,13 +2993,7 @@ const SingleProjectNew: FC<SingleProjectProps> = ({
                       }
                       onClick={() => {
                         setPaltoRideSelectedDriverId(driver.id);
-                        if (isDesktopViewport) {
-                          setIsRecapPopupOpen(true);
-                          return;
-                        }
-                        document
-                          .querySelector('.palto-ride-card--map')
-                          ?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                        setIsRecapPopupOpen(true);
                       }}
                     >
                       <span className="palto-ride-driver-item__left">
@@ -3125,7 +3120,8 @@ const SingleProjectNew: FC<SingleProjectProps> = ({
           )}
           </div>
           </div>
-          {isRecapPopupOpen ? (
+          {isRecapPopupOpen && typeof document !== 'undefined'
+            ? createPortal(
             <div className="palto-ride-recap-modal" role="dialog" aria-modal="true" aria-label="Recap commande">
               <div className="palto-ride-recap-modal__backdrop" onClick={closeRecapPopup} />
               <div className="palto-ride-recap-modal__content" onClick={(e) => e.stopPropagation()}>
@@ -3240,9 +3236,12 @@ const SingleProjectNew: FC<SingleProjectProps> = ({
                   </Button>
                 </div>
               </div>
-            </div>
-          ) : null}
-          {isCheckoutPopupOpen ? (
+            </div>,
+            document.body
+          )
+            : null}
+          {isCheckoutPopupOpen && typeof document !== 'undefined'
+            ? createPortal(
             <div className="palto-ride-recap-modal" role="dialog" aria-modal="true" aria-label="Checkout commande">
               <div className="palto-ride-recap-modal__backdrop" onClick={closeCheckoutPopup} />
               <div className="palto-ride-recap-modal__content" onClick={(e) => e.stopPropagation()}>
@@ -3361,8 +3360,10 @@ const SingleProjectNew: FC<SingleProjectProps> = ({
                   </Button>
                 </div>
               </div>
-            </div>
-          ) : null}
+            </div>,
+            document.body
+          )
+            : null}
         </div>
         </>
         ) : (
