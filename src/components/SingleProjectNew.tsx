@@ -1593,6 +1593,17 @@ const SingleProjectNew: FC<SingleProjectProps> = ({
     setIsCheckoutPopupOpen(false);
     setCheckoutError(null);
   }, []);
+
+  useEffect(() => {
+    if (!isRecapPopupOpen && !isCheckoutPopupOpen) return;
+    const prevOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    document.body.classList.add('palto-go-ride-modal-open');
+    return () => {
+      document.body.style.overflow = prevOverflow;
+      document.body.classList.remove('palto-go-ride-modal-open');
+    };
+  }, [isRecapPopupOpen, isCheckoutPopupOpen]);
   const handleRecapModalConfirmOrder = useCallback(() => {
     if (paltoPickupTiming === 'now' && !paltoSelectedDriver) {
       return;
@@ -3014,8 +3025,8 @@ const SingleProjectNew: FC<SingleProjectProps> = ({
           </div>
           ) : null}
 
-          <div className="palto-ride-column palto-ride-column--map">
           {isDesktopViewport ? (
+          <div className="palto-ride-column palto-ride-column--map">
             <section className="palto-ride-card palto-ride-card--map-live">
               <div className="palto-ride-map-shell">
                 <HomeOsmMapBackground
@@ -3029,96 +3040,8 @@ const SingleProjectNew: FC<SingleProjectProps> = ({
                 />
               </div>
             </section>
-          ) : (
-            <section className="palto-ride-card palto-ride-card--map">
-              <h2 className="palto-ride-card__title">Recap commande</h2>
-              <div className="palto-ride-recap">
-                <div className="palto-ride-recap__section">
-                  <p className="palto-ride-recap-row">
-                    <span>Prise en charge</span>
-                    <strong>{paltoRecapPickupText}</strong>
-                  </p>
-                  <p className="palto-ride-recap__coords">{paltoRecapCoordsText}</p>
-                  <p className="palto-ride-recap-row">
-                    <span>Temps estime du trajet</span>
-                    <strong>{paltoRecapDurationText}</strong>
-                  </p>
-                  <p className="palto-ride-recap-row">
-                    <span>Temps en voiture a cause des bouchons</span>
-                    <strong>{paltoRecapTrafficDurationText}</strong>
-                  </p>
-                  {paltoRouteDistanceKm ? (
-                    <p className="palto-ride-recap-row">
-                      <span>Distance estimee</span>
-                      <strong>{paltoRouteDistanceKm.toFixed(2)} km</strong>
-                    </p>
-                  ) : null}
-                  {paltoRouteDeniveleEstimateM !== null ? (
-                    <p className="palto-ride-recap-row">
-                      <span>Denivele estime</span>
-                      <strong>+{paltoRouteDeniveleEstimateM} m</strong>
-                    </p>
-                  ) : null}
-                </div>
-                <hr className="palto-ride-recap-separator" />
-                <div className="palto-ride-recap__section">
-                  <p className="palto-ride-recap-row">
-                    <span>Chauffeur selectionne</span>
-                    <strong>
-                      {paltoPickupTiming === 'later'
-                        ? 'A confirmer par un chauffeur'
-                        : paltoSelectedDriver
-                          ? paltoSelectedDriver.name
-                          : 'Aucun'}
-                    </strong>
-                  </p>
-                  <p className="palto-ride-recap-row">
-                    <span>Vehicule</span>
-                    <strong>
-                      {paltoPickupTiming === 'later'
-                        ? '—'
-                        : paltoSelectedDriver
-                          ? paltoSelectedDriver.moto
-                          : '-'}
-                    </strong>
-                  </p>
-                </div>
-                <hr className="palto-ride-recap-separator" />
-                <div className="palto-ride-recap__section">
-                  {paltoPricing ? (
-                    <>
-                      <p className="palto-ride-recap-price-row">
-                        <span>Montant HT:</span>
-                        <strong>{paltoPricing.ht} EUR</strong>
-                      </p>
-                      <p className="palto-ride-recap-price-row">
-                        <span>TVA (20%):</span>
-                        <strong>{paltoPricing.tva} EUR</strong>
-                      </p>
-                      <p className="palto-ride-recap-price-row palto-ride-recap-price-row--total">
-                        <span>Total TTC:</span>
-                        <strong>{paltoPricing.ttc} EUR</strong>
-                      </p>
-                    </>
-                  ) : paltoRouteDistanceKm != null ? (
-                    <p className="palto-ride-recap-price-row palto-ride-recap-price-row--total">
-                      <span>Total estime TTC:</span>
-                      <strong>
-                        {Math.max(
-                          6,
-                          (effectiveBaseFareEur + paltoRouteDistanceKm * effectivePricePerKmEur) *
-                            effectiveDriverPricingMultiplier *
-                            (1 + (isNightRide ? effectiveNightSurchargeRate : 0))
-                        ).toFixed(2)}{' '}
-                        EUR
-                      </strong>
-                    </p>
-                  ) : null}
-                </div>
-              </div>
-            </section>
-          )}
           </div>
+          ) : null}
           </div>
           {isRecapPopupOpen && typeof document !== 'undefined'
             ? createPortal(
