@@ -1,0 +1,90 @@
+# Connexion Supabase — Palto
+
+## État du projet Supabase
+
+| Élément | Valeur |
+|--------|--------|
+| Projet | **palto** |
+| Référence | `uzjplpdpbxvzhisxgwfz` |
+| URL API | `https://uzjplpdpbxvzhisxgwfz.supabase.co` |
+| Dashboard | [Ouvrir le projet](https://supabase.com/dashboard/project/uzjplpdpbxvzhisxgwfz) |
+
+Tables principales déjà en place : `app_accounts`, `app_sessions`, `clients`, `courses`, `course_events`, `client_profile_data`.
+
+**La production** (`palto-six.vercel.app`) utilise Supabase via les variables Vercel `SUPABASE_URL` + `SUPABASE_SERVICE_ROLE_KEY` (les routes `/api/*` répondent, ex. `/api/client/profile` → 401 sans token = base joignable).
+
+**Le dev local** ne parle pas à la base tant que `.env.local` n’a pas ces variables **et** que tu lances `npm run dev:api` (Vercel CLI via `npx`).
+
+---
+
+## 1. Compléter `.env.local` (racine du repo)
+
+Copie les clés depuis [Settings → API](https://supabase.com/dashboard/project/uzjplpdpbxvzhisxgwfz/settings/api) :
+
+- **Project URL** → `SUPABASE_URL` et `VITE_SUPABASE_URL`
+- **anon / publishable** → `VITE_SUPABASE_ANON_KEY` (côté navigateur uniquement)
+- **service_role** (secret) → `SUPABASE_SERVICE_ROLE_KEY` (serveur / `vercel dev` uniquement, jamais en `VITE_`)
+
+Exemple (à adapter avec ta vraie service role) :
+
+```env
+SUPABASE_URL=https://uzjplpdpbxvzhisxgwfz.supabase.co
+SUPABASE_SERVICE_ROLE_KEY=colle_ici_la_service_role
+
+VITE_SUPABASE_URL=https://uzjplpdpbxvzhisxgwfz.supabase.co
+VITE_SUPABASE_ANON_KEY=colle_ici_la_cle_anon_ou_publishable
+
+VITE_API_BASE_URL=/api
+```
+
+Optionnel : `SUPABASE_JWT_SECRET` (Settings → API → JWT Secret) pour Realtime ; `VITE_USE_CLIENT_RIDES_API=1` (défaut activé).
+
+---
+
+## 2. Lancer le stack local (front + API + base)
+
+```bash
+# Front + API (charge .env.local pour les routes /api)
+npm run dev:api
+```
+
+Équivalent : `npx vercel dev` (pas besoin d’installer Vercel globalement).
+
+`npm run dev` seul = **Vite uniquement** : pas de vraie connexion aux routes `/api` (proxy vers `:3000` sans serveur = profil / courses / auth cassés en local).
+
+Vérifier :
+
+```bash
+npm run check:supabase
+```
+
+---
+
+## 3. Skills Supabase (`npx skills add supabase/agent-skills`)
+
+Ça installe des **guides pour l’assistant Cursor** (bonnes pratiques Postgres, etc.).  
+Ce n’est **pas** la connexion de l’app : la connexion = `.env.local` + `vercel dev` + variables Vercel en prod.
+
+Pour que Cursor interroge ton projet via MCP : authentifier le serveur **Supabase** dans Cursor (Settings → MCP) — le plugin peut lister tables et appliquer des migrations.
+
+---
+
+## 4. Vercel (production)
+
+Dans [Vercel → palto → Settings → Environment Variables](https://vercel.com), vérifier que pour **Production** et **Preview** :
+
+- `SUPABASE_URL` = URL du projet
+- `SUPABASE_SERVICE_ROLE_KEY` = service role (non vide)
+
+Puis redéployer. Si une variable est vide, les API renvoient `503 Service indisponible`.
+
+---
+
+## Dépannage rapide
+
+| Symptôme | Cause probable |
+|----------|----------------|
+| Profil / lieux OK en prod, vides en local | `.env.local` sans Supabase ou seulement `npm run dev` |
+| `503` sur `/api/client/profile` | `SUPABASE_*` manquant sur Vercel ou en local |
+| Realtime courses ne bouge pas | `VITE_SUPABASE_URL` + `VITE_SUPABASE_ANON_KEY` + `SUPABASE_JWT_SECRET` |
+| MCP Supabase « read-only » sur migrations | Utiliser le dashboard SQL ou CLI liée au projet |

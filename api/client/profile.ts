@@ -8,6 +8,7 @@ import {
   sanitizeSavedPlacesSnapshot,
   savedPlacesSnapshotHasContent,
 } from '../../server/lib/clientProfileSanitize.js'
+import { mergeAccountSnapshots, mergeSavedPlacesSnapshots } from '../../server/lib/clientProfileMerge.js'
 
 const PutBodySchema = z.object({
   account: z.unknown().optional(),
@@ -51,8 +52,23 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   }
 
   const session = await getPaltoAppSessionByToken(supabase, token)
-  if (!session || session.role !== 'client') {
+  if (!session) {
     res.status(401).json({ error: 'Non autorise' })
+    return
+  }
+
+  let clientAccountId = session.role === 'client' ? session.accountId : null
+  if (!clientAccountId) {
+    const { data: clientRow } = await supabase
+      .from('app_accounts')
+      .select('id')
+      .eq('email', session.email)
+      .eq('role', 'client')
+      .maybeSingle()
+    clientAccountId = clientRow?.id ? String(clientRow.id) : null
+  }
+  if (!clientAccountId) {
+    res.status(401).json({ error: 'Compte passager requis pour le profil' })
     return
   }
 
@@ -60,7 +76,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const { data, error } = await supabase
       .from('client_profile_data')
       .select('account_snapshot, saved_places, updated_at')
-      .eq('account_id', session.accountId)
+      .eq('account_id', clientAccountId)
       .maybeSingle()
 
     if (error) {
@@ -96,8 +112,21 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     return
   }
 
-  const account = sanitizeAccountSnapshot(parsed.data.account ?? {})
-  const savedPlaces = sanitizeSavedPlacesSnapshot(parsed.data.savedPlaces ?? {})
+  const incomingAccount = sanitizeAccountSnapshot(parsed.data.account ?? {})
+  const incomingPlaces = sanitizeSavedPlacesSnapshot(parsed.data.savedPlaces ?? {})
+
+  const { data: existingRow } = await supabase
+    .from('client_profile_data')
+    .select('account_snapshot, saved_places')
+    .eq('account_id', clientAccountId)
+    .maybeSingle()
+
+  const existingAccount = sanitizeAccountSnapshot(existingRow?.account_snapshot ?? {})
+  const existingPlaces = sanitizeSavedPlacesSnapshot(existingRow?.saved_places ?? {})
+
+  const account = mergeAccountSnapshots(existingAccount, incomingAccount)
+  const savedPlaces = mergeSavedPlacesSnapshots(existingPlaces, incomingPlaces)
+
   if (!accountSnapshotHasContent(account) && !savedPlacesSnapshotHasContent(savedPlaces)) {
     res.status(400).json({ error: 'Rien a enregistrer' })
     return
@@ -113,7 +142,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     .from('client_profile_data')
     .upsert(
       {
-        account_id: session.accountId,
+        account_id: clientAccountId,
         account_snapshot: accountWithEmail,
         saved_places: savedPlaces,
         updated_at: new Date().toISOString(),

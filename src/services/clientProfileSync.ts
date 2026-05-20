@@ -10,8 +10,11 @@ import {
   type ClientSavedPlacesSnapshot,
 } from '../constants/clientSavedPlacesStorage'
 import { isClientAuthenticated } from './authService'
+import { mergeClientAccountSnapshots, mergeClientSavedPlacesSnapshots } from './clientProfileMerge'
 
 const API_BASE_URL = apiBaseUrl()
+
+const syncInFlightByEmail = new Map<string, Promise<void>>()
 
 export function clientProfileSyncEnabled(): boolean {
   return useClientRidesApi()
@@ -56,7 +59,10 @@ async function fetchRemoteProfile(): Promise<RemoteProfilePayload | null> {
       headers: { Authorization: `Bearer ${token}` },
     })
     if (res.status === 404) return { account: {}, savedPlaces: {}, updatedAt: null }
-    if (!res.ok) return null
+    if (!res.ok) {
+      console.warn('[clientProfileSync] GET failed', res.status)
+      return null
+    }
     return (await res.json()) as RemoteProfilePayload
   } catch (e) {
     console.warn('[clientProfileSync] fetch failed', e)
@@ -64,7 +70,11 @@ async function fetchRemoteProfile(): Promise<RemoteProfilePayload | null> {
   }
 }
 
-async function pushRemoteProfile(email: string, account: ClientAccountSnapshot, savedPlaces: ClientSavedPlacesSnapshot): Promise<boolean> {
+async function pushRemoteProfile(
+  email: string,
+  account: ClientAccountSnapshot,
+  savedPlaces: ClientSavedPlacesSnapshot
+): Promise<boolean> {
   const token = getBearerToken()
   if (!token) return false
   if (!accountHasContent(account) && !placesHasContent(savedPlaces)) return false
@@ -77,6 +87,10 @@ async function pushRemoteProfile(email: string, account: ClientAccountSnapshot, 
       },
       body: JSON.stringify({ account, savedPlaces }),
     })
+    if (!res.ok) {
+      const body = (await res.json().catch(() => ({}))) as { error?: string }
+      console.warn('[clientProfileSync] PUT failed', res.status, body.error)
+    }
     return res.ok
   } catch (e) {
     console.warn('[clientProfileSync] push failed', e)
@@ -100,13 +114,9 @@ export function scheduleClientProfilePush(email: string | undefined): void {
   }, 600)
 }
 
-/**
- * Après connexion : récupère le profil serveur sur cet appareil, ou pousse le local si le serveur est vide.
- * Résout le cas desktop (données locales) → mobile (session seule).
- */
-export async function syncClientProfileWithServer(email: string | undefined): Promise<void> {
+async function runSyncClientProfileWithServer(email: string): Promise<void> {
   if (!clientProfileSyncEnabled() || !isClientAuthenticated()) return
-  const key = (email ?? '').trim().toLowerCase()
+  const key = email.trim().toLowerCase()
   if (!key) return
 
   const localAccount = loadClientAccountSnapshot(key)
@@ -114,27 +124,43 @@ export async function syncClientProfileWithServer(email: string | undefined): Pr
   const remote = await fetchRemoteProfile()
   if (!remote) return
 
-  const remoteHasAccount = Boolean(remote.hasAccount)
-  const remoteHasPlaces = Boolean(remote.hasSavedPlaces)
-  const localHasAccount = accountHasContent(localAccount)
-  const localHasPlaces = placesHasContent(localPlaces)
+  const remoteAccount = (remote.account ?? {}) as Partial<ClientAccountSnapshot>
+  const remotePlaces = (remote.savedPlaces ?? {}) as Partial<ClientSavedPlacesSnapshot>
 
-  if (remoteHasAccount || remoteHasPlaces) {
-    if (remoteHasAccount && remote.account) {
-      const merged: ClientAccountSnapshot = {
-        ...localAccount,
-        ...remote.account,
-        email: key,
-      } as ClientAccountSnapshot
-      saveClientAccountSnapshot(merged, key)
-    }
-    if (remoteHasPlaces && remote.savedPlaces) {
-      saveClientSavedPlaces(remote.savedPlaces as ClientSavedPlacesSnapshot, key)
-    }
+  const mergedAccount = mergeClientAccountSnapshots(localAccount, remoteAccount)
+  mergedAccount.email = key
+
+  const mergedPlaces = mergeClientSavedPlacesSnapshots(localPlaces, remotePlaces)
+
+  saveClientAccountSnapshot(mergedAccount, key)
+  saveClientSavedPlaces(mergedPlaces, key)
+
+  if (accountHasContent(mergedAccount) || placesHasContent(mergedPlaces)) {
+    await pushRemoteProfile(key, mergedAccount, mergedPlaces)
+  }
+
+  if (typeof window !== 'undefined') {
+    window.dispatchEvent(new CustomEvent('palto:client-profile-synced'))
+  }
+}
+
+/**
+ * Fusion bidirectionnelle local ↔ serveur, puis persistance locale + push du meilleur état.
+ * Évite d’écraser une photo ou des lieux locaux par des valeurs vides venant du serveur.
+ */
+export async function syncClientProfileWithServer(email: string | undefined): Promise<void> {
+  const key = (email ?? '').trim().toLowerCase()
+  if (!key) return
+
+  const existing = syncInFlightByEmail.get(key)
+  if (existing) {
+    await existing
     return
   }
 
-  if (localHasAccount || localHasPlaces) {
-    await pushRemoteProfile(key, localAccount, localPlaces)
-  }
+  const task = runSyncClientProfileWithServer(key).finally(() => {
+    syncInFlightByEmail.delete(key)
+  })
+  syncInFlightByEmail.set(key, task)
+  await task
 }

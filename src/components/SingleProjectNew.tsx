@@ -74,6 +74,7 @@ import {
 import { DashboardHomeRidesBanner } from './DashboardHomeRidesBanner';
 import { useClientHomeTopbarRides } from '../hooks/useClientHomeTopbarRides';
 import { simplifyAddressDisplay as simplifyRideAddress } from '../services/addressDisplay';
+import { getNearbyDrivers } from '../services/getNearbyDrivers';
 
 /** Rayon d’affichage des chauffeurs autour du point de départ validé (page Go). */
 const PICKUP_DRIVER_SEARCH_RADIUS_KM = 20;
@@ -379,8 +380,14 @@ const SingleProjectNew: FC<SingleProjectProps> = ({
     }
     return hour >= 20 || hour < 6;
   }, [paltoPickupTiming, paltoPickupDateTime]);
-  // Prod: aucun fallback local fictif, en attendant le branchement API réel.
-  const allNearbyDrivers = useMemo(() => [], []);
+  const allNearbyDrivers = useMemo(() => {
+    if (!pickupResolvedPoint) return [];
+    return getNearbyDrivers({
+      origin: pickupResolvedPoint,
+      radiusKm: effectiveDriverSearchRadiusKm,
+      limit: 9,
+    });
+  }, [pickupResolvedPoint, effectiveDriverSearchRadiusKm]);
 
   const pickupFilteredDrivers = useMemo(() => {
     if (!pickupResolvedPoint) return [];
@@ -949,9 +956,11 @@ const SingleProjectNew: FC<SingleProjectProps> = ({
   useEffect(() => {
     const refreshClientSession = () => setClientSessionTick((n) => n + 1);
     window.addEventListener(PALTO_CLIENT_SESSION_CHANGED_EVENT, refreshClientSession);
+    window.addEventListener('palto:client-profile-synced', refreshClientSession);
     window.addEventListener('storage', refreshClientSession);
     return () => {
       window.removeEventListener(PALTO_CLIENT_SESSION_CHANGED_EVENT, refreshClientSession);
+      window.removeEventListener('palto:client-profile-synced', refreshClientSession);
       window.removeEventListener('storage', refreshClientSession);
     };
   }, []);

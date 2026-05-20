@@ -38,6 +38,11 @@ type DriverTemplate = {
   speedKmh: number
 }
 
+/** Comptes chauffeur réels (UUID) → libellé affiché sur la page Go. */
+const ACCOUNT_DISPLAY_OVERRIDES: Record<string, Pick<DriverTemplate, 'name' | 'moto'>> = {
+  'e09f65c3-f47e-413c-ba41-2ea2749f86ec': { name: 'Océane P.', moto: 'Moto' },
+}
+
 const DRIVER_TEMPLATES: DriverTemplate[] = [
   { id: 'd1', name: 'Karim L.', moto: 'Maxi-scooter', basePriceEur: 8.5, speedKmh: 25 },
   { id: 'd2', name: 'Sophie R.', moto: 'Scooter', basePriceEur: 9, speedKmh: 22 },
@@ -85,10 +90,11 @@ export function getNearbyDriversMock({
     const pos = moveFrom(origin, distanceKm, bearingDeg)
     const minutes = Math.max(2, Math.round((distanceKm / tpl.speedKmh) * 60))
     const price = Math.max(6, tpl.basePriceEur + distanceKm * 1.15)
+    const display = ACCOUNT_DISPLAY_OVERRIDES[tpl.id]
     return {
       id: tpl.id,
-      name: tpl.name,
-      moto: tpl.moto,
+      name: display?.name ?? tpl.name,
+      moto: display?.moto ?? tpl.moto,
       distance: `${distanceKm.toFixed(1).replace('.', ',')} km · ~${minutes} min`,
       price: `${Math.round(price)} EUR`,
       longitude: pos.longitude,

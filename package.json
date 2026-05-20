@@ -6,6 +6,8 @@
   "scripts": {
     "build": "vite build",
     "dev": "vite",
+    "dev:api": "npx vercel dev",
+    "check:supabase": "node scripts/check-supabase-env.mjs",
     "calc-frais": "npx --yes tsx scripts/calc-frais-transport.ts",
     "lint": "eslint .",
     "typecheck": "tsc -p tsconfig.node.json --noEmit",
