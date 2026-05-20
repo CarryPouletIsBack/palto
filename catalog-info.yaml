@@ -1,0 +1,25 @@
+apiVersion: backstage.io/v1alpha1
+kind: Component
+metadata:
+  name: palto
+  title: Palto
+  description: Application web mobilité à La Réunion — carte OSM, parcours Go, compte passager et dashboard chauffeur.
+  tags:
+    - react
+    - vite
+    - typescript
+    - mobility
+  annotations:
+    github.com/project-slug: carrypouletisback/palto
+    backstage.io/source-location: url:https://github.com/carrypouletisback/palto
+    # Design system documenté dans la page projet Go (pas une route /design-system dédiée).
+    palto.backstage.io/design-system-path: /go#design-system
+  links:
+    - url: https://github.com/carrypouletisback/palto
+      title: Dépôt GitHub
+    - url: https://github.com/carrypouletisback/palto/blob/main/README.md
+      title: README
+spec:
+  type: website
+  lifecycle: production
+  owner: user:default/CarryPouletIsBack

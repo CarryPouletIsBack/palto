@@ -91,7 +91,7 @@ Puis redéployer. Si une variable est vide, les API renvoient `503 Service indis
 
 - Saisir **email + mot de passe** (pas l’UUID compte).
 - Depuis **n’importe quel** bouton « Se connecter » (accueil, Go, dashboard), Palto essaie le type de compte adapté à la page puis l’autre si besoin, et **redirige** vers `/compte` (passager) ou `/dashboard` (chauffeur).
-- Même email pour passager et chauffeur = souvent **deux mots de passe différents** (deux inscriptions).
+- Même email pour passager et chauffeur = souvent **deux mots de passe différents** (deux inscriptions). Le dashboard chauffeur n’accepte que le mot de passe **chauffeur** (reconnexion même email OK).
 
 Réinitialiser un mot de passe (local, avec `.env.local` + service role) :
 

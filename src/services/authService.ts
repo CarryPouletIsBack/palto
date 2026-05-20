@@ -152,11 +152,33 @@ export async function loginWithHint(
   return { success: false, error: lastError }
 }
 
-export const login = async (
+/**
+ * Connexion dashboard : uniquement le compte chauffeur (pas de bascule passager).
+ * Si le mot de passe correspond au compte passager, message explicite.
+ */
+export async function loginChauffeurOnly(
   credentials: LoginCredentials
-): Promise<{ success: boolean; user?: User; error?: string; role?: AccountRole }> => {
-  return loginWithHint(credentials, 'chauffeur')
+): Promise<{ success: boolean; user?: User; error?: string; role?: AccountRole }> {
+  const result = await postAuth('/auth/chauffeur/login', credentials)
+  if (result.success && result.token && result.user) {
+    persistUnifiedSession(result.token, result.user, 'chauffeur')
+    notifyClientSessionChanged()
+    return { success: true, user: result.user, role: 'chauffeur' }
+  }
+
+  const clientProbe = await postAuth('/auth/client/login', credentials)
+  if (clientProbe.success) {
+    return {
+      success: false,
+      error:
+        'Ce mot de passe correspond à votre compte passager. Sur le dashboard, utilisez le mot de passe du compte chauffeur (souvent différent).',
+    }
+  }
+
+  return { success: false, error: result.error ?? 'Email ou mot de passe chauffeur incorrect' }
 }
+
+export const login = loginChauffeurOnly
 
 export const logout = (): void => {
   clearInvalidSession()
