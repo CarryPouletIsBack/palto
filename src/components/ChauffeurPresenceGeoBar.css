@@ -49,6 +49,15 @@
   align-self: center;
 }
 
+.chauffeur-presence-geo--active .chauffeur-presence-geo__inner {
+  border-color: rgba(22, 101, 52, 0.35);
+  background: linear-gradient(135deg, rgba(163, 230, 53, 0.12), rgba(34, 197, 94, 0.06));
+}
+
+.chauffeur-presence-geo--active .chauffeur-presence-geo__icon {
+  color: #15803d;
+}
+
 @media (max-width: 768px) {
   .chauffeur-presence-geo__inner {
     flex-direction: column;

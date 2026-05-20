@@ -83,7 +83,10 @@ const TRANSLATIONS: Record<Language, Record<string, unknown>> = {
       body:
         'Sur iPhone, appuyez sur le bouton, autorisez la position, puis réappuyez si vous venez des Réglages Safari. Sans envoi GPS, les passagers ne vous voient pas.',
       activate: 'Activer ma position',
-      active: 'Position envoyée — vous êtes visible pour les courses à proximité.',
+      activeTitle: 'Position partagée',
+      activeBody:
+        'Votre dernière position reste visible environ 2 h sur la page Go, même si vous fermez le dashboard. Appuyez sur « Actualiser » pour la mettre à jour.',
+      refresh: 'Actualiser ma localisation',
     },
     clientMeetDriver: {
       back: 'Retour',
@@ -770,7 +773,10 @@ const TRANSLATIONS: Record<Language, Record<string, unknown>> = {
       body:
         'On iPhone, tap the button, allow location, then tap again if you just changed Safari settings. Without GPS, passengers will not see you nearby.',
       activate: 'Enable my location',
-      active: 'Location shared — you are visible for nearby ride requests.',
+      activeTitle: 'Location shared',
+      activeBody:
+        'Your last position stays visible on the Go page for about 2 hours, even if you close the dashboard. Tap « Update » to refresh it.',
+      refresh: 'Update my location',
     },
     clientMeetDriver: {
       back: 'Back',

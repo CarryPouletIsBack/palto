@@ -2960,8 +2960,8 @@ const SingleProjectNew: FC<SingleProjectProps> = ({
                 <p className="palto-ride-drivers-empty">Recherche de chauffeurs en ligne…</p>
               ) : pickupFilteredDrivers.length === 0 ? (
                 <p className="palto-ride-drivers-empty">
-                  Aucun chauffeur en ligne dans ce rayon. Le chauffeur doit être connecté au dashboard avec la
-                  localisation activée (position mise à jour toutes les ~20 s).
+                  Aucun chauffeur disponible dans ce rayon. La position d’un chauffeur reste visible environ 2 h
+                  après sa dernière mise à jour (dashboard ou bouton « Actualiser ma localisation »).
                 </p>
               ) : (
                 pickupFilteredDrivers.map((driver) => {

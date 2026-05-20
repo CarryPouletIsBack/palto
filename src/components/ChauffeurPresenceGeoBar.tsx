@@ -5,16 +5,44 @@ import './ChauffeurPresenceGeoBar.css'
 
 type Props = {
   onActivate: () => void
+  onRefresh: () => void
   error?: string | null
-  /** Masquer seulement quand une position a bien été envoyée au serveur. */
-  hide?: boolean
+  /** Position déjà enregistrée : afficher le bandeau « actif » + actualisation manuelle. */
+  tracking?: boolean
 }
 
-/** Bannière dashboard : activer le GPS chauffeur (requis sur mobile après un clic). */
-export function ChauffeurPresenceGeoBar({ onActivate, error, hide }: Props) {
+/** Bannière dashboard : activer ou actualiser le GPS chauffeur (page Go). */
+export function ChauffeurPresenceGeoBar({ onActivate, onRefresh, error, tracking }: Props) {
   const { t } = useLanguage()
 
-  if (hide) return null
+  if (tracking) {
+    return (
+      <div
+        className="chauffeur-presence-geo chauffeur-presence-geo--active"
+        role="region"
+        aria-labelledby="chauffeur-presence-geo-active-title"
+      >
+        <div className="chauffeur-presence-geo__inner">
+          <MapPin size={20} aria-hidden className="chauffeur-presence-geo__icon" />
+          <div className="chauffeur-presence-geo__text">
+            <p id="chauffeur-presence-geo-active-title" className="chauffeur-presence-geo__title">
+              {t('chauffeurGeo.activeTitle')}
+            </p>
+            <p className="chauffeur-presence-geo__body">{t('chauffeurGeo.activeBody')}</p>
+            {error ? <p className="chauffeur-presence-geo__error">{error}</p> : null}
+          </div>
+          <Button
+            type="button"
+            variant="secondary"
+            className="chauffeur-presence-geo__btn"
+            onClick={onRefresh}
+          >
+            {t('chauffeurGeo.refresh')}
+          </Button>
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div className="chauffeur-presence-geo" role="region" aria-labelledby="chauffeur-presence-geo-title">

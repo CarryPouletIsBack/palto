@@ -1,4 +1,5 @@
 import type { SupabaseClient } from '@supabase/supabase-js'
+import { CHAUFFEUR_PRESENCE_VISIBILITY_MS } from './chauffeurPresence.js'
 import { haversineKm, type GeoPoint } from './haversineKm.js'
 
 export type NearbyDriverApiItem = {
@@ -12,7 +13,7 @@ export type NearbyDriverApiItem = {
   distanceKm: number
 }
 
-const PRESENCE_MAX_AGE_MS = 3 * 60 * 1000
+const PRESENCE_MAX_AGE_MS = CHAUFFEUR_PRESENCE_VISIBILITY_MS
 
 function displayName(fullName: string | null | undefined, email: string | null | undefined): string {
   const n = (fullName ?? '').trim()

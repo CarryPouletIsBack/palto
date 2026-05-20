@@ -16,6 +16,8 @@ export type ChauffeurPresenceHeartbeat = {
   /** Au moins une position a été lue et envoyée au serveur. */
   tracking: boolean
   startTracking: () => void
+  /** Repousse la position enregistrée (geste explicite, sans réactiver le suivi continu). */
+  refreshLocation: () => void
   geoError: string | null
   needsActivationPrompt: boolean
 }
@@ -55,6 +57,38 @@ export function useChauffeurPresenceHeartbeat(enabled = true): ChauffeurPresence
     },
     []
   )
+
+  const refreshLocation = useCallback(() => {
+    if (!canRun || !navigator.geolocation) {
+      setGeoError(
+        language === 'en' ? 'Geolocation is not available on this device.' : 'Géolocalisation non disponible sur cet appareil.'
+      )
+      return
+    }
+    setGeoError(null)
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        void push(pos.coords.longitude, pos.coords.latitude, true).then((ok) => {
+          if (ok) {
+            setPositionOk(true)
+            setWatching(true)
+            setGeoError(null)
+          } else {
+            setGeoError(
+              language === 'en'
+                ? 'Could not save position on server.'
+                : 'Impossible d’enregistrer la position sur le serveur.'
+            )
+          }
+        })
+      },
+      (err) => {
+        console.warn('[presence] refresh', err.code, err.message)
+        setGeoError(geolocationErrorMessage(err.code, language))
+      },
+      { ...GEO_RELAXED, maximumAge: 0 }
+    )
+  }, [canRun, push, language])
 
   const startTracking = useCallback(() => {
     if (!canRun || !navigator.geolocation) {
@@ -182,8 +216,6 @@ export function useChauffeurPresenceHeartbeat(enabled = true): ChauffeurPresence
       watchIdRef.current = null
       if (intervalIdRef.current != null) window.clearInterval(intervalIdRef.current)
       intervalIdRef.current = null
-      const last = lastPosRef.current
-      if (last) void pushChauffeurPresence({ ...last, isAvailable: false })
     }
   }, [watching, canRun, push, language])
 
@@ -192,6 +224,7 @@ export function useChauffeurPresenceHeartbeat(enabled = true): ChauffeurPresence
   return {
     tracking: positionOk,
     startTracking,
+    refreshLocation,
     geoError,
     needsActivationPrompt,
   }
