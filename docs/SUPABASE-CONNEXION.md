@@ -86,10 +86,26 @@ Puis redéployer. Si une variable est vide, les API renvoient `503 Service indis
 
 ---
 
+## Connexion (email / mot de passe)
+
+- Saisir **email + mot de passe** (pas l’UUID compte).
+- Depuis **n’importe quel** bouton « Se connecter » (accueil, Go, dashboard), Palto essaie le type de compte adapté à la page puis l’autre si besoin, et **redirige** vers `/compte` (passager) ou `/dashboard` (chauffeur).
+- Même email pour passager et chauffeur = souvent **deux mots de passe différents** (deux inscriptions).
+
+Réinitialiser un mot de passe (local, avec `.env.local` + service role) :
+
+```bash
+npm run reset-password -- chauffeur pauzatoceane@gmail.com NouveauMotDePasse
+npm run reset-password -- client pauzatnathan980@gmail.com NouveauMotDePasse
+```
+
 ## Dépannage rapide
 
 | Symptôme | Cause probable |
 |----------|----------------|
+| « Service indisponible » / impossible de joindre l’API | Local : `npm run dev` seul (pas d’API). Lancer `npm run dev:api` ; si timeout Vercel, fermer les autres Vite et réessayer |
+| « Mot de passe incorrect » en prod | Bon email mais mauvais mot de passe, ou écran client vs chauffeur inversé |
+| « Email incorrect » | Email inconnu pour ce **rôle** (ex. Nathan sur écran chauffeur) |
 | Profil / lieux OK en prod, vides en local | `.env.local` sans Supabase ou seulement `npm run dev` |
 | `503` sur `/api/client/profile` | `SUPABASE_*` manquant sur Vercel ou en local |
 | Realtime courses ne bouge pas | `VITE_SUPABASE_URL` + `VITE_SUPABASE_ANON_KEY` + `SUPABASE_JWT_SECRET` |

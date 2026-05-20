@@ -1,10 +1,10 @@
 import { useMemo, useState } from 'react'
 import { Eye, EyeOff, X } from 'lucide-react'
-import { loginClient, registerClient } from '../services/authService'
+import { loginWithHint, registerClient, type AccountRole } from '../services/authService'
 import './AuthPage.css'
 
 type Props = {
-  onAuthSuccess: () => void
+  onAuthSuccess: (role: AccountRole) => void
   onClose?: () => void
 }
 
@@ -22,13 +22,23 @@ export default function ClientAuthPage({ onAuthSuccess, onClose }: Props) {
     setLoading(true)
     setError(null)
     setHelpMessage(null)
-    const result = mode === 'signup' ? await registerClient({ email, password }) : await loginClient({ email, password })
+    if (mode === 'signup') {
+      const reg = await registerClient({ email, password })
+      setLoading(false)
+      if (!reg.success) {
+        setError(reg.error ?? 'Erreur de connexion')
+        return
+      }
+      onAuthSuccess('client')
+      return
+    }
+    const result = await loginWithHint({ email, password }, 'client')
     setLoading(false)
-    if (!result.success) {
+    if (!result.success || !result.role) {
       setError(result.error ?? 'Erreur de connexion')
       return
     }
-    onAuthSuccess()
+    onAuthSuccess(result.role)
   }
 
   return (
@@ -40,7 +50,10 @@ export default function ClientAuthPage({ onAuthSuccess, onClose }: Props) {
           </button>
         ) : null}
         <h1 className="auth-page-title">{mode === 'signup' ? 'Creer un compte client' : 'Connexion client'}</h1>
-        <p className="auth-page-subtitle">Compte client connecte a la base de donnees.</p>
+        <p className="auth-page-subtitle">
+          Email et mot de passe Palto. Si tu as un compte passager et un compte chauffeur, entre ceux que tu as choisis
+          à l’inscription — Palto ouvre la bonne vue automatiquement.
+        </p>
         <div className="auth-page-grid">
           <input
             className="auth-page-input"

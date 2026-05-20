@@ -1,10 +1,10 @@
 import { useMemo, useState, type FormEvent } from 'react'
 import { Eye, EyeOff, X } from 'lucide-react'
-import { login, registerChauffeur } from '../services/authService'
+import { loginWithHint, registerChauffeur, type AccountRole } from '../services/authService'
 import './AuthPage.css'
 
 type Props = {
-  onAuthSuccess: () => void
+  onAuthSuccess: (role: AccountRole) => void
   onClose?: () => void
 }
 
@@ -28,22 +28,29 @@ export default function ChauffeurAuthPage({ onAuthSuccess, onClose }: Props) {
     setLoading(true)
     setError(null)
     setHelpMessage(null)
-    const result =
-      mode === 'signup'
-        ? await registerChauffeur({
-            email,
-            password,
-            phoneInternational: phone,
-            vehicleType,
-            deliveryEquipped,
-          })
-        : await login({ email, password })
+    if (mode === 'signup') {
+      const reg = await registerChauffeur({
+        email,
+        password,
+        phoneInternational: phone,
+        vehicleType,
+        deliveryEquipped,
+      })
+      setLoading(false)
+      if (!reg.success) {
+        setError(reg.error ?? 'Erreur de connexion')
+        return
+      }
+      onAuthSuccess('chauffeur')
+      return
+    }
+    const result = await loginWithHint({ email, password }, 'chauffeur')
     setLoading(false)
-    if (!result.success) {
+    if (!result.success || !result.role) {
       setError(result.error ?? 'Erreur de connexion')
       return
     }
-    onAuthSuccess()
+    onAuthSuccess(result.role)
   }
 
   const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
@@ -60,7 +67,10 @@ export default function ChauffeurAuthPage({ onAuthSuccess, onClose }: Props) {
           </button>
         ) : null}
         <h1 className="auth-page-title">{mode === 'signup' ? 'Creer un compte chauffeur' : 'Connexion chauffeur'}</h1>
-        <p className="auth-page-subtitle">Compte chauffeur connecte a la base de donnees.</p>
+        <p className="auth-page-subtitle">
+          Email et mot de passe Palto. Même adresse possible pour passager et chauffeur : utilise le mot de passe de
+          l’espace que tu veux ouvrir (ou laisse Palto détecter le bon compte).
+        </p>
         <form className="auth-page-grid" onSubmit={handleSubmit}>
           <input
             className="auth-page-input"

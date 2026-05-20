@@ -4,6 +4,10 @@ import type { RegisterChauffeurPayload } from '../constants/chauffeurRegistratio
 
 const AUTH_STORAGE_KEY = 'dashboard_auth'
 export const DASHBOARD_AUTH_TOKEN_KEY = 'dashboard_token'
+/** Rôle du compte connecté (`client` passager ou `chauffeur`). */
+export const SESSION_ROLE_KEY = 'palto:account_role'
+
+export type AccountRole = 'client' | 'chauffeur'
 
 const API_BASE_URL = apiBaseUrl()
 
@@ -43,7 +47,15 @@ async function postAuth<TPayload extends Record<string, unknown>>(
       | { success?: boolean; token?: string; user?: User; error?: string }
       | null
     if (!response.ok) {
-      return { success: false, error: data?.error || 'Erreur serveur' }
+      if (response.status === 503) {
+        return {
+          success: false,
+          error:
+            data?.error ||
+            'Service indisponible (Supabase). En local : lance npm run dev:api, pas seulement npm run dev.',
+        }
+      }
+      return { success: false, error: data?.error || `Erreur serveur (${response.status})` }
     }
     if (!data?.success || !data.token || !data.user) {
       return { success: false, error: data?.error || 'Reponse serveur invalide' }
@@ -51,7 +63,11 @@ async function postAuth<TPayload extends Record<string, unknown>>(
     return { success: true, token: data.token, user: data.user }
   } catch (error) {
     console.error('[authService] requete auth echouee', error)
-    return { success: false, error: 'Service indisponible' }
+    return {
+      success: false,
+      error:
+        'Impossible de joindre l’API (/api). En local : terminal avec npm run dev:api (Vercel sur :3000), puis http://localhost:5173.',
+    }
   }
 }
 
@@ -61,51 +77,85 @@ export function isChauffeurPrimaryAccountEmail(email: string | null | undefined)
   return normalizeEmail(user?.email ?? '') === normalizeEmail(email)
 }
 
+export function getSessionRole(): AccountRole | null {
+  if (typeof window === 'undefined') return null
+  const raw = localStorage.getItem(SESSION_ROLE_KEY)
+  return raw === 'client' || raw === 'chauffeur' ? raw : null
+}
+
+function hasValidSessionToken(): boolean {
+  const token = localStorage.getItem(DASHBOARD_AUTH_TOKEN_KEY)
+  const authData = localStorage.getItem(AUTH_STORAGE_KEY)
+  if (!isDbSessionToken(token) || !authData) return false
+  try {
+    const user = JSON.parse(authData)
+    return !!(user && user.email)
+  } catch {
+    return false
+  }
+}
+
+function clearInvalidSession(): void {
+  localStorage.removeItem(DASHBOARD_AUTH_TOKEN_KEY)
+  localStorage.removeItem(AUTH_STORAGE_KEY)
+  localStorage.removeItem(CLIENT_AUTH_TOKEN_KEY)
+  localStorage.removeItem(CLIENT_AUTH_STORAGE_KEY)
+  localStorage.removeItem(SESSION_ROLE_KEY)
+}
+
 export async function registerChauffeur(payload: RegisterChauffeurPayload): Promise<{ success: boolean; error?: string }> {
   const result = await postAuth('/auth/chauffeur/register', payload as unknown as Record<string, unknown>)
   if (!result.success || !result.token || !result.user) return { success: false, error: result.error }
-  persistUnifiedSession(result.token, result.user)
+  persistUnifiedSession(result.token, result.user, 'chauffeur')
   notifyClientSessionChanged()
   return { success: true }
 }
 
 export const isAuthenticated = (): boolean => {
   if (typeof window === 'undefined') return false
-
-  try {
-    const token = localStorage.getItem(DASHBOARD_AUTH_TOKEN_KEY)
-    const authData = localStorage.getItem(AUTH_STORAGE_KEY)
-
-    if (!isDbSessionToken(token) || !authData) {
-      localStorage.removeItem(DASHBOARD_AUTH_TOKEN_KEY)
-      localStorage.removeItem(AUTH_STORAGE_KEY)
-      return false
-    }
-
-    const user = JSON.parse(authData)
-    return !!(user && user.email)
-  } catch {
-    localStorage.removeItem(DASHBOARD_AUTH_TOKEN_KEY)
-    localStorage.removeItem(AUTH_STORAGE_KEY)
+  if (!hasValidSessionToken()) {
+    clearInvalidSession()
     return false
   }
+  const role = getSessionRole()
+  if (!role) return true
+  return role === 'chauffeur'
+}
+
+/**
+ * Connexion depuis n’importe quel écran : essaie d’abord le rôle attendu (page passager ou chauffeur),
+ * puis l’autre rôle si besoin (même email, mots de passe différents possibles).
+ */
+export async function loginWithHint(
+  credentials: LoginCredentials,
+  hint: AccountRole
+): Promise<{ success: boolean; user?: User; error?: string; role?: AccountRole }> {
+  const order: AccountRole[] = hint === 'client' ? ['client', 'chauffeur'] : ['chauffeur', 'client']
+  let lastError = 'Erreur de connexion'
+
+  for (const role of order) {
+    const endpoint = role === 'client' ? '/auth/client/login' : '/auth/chauffeur/login'
+    const result = await postAuth(endpoint, credentials)
+    if (result.success && result.token && result.user) {
+      persistUnifiedSession(result.token, result.user, role)
+      notifyClientSessionChanged()
+      if (role === 'client') void syncClientProfileWithServer(result.user.email)
+      return { success: true, user: result.user, role }
+    }
+    lastError = result.error ?? lastError
+  }
+
+  return { success: false, error: lastError }
 }
 
 export const login = async (
   credentials: LoginCredentials
-): Promise<{ success: boolean; user?: User; error?: string }> => {
-  const result = await postAuth('/auth/chauffeur/login', credentials)
-  if (!result.success || !result.token || !result.user) return { success: false, error: result.error }
-  persistUnifiedSession(result.token, result.user)
-  notifyClientSessionChanged()
-  return { success: true, user: result.user }
+): Promise<{ success: boolean; user?: User; error?: string; role?: AccountRole }> => {
+  return loginWithHint(credentials, 'chauffeur')
 }
 
 export const logout = (): void => {
-  localStorage.removeItem(DASHBOARD_AUTH_TOKEN_KEY)
-  localStorage.removeItem(AUTH_STORAGE_KEY)
-  localStorage.removeItem(CLIENT_AUTH_TOKEN_KEY)
-  localStorage.removeItem(CLIENT_AUTH_STORAGE_KEY)
+  clearInvalidSession()
   notifyClientSessionChanged()
 }
 
@@ -143,17 +193,18 @@ function notifyClientSessionChanged(): void {
   window.dispatchEvent(new CustomEvent(PALTO_CLIENT_SESSION_CHANGED_EVENT))
 }
 
-function persistUnifiedSession(token: string, user: User): void {
+function persistUnifiedSession(token: string, user: User, role: AccountRole): void {
   localStorage.setItem(DASHBOARD_AUTH_TOKEN_KEY, token)
   localStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(user))
   localStorage.setItem(CLIENT_AUTH_TOKEN_KEY, token)
   localStorage.setItem(CLIENT_AUTH_STORAGE_KEY, JSON.stringify(user))
+  localStorage.setItem(SESSION_ROLE_KEY, role)
 }
 
 export async function registerClient(credentials: LoginCredentials): Promise<{ success: boolean; error?: string }> {
   const result = await postAuth('/auth/client/register', credentials)
   if (!result.success || !result.token || !result.user) return { success: false, error: result.error }
-  persistUnifiedSession(result.token, result.user)
+  persistUnifiedSession(result.token, result.user, 'client')
   notifyClientSessionChanged()
   void syncClientProfileWithServer(result.user.email)
   return { success: true }
@@ -161,40 +212,23 @@ export async function registerClient(credentials: LoginCredentials): Promise<{ s
 
 export async function loginClient(
   credentials: LoginCredentials
-): Promise<{ success: boolean; user?: User; error?: string }> {
-  const result = await postAuth('/auth/client/login', credentials)
-  if (!result.success || !result.token || !result.user) return { success: false, error: result.error }
-  persistUnifiedSession(result.token, result.user)
-  notifyClientSessionChanged()
-  void syncClientProfileWithServer(result.user.email)
-  return { success: true, user: result.user }
+): Promise<{ success: boolean; user?: User; error?: string; role?: AccountRole }> {
+  return loginWithHint(credentials, 'client')
 }
 
 export const isClientAuthenticated = (): boolean => {
   if (typeof window === 'undefined') return false
-  try {
-    const token = localStorage.getItem(CLIENT_AUTH_TOKEN_KEY)
-    const authData = localStorage.getItem(CLIENT_AUTH_STORAGE_KEY)
-    if (!isDbSessionToken(token) || !authData) {
-      localStorage.removeItem(CLIENT_AUTH_TOKEN_KEY)
-      localStorage.removeItem(CLIENT_AUTH_STORAGE_KEY)
-      return false
-    }
-    const user = JSON.parse(authData)
-    return !!(user && user.email)
-  } catch {
-    localStorage.removeItem(CLIENT_AUTH_TOKEN_KEY)
-    localStorage.removeItem(CLIENT_AUTH_STORAGE_KEY)
+  if (!hasValidSessionToken()) {
+    clearInvalidSession()
     return false
   }
+  const role = getSessionRole()
+  if (!role) return true
+  return role === 'client'
 }
 
 export const logoutClient = (): void => {
-  localStorage.removeItem(DASHBOARD_AUTH_TOKEN_KEY)
-  localStorage.removeItem(AUTH_STORAGE_KEY)
-  localStorage.removeItem(CLIENT_AUTH_TOKEN_KEY)
-  localStorage.removeItem(CLIENT_AUTH_STORAGE_KEY)
-  notifyClientSessionChanged()
+  logout()
 }
 
 export const getCurrentClientUser = (): User | null => {

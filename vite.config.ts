@@ -4,6 +4,9 @@ import tailwindcss from '@tailwindcss/vite'
 import react from '@vitejs/plugin-react'
 import { VitePWA } from 'vite-plugin-pwa'
 
+/** `vercel dev` doit détecter un port fixe (évite le timeout « Detecting port … »). */
+const vercelDev = process.env.VERCEL === '1'
+
 export default defineConfig({
   plugins: [
     // The React and Tailwind plugins are both required for Make, even if
@@ -49,9 +52,10 @@ export default defineConfig({
   },
   server: {
     port: 5173,
+    strictPort: vercelDev,
     /** Ouvre le navigateur sur l’URL réelle (important si 5173 est déjà pris : Vite passe à 5174, 5175…). */
-    open: true,
-    host: true, // Permet l'accès depuis le réseau local (téléphone, etc.)
+    open: !vercelDev,
+    host: vercelDev ? false : true, // réseau local hors vercel dev (détection de port Vercel)
     watch: {
       usePolling: true, // Nécessaire sur Windows pour que les modifs soient détectées sans redémarrer
     },

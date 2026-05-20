@@ -19,7 +19,7 @@ import { DestinationSpotlight } from './components/DestinationSpotlight'
 import { GeolocationPromptBanner } from './components/GeolocationPromptBanner'
 import { getDestinationById, type PopularDestination } from './data/popularDestinations'
 import { Toaster } from 'sonner'
-import { isAuthenticated, isClientAuthenticated } from './services/authService'
+import { isAuthenticated, isClientAuthenticated, type AccountRole } from './services/authService'
 import {
   FONT_SCALE_CHANGED_EVENT,
   clampFontScalePercent,
@@ -362,6 +362,22 @@ function App() {
           : `${prefix}/dashboard?dashboardView=user`
       window.history.pushState({}, '', url)
       setCurrentPage('dashboard')
+    },
+    [language]
+  )
+
+  /** Après connexion : ouvrir le dashboard chauffeur ou le compte passager selon le rôle détecté. */
+  const redirectAfterAuth = useCallback(
+    (role: AccountRole) => {
+      const prefix = language === 'en' ? '/en' : '/fr'
+      setAuthUiTick((n) => n + 1)
+      if (role === 'chauffeur') {
+        window.history.pushState({}, '', `${prefix}/dashboard?dashboardView=user`)
+        setCurrentPage('dashboard')
+      } else {
+        window.history.pushState({}, '', `${prefix}/compte`)
+        setCurrentPage('client-compte')
+      }
     },
     [language]
   )
@@ -809,12 +825,7 @@ function App() {
                     setCurrentPage('accueil')
                     window.history.pushState({}, '', getPathFromPage('accueil'))
                   }}
-                  onAuthSuccess={() => {
-                    const prefix = language === 'en' ? '/en' : '/fr'
-                    window.history.pushState({}, '', `${prefix}/compte`)
-                    setCurrentPage('client-compte')
-                    setAuthUiTick((n) => n + 1)
-                  }}
+                  onAuthSuccess={redirectAfterAuth}
                 />
               )
             )}
@@ -841,12 +852,7 @@ function App() {
                     setCurrentPage('accueil-chauffeur')
                     window.history.pushState({}, '', getPathFromPage('accueil-chauffeur'))
                   }}
-                  onAuthSuccess={() => {
-                    const prefix = language === 'en' ? '/en' : '/fr'
-                    window.history.pushState({}, '', `${prefix}/dashboard?dashboardView=user`)
-                    setCurrentPage('dashboard')
-                    setAuthUiTick((n) => n + 1)
-                  }}
+                  onAuthSuccess={redirectAfterAuth}
                 />
               )
             )}
@@ -854,7 +860,7 @@ function App() {
               isAuthenticated() ? (
                 <DriverNavigationView courseId={navigationCourseId} onClose={closeDriverNavigation} />
               ) : (
-                <ChauffeurAuthPage onAuthSuccess={() => setCurrentPage('dashboard')} />
+                <ChauffeurAuthPage onAuthSuccess={redirectAfterAuth} />
               )
             )}
           </>
