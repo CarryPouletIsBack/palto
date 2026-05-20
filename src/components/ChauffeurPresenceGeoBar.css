@@ -1,0 +1,61 @@
+.chauffeur-presence-geo {
+  margin: 0 0 1rem;
+  padding: 0 0.5rem;
+}
+
+.chauffeur-presence-geo__inner {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: 0.75rem 1rem;
+  padding: 0.85rem 1rem;
+  border-radius: 12px;
+  border: 1px solid rgba(99, 102, 241, 0.35);
+  background: linear-gradient(135deg, rgba(99, 102, 241, 0.08), rgba(168, 85, 247, 0.06));
+}
+
+.chauffeur-presence-geo__icon {
+  flex-shrink: 0;
+  color: #6366f1;
+  margin-top: 0.15rem;
+}
+
+.chauffeur-presence-geo__text {
+  flex: 1 1 12rem;
+  min-width: 0;
+}
+
+.chauffeur-presence-geo__title {
+  margin: 0 0 0.25rem;
+  font-weight: 600;
+  font-size: 0.95rem;
+}
+
+.chauffeur-presence-geo__body {
+  margin: 0;
+  font-size: 0.85rem;
+  line-height: 1.4;
+  opacity: 0.88;
+}
+
+.chauffeur-presence-geo__error {
+  margin: 0.5rem 0 0;
+  font-size: 0.82rem;
+  color: #b91c1c;
+}
+
+.chauffeur-presence-geo__btn {
+  flex-shrink: 0;
+  align-self: center;
+}
+
+@media (max-width: 768px) {
+  .chauffeur-presence-geo__inner {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .chauffeur-presence-geo__btn {
+    width: 100%;
+  }
+}
