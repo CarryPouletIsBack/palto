@@ -1,5 +1,6 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node'
 import { z } from 'zod'
+import { expireStaleInstantPendingCourses } from '../../server/lib/expireStaleInstantPendingCourses.js'
 import { getSupabaseAdmin } from '../../server/lib/supabaseAdmin.js'
 import { getVerifiedChauffeurSession } from '../../server/lib/chauffeurAuth.js'
 import { sameDriverExternalKey } from '../../server/lib/driverIdentity.js'
@@ -133,6 +134,11 @@ function toIsoDate(d: Date): string {
 
 async function handleRidesGet(res: VercelResponse, driverKey: string) {
   const supabase = getSupabaseAdmin()
+  try {
+    await expireStaleInstantPendingCourses(supabase)
+  } catch (e) {
+    console.error('[chauffeur/rides GET] expire stale instant', e)
+  }
   const { data, error } = await supabase
     .from('courses')
     .select(
@@ -248,6 +254,11 @@ async function handleRidesActionPost(
 
 async function handleStatsGet(res: VercelResponse, driverKey: string) {
   const supabase = getSupabaseAdmin()
+  try {
+    await expireStaleInstantPendingCourses(supabase)
+  } catch (e) {
+    console.error('[chauffeur/stats GET] expire stale instant', e)
+  }
   const { data, error } = await supabase
     .from('courses')
     .select('status,amount_eur,booking_kind,scheduled_date,requested_driver_external_key,assigned_driver_external_key')
@@ -356,17 +367,29 @@ async function handleCompliancePost(req: VercelRequest, res: VercelResponse, das
   return res.status(200).json({ snapshot: current })
 }
 
+const ChauffeurVehicleTypeSchema = z.enum(['berline', 'utilitaire', 'moto', 'scooter'])
+
 const RideProfileBodySchema = z.object({
   petFriendly: z.boolean(),
   luggageAssistance: z.boolean(),
   insulatedBag: z.boolean(),
+  vehicleType: z.union([ChauffeurVehicleTypeSchema, z.literal(''), z.null()]).optional(),
 })
+
+function normalizeVehicleTypeForDb(
+  vehicleType: z.infer<typeof RideProfileBodySchema>['vehicleType']
+): string | null | undefined {
+  if (vehicleType === undefined) return undefined
+  const trimmed = typeof vehicleType === 'string' ? vehicleType.trim() : vehicleType
+  if (!trimmed) return null
+  return trimmed
+}
 
 async function handleRideProfileGet(res: VercelResponse, accountId: string) {
   const supabase = getSupabaseAdmin()
   const { data, error } = await supabase
     .from('app_accounts')
-    .select('pet_friendly, luggage_assistance, insulated_bag')
+    .select('pet_friendly, luggage_assistance, insulated_bag, vehicle_type')
     .eq('id', accountId)
     .eq('role', 'chauffeur')
     .maybeSingle()
@@ -377,10 +400,15 @@ async function handleRideProfileGet(res: VercelResponse, accountId: string) {
   }
   if (!data) return res.status(404).json({ error: 'Compte chauffeur introuvable' })
 
+  const vehicleSlug = (data.vehicle_type ?? '').trim().toLowerCase()
+  const vehicleType =
+    vehicleSlug && ChauffeurVehicleTypeSchema.safeParse(vehicleSlug).success ? vehicleSlug : null
+
   return res.status(200).json({
     petFriendly: data.pet_friendly === true,
     luggageAssistance: data.luggage_assistance === true,
     insulatedBag: data.insulated_bag === true,
+    vehicleType,
   })
 }
 
@@ -397,14 +425,18 @@ async function handleRideProfilePut(req: VercelRequest, res: VercelResponse, acc
   if (!parsed.success) return res.status(400).json({ error: 'Payload invalide', details: parsed.error.flatten() })
 
   const supabase = getSupabaseAdmin()
+  const vehicleTypeDb = normalizeVehicleTypeForDb(parsed.data.vehicleType)
+  const update: Record<string, unknown> = {
+    pet_friendly: parsed.data.petFriendly,
+    luggage_assistance: parsed.data.luggageAssistance,
+    insulated_bag: parsed.data.insulatedBag,
+    updated_at: new Date().toISOString(),
+  }
+  if (vehicleTypeDb !== undefined) update.vehicle_type = vehicleTypeDb
+
   const { error } = await supabase
     .from('app_accounts')
-    .update({
-      pet_friendly: parsed.data.petFriendly,
-      luggage_assistance: parsed.data.luggageAssistance,
-      insulated_bag: parsed.data.insulatedBag,
-      updated_at: new Date().toISOString(),
-    })
+    .update(update)
     .eq('id', accountId)
     .eq('role', 'chauffeur')
 

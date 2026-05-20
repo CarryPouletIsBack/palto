@@ -9,7 +9,7 @@ import {
   saveClientSavedPlaces,
   type ClientSavedPlacesSnapshot,
 } from '../constants/clientSavedPlacesStorage'
-import { isClientAuthenticated } from './authService'
+import { getClientAuthorizationHeader, isClientAuthenticated } from './authService'
 import { mergeClientAccountSnapshots, mergeClientSavedPlacesSnapshots } from './clientProfileMerge'
 
 const API_BASE_URL = apiBaseUrl()
@@ -20,13 +20,8 @@ export function clientProfileSyncEnabled(): boolean {
   return useClientRidesApi()
 }
 
-function getBearerToken(): string {
-  if (typeof window === 'undefined') return ''
-  return (
-    localStorage.getItem('palto:client_token')?.trim() ||
-    localStorage.getItem('dashboard_token')?.trim() ||
-    ''
-  )
+function getBearerToken(): string | null {
+  return getClientAuthorizationHeader()
 }
 
 function accountHasContent(s: ClientAccountSnapshot): boolean {
@@ -52,11 +47,11 @@ type RemoteProfilePayload = {
 }
 
 async function fetchRemoteProfile(): Promise<RemoteProfilePayload | null> {
-  const token = getBearerToken()
-  if (!token) return null
+  const auth = getBearerToken()
+  if (!auth) return null
   try {
     const res = await fetch(`${API_BASE_URL}/client/profile`, {
-      headers: { Authorization: `Bearer ${token}` },
+      headers: { Authorization: auth },
     })
     if (res.status === 404) return { account: {}, savedPlaces: {}, updatedAt: null }
     if (!res.ok) {
@@ -75,14 +70,14 @@ async function pushRemoteProfile(
   account: ClientAccountSnapshot,
   savedPlaces: ClientSavedPlacesSnapshot
 ): Promise<boolean> {
-  const token = getBearerToken()
-  if (!token) return false
+  const auth = getBearerToken()
+  if (!auth) return false
   if (!accountHasContent(account) && !placesHasContent(savedPlaces)) return false
   try {
     const res = await fetch(`${API_BASE_URL}/client/profile`, {
       method: 'PUT',
       headers: {
-        Authorization: `Bearer ${token}`,
+        Authorization: auth,
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({ account, savedPlaces }),

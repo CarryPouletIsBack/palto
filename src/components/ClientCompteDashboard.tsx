@@ -30,7 +30,6 @@ import { toast } from 'sonner';
 import { useLanguage } from '../contexts/LanguageContext';
 import LanguageSwitcher from './LanguageSwitcher';
 import { trackEvent } from '../services/googleAnalyticsTracking';
-import { openNativeSelectPicker } from '../dom/openNativeSelectPicker';
 import { fileToCompressedProfilePhotoDataUrl } from '../utils/clientProfilePhotoDataUrl';
 import { useClientHomeTopbarRides } from '../hooks/useClientHomeTopbarRides';
 import './Dashboard.css';
@@ -90,11 +89,9 @@ import {
   CHAUFFEUR_ORG_STORAGE_KEY,
   loadChauffeurOrg,
 } from '../constants/chauffeurOrganizationStorage';
-import { loadChauffeurRegistry, normalizeChauffeurEmail } from '../constants/chauffeurRegistrationStorage';
 import { simplifyAddressDisplay } from '../services/addressDisplay';
 import {
   getCurrentClientUser,
-  isChauffeurPrimaryAccountEmail,
   isClientAuthenticated,
   logoutClient,
   PALTO_CLIENT_SESSION_CHANGED_EVENT,
@@ -404,26 +401,6 @@ export default function ClientCompteDashboard({ onBack, onOpenClientLiveMeet }: 
     if (fromSession) return fromSession;
     return profile.email.trim().toLowerCase();
   }, [profile.email, ridesSyncTick, authSessionTick]);
-  const chauffeurLinkContext = useMemo(() => {
-    void orgSyncTick;
-    const emailNorm = normalizeChauffeurEmail(profile.email || '');
-    const registry = loadChauffeurRegistry();
-    const inRegistry = Boolean(registry[emailNorm]);
-    const org = loadChauffeurOrg();
-    const orgMember = org?.members.find((m) => normalizeChauffeurEmail(m.email) === emailNorm) ?? null;
-    const isOrgAdmin = org != null && normalizeChauffeurEmail(org.adminEmail) === emailNorm;
-    const isPrimaryAdmin = isChauffeurPrimaryAccountEmail(profile.email);
-    const hasLinkedChauffeurAccount = Boolean(isPrimaryAdmin || inRegistry || orgMember);
-    const scopeLabel = isPrimaryAdmin || isOrgAdmin
-      ? (isEn ? 'Admin' : 'Admin')
-      : orgMember
-        ? (isEn ? 'Organization driver' : "Chauffeur d'organisation")
-        : (isEn ? 'Independent driver' : 'Chauffeur independant');
-    return {
-      hasLinkedChauffeurAccount,
-      scopeLabel,
-    };
-  }, [profile.email, isEn, orgSyncTick]);
   const [isEditing, setIsEditing] = useState(false);
   const [draft, setDraft] = useState<ClientAccountSnapshot>(profile);
   const [phoneCountryDraft, setPhoneCountryDraft] = useState<SupportedPhoneCountry>('RE');
@@ -435,8 +412,6 @@ export default function ClientCompteDashboard({ onBack, onOpenClientLiveMeet }: 
   const [createRideMenuOpen, setCreateRideMenuOpen] = useState(false);
   const accountMenuRef = useRef<HTMLDivElement | null>(null);
   const topbarPhotoInputRef = useRef<HTMLInputElement | null>(null);
-  const accountRoleSelectRef = useRef<HTMLSelectElement | null>(null);
-
   useEffect(() => {
     const onResize = () => {
       const mobile = window.innerWidth <= 768;
@@ -1129,23 +1104,6 @@ export default function ClientCompteDashboard({ onBack, onOpenClientLiveMeet }: 
     trackEvent('click', 'client_account', 'overview_driver_dashboard');
   }, [language]);
 
-  const handleAccountRoleSelect = useCallback(
-    (nextRole: 'client' | 'chauffeur') => {
-      if (nextRole === 'chauffeur') {
-        setAccountModalOpen(false);
-        handleDriverDashboard();
-      }
-    },
-    [handleDriverDashboard]
-  );
-
-  const handleBecomeDriver = useCallback(() => {
-    const prefix = language === 'en' ? '/en' : '/fr';
-    window.history.pushState({}, '', `${prefix}/dashboard?chauffeurSignup=1`);
-    window.dispatchEvent(new PopStateEvent('popstate'));
-    trackEvent('click', 'client_account', 'overview_become_driver');
-  }, [language]);
-
   const overviewPlacesPreview = useMemo(() => {
     const out: Array<{ key: string; label: string; address: string; kind: 'home' | 'work' | 'airport' | 'other' }> = [];
     if (placesDraft.domicile.trim()) {
@@ -1488,40 +1446,10 @@ export default function ClientCompteDashboard({ onBack, onOpenClientLiveMeet }: 
                       {accountModalOpen ? (
                         <div className="client-compte-account-menu" role="menu" aria-label="Menu compte">
                           <div className="client-compte-account-menu__head">
-                            {chauffeurLinkContext.hasLinkedChauffeurAccount ? (
-                              <button
-                                type="button"
-                                className="client-compte-account-menu__head-identity"
-                                onClick={() => openNativeSelectPicker(accountRoleSelectRef.current)}
-                                aria-label={isEn ? 'Open account switcher' : 'Ouvrir le sélecteur de compte'}
-                              >
-                                <strong>
-                                  {profile.prenom} {profile.nom}
-                                </strong>
-                                <span>{profile.email}</span>
-                              </button>
-                            ) : (
-                              <>
-                                <strong>
-                                  {profile.prenom} {profile.nom}
-                                </strong>
-                                <span>{profile.email}</span>
-                              </>
-                            )}
-                            {chauffeurLinkContext.hasLinkedChauffeurAccount ? (
-                              <select
-                                ref={accountRoleSelectRef}
-                                className="client-compte-account-menu__role-select client-compte-account-menu__role-select--sr-only"
-                                aria-label={isEn ? 'Account' : 'Compte'}
-                                value="client"
-                                onChange={(e) => handleAccountRoleSelect(e.target.value as 'client' | 'chauffeur')}
-                              >
-                                <option value="client">{isEn ? 'Client account' : 'Compte client'}</option>
-                                <option value="chauffeur">
-                                  {isEn ? 'Driver account' : 'Compte chauffeur'} ({chauffeurLinkContext.scopeLabel})
-                                </option>
-                              </select>
-                            ) : null}
+                            <strong>
+                              {profile.prenom} {profile.nom}
+                            </strong>
+                            <span>{profile.email}</span>
                           </div>
                           <div className="client-compte-account-menu__actions">
                             <button
@@ -1533,6 +1461,16 @@ export default function ClientCompteDashboard({ onBack, onOpenClientLiveMeet }: 
                               }}
                             >
                               Reglages Palto
+                            </button>
+                            <button
+                              type="button"
+                              className="client-compte-account-menu__item"
+                              onClick={() => {
+                                setAccountModalOpen(false);
+                                handleDriverDashboard();
+                              }}
+                            >
+                              {isEn ? 'Go to driver space' : 'Aller à l’espace chauffeur'}
                             </button>
                             <button
                               type="button"
@@ -1588,43 +1526,23 @@ export default function ClientCompteDashboard({ onBack, onOpenClientLiveMeet }: 
                         {profile.email}
                       </p>
                     </div>
-                    {chauffeurLinkContext.hasLinkedChauffeurAccount ? (
-                      <div
-                        className="client-compte-profile-driver-link"
-                        role="button"
-                        tabIndex={0}
-                        onClick={(e) => {
-                          e.stopPropagation();
+                    <div
+                      className="client-compte-profile-driver-link"
+                      role="button"
+                      tabIndex={0}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleDriverDashboard();
+                      }}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter' || e.key === ' ') {
+                          e.preventDefault();
                           handleDriverDashboard();
-                        }}
-                        onKeyDown={(e) => {
-                          if (e.key === 'Enter' || e.key === ' ') {
-                            e.preventDefault();
-                            handleDriverDashboard();
-                          }
-                        }}
-                      >
-                        <span>{`${isEn ? 'Driver account' : 'Compte chauffeur'} · ${chauffeurLinkContext.scopeLabel}`}</span>
-                      </div>
-                    ) : (
-                      <div
-                        className="client-compte-profile-driver-link client-compte-profile-driver-link--become"
-                        role="button"
-                        tabIndex={0}
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleBecomeDriver();
-                        }}
-                        onKeyDown={(e) => {
-                          if (e.key === 'Enter' || e.key === ' ') {
-                            e.preventDefault();
-                            handleBecomeDriver();
-                          }
-                        }}
-                      >
-                        <span>{isEn ? 'Become a driver' : 'Devenir chauffeur'}</span>
-                      </div>
-                    )}
+                        }
+                      }}
+                    >
+                      <span>{isEn ? 'Go to driver space' : 'Aller à l’espace chauffeur'}</span>
+                    </div>
                   </div>
                 </article>
 

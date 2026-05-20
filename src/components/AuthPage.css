@@ -63,6 +63,23 @@
   background: #ffffff;
 }
 
+.auth-page-phone-row {
+  display: grid;
+  grid-template-columns: minmax(108px, 0.42fr) 1fr;
+  gap: 8px;
+  align-items: center;
+}
+
+.auth-page-select--phone-country {
+  padding-right: 8px;
+}
+
+.auth-page-field-hint {
+  margin: -4px 0 0;
+  font-size: 0.8rem;
+  color: #64748b;
+}
+
 .auth-page-password-row {
   position: relative;
   display: flex;

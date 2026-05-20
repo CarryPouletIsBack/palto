@@ -1,11 +1,14 @@
 import { apiBaseUrl } from '../constants/featureFlags'
+import { saveClientAccountSnapshot } from '../constants/clientAccountStorage'
 import { syncClientProfileWithServer } from './clientProfileSync'
 import type { RegisterChauffeurPayload } from '../constants/chauffeurRegistrationStorage'
 
-const AUTH_STORAGE_KEY = 'dashboard_auth'
+const CHAUFFEUR_AUTH_STORAGE_KEY = 'dashboard_auth'
 export const DASHBOARD_AUTH_TOKEN_KEY = 'dashboard_token'
-/** Rôle du compte connecté (`client` passager ou `chauffeur`). */
-export const SESSION_ROLE_KEY = 'palto:account_role'
+
+/** @deprecated Rôle unique supprimé — conservé pour migration one-shot depuis l’auth unifiée. */
+const LEGACY_SESSION_ROLE_KEY = 'palto:account_role'
+const LEGACY_AUTH_MIGRATION_KEY = 'palto:auth-split-migration-v1'
 
 export type AccountRole = 'client' | 'chauffeur'
 
@@ -16,6 +19,12 @@ export type { RegisterChauffeurPayload, ChauffeurVehicleType, ChauffeurRegistere
 export interface LoginCredentials {
   email: string
   password: string
+}
+
+export type RegisterClientPayload = LoginCredentials & {
+  prenom: string
+  nom: string
+  phone: string
 }
 
 export interface User {
@@ -31,6 +40,16 @@ function isDbSessionToken(token: string | null): token is string {
 
 function normalizeEmail(email: string): string {
   return email.trim().toLowerCase()
+}
+
+function parseStoredUser(raw: string | null): User | null {
+  if (!raw) return null
+  try {
+    const user = JSON.parse(raw) as User
+    return user?.email?.trim() ? user : null
+  } catch {
+    return null
+  }
 }
 
 async function postAuth<TPayload extends Record<string, unknown>>(
@@ -71,111 +90,125 @@ async function postAuth<TPayload extends Record<string, unknown>>(
   }
 }
 
+/** @deprecated Préférer `isChauffeurSession` + email chauffeur explicite. */
 export function isChauffeurPrimaryAccountEmail(email: string | null | undefined): boolean {
   if (!email?.trim()) return false
-  const user = getCurrentUser()
-  return normalizeEmail(user?.email ?? '') === normalizeEmail(email)
+  const chauffeur = getCurrentUser()
+  if (!chauffeur?.email?.trim()) return false
+  return normalizeEmail(chauffeur.email) === normalizeEmail(email)
 }
 
-export function getSessionRole(): AccountRole | null {
-  if (typeof window === 'undefined') return null
-  const raw = localStorage.getItem(SESSION_ROLE_KEY)
-  return raw === 'client' || raw === 'chauffeur' ? raw : null
-}
-
-function hasValidSessionToken(): boolean {
+function hasValidChauffeurSessionToken(): boolean {
   const token = localStorage.getItem(DASHBOARD_AUTH_TOKEN_KEY)
-  const authData = localStorage.getItem(AUTH_STORAGE_KEY)
-  if (!isDbSessionToken(token) || !authData) return false
-  try {
-    const user = JSON.parse(authData)
-    return !!(user && user.email)
-  } catch {
-    return false
-  }
+  const user = parseStoredUser(localStorage.getItem(CHAUFFEUR_AUTH_STORAGE_KEY))
+  return isDbSessionToken(token) && user != null
 }
 
-function clearInvalidSession(): void {
+function hasValidClientSessionToken(): boolean {
+  const token = localStorage.getItem(CLIENT_AUTH_TOKEN_KEY)
+  const user = parseStoredUser(localStorage.getItem(CLIENT_AUTH_STORAGE_KEY))
+  return isDbSessionToken(token) && user != null
+}
+
+function clearChauffeurSession(): void {
   localStorage.removeItem(DASHBOARD_AUTH_TOKEN_KEY)
-  localStorage.removeItem(AUTH_STORAGE_KEY)
+  localStorage.removeItem(CHAUFFEUR_AUTH_STORAGE_KEY)
+}
+
+function clearClientSession(): void {
   localStorage.removeItem(CLIENT_AUTH_TOKEN_KEY)
   localStorage.removeItem(CLIENT_AUTH_STORAGE_KEY)
-  localStorage.removeItem(SESSION_ROLE_KEY)
+}
+
+/** Sépare les anciennes sessions unifiées (un token dans les deux clés). */
+function migrateLegacyUnifiedSessionOnce(): void {
+  if (typeof window === 'undefined') return
+  if (localStorage.getItem(LEGACY_AUTH_MIGRATION_KEY) === '1') return
+
+  const legacyRole = localStorage.getItem(LEGACY_SESSION_ROLE_KEY)
+  const dashToken = localStorage.getItem(DASHBOARD_AUTH_TOKEN_KEY)?.trim() ?? ''
+  const clientToken = localStorage.getItem(CLIENT_AUTH_TOKEN_KEY)?.trim() ?? ''
+  const tokensMatch = dashToken.length > 0 && dashToken === clientToken
+
+  if (tokensMatch || legacyRole) {
+    if (legacyRole === 'client' || (tokensMatch && !legacyRole)) {
+      clearChauffeurSession()
+    } else if (legacyRole === 'chauffeur') {
+      clearClientSession()
+    }
+    localStorage.removeItem(LEGACY_SESSION_ROLE_KEY)
+  }
+
+  localStorage.setItem(LEGACY_AUTH_MIGRATION_KEY, '1')
+}
+
+if (typeof window !== 'undefined') {
+  migrateLegacyUnifiedSessionOnce()
+}
+
+export const PALTO_CHAUFFEUR_SESSION_CHANGED_EVENT = 'palto:chauffeur-session-changed'
+
+function notifyChauffeurSessionChanged(): void {
+  if (typeof window === 'undefined') return
+  window.dispatchEvent(new CustomEvent(PALTO_CHAUFFEUR_SESSION_CHANGED_EVENT))
+}
+
+function persistChauffeurSession(token: string, user: User): void {
+  localStorage.setItem(DASHBOARD_AUTH_TOKEN_KEY, token)
+  localStorage.setItem(CHAUFFEUR_AUTH_STORAGE_KEY, JSON.stringify(user))
 }
 
 export async function registerChauffeur(payload: RegisterChauffeurPayload): Promise<{ success: boolean; error?: string }> {
   const result = await postAuth('/auth/chauffeur/register', payload as unknown as Record<string, unknown>)
   if (!result.success || !result.token || !result.user) return { success: false, error: result.error }
-  persistUnifiedSession(result.token, result.user, 'chauffeur')
-  notifyClientSessionChanged()
+  persistChauffeurSession(result.token, result.user)
+  notifyChauffeurSessionChanged()
   return { success: true }
 }
 
-/**
- * Session valide pour le dashboard / heartbeat GPS.
- * Inclut le rôle passager : bascule « Compte chauffeur » depuis l’accueil (comme avant),
- * l’API chauffeur identifie le compte par email de session.
- */
+/** Session chauffeur valide (dashboard / API chauffeur) — indépendante du compte client. */
 export const isChauffeurSession = (): boolean => {
   if (typeof window === 'undefined') return false
-  if (!hasValidSessionToken()) {
-    clearInvalidSession()
+  migrateLegacyUnifiedSessionOnce()
+  if (!hasValidChauffeurSessionToken()) {
+    clearChauffeurSession()
     return false
   }
-  const role = getSessionRole()
-  if (!role) return true
-  return role === 'chauffeur' || role === 'client'
+  return true
 }
 
 /** @alias isChauffeurSession */
 export const isAuthenticated = isChauffeurSession
 
 /**
- * Connexion depuis n’importe quel écran : essaie d’abord le rôle attendu (page passager ou chauffeur),
- * puis l’autre rôle si besoin (même email, mots de passe différents possibles).
+ * Connexion compte client uniquement (`/auth/client/login`).
+ * @deprecated Utiliser `loginClient` — conservé pour compat interne.
  */
 export async function loginWithHint(
   credentials: LoginCredentials,
-  hint: AccountRole
+  _hint: AccountRole
 ): Promise<{ success: boolean; user?: User; error?: string; role?: AccountRole }> {
-  const order: AccountRole[] = hint === 'client' ? ['client', 'chauffeur'] : ['chauffeur', 'client']
-  let lastError = 'Erreur de connexion'
-
-  for (const role of order) {
-    const endpoint = role === 'client' ? '/auth/client/login' : '/auth/chauffeur/login'
-    const result = await postAuth(endpoint, credentials)
-    if (result.success && result.token && result.user) {
-      persistUnifiedSession(result.token, result.user, role)
-      notifyClientSessionChanged()
-      if (role === 'client') void syncClientProfileWithServer(result.user.email)
-      return { success: true, user: result.user, role }
-    }
-    lastError = result.error ?? lastError
-  }
-
-  return { success: false, error: lastError }
+  return loginClient(credentials)
 }
 
-/**
- * Connexion dashboard : uniquement le compte chauffeur (pas de bascule passager).
- * Si le mot de passe correspond au compte passager, message explicite.
- */
+/** Connexion compte chauffeur uniquement. */
 export async function loginChauffeurOnly(
   credentials: LoginCredentials
 ): Promise<{ success: boolean; user?: User; error?: string; role?: AccountRole }> {
   const result = await postAuth('/auth/chauffeur/login', credentials)
   if (result.success && result.token && result.user) {
-    persistUnifiedSession(result.token, result.user, 'chauffeur')
-    notifyClientSessionChanged()
+    persistChauffeurSession(result.token, result.user)
+    notifyChauffeurSessionChanged()
     return { success: true, user: result.user, role: 'chauffeur' }
   }
 
   const clientProbe = await postAuth('/auth/client/login', credentials)
-  if (clientProbe.success && clientProbe.token && clientProbe.user) {
-    persistUnifiedSession(clientProbe.token, clientProbe.user, 'client')
-    notifyClientSessionChanged()
-    void syncClientProfileWithServer(clientProbe.user.email)
-    return { success: true, user: clientProbe.user, role: 'client' }
+  if (clientProbe.success) {
+    return {
+      success: false,
+      error:
+        'Ce mot de passe correspond au compte client. Connectez-vous depuis Mon compte ou utilisez le mot de passe chauffeur.',
+    }
   }
 
   return { success: false, error: result.error ?? 'Email ou mot de passe incorrect' }
@@ -184,11 +217,11 @@ export async function loginChauffeurOnly(
 export const login = loginChauffeurOnly
 
 export const logout = (): void => {
-  clearInvalidSession()
-  notifyClientSessionChanged()
+  clearChauffeurSession()
+  notifyChauffeurSessionChanged()
 }
 
-/** En-tête `Authorization` pour les routes `/api/chauffeur/*` (token dashboard). */
+/** En-tête `Authorization` pour les routes `/api/chauffeur/*`. */
 export function getDashboardAuthorizationHeader(): string | null {
   if (typeof window === 'undefined') return null
   const token = localStorage.getItem(DASHBOARD_AUTH_TOKEN_KEY)
@@ -198,23 +231,17 @@ export function getDashboardAuthorizationHeader(): string | null {
 
 export const getCurrentUser = (): User | null => {
   if (typeof window === 'undefined') return null
-
-  try {
-    const authData = localStorage.getItem(AUTH_STORAGE_KEY)
-    if (!authData) return null
-    return JSON.parse(authData)
-  } catch {
-    return null
-  }
+  migrateLegacyUnifiedSessionOnce()
+  return parseStoredUser(localStorage.getItem(CHAUFFEUR_AUTH_STORAGE_KEY))
 }
 
 /* -------------------------------------------------------------------------- */
-/* Compte passager (session distincte du dashboard chauffeur)                */
+/* Compte client (session distincte)                                           */
 /* -------------------------------------------------------------------------- */
 
 const CLIENT_AUTH_STORAGE_KEY = 'palto:client_auth'
 export const CLIENT_AUTH_TOKEN_KEY = 'palto:client_token'
-/** Émis après connexion / déconnexion passager (écouter sur `window` pour rafraîchir l’UI). */
+
 export const PALTO_CLIENT_SESSION_CHANGED_EVENT = 'palto:client-session-changed'
 
 function notifyClientSessionChanged(): void {
@@ -222,19 +249,30 @@ function notifyClientSessionChanged(): void {
   window.dispatchEvent(new CustomEvent(PALTO_CLIENT_SESSION_CHANGED_EVENT))
 }
 
-function persistUnifiedSession(token: string, user: User, role: AccountRole): void {
-  localStorage.setItem(DASHBOARD_AUTH_TOKEN_KEY, token)
-  localStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(user))
+function persistClientSession(token: string, user: User): void {
   localStorage.setItem(CLIENT_AUTH_TOKEN_KEY, token)
   localStorage.setItem(CLIENT_AUTH_STORAGE_KEY, JSON.stringify(user))
-  localStorage.setItem(SESSION_ROLE_KEY, role)
 }
 
-export async function registerClient(credentials: LoginCredentials): Promise<{ success: boolean; error?: string }> {
-  const result = await postAuth('/auth/client/register', credentials)
+export async function registerClient(payload: RegisterClientPayload): Promise<{ success: boolean; error?: string }> {
+  const result = await postAuth('/auth/client/register', payload as unknown as Record<string, unknown>)
   if (!result.success || !result.token || !result.user) return { success: false, error: result.error }
-  persistUnifiedSession(result.token, result.user, 'client')
+  persistClientSession(result.token, result.user)
   notifyClientSessionChanged()
+  const emailNorm = payload.email.trim().toLowerCase()
+  saveClientAccountSnapshot(
+    {
+      prenom: payload.prenom.trim(),
+      nom: payload.nom.trim(),
+      email: emailNorm,
+      telephone: payload.phone.trim(),
+      ville: '',
+      preferredPayment: 'indifferent',
+      profilePhotoUrl: null,
+      profilePhotoName: '',
+    },
+    emailNorm
+  )
   void syncClientProfileWithServer(result.user.email)
   return { success: true }
 }
@@ -242,31 +280,58 @@ export async function registerClient(credentials: LoginCredentials): Promise<{ s
 export async function loginClient(
   credentials: LoginCredentials
 ): Promise<{ success: boolean; user?: User; error?: string; role?: AccountRole }> {
-  return loginWithHint(credentials, 'client')
+  const result = await postAuth('/auth/client/login', credentials)
+  if (result.success && result.token && result.user) {
+    persistClientSession(result.token, result.user)
+    notifyClientSessionChanged()
+    void syncClientProfileWithServer(result.user.email)
+    return { success: true, user: result.user, role: 'client' }
+  }
+
+  const chauffeurProbe = await postAuth('/auth/chauffeur/login', credentials)
+  if (chauffeurProbe.success) {
+    return {
+      success: false,
+      error:
+        'Ce mot de passe correspond au compte chauffeur. Utilisez l’espace chauffeur ou le mot de passe client.',
+    }
+  }
+
+  return { success: false, error: result.error ?? 'Email ou mot de passe incorrect' }
 }
 
 export const isClientAuthenticated = (): boolean => {
   if (typeof window === 'undefined') return false
-  if (!hasValidSessionToken()) {
-    clearInvalidSession()
+  migrateLegacyUnifiedSessionOnce()
+  if (!hasValidClientSessionToken()) {
+    clearClientSession()
     return false
   }
-  const role = getSessionRole()
-  if (!role) return true
-  return role === 'client'
+  return true
 }
 
 export const logoutClient = (): void => {
-  logout()
+  clearClientSession()
+  notifyClientSessionChanged()
+}
+
+/** En-tête `Authorization` pour les routes `/api/client/*` protégées. */
+export function getClientAuthorizationHeader(): string | null {
+  if (typeof window === 'undefined') return null
+  const token = localStorage.getItem(CLIENT_AUTH_TOKEN_KEY)
+  if (!isDbSessionToken(token)) return null
+  return `Bearer ${token}`
 }
 
 export const getCurrentClientUser = (): User | null => {
   if (typeof window === 'undefined') return null
-  try {
-    const authData = localStorage.getItem(CLIENT_AUTH_STORAGE_KEY)
-    if (!authData) return null
-    return JSON.parse(authData)
-  } catch {
-    return null
-  }
+  migrateLegacyUnifiedSessionOnce()
+  return parseStoredUser(localStorage.getItem(CLIENT_AUTH_STORAGE_KEY))
+}
+
+/** Rôle « actif » pour redirection après login (priorité chauffeur si les deux sessions existent). */
+export function getSessionRole(): AccountRole | null {
+  if (isChauffeurSession()) return 'chauffeur'
+  if (isClientAuthenticated()) return 'client'
+  return null
 }

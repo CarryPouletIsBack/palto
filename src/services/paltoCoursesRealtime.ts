@@ -15,9 +15,10 @@ let connectPromise: Promise<void> | null = null
 function getPaltoBearerForRealtime(): string | null {
   if (typeof window === 'undefined') return null
   const dash = localStorage.getItem(DASHBOARD_AUTH_TOKEN_KEY)?.trim()
-  if (dash) return dash
+  if (dash && /^[a-f0-9]{64}$/i.test(dash)) return dash
   const client = localStorage.getItem(CLIENT_AUTH_TOKEN_KEY)?.trim()
-  return client || null
+  if (client && /^[a-f0-9]{64}$/i.test(client)) return client
+  return null
 }
 
 function emitDebounced(ms: number) {

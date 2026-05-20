@@ -1297,7 +1297,7 @@ const SingleProjectNew: FC<SingleProjectProps> = ({
     if (destination && destination !== pickup) sessionAddresses.push(destination);
 
     const user = getCurrentClientUser();
-    if (!user?.email || !clientRidesApiEnabled()) {
+    if (!user?.email || !clientRidesApiEnabled() || !isClientAuthenticated()) {
       setGoMobileRideHistoryAddresses(sessionAddresses);
       return;
     }

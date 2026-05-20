@@ -36,7 +36,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   const email = normalizeEmail(parsed.data.email)
   const { data, error } = await supabase
     .from('app_accounts')
-    .select('id,email,password_hash')
+    .select('id,email,password_hash,full_name')
     .eq('email', email)
     .eq('role', 'chauffeur')
     .maybeSingle()
@@ -54,6 +54,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   return res.status(200).json({
     success: true,
     token,
-    user: { email: data.email, displayName: data.email.split('@')[0] || 'Chauffeur' },
+    user: {
+      email: data.email,
+      displayName: (data.full_name ?? '').trim() || data.email.split('@')[0] || 'Chauffeur',
+    },
   })
 }

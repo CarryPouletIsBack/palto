@@ -1,5 +1,7 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node'
 import { z } from 'zod'
+import { getVerifiedClientSession } from '../../server/lib/clientAuth.js'
+import { expireStaleInstantPendingCourses } from '../../server/lib/expireStaleInstantPendingCourses.js'
 import { getSupabaseAdmin } from '../../server/lib/supabaseAdmin.js'
 import { listNearbyDriversFromPresence } from '../../server/lib/nearbyDriversFromPresence.js'
 
@@ -51,28 +53,6 @@ type ClientRow = {
   id: string
 }
 
-async function getVerifiedSessionEmail(req: VercelRequest): Promise<string | null> {
-  const raw = req.headers.authorization
-  if (!raw?.toLowerCase().startsWith('bearer ')) return null
-  const token = raw.slice(7).trim()
-  if (!token) return null
-  try {
-    const supabase = getSupabaseAdmin()
-    const { data, error } = await supabase
-      .from('app_sessions')
-      .select('email, expires_at')
-      .eq('token', token)
-      .maybeSingle()
-    if (error || !data) return null
-    const expiresAt = Date.parse(data.expires_at)
-    if (Number.isNaN(expiresAt) || expiresAt < Date.now()) return null
-    const email = String(data.email || '').trim().toLowerCase()
-    return email || null
-  } catch {
-    return null
-  }
-}
-
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   res.setHeader('Access-Control-Allow-Origin', '*')
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS')
@@ -93,11 +73,12 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       res.status(400).json({ error: 'Payload invalide', details: parsedBody.error.flatten() })
       return
     }
-    const sessionEmail = await getVerifiedSessionEmail(req)
-    if (!sessionEmail) {
-      res.status(401).json({ error: 'Non autorise' })
+    const clientSession = await getVerifiedClientSession(req)
+    if (!clientSession) {
+      res.status(401).json({ error: 'Connexion client requise' })
       return
     }
+    const sessionEmail = clientSession.email
     let supabase
     try {
       supabase = getSupabaseAdmin()
@@ -175,6 +156,12 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     return
   }
 
+  const clientSession = await getVerifiedClientSession(req)
+  if (!clientSession) {
+    res.status(401).json({ error: 'Connexion client requise' })
+    return
+  }
+
   const parsed = QuerySchema.safeParse(req.query)
   if (!parsed.success) {
     res.status(400).json({ error: 'Query invalide', details: parsed.error.flatten() })
@@ -182,6 +169,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   }
 
   const { email, status = 'all', limit = 40 } = parsed.data
+  const emailNorm = email.trim().toLowerCase()
+  if (emailNorm !== clientSession.email) {
+    res.status(403).json({ error: 'Email non autorise pour cette session' })
+    return
+  }
 
   let supabase
   try {
@@ -192,7 +184,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     return
   }
 
-  const emailNorm = email.trim().toLowerCase()
+  try {
+    await expireStaleInstantPendingCourses(supabase)
+  } catch (e) {
+    console.error('[client/rides GET] expire stale instant', e)
+  }
   const now = new Date()
   const today = now.toISOString().slice(0, 10)
   const hh = String(now.getHours()).padStart(2, '0')

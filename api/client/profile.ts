@@ -57,20 +57,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     return
   }
 
-  let clientAccountId = session.role === 'client' ? session.accountId : null
-  if (!clientAccountId) {
-    const { data: clientRow } = await supabase
-      .from('app_accounts')
-      .select('id')
-      .eq('email', session.email)
-      .eq('role', 'client')
-      .maybeSingle()
-    clientAccountId = clientRow?.id ? String(clientRow.id) : null
-  }
-  if (!clientAccountId) {
-    res.status(401).json({ error: 'Compte passager requis pour le profil' })
+  if (session.role !== 'client') {
+    res.status(403).json({ error: 'Token chauffeur non utilisable pour le profil client' })
     return
   }
+  const clientAccountId = session.accountId
 
   if (req.method === 'GET') {
     const { data, error } = await supabase

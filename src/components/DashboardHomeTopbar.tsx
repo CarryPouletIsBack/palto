@@ -4,7 +4,7 @@ import { User } from 'lucide-react'
 import { useLanguage } from '../contexts/LanguageContext'
 import { trackEvent } from '../services/googleAnalyticsTracking'
 import { loadClientAccountSnapshot } from '../constants/clientAccountStorage'
-import { isChauffeurPrimaryAccountEmail, logoutClient } from '../services/authService'
+import { logoutClient } from '../services/authService'
 import {
   getCurrentClientUser,
   getCurrentUser,
@@ -14,7 +14,6 @@ import {
   type User as AuthUser,
 } from '../services/authService'
 import LanguageSwitcher from './LanguageSwitcher'
-import { openNativeSelectPicker } from '../dom/openNativeSelectPicker'
 import './Dashboard.css'
 import './Dashboard.app-theme.css'
 
@@ -43,7 +42,6 @@ export function DashboardHomeTopbar({
   const [profileSyncTick, setProfileSyncTick] = useState(0)
   const [accountModalOpen, setAccountModalOpen] = useState(false)
   const accountMenuRef = useRef<HTMLDivElement | null>(null)
-  const accountRoleSelectRef = useRef<HTMLSelectElement | null>(null)
   const profileSyncedForEmailRef = useRef<string | null>(null)
 
   useEffect(() => {
@@ -117,12 +115,6 @@ export function DashboardHomeTopbar({
     return typeof photo === 'string' && photo.trim() ? photo : null
   }, [session.clientLogged, session.user, authTick, profileSyncTick])
 
-  const hasLinkedChauffeurAccount = useMemo(() => {
-    const email = session.user?.email?.trim() ?? ''
-    if (!email) return false
-    return session.chauffeurLogged || isChauffeurPrimaryAccountEmail(email)
-  }, [session.chauffeurLogged, session.user?.email])
-
   useEffect(() => {
     if (!accountModalOpen) return
     const onPointerDown = (event: MouseEvent) => {
@@ -194,40 +186,15 @@ export function DashboardHomeTopbar({
                 {accountModalOpen ? (
                   <div className="client-compte-account-menu" role="menu" aria-label="Menu compte">
                     <div className="client-compte-account-menu__head">
-                      {hasLinkedChauffeurAccount ? (
-                        <button
-                          type="button"
-                          className="client-compte-account-menu__head-identity"
-                          onClick={() => openNativeSelectPicker(accountRoleSelectRef.current)}
-                          aria-label={language === 'en' ? 'Open account switcher' : 'Ouvrir le sélecteur de compte'}
-                        >
-                          <strong>{accountDisplayName}</strong>
-                          <span>{session.user?.email ?? ''}</span>
-                        </button>
-                      ) : (
-                        <>
-                          <strong>{accountDisplayName}</strong>
-                          <span>{session.user?.email ?? ''}</span>
-                        </>
-                      )}
-                      {hasLinkedChauffeurAccount ? (
-                        <select
-                          ref={accountRoleSelectRef}
-                          className="client-compte-account-menu__role-select client-compte-account-menu__role-select--sr-only"
-                          aria-label={language === 'en' ? 'Account' : 'Compte'}
-                          value="client"
-                          onChange={(e) => {
-                            if (e.target.value === 'chauffeur') handleDriverDashboard()
-                          }}
-                        >
-                          <option value="client">{language === 'en' ? 'Client account' : 'Compte client'}</option>
-                          <option value="chauffeur">{language === 'en' ? 'Driver account' : 'Compte chauffeur'}</option>
-                        </select>
-                      ) : null}
+                      <strong>{accountDisplayName}</strong>
+                      <span>{session.user?.email ?? ''}</span>
                     </div>
                     <div className="client-compte-account-menu__actions">
                       <button type="button" className="client-compte-account-menu__item" onClick={handleClientAccount}>
                         {language === 'en' ? 'Manage Palto account' : 'Gerer le compte Palto'}
+                      </button>
+                      <button type="button" className="client-compte-account-menu__item" onClick={handleDriverDashboard}>
+                        {language === 'en' ? 'Go to driver space' : 'Aller à l’espace chauffeur'}
                       </button>
                       <button
                         type="button"

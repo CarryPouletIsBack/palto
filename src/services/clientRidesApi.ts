@@ -1,4 +1,5 @@
 import { apiBaseUrl, useClientRidesApi } from '../constants/featureFlags'
+import { getClientAuthorizationHeader } from './authService'
 
 const API_BASE_URL = apiBaseUrl()
 
@@ -29,10 +30,14 @@ export type ClientRideItem = {
 }
 
 export async function fetchClientRides(email: string, status: 'upcoming' | 'completed' | 'cancelled' | 'all' = 'all') {
+  const auth = getClientAuthorizationHeader()
+  if (!auth) {
+    throw new Error('Connexion client requise')
+  }
   const url = new URL(`${API_BASE_URL}/client/rides`, window.location.origin)
   url.searchParams.set('email', email)
   url.searchParams.set('status', status)
-  const res = await fetch(url.toString())
+  const res = await fetch(url.toString(), { headers: { Authorization: auth } })
   const data = (await res.json().catch(() => ({}))) as { items?: ClientRideItem[]; error?: string }
   if (!res.ok) {
     throw new Error(data.error || `Erreur ${res.status}`)
@@ -41,13 +46,14 @@ export async function fetchClientRides(email: string, status: 'upcoming' | 'comp
 }
 
 export async function cancelClientRide(courseId: string): Promise<void> {
-  const token =
-    (typeof window !== 'undefined' && (localStorage.getItem('palto:client_token') || localStorage.getItem('dashboard_token'))) ||
-    ''
+  const auth = getClientAuthorizationHeader()
+  if (!auth) {
+    throw new Error('Connexion client requise')
+  }
   const headers: HeadersInit = {
     'Content-Type': 'application/json',
+    Authorization: auth,
   }
-  if (token) headers.Authorization = `Bearer ${token}`
   const res = await fetch(`${API_BASE_URL}/client/rides`, {
     method: 'POST',
     headers,

@@ -10,11 +10,11 @@ import {
 import useEmblaCarousel from 'embla-carousel-react';
 import { type ProjectWithMeta } from '../services/projectService';
 import {
-  getCurrentClientUser,
   getCurrentUser,
   isAuthenticated,
   isChauffeurPrimaryAccountEmail,
   logout,
+  PALTO_CHAUFFEUR_SESSION_CHANGED_EVENT,
   PALTO_CLIENT_SESSION_CHANGED_EVENT,
 } from '../services/authService';
 import ProjectEditor from './ProjectEditor';
@@ -78,7 +78,6 @@ import { loadClientAccountSnapshot } from '../constants/clientAccountStorage';
 import { trackEvent } from '../services/googleAnalyticsTracking';
 import { useChauffeurPresenceHeartbeat } from '../hooks/useChauffeurPresenceHeartbeat';
 import { ChauffeurPresenceGeoBar } from './ChauffeurPresenceGeoBar';
-import { openNativeSelectPicker } from '../dom/openNativeSelectPicker';
 import { toast } from 'sonner';
 import './Dashboard.css';
 import './Dashboard.app-theme.css';
@@ -138,6 +137,11 @@ import {
   complianceApiEnabled,
   fetchChauffeurComplianceSnapshotFromApi,
 } from '../services/chauffeurComplianceApi';
+import {
+  CHAUFFEUR_VEHICLE_TYPES,
+  CHAUFFEUR_VEHICLE_TYPE_LABELS,
+  isChauffeurVehicleType,
+} from '../constants/chauffeurVehicleType';
 import {
   fetchChauffeurRideProfileFromServer,
   syncChauffeurRideProfileToServer,
@@ -336,10 +340,8 @@ function inferProfileFromEmail(emailRaw: string): Pick<ChauffeurProfile, 'prenom
   return { prenom: pretty(chunks[0]), nom: pretty(chunks.slice(1).join(' ')) };
 }
 
-function getUnifiedSessionEmail(): string {
-  const dashboardEmail = getCurrentUser()?.email?.trim() ?? '';
-  if (dashboardEmail) return dashboardEmail;
-  return getCurrentClientUser()?.email?.trim() ?? '';
+function getChauffeurSessionEmail(): string {
+  return getCurrentUser()?.email?.trim() ?? '';
 }
 
 async function readFileAsDataUrl(file: File): Promise<string> {
@@ -680,7 +682,6 @@ const Dashboard = ({
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
   const paltoMenuRef = useRef<HTMLDivElement | null>(null);
   const topbarAccountMenuRef = useRef<HTMLDivElement | null>(null);
-  const topbarAccountRoleSelectRef = useRef<HTMLSelectElement | null>(null);
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
@@ -742,7 +743,7 @@ const Dashboard = ({
   }, [persistRides, refreshRides]);
 
   const [chauffeurProfile, setChauffeurProfile] = useState<ChauffeurProfile>(() => {
-    const currentUserEmail = getUnifiedSessionEmail();
+    const currentUserEmail = getChauffeurSessionEmail();
     const emailNorm = normalizeChauffeurEmail(currentUserEmail);
     const storedProfile = loadStoredChauffeurProfile(emailNorm);
     if (storedProfile) return storedProfile;
@@ -818,7 +819,7 @@ const Dashboard = ({
   const useComplianceApi = complianceApiEnabled();
   const useStatsApi = statsApiEnabled();
   const paltoIdentity = useMemo(() => {
-    const sessionEmail = getUnifiedSessionEmail().trim().toLowerCase();
+    const sessionEmail = getChauffeurSessionEmail().trim().toLowerCase();
     const snap = loadClientAccountSnapshot(sessionEmail);
     const fullName = `${snap.prenom.trim()} ${snap.nom.trim()}`.trim();
     const fallbackName = `${chauffeurProfile.prenom} ${chauffeurProfile.nom}`.trim();
@@ -831,10 +832,6 @@ const Dashboard = ({
       photoUrl: photo,
     };
   }, [authSessionTick, chauffeurProfile.email, chauffeurProfile.nom, chauffeurProfile.prenom]);
-  const hasLinkedClientAccount = useMemo(() => {
-    return Boolean(getCurrentClientUser()?.email?.trim());
-  }, [authSessionTick]);
-
   useEffect(() => {
     const bump = () => setAuthSessionTick((n) => n + 1);
     const onStorage = (e: StorageEvent) => {
@@ -844,15 +841,17 @@ const Dashboard = ({
       }
     };
     window.addEventListener(PALTO_CLIENT_SESSION_CHANGED_EVENT, bump as EventListener);
+    window.addEventListener(PALTO_CHAUFFEUR_SESSION_CHANGED_EVENT, bump as EventListener);
     window.addEventListener('storage', onStorage);
     return () => {
       window.removeEventListener(PALTO_CLIENT_SESSION_CHANGED_EVENT, bump as EventListener);
+      window.removeEventListener(PALTO_CHAUFFEUR_SESSION_CHANGED_EVENT, bump as EventListener);
       window.removeEventListener('storage', onStorage);
     };
   }, []);
 
   useEffect(() => {
-    const sessionEmail = getUnifiedSessionEmail().toLowerCase();
+    const sessionEmail = getChauffeurSessionEmail().toLowerCase();
     if (!sessionEmail) return;
     const storedProfile = loadStoredChauffeurProfile(normalizeChauffeurEmail(sessionEmail));
     if (storedProfile) {
@@ -949,7 +948,7 @@ const Dashboard = ({
       setComplianceApiSnapshot(null);
       return;
     }
-    const email = getUnifiedSessionEmail();
+    const email = getChauffeurSessionEmail();
     const norm = normalizeChauffeurEmail(email);
     if (!norm || !isChauffeurInSelfServiceRegistry(norm)) {
       setComplianceApiSnapshot(null);
@@ -1102,17 +1101,12 @@ const Dashboard = ({
     window.location.href = '/';
   }, []);
 
-  const handleTopbarRoleSelect = useCallback(
-    (nextRole: 'chauffeur' | 'client') => {
-      if (nextRole === 'client') {
-        const prefix = language === 'en' ? '/en' : '/fr';
-        setTopbarAccountMenuOpen(false);
-        window.history.pushState({}, '', `${prefix}/compte`);
-        window.dispatchEvent(new PopStateEvent('popstate'));
-      }
-    },
-    [language]
-  );
+  const handleOpenClientSpace = useCallback(() => {
+    const prefix = language === 'en' ? '/en' : '/fr';
+    setTopbarAccountMenuOpen(false);
+    window.history.pushState({}, '', `${prefix}/compte`);
+    window.dispatchEvent(new PopStateEvent('popstate'));
+  }, [language]);
 
   const ORG_EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/i;
 
@@ -1570,7 +1564,7 @@ const Dashboard = ({
 
   const coursesBlockedByCompliance = useMemo(() => {
     void complianceUiTick;
-    const email = getUnifiedSessionEmail();
+    const email = getChauffeurSessionEmail();
     if (!email?.trim()) return false;
     if (isChauffeurPrimaryAccountEmail(email)) return false;
     const norm = normalizeChauffeurEmail(email);
@@ -1896,6 +1890,13 @@ const Dashboard = ({
     setChauffeurProfile(nextProfile);
     setUserProfileDraft(nextProfile);
     persistStoredChauffeurProfile(nextProfile);
+    const vehicleSlug = isChauffeurVehicleType(nextProfile.vehicule) ? nextProfile.vehicule : null;
+    void syncChauffeurRideProfileToServer({
+      petFriendly: chauffeurRideSettings.petFriendly,
+      luggageAssistance: chauffeurRideSettings.luggageAssistance,
+      insulatedBag: chauffeurRideSettings.insulatedBag,
+      vehicleType: vehicleSlug,
+    });
     setProfilePhotoUrl(profilePhotoDraftUrl);
     setOrganizationPhotoUrl(organizationPhotoDraftUrl);
     setVehiclePhotoUrl(vehiclePhotoDraftUrl);
@@ -1910,6 +1911,9 @@ const Dashboard = ({
     profilePhotoDraftUrl,
     phoneCountryDraft,
     phoneNationalDraft,
+    chauffeurRideSettings.insulatedBag,
+    chauffeurRideSettings.luggageAssistance,
+    chauffeurRideSettings.petFriendly,
     userProfileDraft,
     vehiclePhotoDraftName,
     vehiclePhotoDraftUrl,
@@ -1945,12 +1949,14 @@ const Dashboard = ({
   const saveRideSettingsEdit = useCallback(() => {
     setChauffeurRideSettings(rideSettingsDraft);
     saveChauffeurRideSettingsSnapshot(rideSettingsDraft);
+    const vehicleSlug = isChauffeurVehicleType(chauffeurProfile.vehicule) ? chauffeurProfile.vehicule : null;
     void syncChauffeurRideProfileToServer({
       petFriendly: rideSettingsDraft.petFriendly,
       luggageAssistance: rideSettingsDraft.luggageAssistance,
       insulatedBag: rideSettingsDraft.insulatedBag,
+      vehicleType: vehicleSlug,
     });
-  }, [rideSettingsDraft]);
+  }, [chauffeurProfile.vehicule, rideSettingsDraft]);
 
   /** Au chargement : lire Supabase (vérité pour la page Go), pas écraser la base avec le localStorage. */
   useEffect(() => {
@@ -1972,6 +1978,13 @@ const Dashboard = ({
         luggageAssistance: profile.luggageAssistance,
         insulatedBag: profile.insulatedBag,
       }))
+      const vehicleSlug = profile.vehicleType ?? '';
+      setChauffeurProfile((prev) => {
+        const next = { ...prev, vehicule: vehicleSlug };
+        persistStoredChauffeurProfile(next);
+        return next;
+      });
+      setUserProfileDraft((prev) => ({ ...prev, vehicule: vehicleSlug }));
     })
   }, [])
 
@@ -2286,34 +2299,8 @@ const Dashboard = ({
                   {topbarAccountMenuOpen ? (
                     <div className="client-compte-account-menu" role="menu" aria-label="Menu compte">
                       <div className="client-compte-account-menu__head">
-                        {hasLinkedClientAccount ? (
-                          <button
-                            type="button"
-                            className="client-compte-account-menu__head-identity"
-                            onClick={() => openNativeSelectPicker(topbarAccountRoleSelectRef.current)}
-                            aria-label={language === 'en' ? 'Open account switcher' : 'Ouvrir le sélecteur de compte'}
-                          >
-                            <strong>{paltoIdentity.fullName}</strong>
-                            <span>{paltoIdentity.email}</span>
-                          </button>
-                        ) : (
-                          <>
-                            <strong>{paltoIdentity.fullName}</strong>
-                            <span>{paltoIdentity.email}</span>
-                          </>
-                        )}
-                        {hasLinkedClientAccount ? (
-                          <select
-                            ref={topbarAccountRoleSelectRef}
-                            className="client-compte-account-menu__role-select client-compte-account-menu__role-select--sr-only"
-                            aria-label={language === 'en' ? 'Account' : 'Compte'}
-                            value="chauffeur"
-                            onChange={(e) => handleTopbarRoleSelect(e.target.value as 'chauffeur' | 'client')}
-                          >
-                            <option value="chauffeur">{language === 'en' ? 'Driver account' : 'Compte chauffeur'}</option>
-                            <option value="client">{language === 'en' ? 'Client account' : 'Compte client'}</option>
-                          </select>
-                        ) : null}
+                        <strong>{paltoIdentity.fullName}</strong>
+                        <span>{paltoIdentity.email}</span>
                       </div>
                       <div className="client-compte-account-menu__actions">
                         <button
@@ -2325,6 +2312,13 @@ const Dashboard = ({
                           }}
                         >
                           {language === 'en' ? 'Manage Palto account' : 'Gerer le compte Palto'}
+                        </button>
+                        <button
+                          type="button"
+                          className="client-compte-account-menu__item"
+                          onClick={handleOpenClientSpace}
+                        >
+                          {language === 'en' ? 'Go to client space' : 'Aller à l’espace client'}
                         </button>
                         <button
                           type="button"
@@ -2382,7 +2376,7 @@ const Dashboard = ({
                       </h3>
                       <p className="dashboard-compliance-lead">{t('chauffeurCompliance.bannerLead')}</p>
                       <ChauffeurDocumentsChecklist
-                        emailNorm={normalizeChauffeurEmail(getUnifiedSessionEmail())}
+                        emailNorm={normalizeChauffeurEmail(getChauffeurSessionEmail())}
                         onComplianceChange={() => setComplianceUiTick((n) => n + 1)}
                       />
                     </section>
@@ -3658,14 +3652,23 @@ const Dashboard = ({
                                 </label>
                                 <label>
                                   Véhicule
-                                  <input
-                                    type="text"
-                                    value={userProfileDraft.vehicule}
+                                  <select
+                                    value={
+                                      isChauffeurVehicleType(userProfileDraft.vehicule)
+                                        ? userProfileDraft.vehicule
+                                        : ''
+                                    }
                                     onChange={(e) =>
                                       setUserProfileDraft((prev) => ({ ...prev, vehicule: e.target.value }))
                                     }
-                                    required
-                                  />
+                                  >
+                                    <option value="">Non renseigné</option>
+                                    {CHAUFFEUR_VEHICLE_TYPES.map((type) => (
+                                      <option key={type} value={type}>
+                                        {CHAUFFEUR_VEHICLE_TYPE_LABELS[type]}
+                                      </option>
+                                    ))}
+                                  </select>
                                 </label>
                                 <label>
                                   Plaque

@@ -17,7 +17,9 @@ export type ChauffeurRegisteredRecord = {
 export type RegisterChauffeurPayload = {
   email: string
   password: string
-  phoneInternational: string
+  prenom: string
+  nom: string
+  phone: string
   vehicleType: ChauffeurVehicleType
   deliveryEquipped: boolean
 }
@@ -94,8 +96,12 @@ export function registerChauffeurInRegistry(
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(emailNorm)) {
     return { success: false, error: 'EMAIL_INVALID' }
   }
-  if (!payload.phoneInternational?.trim()) {
+  const phone = (payload.phone ?? '').trim()
+  if (!phone) {
     return { success: false, error: 'PHONE_REQUIRED' }
+  }
+  if (!payload.prenom?.trim() || !payload.nom?.trim()) {
+    return { success: false, error: 'NAME_REQUIRED' }
   }
   if (emailNorm === opts.reservedPrimaryEmailNorm) {
     return { success: false, error: 'EMAIL_RESERVED' }
@@ -105,7 +111,7 @@ export function registerChauffeurInRegistry(
 
   map[emailNorm] = {
     password: payload.password,
-    phoneInternational: payload.phoneInternational.trim(),
+    phoneInternational: phone,
     vehicleType: payload.vehicleType,
     deliveryEquipped: payload.deliveryEquipped,
   }

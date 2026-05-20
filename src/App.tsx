@@ -371,8 +371,7 @@ function App() {
     (role: AccountRole, options?: { preferDashboard?: boolean }) => {
       const prefix = language === 'en' ? '/en' : '/fr'
       setAuthUiTick((n) => n + 1)
-      const openDashboard =
-        role === 'chauffeur' || (options?.preferDashboard && role === 'client')
+      const openDashboard = role === 'chauffeur' || options?.preferDashboard === true
       if (openDashboard) {
         window.history.pushState({}, '', `${prefix}/dashboard?dashboardView=user`)
         setCurrentPage('dashboard')

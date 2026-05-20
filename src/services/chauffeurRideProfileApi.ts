@@ -1,3 +1,5 @@
+import type { ChauffeurVehicleType } from '../constants/chauffeurVehicleType'
+import { isChauffeurVehicleType } from '../constants/chauffeurVehicleType'
 import { apiBaseUrl, useChauffeurPresenceApi } from '../constants/featureFlags'
 import { isChauffeurSession } from './authService'
 
@@ -19,6 +21,14 @@ export type ChauffeurRideProfilePayload = {
   petFriendly: boolean
   luggageAssistance: boolean
   insulatedBag: boolean
+  /** Slug `app_accounts.vehicle_type` ; `null` ou `''` efface la valeur. */
+  vehicleType?: ChauffeurVehicleType | '' | null
+}
+
+function parseVehicleTypeFromApi(value: unknown): ChauffeurVehicleType | null {
+  if (typeof value !== 'string') return null
+  const slug = value.trim().toLowerCase()
+  return isChauffeurVehicleType(slug) ? slug : null
 }
 
 /** Lit les préférences course depuis `app_accounts` (source de vérité pour la page Go). */
@@ -39,6 +49,7 @@ export async function fetchChauffeurRideProfileFromServer(): Promise<ChauffeurRi
       petFriendly: data.petFriendly === true,
       luggageAssistance: data.luggageAssistance === true,
       insulatedBag: data.insulatedBag === true,
+      vehicleType: parseVehicleTypeFromApi(data.vehicleType),
     }
   } catch (e) {
     console.warn('[chauffeurRideProfileApi] GET failed', e)
@@ -46,7 +57,7 @@ export async function fetchChauffeurRideProfileFromServer(): Promise<ChauffeurRi
   }
 }
 
-/** Sync préférences course (Animaux, bagages, etc.) → `app_accounts`. */
+/** Sync préférences course + type véhicule → `app_accounts` (source de vérité page Go). */
 export async function syncChauffeurRideProfileToServer(
   profile: ChauffeurRideProfilePayload
 ): Promise<boolean> {

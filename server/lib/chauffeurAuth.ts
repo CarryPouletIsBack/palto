@@ -42,18 +42,21 @@ export async function getVerifiedChauffeurSession(req: VercelRequest): Promise<V
     const supabase = getSupabaseAdmin()
     const { data, error } = await supabase
       .from('app_sessions')
-      .select('email, expires_at')
+      .select('email, role, account_id, expires_at')
       .eq('token', token)
       .maybeSingle()
     if (error || !data) return null
+    if (data.role !== 'chauffeur') return null
     const expiresAt = Date.parse(data.expires_at)
     if (Number.isNaN(expiresAt) || expiresAt < Date.now()) return null
     const email = String(data.email || '').trim().toLowerCase()
-    if (!email) return null
+    const accountId = String(data.account_id ?? '').trim()
+    if (!email || !accountId) return null
 
     const { data: roleAccount, error: roleError } = await supabase
       .from('app_accounts')
       .select('id')
+      .eq('id', accountId)
       .eq('email', email)
       .eq('role', 'chauffeur')
       .maybeSingle()

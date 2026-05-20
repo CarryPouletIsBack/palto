@@ -1,5 +1,5 @@
 const LOCAL_SNAPSHOT_PURGE_MARKER_KEY = 'palto:local-snapshot-purge-v1';
-const LOCAL_SNAPSHOT_PURGE_VERSION = '2026-05-local-purge-v2';
+const LOCAL_SNAPSHOT_PURGE_VERSION = '2026-05-auth-split-v1';
 
 const LOCAL_STORAGE_KEYS_TO_CLEAR = [
   'dashboard_auth',
@@ -19,6 +19,8 @@ const LOCAL_STORAGE_KEYS_TO_CLEAR = [
   'palto:chauffeur_compliance_v1',
   'palto.chauffeur.ride-settings.v1',
   'palto:view',
+  'palto:account_role',
+  'palto:auth-split-migration-v1',
 ] as const;
 
 const SESSION_STORAGE_KEYS_TO_CLEAR = ['palto:goPrefill', 'palto:chauffeur-nav-course'] as const;

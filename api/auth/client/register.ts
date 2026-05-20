@@ -2,8 +2,14 @@ import type { VercelRequest, VercelResponse } from '@vercel/node'
 import { z } from 'zod'
 import { getSupabaseAdmin } from '../../../server/lib/supabaseAdmin.js'
 import { createAccountSession, hashPassword, normalizeEmail } from '../../../server/lib/accountAuth.js'
+import {
+  AccountRegistrationIdentitySchema,
+  buildAccountFullName,
+  normalizeRegistrationPhone,
+  registrationDisplayName,
+} from '../../../server/lib/accountRegistrationFields.js'
 
-const BodySchema = z.object({
+const BodySchema = AccountRegistrationIdentitySchema.extend({
   email: z.string().email().max(320),
   password: z.string().min(6).max(128),
 })
@@ -35,10 +41,20 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
   const email = normalizeEmail(parsed.data.email)
   const passwordHash = hashPassword(parsed.data.password)
+  const fullName = buildAccountFullName(parsed.data.prenom, parsed.data.nom)
+  const phone = normalizeRegistrationPhone(parsed.data.phone)
+  const displayName = registrationDisplayName(parsed.data.prenom, parsed.data.nom, email)
+
   const { data, error } = await supabase
     .from('app_accounts')
-    .insert({ email, role: 'client', password_hash: passwordHash })
-    .select('id,email')
+    .insert({
+      email,
+      role: 'client',
+      password_hash: passwordHash,
+      full_name: fullName,
+      phone,
+    })
+    .select('id,email,full_name')
     .single()
 
   if (error || !data) {
@@ -50,10 +66,34 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     })
   }
 
+  const { data: existingClients } = await supabase
+    .from('clients')
+    .select('id')
+    .ilike('email', email)
+    .order('created_at', { ascending: false })
+    .limit(1)
+
+  const existingClient = existingClients?.[0]
+  if (existingClient?.id) {
+    await supabase
+      .from('clients')
+      .update({ full_name: fullName, phone, updated_at: new Date().toISOString() })
+      .eq('id', existingClient.id)
+  } else {
+    const { error: clientErr } = await supabase.from('clients').insert({
+      full_name: fullName,
+      phone,
+      email,
+    })
+    if (clientErr) {
+      console.warn('[auth/client/register] clients insert', clientErr)
+    }
+  }
+
   const token = await createAccountSession(supabase, { accountId: data.id, email: data.email, role: 'client' })
   return res.status(201).json({
     success: true,
     token,
-    user: { email: data.email, displayName: data.email.split('@')[0] || 'Passager' },
+    user: { email: data.email, displayName },
   })
 }

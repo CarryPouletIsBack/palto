@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState, type FormEvent } from 'react'
 import { Eye, EyeOff, X } from 'lucide-react'
+import AuthSignupIdentityFields from './AuthSignupIdentityFields'
 import {
   getCurrentClientUser,
   isClientAuthenticated,
@@ -7,6 +8,12 @@ import {
   registerChauffeur,
   type AccountRole,
 } from '../services/authService'
+import {
+  buildInternationalPhone,
+  isValidNationalPhone,
+  normalizeNationalPhone,
+  type SupportedPhoneCountry,
+} from '../services/phoneNumber'
 import './AuthPage.css'
 
 type Props = {
@@ -20,10 +27,13 @@ export default function ChauffeurAuthPage({ onAuthSuccess, onClose }: Props) {
     []
   )
   const [mode, setMode] = useState<'login' | 'signup'>(signupDefault ? 'signup' : 'login')
+  const [prenom, setPrenom] = useState('')
+  const [nom, setNom] = useState('')
+  const [phoneCountry, setPhoneCountry] = useState<SupportedPhoneCountry>('RE')
+  const [phoneNational, setPhoneNational] = useState('')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [showPassword, setShowPassword] = useState(false)
-  const [phone, setPhone] = useState('')
   const [vehicleType, setVehicleType] = useState<'berline' | 'utilitaire' | 'moto' | 'scooter'>('berline')
   const [deliveryEquipped, setDeliveryEquipped] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -37,26 +47,46 @@ export default function ChauffeurAuthPage({ onAuthSuccess, onClose }: Props) {
     if (clientUser?.email?.trim()) setEmail(clientUser.email.trim())
   }, [email])
 
-  const submit = async () => {
-    setLoading(true)
-    setError(null)
-    setHelpMessage(null)
-    if (mode === 'signup') {
-      const reg = await registerChauffeur({
-        email,
-        password,
-        phoneInternational: phone,
-        vehicleType,
-        deliveryEquipped,
-      })
-      setLoading(false)
-      if (!reg.success) {
-        setError(reg.error ?? 'Erreur de connexion')
-        return
-      }
-      onAuthSuccess('chauffeur')
+  const submitSignup = async () => {
+    const prenomTrim = prenom.trim()
+    const nomTrim = nom.trim()
+    if (!prenomTrim || !nomTrim) {
+      setError('Prénom et nom sont requis.')
       return
     }
+    const normalizedNational = normalizeNationalPhone(phoneCountry, phoneNational)
+    if (!isValidNationalPhone(phoneCountry, normalizedNational)) {
+      setError(
+        phoneCountry === 'FR'
+          ? 'Numéro invalide (France) : 9 chiffres attendus après +33.'
+          : 'Numéro invalide (Réunion) : format attendu type 692… ou 262… après +262.'
+      )
+      return
+    }
+    const phone = buildInternationalPhone(phoneCountry, normalizedNational)
+
+    setLoading(true)
+    setError(null)
+    const reg = await registerChauffeur({
+      email: email.trim(),
+      password,
+      prenom: prenomTrim,
+      nom: nomTrim,
+      phone,
+      vehicleType,
+      deliveryEquipped,
+    })
+    setLoading(false)
+    if (!reg.success) {
+      setError(reg.error ?? 'Erreur de connexion')
+      return
+    }
+    onAuthSuccess('chauffeur')
+  }
+
+  const submitLogin = async () => {
+    setLoading(true)
+    setError(null)
     const result = await loginChauffeurOnly({ email, password })
     setLoading(false)
     if (!result.success || result.role !== 'chauffeur') {
@@ -66,9 +96,14 @@ export default function ChauffeurAuthPage({ onAuthSuccess, onClose }: Props) {
     onAuthSuccess('chauffeur')
   }
 
-  const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
+  const handleSubmit = (e: FormEvent) => {
     e.preventDefault()
-    void submit()
+    setHelpMessage(null)
+    if (mode === 'signup') {
+      void submitSignup()
+    } else {
+      void submitLogin()
+    }
   }
 
   return (
@@ -82,16 +117,46 @@ export default function ChauffeurAuthPage({ onAuthSuccess, onClose }: Props) {
         <h1 className="auth-page-title">{mode === 'signup' ? 'Creer un compte chauffeur' : 'Connexion chauffeur'}</h1>
         <p className="auth-page-subtitle">
           {clientAlreadyLogged
-            ? 'Vous êtes déjà connectée en passager. Ici, entrez le mot de passe du compte chauffeur (souvent différent du mot de passe passager).'
-            : 'Email et mot de passe du compte chauffeur Palto.'}
+            ? 'Session client active en parallèle. Connectez-vous ici avec le mot de passe du compte chauffeur (compte distinct).'
+            : 'Compte chauffeur Palto uniquement — indépendant du compte client.'}
         </p>
         <form className="auth-page-grid" onSubmit={handleSubmit}>
+          {mode === 'signup' ? (
+            <>
+              <AuthSignupIdentityFields
+                prenom={prenom}
+                nom={nom}
+                phoneCountry={phoneCountry}
+                phoneNational={phoneNational}
+                onPrenomChange={setPrenom}
+                onNomChange={setNom}
+                onPhoneCountryChange={setPhoneCountry}
+                onPhoneNationalChange={setPhoneNational}
+              />
+              <select
+                className="auth-page-select"
+                value={vehicleType}
+                onChange={(e) => setVehicleType(e.target.value as typeof vehicleType)}
+              >
+                <option value="berline">Berline</option>
+                <option value="utilitaire">Utilitaire</option>
+                <option value="moto">Moto</option>
+                <option value="scooter">Scooter</option>
+              </select>
+              <label className="auth-page-checkbox-row">
+                <input type="checkbox" checked={deliveryEquipped} onChange={(e) => setDeliveryEquipped(e.target.checked)} />
+                Equipe livraison
+              </label>
+            </>
+          ) : null}
           <input
             className="auth-page-input"
             type="email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             placeholder="Email"
+            autoComplete="email"
+            required
           />
           <div className="auth-page-password-row">
             <input
@@ -100,6 +165,9 @@ export default function ChauffeurAuthPage({ onAuthSuccess, onClose }: Props) {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               placeholder="Mot de passe"
+              autoComplete={mode === 'signup' ? 'new-password' : 'current-password'}
+              required
+              minLength={mode === 'signup' ? 6 : undefined}
             />
             <button
               className="auth-page-toggle-visibility"
@@ -126,31 +194,6 @@ export default function ChauffeurAuthPage({ onAuthSuccess, onClose }: Props) {
               Mot de passe oublie ?
             </button>
           ) : null}
-          {mode === 'signup' ? (
-            <>
-              <input
-                className="auth-page-input"
-                type="text"
-                value={phone}
-                onChange={(e) => setPhone(e.target.value)}
-                placeholder="Telephone international (+262...)"
-              />
-              <select
-                className="auth-page-select"
-                value={vehicleType}
-                onChange={(e) => setVehicleType(e.target.value as typeof vehicleType)}
-              >
-                <option value="berline">Berline</option>
-                <option value="utilitaire">Utilitaire</option>
-                <option value="moto">Moto</option>
-                <option value="scooter">Scooter</option>
-              </select>
-              <label className="auth-page-checkbox-row">
-                <input type="checkbox" checked={deliveryEquipped} onChange={(e) => setDeliveryEquipped(e.target.checked)} />
-                Equipe livraison
-              </label>
-            </>
-          ) : null}
           {error ? <p className="auth-page-error">{error}</p> : null}
           {helpMessage ? <p className="auth-page-help">{helpMessage}</p> : null}
           <div className="auth-page-actions">
@@ -160,7 +203,10 @@ export default function ChauffeurAuthPage({ onAuthSuccess, onClose }: Props) {
             <button
               className="auth-page-btn auth-page-btn--ghost"
               type="button"
-              onClick={() => setMode((m) => (m === 'signup' ? 'login' : 'signup'))}
+              onClick={() => {
+                setMode((m) => (m === 'signup' ? 'login' : 'signup'))
+                setError(null)
+              }}
             >
               {mode === 'signup' ? "J'ai deja un compte" : 'Creer un compte'}
             </button>
