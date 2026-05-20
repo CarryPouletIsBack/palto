@@ -5,6 +5,9 @@ import type { RegisterChauffeurPayload } from '../constants/chauffeurRegistratio
 const CHAUFFEUR_AUTH_STORAGE_KEY = 'dashboard_auth'
 export const DASHBOARD_AUTH_TOKEN_KEY = 'dashboard_token'
 
+const CLIENT_AUTH_STORAGE_KEY = 'palto:client_auth'
+export const CLIENT_AUTH_TOKEN_KEY = 'palto:client_token'
+
 /** @deprecated Rôle unique supprimé — conservé pour migration one-shot depuis l’auth unifiée. */
 const LEGACY_SESSION_ROLE_KEY = 'palto:account_role'
 const LEGACY_AUTH_MIGRATION_KEY = 'palto:auth-split-migration-v1'
@@ -141,10 +144,6 @@ function migrateLegacyUnifiedSessionOnce(): void {
   localStorage.setItem(LEGACY_AUTH_MIGRATION_KEY, '1')
 }
 
-if (typeof window !== 'undefined') {
-  migrateLegacyUnifiedSessionOnce()
-}
-
 export const PALTO_CHAUFFEUR_SESSION_CHANGED_EVENT = 'palto:chauffeur-session-changed'
 
 function notifyChauffeurSessionChanged(): void {
@@ -253,9 +252,6 @@ export const getCurrentUser = (): User | null => {
 /* Compte client (session distincte)                                           */
 /* -------------------------------------------------------------------------- */
 
-const CLIENT_AUTH_STORAGE_KEY = 'palto:client_auth'
-export const CLIENT_AUTH_TOKEN_KEY = 'palto:client_token'
-
 export const PALTO_CLIENT_SESSION_CHANGED_EVENT = 'palto:client-session-changed'
 
 function notifyClientSessionChanged(): void {
@@ -357,4 +353,8 @@ export function getSessionRole(): AccountRole | null {
   if (isChauffeurSession()) return 'chauffeur'
   if (isClientAuthenticated()) return 'client'
   return null
+}
+
+if (typeof window !== 'undefined') {
+  migrateLegacyUnifiedSessionOnce()
 }
