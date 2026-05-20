@@ -1,6 +1,5 @@
 import { apiBaseUrl } from '../constants/featureFlags'
 import { saveClientAccountSnapshot } from '../constants/clientAccountStorage'
-import { syncClientProfileWithServer } from './clientProfileSync'
 import type { RegisterChauffeurPayload } from '../constants/chauffeurRegistrationStorage'
 
 const CHAUFFEUR_AUTH_STORAGE_KEY = 'dashboard_auth'
@@ -224,6 +223,18 @@ export const logout = (): void => {
   notifyChauffeurSessionChanged()
 }
 
+/** Accueil Palto selon le préfixe langue dans l’URL. */
+export function getPaltoHomePath(): string {
+  if (typeof window === 'undefined') return '/fr'
+  return window.location.pathname.startsWith('/en') ? '/en' : '/fr'
+}
+
+/** Déconnexion chauffeur puis rechargement accueil (évite état React incohérent). */
+export function logoutChauffeurToHome(): void {
+  logout()
+  if (typeof window !== 'undefined') window.location.assign(getPaltoHomePath())
+}
+
 /** En-tête `Authorization` pour les routes `/api/chauffeur/*`. */
 export function getDashboardAuthorizationHeader(): string | null {
   if (typeof window === 'undefined') return null
@@ -279,7 +290,7 @@ export async function registerClient(payload: RegisterClientPayload): Promise<{ 
     },
     emailNorm
   )
-  void syncClientProfileWithServer(result.user.email)
+  void import('./clientProfileSync').then((m) => m.syncClientProfileWithServer(result.user.email))
   return { success: true }
 }
 
@@ -290,7 +301,7 @@ export async function loginClient(
   if (result.success && result.token && result.user) {
     persistClientSession(result.token, result.user)
     notifyClientSessionChanged()
-    void syncClientProfileWithServer(result.user.email)
+    void import('./clientProfileSync').then((m) => m.syncClientProfileWithServer(result.user.email))
     return { success: true, user: result.user, role: 'client' }
   }
 
@@ -319,6 +330,12 @@ export const isClientAuthenticated = (): boolean => {
 export const logoutClient = (): void => {
   clearClientSession()
   notifyClientSessionChanged()
+}
+
+/** Déconnexion client puis rechargement accueil. */
+export function logoutClientToHome(): void {
+  logoutClient()
+  if (typeof window !== 'undefined') window.location.assign(getPaltoHomePath())
 }
 
 /** En-tête `Authorization` pour les routes `/api/client/*` protégées. */

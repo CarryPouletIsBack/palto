@@ -13,7 +13,7 @@ import {
   getCurrentUser,
   isAuthenticated,
   isChauffeurPrimaryAccountEmail,
-  logout,
+  logoutChauffeurToHome,
   PALTO_CHAUFFEUR_SESSION_CHANGED_EVENT,
   PALTO_CLIENT_SESSION_CHANGED_EVENT,
 } from '../services/authService';
@@ -1097,16 +1097,8 @@ const Dashboard = ({
 
   const handleTopbarLogout = useCallback(() => {
     setTopbarAccountMenuOpen(false);
-    logout();
-    window.location.href = '/';
+    logoutChauffeurToHome();
   }, []);
-
-  const handleOpenClientSpace = useCallback(() => {
-    const prefix = language === 'en' ? '/en' : '/fr';
-    setTopbarAccountMenuOpen(false);
-    window.history.pushState({}, '', `${prefix}/compte`);
-    window.dispatchEvent(new PopStateEvent('popstate'));
-  }, [language]);
 
   const ORG_EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/i;
 
@@ -2180,8 +2172,7 @@ const Dashboard = ({
                     onClick={() => {
                       setAlertsOpen(false);
                       setMoreMenuOpen(false);
-                      logout();
-                      window.location.href = '/';
+                      logoutChauffeurToHome();
                     }}
                   >
                     <LogOut size={16} />
@@ -2312,13 +2303,6 @@ const Dashboard = ({
                           }}
                         >
                           {language === 'en' ? 'Manage Palto account' : 'Gerer le compte Palto'}
-                        </button>
-                        <button
-                          type="button"
-                          className="client-compte-account-menu__item"
-                          onClick={handleOpenClientSpace}
-                        >
-                          {language === 'en' ? 'Go to client space' : 'Aller à l’espace client'}
                         </button>
                         <button
                           type="button"

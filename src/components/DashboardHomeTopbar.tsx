@@ -4,7 +4,7 @@ import { User } from 'lucide-react'
 import { useLanguage } from '../contexts/LanguageContext'
 import { trackEvent } from '../services/googleAnalyticsTracking'
 import { loadClientAccountSnapshot } from '../constants/clientAccountStorage'
-import { logoutClient } from '../services/authService'
+import { logoutClientToHome } from '../services/authService'
 import {
   getCurrentClientUser,
   getCurrentUser,
@@ -127,21 +127,14 @@ export function DashboardHomeTopbar({
     return () => window.removeEventListener('mousedown', onPointerDown)
   }, [accountModalOpen])
 
-  const handleDriverDashboard = () => {
-    const prefix = language === 'en' ? '/en' : '/fr'
-    window.history.pushState({}, '', `${prefix}/dashboard`)
-    window.dispatchEvent(new PopStateEvent('popstate'))
-    setAccountModalOpen(false)
-  }
-
   const handleClientAccount = () => {
     setAccountModalOpen(false)
     onOpenClientAccount?.()
   }
 
   const handleLogout = () => {
-    logoutClient()
     setAccountModalOpen(false)
+    logoutClientToHome()
   }
 
   const titleEl =
@@ -192,9 +185,6 @@ export function DashboardHomeTopbar({
                     <div className="client-compte-account-menu__actions">
                       <button type="button" className="client-compte-account-menu__item" onClick={handleClientAccount}>
                         {language === 'en' ? 'Manage Palto account' : 'Gerer le compte Palto'}
-                      </button>
-                      <button type="button" className="client-compte-account-menu__item" onClick={handleDriverDashboard}>
-                        {language === 'en' ? 'Go to driver space' : 'Aller à l’espace chauffeur'}
                       </button>
                       <button
                         type="button"

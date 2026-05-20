@@ -93,7 +93,7 @@ import { simplifyAddressDisplay } from '../services/addressDisplay';
 import {
   getCurrentClientUser,
   isClientAuthenticated,
-  logoutClient,
+  logoutClientToHome,
   PALTO_CLIENT_SESSION_CHANGED_EVENT,
 } from '../services/authService';
 import { buildClientLiveMeetRideFromRideItem } from '../constants/clientLiveMeetRide';
@@ -1084,24 +1084,16 @@ export default function ClientCompteDashboard({ onBack, onOpenClientLiveMeet }: 
   }, [onBack, isMobileViewport]);
 
   const handleClientLogout = useCallback(() => {
-    logoutClient();
     setAccountModalOpen(false);
     if (isMobileViewport) setMobileSidebarOpen(false);
-    onBack();
-  }, [isMobileViewport, onBack]);
+    logoutClientToHome();
+  }, [isMobileViewport]);
 
   const handleGoPage = useCallback(() => {
     const prefix = language === 'en' ? '/en' : '/fr';
     window.history.pushState({}, '', `${prefix}/go`);
     window.dispatchEvent(new PopStateEvent('popstate'));
     trackEvent('click', 'client_account', 'overview_go_cta');
-  }, [language]);
-
-  const handleDriverDashboard = useCallback(() => {
-    const prefix = language === 'en' ? '/en' : '/fr';
-    window.history.pushState({}, '', `${prefix}/dashboard`);
-    window.dispatchEvent(new PopStateEvent('popstate'));
-    trackEvent('click', 'client_account', 'overview_driver_dashboard');
   }, [language]);
 
   const overviewPlacesPreview = useMemo(() => {
@@ -1466,16 +1458,6 @@ export default function ClientCompteDashboard({ onBack, onOpenClientLiveMeet }: 
                               type="button"
                               className="client-compte-account-menu__item"
                               onClick={() => {
-                                setAccountModalOpen(false);
-                                handleDriverDashboard();
-                              }}
-                            >
-                              {isEn ? 'Go to driver space' : 'Aller à l’espace chauffeur'}
-                            </button>
-                            <button
-                              type="button"
-                              className="client-compte-account-menu__item"
-                              onClick={() => {
                                 openManageAccount('personal');
                                 setAccountModalOpen(false);
                               }}
@@ -1525,23 +1507,6 @@ export default function ClientCompteDashboard({ onBack, onOpenClientLiveMeet }: 
                       <p className="dashboard-field-hint client-compte-profile-email">
                         {profile.email}
                       </p>
-                    </div>
-                    <div
-                      className="client-compte-profile-driver-link"
-                      role="button"
-                      tabIndex={0}
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleDriverDashboard();
-                      }}
-                      onKeyDown={(e) => {
-                        if (e.key === 'Enter' || e.key === ' ') {
-                          e.preventDefault();
-                          handleDriverDashboard();
-                        }
-                      }}
-                    >
-                      <span>{isEn ? 'Go to driver space' : 'Aller à l’espace chauffeur'}</span>
                     </div>
                   </div>
                 </article>
