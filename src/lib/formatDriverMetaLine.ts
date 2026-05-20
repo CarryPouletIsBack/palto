@@ -4,7 +4,9 @@ import { driverServiceBadges } from './driverServiceBadges'
 
 /** Ligne secondaire carte chauffeur : véhicule · distance · services. */
 export function formatDriverMetaLine(driver: NearbyDriver, pickup: GeoPoint | null): string {
-  const parts: string[] = [driver.moto.trim() || 'Véhicule']
+  const parts: string[] = []
+  const vehicle = driver.moto.trim()
+  if (vehicle) parts.push(vehicle)
   if (pickup) {
     const km = haversineDistanceKm(pickup, {
       latitude: driver.latitude,

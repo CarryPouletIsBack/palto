@@ -362,6 +362,28 @@ const RideProfileBodySchema = z.object({
   insulatedBag: z.boolean(),
 })
 
+async function handleRideProfileGet(res: VercelResponse, accountId: string) {
+  const supabase = getSupabaseAdmin()
+  const { data, error } = await supabase
+    .from('app_accounts')
+    .select('pet_friendly, luggage_assistance, insulated_bag')
+    .eq('id', accountId)
+    .eq('role', 'chauffeur')
+    .maybeSingle()
+
+  if (error) {
+    console.error('[chauffeur/ride-profile GET]', error)
+    return res.status(500).json({ error: 'Lecture profil course impossible' })
+  }
+  if (!data) return res.status(404).json({ error: 'Compte chauffeur introuvable' })
+
+  return res.status(200).json({
+    petFriendly: data.pet_friendly === true,
+    luggageAssistance: data.luggage_assistance === true,
+    insulatedBag: data.insulated_bag === true,
+  })
+}
+
 async function handleRideProfilePut(req: VercelRequest, res: VercelResponse, accountId: string) {
   let body: unknown = req.body
   if (typeof req.body === 'string') {
@@ -407,6 +429,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (!session) return res.status(401).json({ error: 'Non autorise' })
   const { email: dashboardEmail, accountId: driverKey } = session
 
+  if (req.method === 'GET' && resource === 'ride-profile') return handleRideProfileGet(res, driverKey)
   if (req.method === 'PUT' && resource === 'ride-profile') return handleRideProfilePut(req, res, driverKey)
   if (req.method === 'POST' && resource === 'presence') return handlePresencePost(req, res, driverKey)
   if (req.method === 'GET' && resource === 'rides') return handleRidesGet(res, driverKey)

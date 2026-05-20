@@ -565,9 +565,7 @@ const SingleProjectNew: FC<SingleProjectProps> = ({
               >
                 <span className="palto-ride-driver-item__left">
                   <span className="palto-ride-driver-item__name">{driver.name}</span>
-                  <span className="palto-ride-driver-item__meta">
-                    {driver.moto} · {meta}
-                  </span>
+                  <span className="palto-ride-driver-item__meta">{meta}</span>
                 </span>
                 <span className="palto-ride-driver-item__price">
                   {dynamicDriverTtc !== null ? `${dynamicDriverTtc.toFixed(2)} EUR` : driver.price}

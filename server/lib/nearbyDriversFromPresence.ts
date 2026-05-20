@@ -84,8 +84,8 @@ export async function listNearbyDriversFromPresence(
         longitude: lng,
         latitude: lat,
         distanceKm,
-        petFriendly: acc.pet_friendly !== false,
-        luggageAssistance: acc.luggage_assistance !== false,
+        petFriendly: acc.pet_friendly === true,
+        luggageAssistance: acc.luggage_assistance === true,
         insulatedBag: acc.insulated_bag === true,
         deliveryEquipped: acc.delivery_equipped === true,
       } satisfies NearbyDriverApiItem

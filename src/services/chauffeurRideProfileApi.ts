@@ -21,6 +21,31 @@ export type ChauffeurRideProfilePayload = {
   insulatedBag: boolean
 }
 
+/** Lit les préférences course depuis `app_accounts` (source de vérité pour la page Go). */
+export async function fetchChauffeurRideProfileFromServer(): Promise<ChauffeurRideProfilePayload | null> {
+  if (!chauffeurRideProfileApiEnabled() || !isChauffeurSession()) return null
+  const headers = authHeaders()
+  if (!('Authorization' in headers)) return null
+  try {
+    const res = await fetch(`${API_BASE_URL}/chauffeur?resource=ride-profile`, { headers })
+    const data = (await res.json().catch(() => ({}))) as Partial<ChauffeurRideProfilePayload> & {
+      error?: string
+    }
+    if (!res.ok) {
+      console.warn('[chauffeurRideProfileApi] GET', res.status, data.error ?? '')
+      return null
+    }
+    return {
+      petFriendly: data.petFriendly === true,
+      luggageAssistance: data.luggageAssistance === true,
+      insulatedBag: data.insulatedBag === true,
+    }
+  } catch (e) {
+    console.warn('[chauffeurRideProfileApi] GET failed', e)
+    return null
+  }
+}
+
 /** Sync préférences course (Animaux, bagages, etc.) → `app_accounts`. */
 export async function syncChauffeurRideProfileToServer(
   profile: ChauffeurRideProfilePayload
@@ -34,8 +59,13 @@ export async function syncChauffeurRideProfileToServer(
       headers: { ...headers, 'Content-Type': 'application/json' },
       body: JSON.stringify(profile),
     })
+    if (!res.ok) {
+      const data = (await res.json().catch(() => ({}))) as { error?: string }
+      console.warn('[chauffeurRideProfileApi] PUT', res.status, data.error ?? '')
+    }
     return res.ok
-  } catch {
+  } catch (e) {
+    console.warn('[chauffeurRideProfileApi] PUT failed', e)
     return false
   }
 }

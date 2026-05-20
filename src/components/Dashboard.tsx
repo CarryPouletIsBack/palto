@@ -138,7 +138,10 @@ import {
   complianceApiEnabled,
   fetchChauffeurComplianceSnapshotFromApi,
 } from '../services/chauffeurComplianceApi';
-import { syncChauffeurRideProfileToServer } from '../services/chauffeurRideProfileApi';
+import {
+  fetchChauffeurRideProfileFromServer,
+  syncChauffeurRideProfileToServer,
+} from '../services/chauffeurRideProfileApi';
 import ChauffeurDocumentsChecklist from './ChauffeurDocumentsChecklist';
 
 interface DashboardProps {
@@ -1949,14 +1952,28 @@ const Dashboard = ({
     });
   }, [rideSettingsDraft]);
 
+  /** Au chargement : lire Supabase (vérité pour la page Go), pas écraser la base avec le localStorage. */
   useEffect(() => {
-    const snap = loadChauffeurRideSettingsSnapshot();
-    void syncChauffeurRideProfileToServer({
-      petFriendly: snap.petFriendly,
-      luggageAssistance: snap.luggageAssistance,
-      insulatedBag: snap.insulatedBag,
-    });
-  }, []);
+    void fetchChauffeurRideProfileFromServer().then((profile) => {
+      if (!profile) return
+      setChauffeurRideSettings((prev) => {
+        const next = {
+          ...prev,
+          petFriendly: profile.petFriendly,
+          luggageAssistance: profile.luggageAssistance,
+          insulatedBag: profile.insulatedBag,
+        }
+        saveChauffeurRideSettingsSnapshot(next)
+        return next
+      })
+      setRideSettingsDraft((prev) => ({
+        ...prev,
+        petFriendly: profile.petFriendly,
+        luggageAssistance: profile.luggageAssistance,
+        insulatedBag: profile.insulatedBag,
+      }))
+    })
+  }, [])
 
   const isRideSettingsDirty = useMemo(
     () =>
