@@ -1923,6 +1923,25 @@ button.dashboard-panel--overview-empty:focus-visible {
   color: #374151;
 }
 
+.dashboard-inline-link-btn {
+  display: inline;
+  padding: 0;
+  border: none;
+  background: none;
+  color: var(--palto-accent, #2563eb);
+  font: inherit;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.dashboard-inline-link-btn:hover {
+  color: var(--palto-accent-hover, #1d4ed8);
+}
+
+.dashboard-table-section--palto-account {
+  padding: 0;
+}
+
 .dashboard-user-actions {
   margin-top: 14px;
   display: flex;

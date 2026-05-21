@@ -1,5 +1,10 @@
 import { apiBaseUrl, stripeCheckoutEnabled } from '../constants/featureFlags'
-import { getClientAuthorizationHeader } from './authService'
+import { getClientAuthorizationHeader, getDashboardAuthorizationHeader } from './authService'
+
+/** Session client ou chauffeur (même email → profil client Stripe lié côté API). */
+export function getStripeAuthorizationHeader(): string | null {
+  return getClientAuthorizationHeader() || getDashboardAuthorizationHeader()
+}
 
 const API_BASE_URL = apiBaseUrl()
 
@@ -34,9 +39,9 @@ async function postStripeAction<T>(
   action: string,
   body?: Record<string, unknown>
 ): Promise<T> {
-  const auth = getClientAuthorizationHeader()
+  const auth = getStripeAuthorizationHeader()
   if (!auth) {
-    throw new Error('Connexion client requise')
+    throw new Error('Connexion Palto requise')
   }
   const res = await fetch(`${API_BASE_URL}/stripe?action=${encodeURIComponent(action)}`, {
     method: 'POST',

@@ -40,6 +40,7 @@ import {
   CalendarDays,
   House,
   User,
+  IdCard,
   Bell,
   PanelLeft,
   MapPin,
@@ -78,6 +79,9 @@ import { loadClientAccountSnapshot } from '../constants/clientAccountStorage';
 import { trackEvent } from '../services/googleAnalyticsTracking';
 import { useChauffeurPresenceHeartbeat } from '../hooks/useChauffeurPresenceHeartbeat';
 import { ChauffeurPresenceGeoBar } from './ChauffeurPresenceGeoBar';
+import ChauffeurPaltoAccountPanel, {
+  type ChauffeurPaltoAccountSection,
+} from './ChauffeurPaltoAccountPanel';
 import { toast } from 'sonner';
 import './Dashboard.css';
 import './Dashboard.app-theme.css';
@@ -225,6 +229,7 @@ type DashboardView =
 
 type OrganizationSubView = 'profile' | 'team' | 'fleet' | 'invites' | 'settings';
 type UserSubView =
+  | 'palto-account'
   | 'profile'
   | 'documents'
   | 'payment'
@@ -675,6 +680,7 @@ const Dashboard = ({
   const [complianceUiTick, setComplianceUiTick] = useState(0);
   const [orgSubView, setOrgSubView] = useState<OrganizationSubView>('profile');
   const [userSubView, setUserSubView] = useState<UserSubView>('profile');
+  const [paltoAccountSection, setPaltoAccountSection] = useState<ChauffeurPaltoAccountSection>('personal');
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [isMobileViewport, setIsMobileViewport] = useState(() =>
     typeof window !== 'undefined' ? window.innerWidth <= 768 : false
@@ -1081,18 +1087,34 @@ const Dashboard = ({
     };
   }, [planningModalDate, isMobileViewport]);
 
+  const openChauffeurPaltoAccount = useCallback(
+    (section: ChauffeurPaltoAccountSection = 'personal') => {
+      setPaltoAccountSection(section);
+      setUserSubView('palto-account');
+      setActiveView('user');
+      setTopbarAccountMenuOpen(false);
+      if (isMobileViewport) {
+        setMobileSidebarOpen(false);
+      }
+    },
+    [isMobileViewport]
+  );
+
   const handleNavSelect = useCallback(
     (view: DashboardView) => {
       setPaltoMenuOpen(false);
       if (view === 'organization') {
         setOrgSubView('profile');
       }
+      if (view === 'user' && userSubView !== 'palto-account') {
+        setUserSubView('profile');
+      }
       setActiveView(view);
       if (isMobileViewport) {
         setMobileSidebarOpen(false);
       }
     },
-    [isMobileViewport]
+    [isMobileViewport, userSubView]
   );
 
   const handleTopbarLogout = useCallback(() => {
@@ -2297,10 +2319,7 @@ const Dashboard = ({
                         <button
                           type="button"
                           className="client-compte-account-menu__item"
-                          onClick={() => {
-                            setTopbarAccountMenuOpen(false);
-                            handleNavSelect('user');
-                          }}
+                          onClick={() => openChauffeurPaltoAccount('personal')}
                         >
                           {language === 'en' ? 'Manage Palto account' : 'Gerer le compte Palto'}
                         </button>
@@ -3447,11 +3466,19 @@ const Dashboard = ({
                         <nav className="dashboard-org-nav">
                           <button
                             type="button"
+                            className={`dashboard-org-nav-item${userSubView === 'palto-account' ? ' active' : ''}`}
+                            onClick={() => openChauffeurPaltoAccount('personal')}
+                          >
+                            <IdCard size={16} aria-hidden />
+                            <span>{language === 'en' ? 'Palto account' : 'Compte Palto'}</span>
+                          </button>
+                          <button
+                            type="button"
                             className={`dashboard-org-nav-item${userSubView === 'profile' ? ' active' : ''}`}
                             onClick={() => setUserSubView('profile')}
                           >
                             <User size={16} aria-hidden />
-                            <span>Profil</span>
+                            <span>Profil chauffeur</span>
                           </button>
                           <button
                             type="button"
@@ -3467,7 +3494,7 @@ const Dashboard = ({
                             onClick={() => setUserSubView('payment')}
                           >
                             <Wallet size={16} aria-hidden />
-                            <span>Paiement</span>
+                            <span>{language === 'en' ? 'Payouts' : 'Versements'}</span>
                           </button>
                           <button
                             type="button"
@@ -3559,6 +3586,14 @@ const Dashboard = ({
                         </nav>
                       </aside>
                       <div className="dashboard-org-main">
+                      {userSubView === 'palto-account' ? (
+                        <section className="dashboard-table-section dashboard-table-section--palto-account">
+                          <ChauffeurPaltoAccountPanel
+                            sessionEmail={getChauffeurSessionEmail()}
+                            initialSection={paltoAccountSection}
+                          />
+                        </section>
+                      ) : null}
                       {(userSubView === 'profile' ||
                         userSubView === 'documents' ||
                         userSubView === 'payment' ||
@@ -3575,7 +3610,17 @@ const Dashboard = ({
                                 <h4>
                                   {paltoIdentity.fullName}
                                 </h4>
-                                <p>Identité gérée dans "Gérer le compte Palto".</p>
+                                <p className="dashboard-field-hint">
+                                  Profil chauffeur (véhicule, téléphone, plaque). Nom, email et photo Palto :{' '}
+                                  <button
+                                    type="button"
+                                    className="dashboard-inline-link-btn"
+                                    onClick={() => openChauffeurPaltoAccount('personal')}
+                                  >
+                                    Compte Palto
+                                  </button>
+                                  .
+                                </p>
                               </div>
                             </div>
                             <form
@@ -3758,7 +3803,34 @@ const Dashboard = ({
                         {userSubView === 'payment' ? (
                           <div className="dashboard-user-sections">
                             <section className="dashboard-user-subcard">
-                              <h4>Paiements</h4>
+                              <h4>{language === 'en' ? 'Payouts & collection' : 'Versements & encaissement'}</h4>
+                              <p className="dashboard-field-hint" style={{ margin: '0 0 12px' }}>
+                                {language === 'en' ? (
+                                  <>
+                                    Bank payouts for your driver activity. For Stripe test cards (Go as passenger), see{' '}
+                                    <button
+                                      type="button"
+                                      className="dashboard-inline-link-btn"
+                                      onClick={() => openChauffeurPaltoAccount('payment')}
+                                    >
+                                      Palto account → Payment
+                                    </button>
+                                    .
+                                  </>
+                                ) : (
+                                  <>
+                                    Versements bancaires pour votre activité chauffeur. Pour les cartes Stripe (mode test, courses Go en passager), voir{' '}
+                                    <button
+                                      type="button"
+                                      className="dashboard-inline-link-btn"
+                                      onClick={() => openChauffeurPaltoAccount('payment')}
+                                    >
+                                      Compte Palto → Paiement
+                                    </button>
+                                    .
+                                  </>
+                                )}
+                              </p>
                               <form
                                 className="dashboard-payment-edit-grid"
                                 onSubmit={(e) => {

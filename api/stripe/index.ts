@@ -85,7 +85,17 @@ function readBearerToken(req: VercelRequest): string | null {
   return token || null
 }
 
-async function requireClientSession(req: VercelRequest, res: VercelResponse) {
+type StripePayerContext = {
+  supabase: Awaited<ReturnType<typeof getSupabaseAdmin>>
+  accountId: string
+  email: string
+}
+
+/** Client direct, ou chauffeur avec compte passager lié au même email (cartes / portefeuille). */
+async function requireStripePayerSession(
+  req: VercelRequest,
+  res: VercelResponse
+): Promise<StripePayerContext | null> {
   const token = readBearerToken(req)
   if (!token) {
     res.status(401).json({ error: 'Non autorise' })
@@ -95,16 +105,45 @@ async function requireClientSession(req: VercelRequest, res: VercelResponse) {
   try {
     supabase = getSupabaseAdmin()
   } catch (e) {
-    console.error('[stripe/client]', e)
+    console.error('[stripe/payer]', e)
     res.status(503).json({ error: 'Service indisponible' })
     return null
   }
   const session = await getPaltoAppSessionByToken(supabase, token)
-  if (!session || session.role !== 'client') {
+  if (!session) {
     res.status(401).json({ error: 'Non autorise' })
     return null
   }
-  return { supabase, session }
+
+  if (session.role === 'client') {
+    return { supabase, accountId: session.accountId, email: session.email }
+  }
+
+  if (session.role === 'chauffeur') {
+    const { data: clientAccount, error } = await supabase
+      .from('app_accounts')
+      .select('id')
+      .eq('email', session.email)
+      .eq('role', 'client')
+      .maybeSingle()
+    if (error) {
+      console.error('[stripe/payer] client lookup', error)
+      res.status(503).json({ error: 'Service indisponible' })
+      return null
+    }
+    const clientId = String(clientAccount?.id ?? '').trim()
+    if (!clientId) {
+      res.status(403).json({
+        error:
+          'Aucun compte passager lie a cet email. Creez ou connectez un compte client avec la meme adresse pour enregistrer une carte.',
+      })
+      return null
+    }
+    return { supabase, accountId: clientId, email: session.email }
+  }
+
+  res.status(401).json({ error: 'Non autorise' })
+  return null
 }
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
@@ -221,7 +260,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       return
     }
 
-    const ctx = await requireClientSession(req, res)
+    const ctx = await requireStripePayerSession(req, res)
     if (!ctx) return
 
     let body: unknown
@@ -232,9 +271,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       return
     }
 
-    const { supabase, session } = ctx
-    const accountId = session.accountId
-    const email = session.email
+    const { supabase, accountId, email } = ctx
 
     try {
       if (action === 'setup-intent') {
