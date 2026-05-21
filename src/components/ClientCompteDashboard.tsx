@@ -202,13 +202,6 @@ function clientRideDurationMinutes(ride: ClientRideItem): number {
   return Math.max(1, Math.round((b - a) / 60000));
 }
 
-const WALLET_SAMPLE_MOVEMENTS: Array<{
-  id: string;
-  date: string;
-  amountCents: number;
-  labelKey: 'clientAccount.walletMov1' | 'clientAccount.walletMov2' | 'clientAccount.walletMov3';
-}> = [];
-
 function formatStripeCardBrand(brand: string): string {
   const b = brand.toLowerCase();
   if (b === 'visa') return 'Visa';
@@ -464,9 +457,18 @@ export default function ClientCompteDashboard({ onBack, onOpenClientLiveMeet }: 
     if (!selectedRide) return false;
     return selectedRide.rawStatus === 'pending' || selectedRide.rawStatus === 'accepted';
   }, [selectedRide]);
-  const recentRidePrices = useMemo(() => {
-    return ridesForUi.filter((r) => r.priceEur > 0).slice(0, 3);
-  }, [ridesForUi]);
+  const walletRideMovements = useMemo(() => {
+    const createdAtById = new Map(clientRides.map((r) => [r.id, r.createdAt]));
+    return [...ridesForUi]
+      .filter((r) => r.priceEur > 0)
+      .sort((a, b) => {
+        const ta = Date.parse(createdAtById.get(a.id) ?? '') || 0;
+        const tb = Date.parse(createdAtById.get(b.id) ?? '') || 0;
+        return tb - ta;
+      });
+  }, [ridesForUi, clientRides]);
+
+  const recentRidePrices = useMemo(() => walletRideMovements.slice(0, 3), [walletRideMovements]);
   const overviewRecentRides = useMemo(() => ridesForUi.slice(0, 6), [ridesForUi]);
   const overviewMapBgUrl = '/images/2948124.jpg';
 
@@ -3345,27 +3347,36 @@ export default function ClientCompteDashboard({ onBack, onOpenClientLiveMeet }: 
                 </article>
                 <article className="dashboard-user-card" style={{ marginTop: 20 }}>
                   <h3 className="client-compte-section-title">{t('clientAccount.walletMovementsTitle')}</h3>
-                  <ul className="client-compte-wallet-movements">
-                    {WALLET_SAMPLE_MOVEMENTS.map((m) => (
-                      <li key={m.id} className="client-compte-wallet-movement-row">
-                        <div>
-                          <strong>{t(m.labelKey)}</strong>
-                          <p className="dashboard-field-hint" style={{ margin: '4px 0 0' }}>
-                            {m.date}
-                          </p>
-                        </div>
-                        <span
-                          className={
-                            m.amountCents < 0
-                              ? 'client-compte-wallet-amount client-compte-wallet-amount--debit'
-                              : 'client-compte-wallet-amount client-compte-wallet-amount--credit'
-                          }
-                        >
-                          {formatWalletEUR(m.amountCents, language)}
-                        </span>
-                      </li>
-                    ))}
-                  </ul>
+                  {walletRideMovements.length === 0 ? (
+                    <p className="dashboard-field-hint" style={{ margin: 0 }}>
+                      {isEn
+                        ? 'No ride payments yet. Your trips will appear here.'
+                        : 'Aucun paiement de course pour le moment. Vos trajets apparaîtront ici.'}
+                    </p>
+                  ) : (
+                    <ul className="client-compte-wallet-movements">
+                      {walletRideMovements.slice(0, 10).map((ride) => (
+                        <li key={ride.id} className="client-compte-wallet-movement-row">
+                          <div>
+                            <strong>{ride.route}</strong>
+                            <p className="dashboard-field-hint" style={{ margin: '4px 0 0' }}>
+                              {language === 'en' ? ride.dateEn : ride.date} ·{' '}
+                              <span
+                                className={`ride-status-badge ride-status-badge--${rideStatusTone(
+                                  language === 'en' ? ride.statusEn : ride.status
+                                )}`}
+                              >
+                                {language === 'en' ? ride.statusEn : ride.status}
+                              </span>
+                            </p>
+                          </div>
+                          <span className="client-compte-wallet-amount client-compte-wallet-amount--debit">
+                            {formatWalletEUR(-Math.round(ride.priceEur * 100), language)}
+                          </span>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
                 </article>
               </section>
             </div>
