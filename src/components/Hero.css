@@ -13,9 +13,8 @@
     overflow-x: hidden;
   }
 
-  /* Compte/Chauffeur : le scroll doit être celui de la page (barre à droite du viewport). */
+  /* Compte client / accueil : scroll sur la page. Chauffeur : scroll interne (Dashboard.css). */
   .page.active:has(.dashboard-container--client-compte),
-  .page.active:has(.dashboard-container--chauffeur),
   .page.active:has(.dashboard-container--home-accueil) {
     overflow-y: auto;
     overflow-x: hidden;

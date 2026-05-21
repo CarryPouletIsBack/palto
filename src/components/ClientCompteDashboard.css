@@ -9,7 +9,6 @@
 /* Desktop : scroll porté par la page, pas par dashboard-main. */
 @media (min-width: 769px) {
   .page.active:has(.dashboard-container--client-compte),
-  .page.active:has(.dashboard-container--chauffeur),
   .page.active:has(.dashboard-container--home-accueil) {
     overflow-y: auto;
     overflow-x: hidden;
@@ -44,13 +43,22 @@
   }
 
   .dashboard-container--client-compte,
-  .dashboard-container--chauffeur,
   .dashboard-container--home-accueil {
     flex: 1 1 auto;
     min-height: 0;
     max-height: none;
     height: auto;
     overflow: visible;
+  }
+
+  /* Chauffeur desktop : hauteur bornée — le scroll est dans .dashboard-content (ou .dashboard-org-main). */
+  .dashboard-container--chauffeur {
+    flex: 1 1 auto;
+    min-height: 0;
+    max-height: 100%;
+    height: 100%;
+    overflow: hidden;
+    align-self: stretch;
   }
 
   .dashboard-container--client-compte .dashboard-sidebar,

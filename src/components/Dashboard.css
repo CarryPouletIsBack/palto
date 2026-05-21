@@ -4324,6 +4324,22 @@ button.dashboard-org-sidebar-brand--home:focus-visible {
 
 /* Compte chauffeur desktop : cadre flottant (style "app card") */
 @media (min-width: 769px) {
+  body.document-scroll-page .page.active:has(.dashboard-container--chauffeur) {
+    overflow: hidden;
+    flex: 1 1 auto;
+    min-height: 0;
+    max-height: 100%;
+  }
+
+  body.document-scroll-page .page.active .main-accueil:has(.dashboard-container--chauffeur) {
+    flex: 1 1 auto;
+    min-height: 0;
+    max-height: 100%;
+    overflow: hidden;
+    margin-top: 0;
+    min-height: 0;
+  }
+
   .dashboard-container--chauffeur {
     padding: 12px;
     gap: 6px;
@@ -4339,14 +4355,19 @@ button.dashboard-org-sidebar-brand--home:focus-visible {
   }
 
   .dashboard-container--chauffeur .dashboard-main {
+    flex: 1 1 auto;
     min-height: 0;
+    max-height: 100%;
     /* border: 1px solid #dbe3ee; */
     border-radius: 18px;
     overflow: hidden;
     background: #f3f6fb;
+    display: flex;
+    flex-direction: column;
   }
 
   .dashboard-container--chauffeur .dashboard-topbar {
+    flex-shrink: 0;
     background: #f3f6fb;
     /* margin: 10px 10px 0; */
     /* border: 1px solid #dbe3ee; */
@@ -4354,8 +4375,24 @@ button.dashboard-org-sidebar-brand--home:focus-visible {
   }
 
   .dashboard-container--chauffeur .dashboard-content {
-    /* margin: 10px 10px 10px; */
-    /* width: fit-content; */
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow-y: auto;
+    overflow-x: hidden;
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior: contain;
+  }
+
+  .dashboard-container--chauffeur .dashboard-content.dashboard-content--org-fullbleed {
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .dashboard-container--chauffeur .dashboard-content.dashboard-content--org-fullbleed > .dashboard-org-layout {
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow: hidden;
   }
 }
 
