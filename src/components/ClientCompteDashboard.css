@@ -15,8 +15,7 @@
     max-height: none;
   }
 
-  .page.active .main-accueil:has(.dashboard-container--client-compte),
-  .page.active .main-accueil:has(.dashboard-container--chauffeur) {
+  .page.active .main-accueil:has(.dashboard-container--client-compte) {
     margin: 0;
     padding: 0;
     width: 100%;
@@ -24,6 +23,18 @@
     min-height: 0;
     flex: 1 1 auto;
     overflow: visible;
+    align-items: stretch;
+    box-sizing: border-box;
+  }
+
+  .page.active .main-accueil:has(.dashboard-container--chauffeur) {
+    margin: 0;
+    padding: 0;
+    width: 100%;
+    max-width: none;
+    min-height: 0;
+    flex: 1 1 auto;
+    overflow: hidden;
     align-items: stretch;
     box-sizing: border-box;
   }

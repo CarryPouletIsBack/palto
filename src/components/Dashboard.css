@@ -4397,8 +4397,65 @@ button.dashboard-org-sidebar-brand--home:focus-visible {
 }
 
 @media (max-width: 768px) {
+  body.document-scroll-page .page.active:has(.dashboard-container--chauffeur) {
+    overflow: hidden;
+    flex: 1 1 auto;
+    min-height: 0;
+    max-height: 100%;
+    height: 100%;
+  }
+
+  body.document-scroll-page .page.active .main-accueil:has(.dashboard-container--chauffeur) {
+    flex: 1 1 auto;
+    min-height: 0;
+    max-height: 100%;
+    height: 100%;
+    overflow: hidden;
+    margin-top: 0;
+  }
+
   .dashboard-container--chauffeur {
+    flex: 1 1 auto;
+    min-height: 0;
+    height: 100%;
+    max-height: 100%;
+    overflow: hidden;
     gap: 6px;
+  }
+
+  .dashboard-container--chauffeur .dashboard-main {
+    flex: 1 1 auto;
+    min-height: 0;
+    max-height: 100%;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .dashboard-container--chauffeur .dashboard-topbar {
+    flex-shrink: 0;
+  }
+
+  .dashboard-container--chauffeur .dashboard-content {
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow-y: auto;
+    overflow-x: hidden;
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior: contain;
+    touch-action: pan-y;
+  }
+
+  .dashboard-container--chauffeur .dashboard-content.dashboard-content--org-fullbleed {
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .dashboard-container--chauffeur .dashboard-content.dashboard-content--org-fullbleed > .dashboard-org-layout {
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow: hidden;
   }
 
   /* Pas de bandeau header : seul le bouton compte reste, fixe (style proche iOS / ClickUp) */

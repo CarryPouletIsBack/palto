@@ -37,13 +37,21 @@
     flex: 1 1 auto;
   }
 
-  body.document-scroll-page .page:not(.single-project-page):has(.dashboard-container--client-compte),
+  body.document-scroll-page .page:not(.single-project-page):has(.dashboard-container--client-compte) {
+    overflow-y: auto;
+    overflow-x: hidden;
+    min-height: 0;
+    flex: 1 1 auto;
+    height: auto;
+    max-height: none;
+  }
+
   body.document-scroll-page .page:not(.single-project-page):has(.dashboard-container--chauffeur) {
     overflow-y: hidden;
     overflow-x: hidden;
     min-height: 0;
     flex: 1 1 auto;
-    height: auto;
+    height: 100%;
     max-height: 100%;
   }
 
@@ -78,7 +86,10 @@ body.accueil-page :is(.page.active:not(.single-project-page), .hero-accueil-root
 }
 
 /* :not(.client-meet-driver-page) — cette page gère ses propres marges dans ClientMeetDriverPage.css */
-body.document-scroll-page .page.active:not(.single-project-page):not(.client-meet-driver-page) {
+body.document-scroll-page
+  .page.active:not(.single-project-page):not(.client-meet-driver-page):not(
+    :has(.dashboard-container--chauffeur)
+  ) {
   position: relative;
   width: 100%;
   max-width: 100%;
@@ -88,8 +99,8 @@ body.document-scroll-page .page.active:not(.single-project-page):not(.client-mee
   overflow: visible;
 }
 
-body.document-scroll-page .page.active:not(.single-project-page):has(.dashboard-container--client-compte),
-body.document-scroll-page .page.active:not(.single-project-page):has(.dashboard-container--chauffeur) {
+/* Compte client : scroll document. Chauffeur : scroll dans .dashboard-content (Dashboard.css). */
+body.document-scroll-page .page.active:not(.single-project-page):has(.dashboard-container--client-compte) {
   overflow: visible;
   flex: 1 1 auto;
   min-height: 0;

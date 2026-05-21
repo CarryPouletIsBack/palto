@@ -4,6 +4,7 @@ import {
   useMemo,
   useCallback,
   useRef,
+  type ChangeEvent,
   type FormEvent,
   type ReactNode,
 } from 'react';
@@ -263,6 +264,13 @@ type ChauffeurDocument = {
   status: 'ok' | 'soon' | 'pending';
   uploadedFileName?: string;
 };
+
+/** Évite `e.target` null (autocomplete iOS / inspecteur) lors de la saisie profil. */
+function readFormControlValue(
+  e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
+): string {
+  return e.currentTarget?.value ?? '';
+}
 
 const REUNION_CITY_SUGGESTIONS = [
   'Saint-Denis',
@@ -832,16 +840,26 @@ const Dashboard = ({
   }, []);
 
   const applyChauffeurProfileToUi = useCallback((profile: ChauffeurProfile) => {
-    setChauffeurProfile(profile);
-    setUserProfileDraft(profile);
+    const normalized: ChauffeurProfile = {
+      ...profile,
+      ville: profile.ville ?? '',
+      vehicule: profile.vehicule ?? '',
+      plaque: profile.plaque ?? '',
+      prenom: profile.prenom ?? '',
+      nom: profile.nom ?? '',
+      email: profile.email ?? '',
+      telephone: profile.telephone ?? '',
+    };
+    setChauffeurProfile(normalized);
+    setUserProfileDraft(normalized);
     setProfilePhotoUrl(profile.profilePhotoUrl ?? null);
     setOrganizationPhotoUrl(profile.organizationPhotoUrl ?? null);
     setVehiclePhotoUrl(profile.vehiclePhotoUrl ?? null);
     setProfilePhotoName(profile.profilePhotoName ?? '');
     setOrganizationPhotoName(profile.organizationPhotoName ?? '');
     setVehiclePhotoName(profile.vehiclePhotoName ?? '');
-    const parsedStoredPhone = parseStoredPhone(profile.telephone);
-    if (profile.telephone.trim()) {
+    const parsedStoredPhone = parseStoredPhone(normalized.telephone);
+    if (normalized.telephone.trim()) {
       setPhoneCountryDraft(parsedStoredPhone.country);
       setPhoneNationalDraft(parsedStoredPhone.nationalNumber);
     }
@@ -3511,7 +3529,7 @@ const Dashboard = ({
                                       type="text"
                                       value={phoneNationalDraft}
                                       onChange={(e) => {
-                                        setPhoneNationalDraft(e.target.value);
+                                        setPhoneNationalDraft(readFormControlValue(e));
                                         if (phoneError) setPhoneError(null);
                                       }}
                                       placeholder={phoneCountryDraft === 'FR' ? '612345678' : '692123456'}
@@ -3533,16 +3551,11 @@ const Dashboard = ({
                                     name="chauffeur-ville"
                                     autoComplete="address-level2"
                                     enterKeyHint="next"
-                                    value={userProfileDraft.ville}
-                                    onChange={(e) =>
-                                      setUserProfileDraft((prev) => ({ ...prev, ville: e.target.value }))
-                                    }
-                                    onInput={(e) =>
-                                      setUserProfileDraft((prev) => ({
-                                        ...prev,
-                                        ville: e.currentTarget.value,
-                                      }))
-                                    }
+                                    value={userProfileDraft.ville ?? ''}
+                                    onChange={(e) => {
+                                      const ville = readFormControlValue(e);
+                                      setUserProfileDraft((prev) => ({ ...prev, ville }));
+                                    }}
                                     required
                                   />
                                   <small className="dashboard-field-hint">
@@ -3555,7 +3568,7 @@ const Dashboard = ({
                                     name="chauffeur-vehicule"
                                     value={normalizeVehicleSlugForSelect(userProfileDraft.vehicule)}
                                     onChange={(e) => {
-                                      const slug = normalizeVehicleSlugForSelect(e.target.value);
+                                      const slug = normalizeVehicleSlugForSelect(readFormControlValue(e));
                                       setUserProfileDraft((prev) => ({ ...prev, vehicule: slug }));
                                     }}
                                   >
@@ -3573,7 +3586,10 @@ const Dashboard = ({
                                     type="text"
                                     value={userProfileDraft.plaque}
                                     onChange={(e) =>
-                                      setUserProfileDraft((prev) => ({ ...prev, plaque: e.target.value }))
+                                      setUserProfileDraft((prev) => ({
+                                        ...prev,
+                                        plaque: readFormControlValue(e),
+                                      }))
                                     }
                                     onBlur={() => {
                                       void handlePlateBlurLookup();
