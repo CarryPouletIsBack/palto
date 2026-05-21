@@ -32,6 +32,7 @@ import LanguageSwitcher from './LanguageSwitcher';
 import { trackEvent } from '../services/googleAnalyticsTracking';
 import { fileToCompressedProfilePhotoDataUrl } from '../utils/clientProfilePhotoDataUrl';
 import { useClientHomeTopbarRides } from '../hooks/useClientHomeTopbarRides';
+import { useBodyScrollLock } from '../hooks/useBodyScrollLock';
 import './Dashboard.css';
 import './Dashboard.app-theme.css';
 import './ClientCompteDashboard.css';
@@ -362,6 +363,13 @@ export default function ClientCompteDashboard({ onBack, onOpenClientLiveMeet }: 
   const [paymentEditSaving, setPaymentEditSaving] = useState(false);
   const stripeOn = clientStripeApiEnabled();
   const stripePk = stripePublishableKey();
+  const clientCompteModalOpen =
+    accountEditModal.open ||
+    paymentModalOpen ||
+    paymentViewPm !== null ||
+    paymentEditPm !== null ||
+    mapPickTarget !== null;
+  useBodyScrollLock(clientCompteModalOpen);
   const [placesDraft, setPlacesDraft] = useState<ClientSavedPlacesSnapshot>(() =>
     loadClientSavedPlaces(getCurrentClientUser()?.email)
   );
@@ -2746,35 +2754,37 @@ export default function ClientCompteDashboard({ onBack, onOpenClientLiveMeet }: 
                   <div className="client-compte-account-edit-modal-head">
                     <h4>{isEn ? 'Card details' : 'Details de la carte'}</h4>
                   </div>
-                  <p style={{ margin: '0 0 8px' }}>
-                    <strong>{formatStripeCardBrand(paymentViewPm.brand)}</strong> •••• {paymentViewPm.last4}
-                  </p>
-                  <p className="dashboard-field-hint" style={{ margin: '0 0 12px' }}>
-                    {String(paymentViewPm.expMonth).padStart(2, '0')}/{String(paymentViewPm.expYear).slice(-2)}
-                  </p>
-                  <h5 className="client-compte-payment-delivery-title" style={{ marginTop: 0 }}>
-                    {isEn ? 'Billing address' : 'Adresse de facturation'}
-                  </h5>
-                  {paymentViewPm.billing?.line1 ? (
-                    <p style={{ margin: 0 }}>
-                      {paymentViewPm.billing.name ? (
-                        <>
-                          {paymentViewPm.billing.name}
-                          <br />
-                        </>
-                      ) : null}
-                      {formatStripeBillingLines(paymentViewPm.billing).map((line) => (
-                        <span key={line}>
-                          {line}
-                          <br />
-                        </span>
-                      ))}
+                  <div className="client-compte-account-edit-modal-body">
+                    <p style={{ margin: '0 0 8px' }}>
+                      <strong>{formatStripeCardBrand(paymentViewPm.brand)}</strong> •••• {paymentViewPm.last4}
                     </p>
-                  ) : (
-                    <p className="dashboard-field-hint" style={{ margin: 0 }}>
-                      {isEn ? 'No billing address on file.' : 'Aucune adresse de facturation enregistree.'}
+                    <p className="dashboard-field-hint" style={{ margin: '0 0 12px' }}>
+                      {String(paymentViewPm.expMonth).padStart(2, '0')}/{String(paymentViewPm.expYear).slice(-2)}
                     </p>
-                  )}
+                    <h5 className="client-compte-payment-delivery-title" style={{ marginTop: 0 }}>
+                      {isEn ? 'Billing address' : 'Adresse de facturation'}
+                    </h5>
+                    {paymentViewPm.billing?.line1 ? (
+                      <p style={{ margin: 0 }}>
+                        {paymentViewPm.billing.name ? (
+                          <>
+                            {paymentViewPm.billing.name}
+                            <br />
+                          </>
+                        ) : null}
+                        {formatStripeBillingLines(paymentViewPm.billing).map((line) => (
+                          <span key={line}>
+                            {line}
+                            <br />
+                          </span>
+                        ))}
+                      </p>
+                    ) : (
+                      <p className="dashboard-field-hint" style={{ margin: 0 }}>
+                        {isEn ? 'No billing address on file.' : 'Aucune adresse de facturation enregistree.'}
+                      </p>
+                    )}
+                  </div>
                   <div className="client-compte-account-edit-modal-actions">
                     <button type="button" className="dashboard-user-edit-btn" onClick={closePaymentMethodView}>
                       {isEn ? 'Close' : 'Fermer'}
@@ -2888,6 +2898,7 @@ export default function ClientCompteDashboard({ onBack, onOpenClientLiveMeet }: 
                   <div className="client-compte-account-edit-modal-head">
                     <h4>{isEn ? 'Add payment method' : 'Ajouter un mode de paiement'}</h4>
                   </div>
+                  <div className="client-compte-account-edit-modal-body">
                   {stripeOn && stripePk ? (
                     <>
                       <p className="dashboard-field-hint" style={{ margin: '0 0 8px' }}>
@@ -2904,6 +2915,7 @@ export default function ClientCompteDashboard({ onBack, onOpenClientLiveMeet }: 
                         <PaltoStripeSetupForm
                           publishableKey={stripePk}
                           clientSecret={setupClientSecret}
+                          customerEmail={activeClientEmail || profile.email.trim()}
                           onSuccess={handleSetupCardSuccess}
                           onError={(msg) => toast.error(msg)}
                           submitLabel={isEn ? 'Save card' : 'Enregistrer la carte'}
@@ -2912,7 +2924,7 @@ export default function ClientCompteDashboard({ onBack, onOpenClientLiveMeet }: 
                     </>
                   ) : (
                     <>
-                      <div className="client-compte-account-edit-modal-grid">
+                      <div className="client-compte-account-edit-modal-grid client-compte-account-edit-modal-grid--nested">
                         <label className="client-compte-account-edit-modal-row">
                           <span>{isEn ? 'Card number' : 'Numero de carte'}</span>
                           <input className={`client-compte-account-edit-modal-input${paymentErrors.cardNumber ? ' is-invalid' : ''}`} value={paymentForm.cardNumber} onChange={(e) => setPaymentForm((p) => ({ ...p, cardNumber: e.target.value }))} />
@@ -2963,23 +2975,19 @@ export default function ClientCompteDashboard({ onBack, onOpenClientLiveMeet }: 
                           </label>
                         </div>
                       </div>
-                      <div className="client-compte-account-edit-modal-actions">
-                        <button type="button" className="dashboard-user-edit-btn dashboard-user-edit-btn--secondary" onClick={closePaymentModal}>
-                          {isEn ? 'Cancel' : 'Annuler'}
-                        </button>
-                        <button type="button" className="dashboard-user-edit-btn" onClick={submitPaymentMethod}>
-                          {isEn ? 'Save card' : 'Enregistrer la carte'}
-                        </button>
-                      </div>
                     </>
                   )}
-                  {stripeOn ? (
-                    <div className="client-compte-account-edit-modal-actions">
-                      <button type="button" className="dashboard-user-edit-btn dashboard-user-edit-btn--secondary" onClick={closePaymentModal}>
-                        {isEn ? 'Cancel' : 'Annuler'}
+                  </div>
+                  <div className="client-compte-account-edit-modal-actions">
+                    <button type="button" className="dashboard-user-edit-btn dashboard-user-edit-btn--secondary" onClick={closePaymentModal}>
+                      {isEn ? 'Cancel' : 'Annuler'}
+                    </button>
+                    {!stripeOn ? (
+                      <button type="button" className="dashboard-user-edit-btn" onClick={submitPaymentMethod}>
+                        {isEn ? 'Save card' : 'Enregistrer la carte'}
                       </button>
-                    </div>
-                  ) : null}
+                    ) : null}
+                  </div>
                 </div>
               </div>
             ) : null}

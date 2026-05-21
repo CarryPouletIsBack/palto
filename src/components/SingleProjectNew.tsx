@@ -20,6 +20,7 @@ import { confirmRidePaymentAuthorized } from '../services/stripeRidePayment';
 import { stripeCheckoutEnabled, stripePublishableKey } from '../constants/featureFlags';
 import { formatRideTotalWithPaltoFee } from '../constants/stripeFees';
 import PaltoRideCheckoutPanel from './PaltoRideCheckoutPanel';
+import { useBodyScrollLock } from '../hooks/useBodyScrollLock';
 import { motion, useMotionValue } from 'framer-motion';
 import { Swiper, SwiperSlide } from 'swiper/react';
 import { Pagination } from 'swiper/modules';
@@ -1781,14 +1782,13 @@ const SingleProjectNew: FC<SingleProjectProps> = ({
     setCheckoutPendingExternalCode(null);
   }, []);
 
-  /** Modale récap/checkout plein écran + portal : mobile Go uniquement. */
+  useBodyScrollLock(isRecapPopupOpen || isCheckoutPopupOpen);
+
+  /** Classe layout mobile Go quand modale récap/checkout ouverte. */
   useEffect(() => {
     if (!isMobileGoViewport || (!isRecapPopupOpen && !isCheckoutPopupOpen)) return;
-    const prevOverflow = document.body.style.overflow;
-    document.body.style.overflow = 'hidden';
     document.body.classList.add('palto-go-ride-modal-open');
     return () => {
-      document.body.style.overflow = prevOverflow;
       document.body.classList.remove('palto-go-ride-modal-open');
     };
   }, [isMobileGoViewport, isRecapPopupOpen, isCheckoutPopupOpen]);

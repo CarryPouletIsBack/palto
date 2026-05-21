@@ -1663,9 +1663,16 @@ html[data-app-theme='dark'] .palto-checkout-stripe--setup .palto-checkout-stripe
     grid-template-columns: 1fr;
   }
 
+  .client-compte-account-edit-modal-backdrop {
+    align-items: flex-end;
+    padding: 0;
+  }
+
   .client-compte-account-edit-modal {
-    max-height: calc(100dvh - 16px);
-    padding: 14px;
+    width: 100%;
+    max-height: min(92dvh, 100%);
+    border-radius: 16px 16px 0 0;
+    padding: 14px 14px calc(14px + env(safe-area-inset-bottom, 0px));
   }
 }
 
@@ -1678,6 +1685,8 @@ html[data-app-theme='dark'] .palto-checkout-stripe--setup .palto-checkout-stripe
   align-items: center;
   justify-content: center;
   padding: 12px;
+  overflow: hidden;
+  overscroll-behavior: none;
 }
 
 .client-compte-account-edit-modal {
@@ -1691,6 +1700,11 @@ html[data-app-theme='dark'] .palto-checkout-stripe--setup .palto-checkout-stripe
   display: flex;
   flex-direction: column;
   overflow: hidden;
+  min-height: 0;
+}
+
+.client-compte-account-edit-modal-head {
+  flex-shrink: 0;
 }
 
 .client-compte-account-edit-modal-head h4 {
@@ -1711,12 +1725,21 @@ html[data-app-theme='dark'] .palto-checkout-stripe--setup .palto-checkout-stripe
   min-height: 44px;
 }
 
-.client-compte-account-edit-modal-grid {
+.client-compte-account-edit-modal-body .client-compte-account-edit-modal-grid--nested {
+  flex: none;
+  min-height: auto;
+  overflow: visible;
+  padding-right: 0;
+}
+
+.client-compte-account-edit-modal-grid,
+.client-compte-account-edit-modal-body {
   display: flex;
   flex-direction: column;
   gap: 10px;
-  flex: 1;
+  flex: 1 1 auto;
   min-height: 0;
+  overflow-x: hidden;
   overflow-y: auto;
   padding-right: 2px;
   overscroll-behavior: contain;
@@ -2421,11 +2444,13 @@ html[data-app-theme='dark'] .client-compte-place-field span {
   align-items: center;
   justify-content: center;
   padding: 16px;
+  overflow: hidden;
+  overscroll-behavior: none;
 }
 
 .client-compte-map-modal {
   width: min(560px, 100%);
-  max-height: min(90vh, 640px);
+  max-height: min(90dvh, 640px);
   display: flex;
   flex-direction: column;
   gap: 12px;
@@ -2434,6 +2459,8 @@ html[data-app-theme='dark'] .client-compte-place-field span {
   border: 1px solid var(--sp-edge, #e2e8f0);
   box-shadow: 0 20px 50px rgba(0, 0, 0, 0.18);
   padding: 16px;
+  overflow: hidden;
+  min-height: 0;
 }
 
 .client-compte-map-modal-head {

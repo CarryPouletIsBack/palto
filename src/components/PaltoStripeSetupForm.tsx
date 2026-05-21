@@ -12,6 +12,7 @@ import { paltoPaymentElementCardOnlyOptions } from '../utils/stripePaymentElemen
 import Button from './Button'
 
 type InnerProps = {
+  customerEmail: string
   onSuccess: () => void
   onError: (message: string) => void
   submitLabel: string
@@ -27,17 +28,62 @@ const addressElementOptions: StripeAddressElementOptions = {
   },
 }
 
-function SetupFormInner({ onSuccess, onError, submitLabel }: InnerProps) {
+function SetupFormInner({ customerEmail, onSuccess, onError, submitLabel }: InnerProps) {
   const stripe = useStripe()
   const elements = useElements()
   const [busy, setBusy] = useState(false)
 
   const handleSave = async () => {
     if (!stripe || !elements) return
+    const email = customerEmail.trim().toLowerCase()
+    if (!email) {
+      onError('E-mail client requis pour enregistrer la carte')
+      return
+    }
+
     setBusy(true)
     try {
+      const { error: submitError } = await elements.submit()
+      if (submitError) {
+        onError(submitError.message ?? 'Formulaire incomplet')
+        return
+      }
+
+      const addressElement = elements.getElement('address')
+      if (!addressElement) {
+        onError('Adresse de facturation indisponible')
+        return
+      }
+
+      const { complete, value } = await addressElement.getValue()
+      if (!complete) {
+        onError('Adresse de facturation incomplete')
+        return
+      }
+
+      const name =
+        value.name?.trim() ||
+        [value.firstName, value.lastName].filter(Boolean).join(' ').trim() ||
+        undefined
+
       const { error, setupIntent } = await stripe.confirmSetup({
         elements,
+        confirmParams: {
+          payment_method_data: {
+            billing_details: {
+              email,
+              name,
+              address: {
+                line1: value.address.line1,
+                line2: value.address.line2 || undefined,
+                city: value.address.city,
+                state: value.address.state || undefined,
+                postal_code: value.address.postal_code,
+                country: value.address.country,
+              },
+            },
+          },
+        },
         redirect: 'if_required',
       })
       if (error) {
@@ -80,6 +126,7 @@ function SetupFormInner({ onSuccess, onError, submitLabel }: InnerProps) {
 type Props = {
   publishableKey: string
   clientSecret: string
+  customerEmail: string
   onSuccess: () => void
   onError: (message: string) => void
   submitLabel: string
@@ -88,6 +135,7 @@ type Props = {
 export default function PaltoStripeSetupForm({
   publishableKey,
   clientSecret,
+  customerEmail,
   onSuccess,
   onError,
   submitLabel,
@@ -104,7 +152,12 @@ export default function PaltoStripeSetupForm({
 
   return (
     <Elements stripe={stripePromise} options={options}>
-      <SetupFormInner onSuccess={onSuccess} onError={onError} submitLabel={submitLabel} />
+      <SetupFormInner
+        customerEmail={customerEmail}
+        onSuccess={onSuccess}
+        onError={onError}
+        submitLabel={submitLabel}
+      />
     </Elements>
   )
 }

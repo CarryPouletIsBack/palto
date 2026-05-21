@@ -6151,6 +6151,8 @@ html[data-app-theme='dark'] .palto-ride-timing-expand__option:hover {
   padding: 16px;
   box-sizing: border-box;
   isolation: isolate;
+  overflow: hidden;
+  overscroll-behavior: none;
 }
 
 .palto-ride-recap-modal__backdrop {

@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
+import { useBodyScrollLock } from '../hooks/useBodyScrollLock';
 import Map, { Marker, NavigationControl, type MapLayerMouseEvent } from 'react-map-gl/maplibre';
 import 'maplibre-gl/dist/maplibre-gl.css';
 import { HOME_MAP_INITIAL_VIEW, HOME_OPENSTREET_STYLE_URL } from './HomeOsmMapBackground';
@@ -50,6 +51,8 @@ export default function ClientComptePlaceMapModal({
   const [marker, setMarker] = useState<MarkerCoords>(DEFAULT_MARKER);
   const [confirming, setConfirming] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  useBodyScrollLock(open);
 
   useEffect(() => {
     if (!open) return;
