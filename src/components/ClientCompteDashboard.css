@@ -1692,7 +1692,8 @@ html[data-app-theme='dark'] .palto-checkout-stripe--setup .palto-checkout-stripe
 .client-compte-account-edit-modal-backdrop {
   position: fixed;
   inset: 0;
-  z-index: 120;
+  /* Au-dessus du dashboard chauffeur mobile (barre ~22000, topbar ~22100) */
+  z-index: 25000;
   background: rgba(15, 23, 42, 0.42);
   display: flex;
   align-items: center;

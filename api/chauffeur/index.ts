@@ -38,6 +38,7 @@ import {
   resolveChauffeurCancelPaymentOutcome,
   type CoursePaymentRow,
 } from '../../server/lib/rideStripePayments.js'
+import { queryChauffeurCoursesList } from '../../server/lib/coursePaymentMethod.js'
 
 const ComplianceQuerySchema = z.object({ email: z.string().email() })
 const ComplianceBodySchema = z.object({
@@ -175,14 +176,11 @@ async function handleRidesGet(res: VercelResponse, driverKey: string) {
   } catch (e) {
     console.error('[chauffeur/rides GET] expire stale instant', e)
   }
-  const { data, error } = await supabase
-    .from('courses')
-    .select(
-      'id, external_code, client_id, scheduled_date, scheduled_time, pickup_address, dropoff_address, status, amount_eur, distance_km, pickup_lng, pickup_lat, dropoff_lng, dropoff_lat, booking_kind, requested_driver_external_key, assigned_driver_external_key, accepted_at, started_at, completed_at, cancelled_at, created_at, payment_method, stripe_payment_intent_id'
-    )
-    .order('created_at', { ascending: false })
-    .limit(200)
-  if (error) return res.status(500).json({ error: 'Lecture impossible' })
+  const { data, error } = await queryChauffeurCoursesList(supabase)
+  if (error) {
+    console.error('[chauffeur/rides GET] courses select', error)
+    return res.status(500).json({ error: 'Lecture impossible' })
+  }
   const rows = (data ?? []) as CourseRow[]
   const ridesBase = rows.filter((r) => visibleForDriver(r, driverKey))
   const clientIds = Array.from(

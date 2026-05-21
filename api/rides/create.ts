@@ -10,7 +10,11 @@ import {
   createManualCapturePaymentIntent,
   isStripePaymentsEnabled,
 } from '../../server/lib/rideStripePayments.js'
-import { parseCoursePaymentMethod, type CoursePaymentMethod } from '../../server/lib/coursePaymentMethod.js'
+import {
+  isCoursePaymentMethodColumnMissing,
+  parseCoursePaymentMethod,
+  type CoursePaymentMethod,
+} from '../../server/lib/coursePaymentMethod.js'
 
 function readBearerToken(req: VercelRequest): string | null {
   const raw = req.headers.authorization
@@ -240,11 +244,34 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     payment_method: paymentMethod,
   }
 
-  const { data: courseRow, error: courseErr } = await supabase
+  let courseRow: {
+    id: string
+    external_code: string | null
+    status: string
+    booking_kind: string
+    scheduled_date: string
+    scheduled_time: string
+  } | null = null
+  let courseErr: { message?: string; code?: string } | null = null
+
+  const insertAttempt = await supabase
     .from('courses')
     .insert(insertPayload)
     .select('id, external_code, status, booking_kind, scheduled_date, scheduled_time')
     .single()
+  courseRow = insertAttempt.data
+  courseErr = insertAttempt.error
+
+  if (courseErr && isCoursePaymentMethodColumnMissing(courseErr)) {
+    const { payment_method: _pm, ...legacyPayload } = insertPayload
+    const legacyAttempt = await supabase
+      .from('courses')
+      .insert(legacyPayload)
+      .select('id, external_code, status, booking_kind, scheduled_date, scheduled_time')
+      .single()
+    courseRow = legacyAttempt.data
+    courseErr = legacyAttempt.error
+  }
 
   if (courseErr || !courseRow) {
     console.error('[rides/create] courses insert', courseErr)

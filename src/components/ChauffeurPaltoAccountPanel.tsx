@@ -1,4 +1,5 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react'
+import { createPortal } from 'react-dom'
 import { IdCard, Pencil, User, Wallet } from 'lucide-react'
 import { toast } from 'sonner'
 import { useLanguage } from '../contexts/LanguageContext'
@@ -197,6 +198,14 @@ export default function ChauffeurPaltoAccountPanel({
     (photoDraftUrl ?? '') !== (profile.profilePhotoUrl ?? '')
 
   useBodyScrollLock(paymentModalOpen || paymentViewPm != null)
+
+  const mountAccountModal = useCallback((node: ReactNode) => {
+    if (!node) return null
+    if (typeof document !== 'undefined') {
+      return createPortal(node, document.body)
+    }
+    return node
+  }, [])
 
   return (
     <div className="client-compte-account-layout chauffeur-palto-account-layout">
@@ -436,7 +445,8 @@ export default function ChauffeurPaltoAccountPanel({
         )}
       </div>
 
-      {paymentModalOpen ? (
+      {mountAccountModal(
+        paymentModalOpen ? (
         <div
           className="client-compte-account-edit-modal-backdrop"
           role="presentation"
@@ -527,7 +537,8 @@ export default function ChauffeurPaltoAccountPanel({
             </div>
           </div>
         </div>
-      ) : null}
+        ) : null
+      )}
     </div>
   )
 }
