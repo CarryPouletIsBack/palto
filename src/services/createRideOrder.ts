@@ -15,7 +15,6 @@ export type CreateRideOrderPayload = {
   clientPhone?: string | null
   clientComment?: string | null
   requestedDriverExternalKey?: string | null
-  /** UUID compte chauffeur (`app_accounts.id`) pour commande instantanée. */
   requestedChauffeurAccountId?: string | null
   pickupLng?: number | null
   pickupLat?: number | null
@@ -26,6 +25,13 @@ export type CreateRideOrderPayload = {
 export type CreateRideOrderResult = {
   courseId: string
   externalCode: string
+  driverAmountEur?: number
+  paltoFeeEur?: number
+  totalChargeEur?: number
+  stripeEnabled?: boolean
+  stripeClientSecret?: string | null
+  stripePaymentIntentId?: string | null
+  stripePublishableKey?: string | null
 }
 
 export async function createRideOrder(body: CreateRideOrderPayload): Promise<CreateRideOrderResult> {
@@ -34,16 +40,12 @@ export async function createRideOrder(body: CreateRideOrderPayload): Promise<Cre
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(body),
   })
-  const data = (await res.json().catch(() => ({}))) as {
-    courseId?: string
-    externalCode?: string
-    error?: string
-  }
+  const data = (await res.json().catch(() => ({}))) as CreateRideOrderResult & { error?: string }
   if (!res.ok) {
     throw new Error(data.error || `Erreur ${res.status}`)
   }
   if (!data.courseId || !data.externalCode) {
     throw new Error('Reponse serveur inattendue')
   }
-  return { courseId: data.courseId, externalCode: data.externalCode }
+  return data
 }

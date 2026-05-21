@@ -16,6 +16,10 @@ import { createPortal } from 'react-dom';
 import { useLanguage } from '../contexts/LanguageContext';
 import { trackEvent } from '../services/googleAnalyticsTracking';
 import { createRideOrder } from '../services/createRideOrder';
+import { confirmRidePaymentAuthorized } from '../services/stripeRidePayment';
+import { stripeCheckoutEnabled, stripePublishableKey } from '../constants/featureFlags';
+import { formatRideTotalWithPaltoFee, PALTO_PLATFORM_FEE_EUR } from '../constants/stripeFees';
+import PaltoStripePaymentForm from './PaltoStripePaymentForm';
 import { motion, useMotionValue } from 'framer-motion';
 import { Swiper, SwiperSlide } from 'swiper/react';
 import { Pagination } from 'swiper/modules';
@@ -45,6 +49,7 @@ import CardSwap, { Card } from './CardSwap';
 import MagicBento from './MagicBento';
 import PaltoH1HandwritingLogo from './PaltoH1HandwritingLogo';
 import ScrollStack, { ScrollStackItem } from './ScrollStack';
+import { LEGACY_DEV_PICKUP_ORIGIN } from '../constants/defaultUserOrigin';
 import HomeOsmMapBackground from './HomeOsmMapBackground';
 import { isLngLatInsideReunionIsland } from '../constants/reunionIsland';
 import { resolvePickOnRoad, fetchDrivingRouteFeature } from '../services/osrmRouting';
@@ -119,13 +124,27 @@ function isGenericMapAddressFallback(text: string | undefined): boolean {
   return /sélectionné sur la carte|selected on the map|Location from map|Lieu indiqué sur la carte/i.test(t);
 }
 
-async function geocodePickupForRide(rawQuery: string, language: string): Promise<GeocodeSnappedResult> {
+function isLegacyDevPickupOrigin(point: GeoPoint): boolean {
+  return (
+    Math.abs(point.latitude - LEGACY_DEV_PICKUP_ORIGIN.latitude) < 1e-5 &&
+    Math.abs(point.longitude - LEGACY_DEV_PICKUP_ORIGIN.longitude) < 1e-5
+  );
+}
+
+async function geocodePickupForRide(
+  rawQuery: string,
+  language: string,
+  proximityOrigin?: GeoPoint
+): Promise<GeocodeSnappedResult> {
   const q = rawQuery.trim();
   if (!q) return { ok: false, error: 'Indiquez une adresse de départ.' };
   const lang = geocodeLang(language);
+  const proximity = proximityOrigin
+    ? ([proximityOrigin.longitude, proximityOrigin.latitude] as [number, number])
+    : ([55.45, -21.15] as [number, number]);
   const coords = await geocodeForward(q, undefined, {
     language: lang,
-    proximity: [55.45, -21.15],
+    proximity,
     bbox: REUNION_ISLAND_BBOX_GEOCODE,
   });
   if (!coords) {
@@ -351,8 +370,6 @@ const SingleProjectNew: FC<SingleProjectProps> = ({
   const [mobileRouteActiveField, setMobileRouteActiveField] = useState<'pickup' | 'destination'>('destination');
   const [pickupAddressSuggestions, setPickupAddressSuggestions] = useState<GeocodeSuggestion[]>([]);
   const [pickupSuggestionLoading, setPickupSuggestionLoading] = useState(false);
-  /** Pas de fallback « Le Port » (dev) : départ uniquement après saisie ou prefill département. */
-  const effectiveRideOrigin = pickupResolvedPoint;
   const pickupAutocompleteTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [chauffeurRideSettings, setChauffeurRideSettings] = useState(() => loadChauffeurRideSettingsSnapshot());
   useEffect(() => {
@@ -599,74 +616,78 @@ const SingleProjectNew: FC<SingleProjectProps> = ({
 
     let cancelled = false;
 
-    const applyDepartmentPickup = async (departmentId: string) => {
+    const applyDepartmentPickup = async (departmentId: string): Promise<boolean> => {
       const deptId = (departmentId.trim() || DEFAULT_HERO_DEPARTMENT_ID) as HeroDepartmentId;
-      const fallbackLabel = getHeroDepartmentLabel(deptId, language);
-      setPaltoPickupLocation(simplifyRideAddress(fallbackLabel));
+      const label = simplifyRideAddress(getHeroDepartmentLabel(deptId, language));
+      setPaltoPickupLocation(label);
       try {
         const seed = getHeroDepartmentOrigin(deptId);
         const picked = await resolvePickOnRoad(seed.longitude, seed.latitude, {
           searchRadiusMeters: GO_SNAP_SEARCH_RADIUS_M,
         });
-        if (cancelled || !isLngLatInsideReunionIsland(picked.longitude, picked.latitude)) return;
-        const reverseLabel =
-          (await geocodeReverse(picked.longitude, picked.latitude, undefined, {
-            language: geocodeLang(language),
-          })) ?? fallbackLabel;
-        const label = simplifyRideAddress(reverseLabel);
-        setPaltoPickupLocation(label);
+        if (cancelled || !isLngLatInsideReunionIsland(picked.longitude, picked.latitude)) return false;
+        if (isLegacyDevPickupOrigin(picked)) return false;
         setPickupResolvedPoint(picked);
         setLastConfirmedPickupText(label);
         setPickupGeocodeError(null);
+        return true;
       } catch {
-        if (!cancelled) {
-          setPaltoPickupLocation(simplifyRideAddress(fallbackLabel));
-        }
+        if (!cancelled) setPaltoPickupLocation(label);
+        return false;
       }
     };
 
-    if (prefill.pickup.trim()) {
-      const pickupQ = prefill.pickup.trim();
-      setPaltoPickupLocation(simplifyRideAddress(pickupQ));
-      void (async () => {
+    void (async () => {
+      setPickupResolvedPoint(null);
+      setLastConfirmedPickupText(null);
+      setPaltoMapRouteFeature(null);
+      setPaltoMapSelectedDestination(null);
+      setLastConfirmedDestinationText(null);
+      setChauffeursSearchOk(false);
+      setPickupGeocodeError(null);
+      setDestinationSearchError(null);
+
+      if (prefill.timing === 'now' || prefill.timing === 'later') {
+        setPaltoPickupTiming(prefill.timing);
+      }
+      if (prefill.datetime?.trim()) {
+        setPaltoPickupDateTime(prefill.datetime.trim());
+      }
+
+      let pickupReady = false;
+      if (prefill.pickup.trim()) {
+        const pickupQ = prefill.pickup.trim();
+        setPaltoPickupLocation(simplifyRideAddress(pickupQ));
         const res = await geocodePickupForRide(pickupQ, language);
-        if (cancelled || !res.ok) return;
-        setPaltoPickupLocation(simplifyRideAddress(res.queryUsed));
-        setPickupResolvedPoint(res.snapped);
-        setLastConfirmedPickupText(simplifyRideAddress(res.queryUsed));
-        setPickupGeocodeError(null);
-      })();
-    } else if (prefill.homeDepartmentId?.trim()) {
-      void applyDepartmentPickup(prefill.homeDepartmentId);
-    } else if (prefill.homeCommune?.trim()) {
-      const area = getHeroDepartmentGeocodeArea(DEFAULT_HERO_DEPARTMENT_ID);
-      const legacyQ = `${prefill.homeCommune.trim()}, ${area}`;
-      setPaltoPickupLocation(simplifyRideAddress(legacyQ));
-      void (async () => {
-        const res = await geocodePickupForRide(legacyQ, language);
-        if (cancelled || !res.ok) return;
-        setPaltoPickupLocation(simplifyRideAddress(res.queryUsed));
-        setPickupResolvedPoint(res.snapped);
-        setLastConfirmedPickupText(simplifyRideAddress(res.queryUsed));
-        setPickupGeocodeError(null);
-      })();
-    } else {
-      void applyDepartmentPickup(DEFAULT_HERO_DEPARTMENT_ID);
-    }
+        if (!cancelled && res.ok && !isLegacyDevPickupOrigin(res.snapped)) {
+          setPaltoPickupLocation(simplifyRideAddress(res.queryUsed));
+          setPickupResolvedPoint(res.snapped);
+          setLastConfirmedPickupText(simplifyRideAddress(res.queryUsed));
+          pickupReady = true;
+        }
+      } else if (prefill.homeDepartmentId?.trim()) {
+        pickupReady = await applyDepartmentPickup(prefill.homeDepartmentId);
+      } else if (prefill.homeCommune?.trim()) {
+        const area = getHeroDepartmentGeocodeArea(DEFAULT_HERO_DEPARTMENT_ID);
+        const legacyQ = `${prefill.homeCommune.trim()}, ${area}`;
+        setPaltoPickupLocation(simplifyRideAddress(legacyQ));
+        const seed = getHeroDepartmentOrigin(DEFAULT_HERO_DEPARTMENT_ID);
+        const res = await geocodePickupForRide(legacyQ, language, seed);
+        if (!cancelled && res.ok && !isLegacyDevPickupOrigin(res.snapped)) {
+          setPaltoPickupLocation(simplifyRideAddress(res.queryUsed));
+          setPickupResolvedPoint(res.snapped);
+          setLastConfirmedPickupText(simplifyRideAddress(res.queryUsed));
+          pickupReady = true;
+        }
+      } else {
+        pickupReady = await applyDepartmentPickup(DEFAULT_HERO_DEPARTMENT_ID);
+      }
 
-    if (prefill.destination.trim()) {
-      setPaltoRideDestination(simplifyRideAddress(prefill.destination.trim()));
-    }
-    if (prefill.timing === 'now' || prefill.timing === 'later') {
-      setPaltoPickupTiming(prefill.timing);
-    }
-    if (prefill.datetime?.trim()) {
-      setPaltoPickupDateTime(prefill.datetime.trim());
-    }
+      if (cancelled || !pickupReady) return;
 
-    const destQ = prefill.destination.trim();
-    if (destQ) {
-      void (async () => {
+      const destQ = prefill.destination.trim();
+      if (destQ) {
+        setPaltoRideDestination(simplifyRideAddress(destQ));
         try {
           const res = await geocodeDestinationForRide(destQ, language);
           if (cancelled || !res.ok) return;
@@ -685,8 +706,8 @@ const SingleProjectNew: FC<SingleProjectProps> = ({
         } catch {
           /* réseau : laisser le champ texte, l’utilisateur peut lancer « Rechercher » */
         }
-      })();
-    }
+      }
+    })();
 
     return () => {
       cancelled = true;
@@ -1561,15 +1582,15 @@ const SingleProjectNew: FC<SingleProjectProps> = ({
   }, [isGoProjectPage, isMobileGoViewport, destinationSuggestionOpen, paltoRideDestination, language]);
 
   useEffect(() => {
-    if (!paltoMapSelectedDestination || !effectiveRideOrigin) {
+    if (!paltoMapSelectedDestination || !pickupResolvedPoint || isLegacyDevPickupOrigin(pickupResolvedPoint)) {
       setPaltoMapRouteFeature(null);
       setPaltoRouteDistanceKm(null);
       setPaltoRouteDeniveleEstimateM(null);
       return;
     }
 
-    const originLng = effectiveRideOrigin.longitude;
-    const originLat = effectiveRideOrigin.latitude;
+    const originLng = pickupResolvedPoint.longitude;
+    const originLat = pickupResolvedPoint.latitude;
     const destLng = paltoMapSelectedDestination.longitude;
     const destLat = paltoMapSelectedDestination.latitude;
 
@@ -1640,8 +1661,8 @@ const SingleProjectNew: FC<SingleProjectProps> = ({
   }, [
     paltoMapSelectedDestination?.latitude,
     paltoMapSelectedDestination?.longitude,
-    effectiveRideOrigin.latitude,
-    effectiveRideOrigin.longitude,
+    pickupResolvedPoint?.latitude,
+    pickupResolvedPoint?.longitude,
   ]);
 
   const handlePaltoMainMapPick = useCallback(async (longitude: number, latitude: number) => {
@@ -1703,6 +1724,9 @@ const SingleProjectNew: FC<SingleProjectProps> = ({
   const [checkoutError, setCheckoutError] = useState<string | null>(null);
   const [checkoutSuccessMessage, setCheckoutSuccessMessage] = useState<string | null>(null);
   const [checkoutSubmitting, setCheckoutSubmitting] = useState(false);
+  const [checkoutStripeClientSecret, setCheckoutStripeClientSecret] = useState<string | null>(null);
+  const [checkoutPendingCourseId, setCheckoutPendingCourseId] = useState<string | null>(null);
+  const [checkoutPendingExternalCode, setCheckoutPendingExternalCode] = useState<string | null>(null);
   useEffect(() => {
     if (!isClientAuthenticated()) return;
     const sessionUser = getCurrentClientUser();
@@ -1721,6 +1745,9 @@ const SingleProjectNew: FC<SingleProjectProps> = ({
   const closeCheckoutPopup = useCallback(() => {
     setIsCheckoutPopupOpen(false);
     setCheckoutError(null);
+    setCheckoutStripeClientSecret(null);
+    setCheckoutPendingCourseId(null);
+    setCheckoutPendingExternalCode(null);
   }, []);
 
   /** Modale récap/checkout plein écran + portal : mobile Go uniquement. */
@@ -1857,25 +1884,36 @@ const SingleProjectNew: FC<SingleProjectProps> = ({
         dropoffLng: paltoMapSelectedDestination?.longitude ?? null,
         dropoffLat: paltoMapSelectedDestination?.latitude ?? null,
       });
+
+      const pk = stripePublishableKey() ?? result.stripePublishableKey ?? null
+      const needsStripe =
+        Boolean(result.stripeEnabled && result.stripeClientSecret && pk && stripeCheckoutEnabled())
+
+      if (needsStripe && result.stripeClientSecret) {
+        setCheckoutPendingCourseId(result.courseId)
+        setCheckoutPendingExternalCode(result.externalCode)
+        setCheckoutStripeClientSecret(result.stripeClientSecret)
+        setCheckoutSubmitting(false)
+        return
+      }
+
       const driverLabel =
         bookingKind === 'instant' && paltoSelectedDriver
           ? paltoSelectedDriver.name
-          : 'un chauffeur disponible';
+          : 'un chauffeur disponible'
       const successMessage =
         bookingKind === 'scheduled'
           ? `Demande prise en compte (${result.externalCode}). Un chauffeur l'acceptera prochainement. Suivi : ${email}.`
           : `Commande enregistree (${result.externalCode}). Chauffeur : ${driverLabel}. Suivi : ${email}.`
-      setCheckoutSuccessMessage(successMessage);
+      setCheckoutSuccessMessage(successMessage)
       window.setTimeout(() => {
-        setIsCheckoutPopupOpen(false);
-        if (onOpenClientAccount) {
-          onOpenClientAccount();
-        }
-      }, 900);
+        setIsCheckoutPopupOpen(false)
+        if (onOpenClientAccount) onOpenClientAccount()
+      }, 900)
     } catch (e) {
-      setCheckoutError(e instanceof Error ? e.message : 'Enregistrement impossible. Reessayez.');
+      setCheckoutError(e instanceof Error ? e.message : 'Enregistrement impossible. Reessayez.')
     } finally {
-      setCheckoutSubmitting(false);
+      setCheckoutSubmitting(false)
     }
   }, [
     checkoutCustomerEmail,
@@ -1899,7 +1937,50 @@ const SingleProjectNew: FC<SingleProjectProps> = ({
     isNightRide,
     onOpenClientAccount,
     projectData.title,
+    stripeCheckoutEnabled,
   ]);
+
+  const finishCheckoutAfterPayment = useCallback(async () => {
+    const courseId = checkoutPendingCourseId
+    const externalCode = checkoutPendingExternalCode
+    const email = checkoutCustomerEmail.trim()
+    if (!courseId || !externalCode) {
+      setCheckoutError('Commande introuvable apres paiement.')
+      return
+    }
+    setCheckoutSubmitting(true)
+    setCheckoutError(null)
+    try {
+      await confirmRidePaymentAuthorized(courseId)
+      const bookingKind = paltoPickupTiming === 'later' ? 'scheduled' : 'instant'
+      const driverLabel =
+        bookingKind === 'instant' && paltoSelectedDriver
+          ? paltoSelectedDriver.name
+          : 'un chauffeur disponible'
+      const successMessage =
+        bookingKind === 'scheduled'
+          ? `Paiement autorise. Demande ${externalCode} — un chauffeur l'acceptera. Suivi : ${email}.`
+          : `Paiement autorise. Commande ${externalCode} — chauffeur : ${driverLabel}. Suivi : ${email}.`
+      setCheckoutStripeClientSecret(null)
+      setCheckoutSuccessMessage(successMessage)
+      window.setTimeout(() => {
+        setIsCheckoutPopupOpen(false)
+        if (onOpenClientAccount) onOpenClientAccount()
+      }, 900)
+    } catch (e) {
+      setCheckoutError(e instanceof Error ? e.message : 'Verification paiement impossible.')
+    } finally {
+      setCheckoutSubmitting(false)
+    }
+  }, [
+    checkoutPendingCourseId,
+    checkoutPendingExternalCode,
+    checkoutCustomerEmail,
+    paltoPickupTiming,
+    paltoSelectedDriver,
+    onOpenClientAccount,
+  ]);
+
   const [showContactModal, setShowContactModal] = useState(false);
   /** Conception & Itération : indice du concept (graduations) et indice du visuel dans le carrousel vertical du concept actif */
   const [paltoConceptionConceptIndex, setPaltoConceptionConceptIndex] = useState(0);
@@ -2458,12 +2539,15 @@ const SingleProjectNew: FC<SingleProjectProps> = ({
       if (hasPickupCoords) {
         const pLng = detail.pickupLng as number;
         const pLat = detail.pickupLat as number;
-        setPickupResolvedPoint((prev) =>
-          prev && Math.abs(prev.longitude - pLng) < 1e-7 && Math.abs(prev.latitude - pLat) < 1e-7
-            ? prev
-            : { longitude: pLng, latitude: pLat }
-        );
-        setPickupGeocodeError(null);
+        const incoming = { longitude: pLng, latitude: pLat };
+        if (!isLegacyDevPickupOrigin(incoming)) {
+          setPickupResolvedPoint((prev) =>
+            prev && Math.abs(prev.longitude - pLng) < 1e-7 && Math.abs(prev.latitude - pLat) < 1e-7
+              ? prev
+              : incoming
+          );
+          setPickupGeocodeError(null);
+        }
       }
       const pickupRaw = typeof detail.pickupText === 'string' ? detail.pickupText.trim() : '';
       if (pickupRaw && !isGenericMapAddressFallback(pickupRaw)) {
@@ -3404,23 +3488,48 @@ const SingleProjectNew: FC<SingleProjectProps> = ({
                             : '—'}
                       </strong>
                     </p>
-                    <p>
-                      <span>Total estime TTC :</span>{' '}
-                      <strong>
-                        {paltoPricing
-                          ? `${paltoPricing.ttc} EUR`
-                          : paltoRouteDistanceKm != null
-                            ? `${Math.max(
-                                6,
-                                (effectiveBaseFareEur + paltoRouteDistanceKm * effectivePricePerKmEur) *
-                                  effectiveDriverPricingMultiplier *
-                                  (1 + (isNightRide ? effectiveNightSurchargeRate : 0))
-                              ).toFixed(2)} EUR`
-                            : '-'}
-                      </strong>
-                    </p>
+                    {(() => {
+                      let driverEur = paltoPricing ? Number.parseFloat(paltoPricing.ttc) : NaN
+                      if (!Number.isFinite(driverEur) || driverEur <= 0) {
+                        const km = paltoRouteDistanceKm
+                        if (km != null && Number.isFinite(km)) {
+                          driverEur = Math.max(
+                            6,
+                            (effectiveBaseFareEur + km * effectivePricePerKmEur) *
+                              effectiveDriverPricingMultiplier *
+                              (1 + (isNightRide ? effectiveNightSurchargeRate : 0))
+                          )
+                        }
+                      }
+                      const breakdown =
+                        Number.isFinite(driverEur) && driverEur > 0
+                          ? formatRideTotalWithPaltoFee(driverEur)
+                          : null
+                      return breakdown ? (
+                        <>
+                          <p>
+                            <span>Tarif chauffeur (TTC) :</span>{' '}
+                            <strong>{breakdown.driverEur.toFixed(2)} EUR</strong>
+                          </p>
+                          <p>
+                            <span>Commission Palto :</span>{' '}
+                            <strong>{breakdown.paltoFeeEur.toFixed(2)} EUR</strong>
+                          </p>
+                          <p>
+                            <span>Total autorise sur la carte :</span>{' '}
+                            <strong>{breakdown.totalEur.toFixed(2)} EUR</strong>
+                          </p>
+                        </>
+                      ) : (
+                        <p>
+                          <span>Total estime TTC :</span> <strong>—</strong>
+                        </p>
+                      )
+                    })()}
                     <p className="palto-checkout__lead">
-                      Paiement en ligne non active : reglement prevu directement avec le chauffeur.
+                      {stripeCheckoutEnabled()
+                        ? `Autorisation bancaire (sans debit immediat). Palto preleve ${PALTO_PLATFORM_FEE_EUR} EUR + le tarif chauffeur a la fin de course. Annulation rapide : aucun frais.`
+                        : 'Paiement en ligne non configure : reglement prevu directement avec le chauffeur.'}
                     </p>
                   </div>
 
@@ -3459,29 +3568,43 @@ const SingleProjectNew: FC<SingleProjectProps> = ({
                     />
                   </label>
 
+                  {checkoutStripeClientSecret && stripePublishableKey() ? (
+                    <PaltoStripePaymentForm
+                      publishableKey={stripePublishableKey()!}
+                      clientSecret={checkoutStripeClientSecret}
+                      submitLabel="Autoriser le paiement sur la carte"
+                      onSuccess={() => void finishCheckoutAfterPayment()}
+                      onError={(msg) => setCheckoutError(msg)}
+                    />
+                  ) : null}
+
                   {checkoutError ? <p className="palto-checkout__error">{checkoutError}</p> : null}
                   {checkoutSuccessMessage ? (
                     <p className="palto-checkout__success">{checkoutSuccessMessage}</p>
                   ) : null}
                 </div>
                 <div className="palto-ride-recap-modal__actions">
-                  <Button
-                    variant="primary"
-                    type="button"
-                    className="palto-ride-search-btn palto-ride-recap-modal__cta"
-                    disabled={
-                      checkoutSubmitting ||
-                      Boolean(checkoutSuccessMessage) ||
-                      (paltoPickupTiming === 'now' && !paltoSelectedDriver)
-                    }
-                    onClick={() => void handleCheckoutConfirm()}
-                  >
-                    {checkoutSubmitting
-                      ? 'Enregistrement…'
-                      : paltoPickupTiming === 'later'
-                        ? 'Finaliser la reservation'
-                        : 'Confirmer la commande'}
-                  </Button>
+                  {!checkoutStripeClientSecret ? (
+                    <Button
+                      variant="primary"
+                      type="button"
+                      className="palto-ride-search-btn palto-ride-recap-modal__cta"
+                      disabled={
+                        checkoutSubmitting ||
+                        Boolean(checkoutSuccessMessage) ||
+                        (paltoPickupTiming === 'now' && !paltoSelectedDriver)
+                      }
+                      onClick={() => void handleCheckoutConfirm()}
+                    >
+                      {checkoutSubmitting
+                        ? 'Preparation…'
+                        : stripeCheckoutEnabled()
+                          ? 'Continuer vers le paiement'
+                          : paltoPickupTiming === 'later'
+                            ? 'Finaliser la reservation'
+                            : 'Confirmer la commande'}
+                    </Button>
+                  ) : null}
                 </div>
               </div>
             </div>

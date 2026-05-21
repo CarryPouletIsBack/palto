@@ -4,6 +4,11 @@ import { getVerifiedClientSession } from '../../server/lib/clientAuth.js'
 import { expireStaleInstantPendingCourses } from '../../server/lib/expireStaleInstantPendingCourses.js'
 import { getSupabaseAdmin } from '../../server/lib/supabaseAdmin.js'
 import { listNearbyDriversFromPresence } from '../../server/lib/nearbyDriversFromPresence.js'
+import {
+  applyCancelPaymentOutcome,
+  resolveClientCancelPaymentOutcome,
+  type CoursePaymentRow,
+} from '../../server/lib/rideStripePayments.js'
 
 const QuerySchema = z.object({
   email: z.string().email(),
@@ -104,7 +109,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const { courseId } = parsedBody.data
     const { data: ride, error: rideErr } = await supabase
       .from('courses')
-      .select('id,client_id,status')
+      .select(
+        'id,client_id,status,amount_eur,palto_fee_eur,total_charge_eur,stripe_payment_intent_id,stripe_payment_status,accepted_at,started_at,assigned_driver_external_key'
+      )
       .eq('id', courseId)
       .maybeSingle()
     if (rideErr || !ride) {
@@ -136,7 +143,21 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       res.status(409).json({ error: 'Annulation impossible' })
       return
     }
-    res.status(200).json({ ok: true, status: updated.status })
+
+    const paymentRow = ride as unknown as CoursePaymentRow
+    const payOutcome = resolveClientCancelPaymentOutcome(paymentRow)
+    try {
+      await applyCancelPaymentOutcome(supabase, paymentRow, payOutcome, {
+        cancelledBy: 'client',
+        reason: 'Annule par le client',
+      })
+    } catch (payErr) {
+      console.error('[client/rides cancel] stripe', payErr)
+      res.status(502).json({ error: 'Course annulee mais paiement a verifier manuellement' })
+      return
+    }
+
+    res.status(200).json({ ok: true, status: updated.status, paymentOutcome: payOutcome })
     return
   }
 

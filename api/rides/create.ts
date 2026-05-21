@@ -3,6 +3,11 @@ import { z } from 'zod'
 import { randomBytes } from 'crypto'
 import { getSupabaseAdmin } from '../../server/lib/supabaseAdmin.js'
 import { resolveRequestedDriverKeyForInsert } from '../../server/lib/driverIdentity.js'
+import { PALTO_PLATFORM_FEE_EUR, totalChargeEur } from '../../server/lib/stripeConfig.js'
+import {
+  createManualCapturePaymentIntent,
+  isStripePaymentsEnabled,
+} from '../../server/lib/rideStripePayments.js'
 
 const BodySchema = z
   .object({
@@ -194,6 +199,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   }
 
   const code = externalCode()
+  const driverAmountEur = b.amountEur
+  const paltoFeeEur = PALTO_PLATFORM_FEE_EUR
+  const totalEur = totalChargeEur(driverAmountEur, paltoFeeEur)
   const insertPayload = {
     external_code: code,
     client_id: clientId,
@@ -202,7 +210,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     pickup_address: normalizeAddressForStorage(b.pickupAddress),
     dropoff_address: normalizeAddressForStorage(b.dropoffAddress),
     status: 'pending' as const,
-    amount_eur: b.amountEur,
+    amount_eur: driverAmountEur,
+    palto_fee_eur: paltoFeeEur,
+    total_charge_eur: totalEur,
     distance_km: b.distanceKm ?? null,
     booking_kind: b.bookingKind,
     requested_driver_external_key: requestedDriverKey,
@@ -230,8 +240,40 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     payload: {
       booking_kind: b.bookingKind,
       client_comment: b.clientComment?.trim() || null,
+      driver_amount_eur: driverAmountEur,
+      palto_fee_eur: paltoFeeEur,
+      total_charge_eur: totalEur,
     },
   })
+
+  let stripeClientSecret: string | null = null
+  let stripePaymentIntentId: string | null = null
+
+  if (isStripePaymentsEnabled()) {
+    try {
+      const pi = await createManualCapturePaymentIntent({
+        courseId: courseRow.id,
+        externalCode: courseRow.external_code ?? code,
+        driverAmountEur,
+        paltoFeeEur,
+        clientEmail: emailNorm,
+      })
+      stripeClientSecret = pi.clientSecret
+      stripePaymentIntentId = pi.paymentIntentId
+      await supabase
+        .from('courses')
+        .update({
+          stripe_payment_intent_id: pi.paymentIntentId,
+          stripe_payment_status: 'requires_payment_method',
+          updated_at: new Date().toISOString(),
+        })
+        .eq('id', courseRow.id)
+    } catch (e) {
+      console.error('[rides/create] stripe PI', e)
+      await supabase.from('courses').delete().eq('id', courseRow.id)
+      return res.status(502).json({ error: 'Impossible de preparer le paiement Stripe' })
+    }
+  }
 
   return res.status(201).json({
     courseId: courseRow.id,
@@ -240,5 +282,12 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     bookingKind: courseRow.booking_kind,
     scheduledDate: courseRow.scheduled_date,
     scheduledTime: courseRow.scheduled_time,
+    driverAmountEur,
+    paltoFeeEur,
+    totalChargeEur: totalEur,
+    stripeEnabled: isStripePaymentsEnabled(),
+    stripeClientSecret,
+    stripePaymentIntentId,
+    stripePublishableKey: process.env.VITE_STRIPE_PUBLISHABLE_KEY?.trim() || process.env.STRIPE_PUBLISHABLE_KEY?.trim() || null,
   })
 }

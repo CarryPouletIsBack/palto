@@ -74,6 +74,15 @@ Ce n’est **pas** la connexion de l’app : la connexion = `.env.local` + `verc
 
 Pour que Cursor interroge ton projet via MCP : authentifier le serveur **Supabase** dans Cursor (Settings → MCP) — le plugin peut lister tables et appliquer des migrations.
 
+### Migrations SQL sans CLI
+
+Si `supabase db push` n’est pas disponible (CLI non installée ou projet non lié) :
+
+1. [SQL Editor](https://supabase.com/dashboard/project/uzjplpdpbxvzhisxgwfz/sql/new)
+2. Exécuter le fichier concerné dans `supabase/migrations/` ou `scripts/` (ex. `scripts/apply-migration-0008.sql` pour Stripe)
+
+Installer la CLI plus tard : `brew install supabase/tap/supabase`, puis `supabase link --project-ref uzjplpdpbxvzhisxgwfz`.
+
 ---
 
 ## 4. Vercel (production)

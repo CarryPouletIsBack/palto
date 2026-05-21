@@ -6237,6 +6237,16 @@ html[data-app-theme='dark'] .palto-ride-timing-expand__option:hover {
   margin-top: 8px;
 }
 
+.palto-checkout-stripe {
+  display: grid;
+  gap: 12px;
+  margin-top: 4px;
+}
+
+.palto-checkout-stripe__pay {
+  width: 100%;
+}
+
 .palto-checkout__field {
   display: grid;
   gap: 6px;

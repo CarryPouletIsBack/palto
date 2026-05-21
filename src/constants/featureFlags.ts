@@ -65,6 +65,15 @@ export function usePricingApi(): boolean {
 }
 
 /** Realtime Supabase (courses / course_events) : URL + clé anon + endpoint /api/auth/realtime-token + SUPABASE_JWT_SECRET côté serveur. */
+export function stripePublishableKey(): string | null {
+  const key = (import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY as string | undefined)?.trim()
+  return key || null
+}
+
+export function stripeCheckoutEnabled(): boolean {
+  return Boolean(stripePublishableKey())
+}
+
 export function supabaseRealtimeConfigured(): boolean {
   const url = (import.meta.env.VITE_SUPABASE_URL as string | undefined)?.trim()
   const key = (import.meta.env.VITE_SUPABASE_ANON_KEY as string | undefined)?.trim()

@@ -22,6 +22,13 @@ async function handleCronExpireInstant(req: VercelRequest, res: VercelResponse) 
 import { getSupabaseAdmin } from '../../server/lib/supabaseAdmin.js'
 import { getVerifiedChauffeurSession } from '../../server/lib/chauffeurAuth.js'
 import { sameDriverExternalKey } from '../../server/lib/driverIdentity.js'
+import {
+  applyCancelPaymentOutcome,
+  applyRideCompletedPayment,
+  captureCancellationFee,
+  resolveChauffeurCancelPaymentOutcome,
+  type CoursePaymentRow,
+} from '../../server/lib/rideStripePayments.js'
 
 const ComplianceQuerySchema = z.object({ email: z.string().email() })
 const ComplianceBodySchema = z.object({
@@ -40,7 +47,7 @@ const ComplianceBodySchema = z.object({
 })
 const RideActionBodySchema = z.object({
   courseId: z.string().uuid(),
-  action: z.enum(['accept', 'start', 'complete', 'cancel']),
+  action: z.enum(['accept', 'start', 'complete', 'cancel', 'no_show']),
 })
 const OrgMemberSchema = z.object({
   id: z.string(),
@@ -260,14 +267,83 @@ async function handleRidesActionPost(
       .select('id, status')
       .maybeSingle()
     if (upErr || !updated) return res.status(409).json({ error: 'Impossible de terminer' })
+    try {
+      await applyRideCompletedPayment(supabase, row as unknown as CoursePaymentRow)
+    } catch (payErr) {
+      console.error('[chauffeur/complete] stripe capture', payErr)
+      return res.status(502).json({ error: 'Course terminee mais capture paiement en echec' })
+    }
     return res.status(200).json({ ok: true, status: updated.status })
   }
+  if (action === 'no_show') {
+    if (row.status !== 'in_progress' || !sameDriverExternalKey(row.assigned_driver_external_key, driverKey)) {
+      return res.status(409).json({ error: 'Course non en cours pour vous' })
+    }
+    const { data: updated, error: upErr } = await supabase
+      .from('courses')
+      .update({
+        status: 'cancelled',
+        cancelled_at: nowIso,
+        cancelled_reason: 'Client absent (no-show)',
+        updated_at: nowIso,
+      })
+      .eq('id', courseId)
+      .eq('status', 'in_progress')
+      .select('id, status')
+      .maybeSingle()
+    if (upErr || !updated) return res.status(409).json({ error: 'Impossible de signaler client absent' })
+    const paymentRow = row as unknown as CoursePaymentRow
+    try {
+      if (paymentRow.stripe_payment_intent_id) {
+        const captured = await captureCancellationFee(paymentRow.stripe_payment_intent_id)
+        await supabase
+          .from('courses')
+          .update({
+            stripe_payment_status: 'succeeded',
+            payment_captured_at: nowIso,
+            cancellation_fee_captured_cents: captured.capturedCents,
+            updated_at: nowIso,
+          })
+          .eq('id', courseId)
+        await supabase.from('course_events').insert({
+          course_id: courseId,
+          event_type: 'no_show',
+          event_note: 'Client absent — frais annulation captures',
+          payload: {
+            driverShareEur: captured.driverShareEur,
+            paltoShareEur: captured.paltoShareEur,
+          },
+        })
+      }
+    } catch (payErr) {
+      console.error('[chauffeur/no_show] stripe', payErr)
+      return res.status(502).json({ error: 'No-show enregistre mais paiement a verifier' })
+    }
+    return res.status(200).json({ ok: true, status: updated.status })
+  }
+
+  const payRow = row as unknown as CoursePaymentRow
+  const payOutcome = resolveChauffeurCancelPaymentOutcome(payRow)
   const { error: upErr } = await supabase
     .from('courses')
-    .update({ status: 'cancelled', cancelled_at: nowIso, cancelled_reason: 'Annule depuis le dashboard', updated_at: nowIso })
+    .update({
+      status: 'cancelled',
+      cancelled_at: nowIso,
+      cancelled_reason: 'Annule depuis le dashboard',
+      updated_at: nowIso,
+    })
     .eq('id', courseId)
   if (upErr) return res.status(500).json({ error: 'Annulation impossible' })
-  return res.status(200).json({ ok: true, status: 'cancelled' })
+  try {
+    await applyCancelPaymentOutcome(supabase, payRow, payOutcome, {
+      cancelledBy: 'chauffeur',
+      reason: 'Annule depuis le dashboard',
+    })
+  } catch (payErr) {
+    console.error('[chauffeur/cancel] stripe', payErr)
+    return res.status(502).json({ error: 'Course annulee mais paiement a verifier' })
+  }
+  return res.status(200).json({ ok: true, status: 'cancelled', paymentOutcome: payOutcome })
 }
 
 async function handleStatsGet(res: VercelResponse, driverKey: string) {

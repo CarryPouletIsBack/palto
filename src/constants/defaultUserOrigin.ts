@@ -1,13 +1,16 @@
 import type { GeoPoint } from '../services/distanceGeo'
 
-/** Adresse de travail / position utilisateur par défaut (Le Port, La Réunion). */
-export const DEFAULT_USER_ORIGIN_LABEL = '3 Allée Dachau, 97420 Le Port, La Réunion'
+/** Repère carte par défaut (centre administratif, pas une adresse de test). */
+export const DEFAULT_USER_ORIGIN_LABEL = 'Saint-Denis, La Réunion'
 
-/**
- * Coordonnées WGS84 correspondant à {@link DEFAULT_USER_ORIGIN_LABEL}
- * (géocodage OpenStreetMap Nominatim — node maison).
- */
+/** Centre approximatif Saint-Denis — utilisé carte accueil / mocks si aucun départ validé. */
 export const DEFAULT_USER_ORIGIN: GeoPoint = {
+  latitude: -20.8789,
+  longitude: 55.4481,
+}
+
+/** Ancienne origine de test (3 Allée Dachau, Le Port) — à ne plus utiliser pour les trajets /go. */
+export const LEGACY_DEV_PICKUP_ORIGIN: GeoPoint = {
   latitude: -20.9346219,
   longitude: 55.2983021,
 }
