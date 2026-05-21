@@ -1,6 +1,7 @@
-import type { ChangeEvent, Dispatch, SetStateAction } from 'react'
+import type { ChangeEvent, Dispatch, FormEvent, SetStateAction } from 'react'
 import type { Language } from '../contexts/LanguageContext'
 import type { ChauffeurRideSettingsSnapshot } from '../constants/chauffeurRideSettingsStorage'
+import { readFormControlValue } from '../utils/readFormControlValue'
 
 type Props = {
   language: Language
@@ -9,10 +10,18 @@ type Props = {
   computeAppliedPrice: (raw: string, multiplierPercent: number) => string
 }
 
-function readFormControlValue(
-  e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
-): string {
-  return e.currentTarget?.value ?? ''
+type FareTextField = keyof Pick<
+  ChauffeurRideSettingsSnapshot,
+  'baseFareEur' | 'pricePerKmEur' | 'nightSurchargePercent' | 'elevationSurchargeEurPer100m'
+>
+
+function patchFareField(
+  setRideSettingsDraft: Dispatch<SetStateAction<ChauffeurRideSettingsSnapshot>>,
+  field: FareTextField,
+  e: ChangeEvent<HTMLInputElement> | FormEvent<HTMLInputElement>
+) {
+  const value = readFormControlValue(e)
+  setRideSettingsDraft((prev) => ({ ...prev, [field]: value }))
 }
 
 export default function ChauffeurRideSettingsForm({
@@ -23,6 +32,16 @@ export default function ChauffeurRideSettingsForm({
 }: Props) {
   const isEn = language === 'en'
   const mult = rideSettingsDraft.pricingMultiplierPercent
+
+  const fareInputProps = (field: FareTextField) => ({
+    type: 'text' as const,
+    inputMode: 'text' as const,
+    autoComplete: 'off',
+    spellCheck: false,
+    value: rideSettingsDraft[field] ?? '',
+    onChange: (e: ChangeEvent<HTMLInputElement>) => patchFareField(setRideSettingsDraft, field, e),
+    onInput: (e: FormEvent<HTMLInputElement>) => patchFareField(setRideSettingsDraft, field, e),
+  })
 
   return (
     <>
@@ -40,12 +59,8 @@ export default function ChauffeurRideSettingsForm({
           <label>
             {isEn ? 'Pickup fee (EUR)' : 'Prise en charge (EUR)'}
             <input
-              type="text"
-              inputMode="decimal"
-              value={rideSettingsDraft.baseFareEur}
-              onChange={(e) =>
-                setRideSettingsDraft((prev) => ({ ...prev, baseFareEur: readFormControlValue(e) }))
-              }
+              {...fareInputProps('baseFareEur')}
+              name="chauffeur-base-fare"
               placeholder="2,20"
               required
             />
@@ -53,12 +68,8 @@ export default function ChauffeurRideSettingsForm({
           <label>
             {isEn ? 'Price per km (EUR)' : 'Prix au km (EUR)'}
             <input
-              type="text"
-              inputMode="decimal"
-              value={rideSettingsDraft.pricePerKmEur}
-              onChange={(e) =>
-                setRideSettingsDraft((prev) => ({ ...prev, pricePerKmEur: readFormControlValue(e) }))
-              }
+              {...fareInputProps('pricePerKmEur')}
+              name="chauffeur-price-per-km"
               placeholder="1,40"
               required
             />
@@ -66,12 +77,8 @@ export default function ChauffeurRideSettingsForm({
           <label>
             {isEn ? 'Night surcharge (%)' : 'Bonus nuit (%)'}
             <input
-              type="text"
-              inputMode="decimal"
-              value={rideSettingsDraft.nightSurchargePercent}
-              onChange={(e) =>
-                setRideSettingsDraft((prev) => ({ ...prev, nightSurchargePercent: readFormControlValue(e) }))
-              }
+              {...fareInputProps('nightSurchargePercent')}
+              name="chauffeur-night-surcharge"
               placeholder="18"
               required
             />
@@ -82,15 +89,8 @@ export default function ChauffeurRideSettingsForm({
           <label>
             {isEn ? 'Elevation surcharge (EUR / 100 m)' : 'Bonus dénivelé (EUR / 100 m)'}
             <input
-              type="text"
-              inputMode="decimal"
-              value={rideSettingsDraft.elevationSurchargeEurPer100m}
-              onChange={(e) =>
-                setRideSettingsDraft((prev) => ({
-                  ...prev,
-                  elevationSurchargeEurPer100m: readFormControlValue(e),
-                }))
-              }
+              {...fareInputProps('elevationSurchargeEurPer100m')}
+              name="chauffeur-elevation-surcharge"
               placeholder="1,50"
               required
             />

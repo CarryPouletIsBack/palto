@@ -7,6 +7,7 @@ import {
   type ChangeEvent,
   type FormEvent,
   type ReactNode,
+  type SetStateAction,
 } from 'react';
 import useEmblaCarousel from 'embla-carousel-react';
 import { type ProjectWithMeta } from '../services/projectService';
@@ -773,6 +774,7 @@ const Dashboard = ({
   const [authSessionTick, setAuthSessionTick] = useState(0);
   /** true pendant édition profil chauffeur — bloque l’écrasement du brouillon par la sync serveur. */
   const profileFormDirtyRef = useRef(false);
+  const rideSettingsFormDirtyRef = useRef(false);
   const profileHydratedEmailRef = useRef<string | null>(null);
   const [complianceApiSnapshot, setComplianceApiSnapshot] = useState<ChauffeurComplianceSnapshot | null>(null);
   const [apiChauffeurStats, setApiChauffeurStats] = useState<ChauffeurActivityStatsForView | null>(null);
@@ -2040,11 +2042,21 @@ const Dashboard = ({
     return (base * (multiplierPercent / 100)).toFixed(2).replace('.', ',');
   }, []);
 
+  const patchRideSettingsDraft = useCallback(
+    (patch: SetStateAction<ChauffeurRideSettings>) => {
+      rideSettingsFormDirtyRef.current = true;
+      setRideSettingsDraft(patch);
+    },
+    []
+  );
+
   const cancelRideSettingsEdit = useCallback(() => {
+    rideSettingsFormDirtyRef.current = false;
     setRideSettingsDraft(chauffeurRideSettings);
   }, [chauffeurRideSettings]);
 
   const saveRideSettingsEdit = useCallback(() => {
+    rideSettingsFormDirtyRef.current = false;
     setChauffeurRideSettings(rideSettingsDraft);
     saveChauffeurRideSettingsSnapshot(rideSettingsDraft);
     const vehicleSlug = isChauffeurVehicleType(chauffeurProfile.vehicule) ? chauffeurProfile.vehicule : null;
@@ -2067,15 +2079,20 @@ const Dashboard = ({
           luggageAssistance: profile.luggageAssistance,
           insulatedBag: profile.insulatedBag,
         }
-        saveChauffeurRideSettingsSnapshot(next)
+        if (!rideSettingsFormDirtyRef.current) {
+          saveChauffeurRideSettingsSnapshot(next)
+        }
         return next
       })
-      setRideSettingsDraft((prev) => ({
-        ...prev,
-        petFriendly: profile.petFriendly,
-        luggageAssistance: profile.luggageAssistance,
-        insulatedBag: profile.insulatedBag,
-      }))
+      setRideSettingsDraft((prev) => {
+        if (rideSettingsFormDirtyRef.current) return prev
+        return {
+          ...prev,
+          petFriendly: profile.petFriendly,
+          luggageAssistance: profile.luggageAssistance,
+          insulatedBag: profile.insulatedBag,
+        }
+      })
       const vehicleSlug = normalizeVehicleSlugForSelect(profile.vehicleType) || (profile.vehicleType ?? '').trim();
       setChauffeurProfile((prev) => {
         if (profileFormDirtyRef.current || prev.vehicule.trim()) return prev;
@@ -2786,7 +2803,7 @@ const Dashboard = ({
                       </div>
 
                       <form
-                        className="dashboard-ride-settings-edit-layout"
+                        className="dashboard-ride-settings-edit-layout dashboard-ride-settings-form"
                         onSubmit={(e) => {
                           e.preventDefault();
                           saveRideSettingsEdit();
@@ -2795,7 +2812,7 @@ const Dashboard = ({
                         <ChauffeurRideSettingsForm
                           language={language}
                           rideSettingsDraft={rideSettingsDraft}
-                          setRideSettingsDraft={setRideSettingsDraft}
+                          setRideSettingsDraft={patchRideSettingsDraft}
                           computeAppliedPrice={computeAppliedPrice}
                         />
 
@@ -3860,7 +3877,7 @@ const Dashboard = ({
                             <section className="dashboard-user-subcard">
                               <h4>Paramètres de course</h4>
                               <form
-                                className="dashboard-ride-settings-edit-layout"
+                                className="dashboard-ride-settings-edit-layout dashboard-ride-settings-form"
                                 onSubmit={(e) => {
                                   e.preventDefault();
                                   saveRideSettingsEdit();
@@ -3869,7 +3886,7 @@ const Dashboard = ({
                                 <ChauffeurRideSettingsForm
                                   language={language}
                                   rideSettingsDraft={rideSettingsDraft}
-                                  setRideSettingsDraft={setRideSettingsDraft}
+                                  setRideSettingsDraft={patchRideSettingsDraft}
                                   computeAppliedPrice={computeAppliedPrice}
                                 />
 

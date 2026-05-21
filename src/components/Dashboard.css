@@ -2200,6 +2200,35 @@ button.dashboard-panel--overview-empty:focus-visible {
   background: #fff;
 }
 
+/* Tarifs / paramètres course : champs éditables (iOS, scroll imbriqué, inspecteur) */
+.dashboard-ride-settings-form .dashboard-payment-edit-grid input,
+.dashboard-ride-settings-form .dashboard-payment-edit-grid select,
+.dashboard-ride-settings-form input[type='number'],
+.dashboard-ride-settings-form .dashboard-ride-setting-range {
+  pointer-events: auto;
+  touch-action: manipulation;
+  -webkit-user-select: text;
+  user-select: text;
+  position: relative;
+  z-index: 2;
+}
+
+.dashboard-container--chauffeur .dashboard-ride-settings-form .dashboard-payment-edit-grid input,
+.dashboard-container--chauffeur .dashboard-ride-settings-form .dashboard-payment-edit-grid select {
+  border: 1px solid #d1d5db !important;
+  background: #fff !important;
+  color: #111827 !important;
+}
+
+@media (max-width: 768px) {
+  .dashboard-ride-settings-form .dashboard-payment-edit-grid input,
+  .dashboard-ride-settings-form .dashboard-payment-edit-grid select,
+  .dashboard-ride-settings-form input[type='number'] {
+    font-size: 16px;
+    min-height: 44px;
+  }
+}
+
 .dashboard-payment-edit-actions {
   grid-column: 1 / -1;
   display: flex;
@@ -3891,6 +3920,23 @@ button.dashboard-org-sidebar-brand--home:focus-visible {
   padding: 0;
   box-sizing: border-box;
   background: transparent;
+}
+
+/* Compte chauffeur : un seul scroll (.dashboard-content), pas de capture tactile sur les inputs */
+.dashboard-container--chauffeur.dashboard-container--chauffeur-account .dashboard-org-layout {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.dashboard-container--chauffeur.dashboard-container--chauffeur-account .dashboard-org-main {
+  overflow: visible;
+  min-height: 0;
+}
+
+.dashboard-container--chauffeur.dashboard-container--chauffeur-account .dashboard-ride-settings-edit-layout .dashboard-panel {
+  position: relative;
+  z-index: 1;
 }
 
 .dashboard-org-main-lead {
