@@ -1335,6 +1335,19 @@ html[data-app-theme='dark'] .client-compte-account-edit-modal-input {
   margin-bottom: 16px;
 }
 
+/* Compte Palto dans le dashboard chauffeur — même avatar rond que le client */
+.chauffeur-palto-account-layout .client-compte-account-profile {
+  align-items: center;
+  text-align: center;
+  width: 100%;
+}
+
+.chauffeur-palto-account-layout .client-compte-account-profile-meta {
+  align-items: center;
+  text-align: center;
+  width: 100%;
+}
+
 .client-compte-account-avatar-uploader {
   display: inline-flex;
   cursor: pointer;

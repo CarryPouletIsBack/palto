@@ -20,6 +20,7 @@ import { confirmRidePaymentAuthorized } from '../services/stripeRidePayment';
 import { stripeCheckoutEnabled, stripePublishableKey } from '../constants/featureFlags';
 import { formatRideTotalWithPaltoFee } from '../constants/stripeFees';
 import PaltoRideCheckoutPanel from './PaltoRideCheckoutPanel';
+import RidePaymentMethodPicker, { type RidePaymentMethod } from './RidePaymentMethodPicker';
 import { useBodyScrollLock } from '../hooks/useBodyScrollLock';
 import { motion, useMotionValue } from 'framer-motion';
 import { Swiper, SwiperSlide } from 'swiper/react';
@@ -559,6 +560,41 @@ const SingleProjectNew: FC<SingleProjectProps> = ({
       ttc: totalTtc.toFixed(2),
     };
   }, [paltoSelectedDriver, computeDriverPriceTtc]);
+
+  const paltoRecapPriceBreakdown = useMemo(() => {
+    let driverEur = paltoPricing ? Number.parseFloat(paltoPricing.ttc) : NaN;
+    if (!Number.isFinite(driverEur) || driverEur <= 0) {
+      const km = paltoRouteDistanceKm;
+      if (km != null && Number.isFinite(km)) {
+        driverEur = Math.max(
+          6,
+          (effectiveBaseFareEur + km * effectivePricePerKmEur) *
+            effectiveDriverPricingMultiplier *
+            (1 + (isNightRide ? effectiveNightSurchargeRate : 0))
+        );
+      }
+    }
+    if (!Number.isFinite(driverEur) || driverEur <= 0) return null;
+    const fees = formatRideTotalWithPaltoFee(driverEur);
+    const tvaRate = 0.2;
+    const ht = driverEur / (1 + tvaRate);
+    const tva = driverEur - ht;
+    return {
+      ht: ht.toFixed(2),
+      tva: tva.toFixed(2),
+      driverTtc: fees.driverEur.toFixed(2),
+      paltoFeeEur: fees.paltoFeeEur.toFixed(2),
+      totalAuthorizedEur: fees.totalEur.toFixed(2),
+    };
+  }, [
+    paltoPricing,
+    paltoRouteDistanceKm,
+    effectiveBaseFareEur,
+    effectivePricePerKmEur,
+    effectiveDriverPricingMultiplier,
+    effectiveNightSurchargeRate,
+    isNightRide,
+  ]);
 
   const mobileShowChooseRideStep = isMobileGoViewport && showDriversColumn;
 
@@ -1765,6 +1801,15 @@ const SingleProjectNew: FC<SingleProjectProps> = ({
   const [checkoutStripeCustomerId, setCheckoutStripeCustomerId] = useState<string | null>(null);
   const [checkoutPendingCourseId, setCheckoutPendingCourseId] = useState<string | null>(null);
   const [checkoutPendingExternalCode, setCheckoutPendingExternalCode] = useState<string | null>(null);
+  const [checkoutPaymentMethod, setCheckoutPaymentMethod] = useState<RidePaymentMethod>(() =>
+    stripeCheckoutEnabled() ? 'card' : 'cash'
+  );
+  const cardPaymentAvailable = stripeCheckoutEnabled();
+  useEffect(() => {
+    if (!cardPaymentAvailable && checkoutPaymentMethod === 'card') {
+      setCheckoutPaymentMethod('cash');
+    }
+  }, [cardPaymentAvailable, checkoutPaymentMethod]);
   useEffect(() => {
     if (!isClientAuthenticated()) return;
     const sessionUser = getCurrentClientUser();
@@ -1921,11 +1966,18 @@ const SingleProjectNew: FC<SingleProjectProps> = ({
         pickupLat: pickupResolvedPoint?.latitude ?? null,
         dropoffLng: paltoMapSelectedDestination?.longitude ?? null,
         dropoffLat: paltoMapSelectedDestination?.latitude ?? null,
+        paymentMethod: checkoutPaymentMethod,
       });
 
       const pk = stripePublishableKey() ?? result.stripePublishableKey ?? null
-      const needsStripe =
-        Boolean(result.stripeEnabled && result.stripeClientSecret && pk && stripeCheckoutEnabled())
+      const wantsCard = checkoutPaymentMethod === 'card'
+      const needsStripe = Boolean(
+        wantsCard &&
+          result.stripeEnabled &&
+          result.stripeClientSecret &&
+          pk &&
+          stripeCheckoutEnabled()
+      )
 
       if (needsStripe && result.stripeClientSecret) {
         setCheckoutPendingCourseId(result.courseId)
@@ -1979,6 +2031,7 @@ const SingleProjectNew: FC<SingleProjectProps> = ({
     onOpenClientAccount,
     projectData.title,
     stripeCheckoutEnabled,
+    checkoutPaymentMethod,
   ]);
 
   const finishCheckoutAfterPayment = useCallback(async () => {
@@ -3431,34 +3484,45 @@ const SingleProjectNew: FC<SingleProjectProps> = ({
                   </div>
                   <hr className="palto-ride-recap-separator" />
                   <div className="palto-ride-recap__section">
-                    {paltoPricing ? (
+                    <RidePaymentMethodPicker
+                      value={checkoutPaymentMethod}
+                      onChange={setCheckoutPaymentMethod}
+                      cardAvailable={cardPaymentAvailable}
+                    />
+                  </div>
+                  <div className="palto-ride-recap__section">
+                    {paltoRecapPriceBreakdown ? (
                       <>
                         <p className="palto-ride-recap-price-row">
-                          <span>Montant HT:</span>
-                          <strong>{paltoPricing.ht} EUR</strong>
+                          <span>Montant HT (course):</span>
+                          <strong>{paltoRecapPriceBreakdown.ht} EUR</strong>
                         </p>
                         <p className="palto-ride-recap-price-row">
                           <span>TVA (20%):</span>
-                          <strong>{paltoPricing.tva} EUR</strong>
+                          <strong>{paltoRecapPriceBreakdown.tva} EUR</strong>
                         </p>
-                        <p className="palto-ride-recap-price-row palto-ride-recap-price-row--total">
-                          <span>Total TTC:</span>
-                          <strong>{paltoPricing.ttc} EUR</strong>
+                        <p className="palto-ride-recap-price-row">
+                          <span>{t('search.checkoutDriverFare')}</span>
+                          <strong>{paltoRecapPriceBreakdown.driverTtc} EUR</strong>
                         </p>
+                        {checkoutPaymentMethod === 'card' ? (
+                          <>
+                            <p className="palto-ride-recap-price-row">
+                              <span>{t('search.checkoutPaltoFee')}</span>
+                              <strong>{paltoRecapPriceBreakdown.paltoFeeEur} EUR</strong>
+                            </p>
+                            <p className="palto-ride-recap-price-row palto-ride-recap-price-row--total">
+                              <span>{t('search.checkoutTotalAuth')}</span>
+                              <strong>{paltoRecapPriceBreakdown.totalAuthorizedEur} EUR</strong>
+                            </p>
+                          </>
+                        ) : (
+                          <p className="palto-ride-recap-price-row palto-ride-recap-price-row--total">
+                            <span>{t('search.checkoutPaymentCash')}</span>
+                            <strong>{paltoRecapPriceBreakdown.driverTtc} EUR</strong>
+                          </p>
+                        )}
                       </>
-                    ) : paltoRouteDistanceKm != null ? (
-                      <p className="palto-ride-recap-price-row palto-ride-recap-price-row--total">
-                        <span>Total estime TTC:</span>
-                        <strong>
-                          {Math.max(
-                            6,
-                            (effectiveBaseFareEur + paltoRouteDistanceKm * effectivePricePerKmEur) *
-                              effectiveDriverPricingMultiplier *
-                              (1 + (isNightRide ? effectiveNightSurchargeRate : 0))
-                          ).toFixed(2)}{' '}
-                          EUR
-                        </strong>
-                      </p>
                     ) : null}
                   </div>
                 </div>
@@ -3514,6 +3578,9 @@ const SingleProjectNew: FC<SingleProjectProps> = ({
                   onCustomerNameChange={setCheckoutCustomerName}
                   onCustomerEmailChange={setCheckoutCustomerEmail}
                   onClientCommentChange={setCheckoutClientComment}
+                  paymentMethod={checkoutPaymentMethod}
+                  onPaymentMethodChange={setCheckoutPaymentMethod}
+                  cardPaymentAvailable={cardPaymentAvailable}
                   stripeClientSecret={checkoutStripeClientSecret}
                   stripeCustomerId={checkoutStripeCustomerId}
                   checkoutError={checkoutError}
@@ -3565,14 +3632,23 @@ const SingleProjectNew: FC<SingleProjectProps> = ({
                               <span>{t('search.checkoutDriverFare')}</span>{' '}
                               <strong>{breakdown.driverEur.toFixed(2)} EUR</strong>
                             </p>
-                            <p>
-                              <span>{t('search.checkoutPaltoFee')}</span>{' '}
-                              <strong>{breakdown.paltoFeeEur.toFixed(2)} EUR</strong>
-                            </p>
-                            <p>
-                              <span>{t('search.checkoutTotalAuth')}</span>{' '}
-                              <strong>{breakdown.totalEur.toFixed(2)} EUR</strong>
-                            </p>
+                            {checkoutPaymentMethod === 'card' ? (
+                              <>
+                                <p>
+                                  <span>{t('search.checkoutPaltoFee')}</span>{' '}
+                                  <strong>{breakdown.paltoFeeEur.toFixed(2)} EUR</strong>
+                                </p>
+                                <p>
+                                  <span>{t('search.checkoutTotalAuth')}</span>{' '}
+                                  <strong>{breakdown.totalEur.toFixed(2)} EUR</strong>
+                                </p>
+                              </>
+                            ) : (
+                              <p>
+                                <span>{t('search.checkoutPaymentCash')}</span>{' '}
+                                <strong>{breakdown.driverEur.toFixed(2)} EUR</strong>
+                              </p>
+                            )}
                           </>
                         ) : (
                           <p>
@@ -3598,7 +3674,7 @@ const SingleProjectNew: FC<SingleProjectProps> = ({
                     >
                       {checkoutSubmitting
                         ? t('search.checkoutPreparing')
-                        : stripeCheckoutEnabled()
+                        : checkoutPaymentMethod === 'card' && stripeCheckoutEnabled()
                           ? t('search.checkoutContinuePayment')
                           : paltoPickupTiming === 'later'
                             ? t('search.bookingRecapConfirmScheduled')

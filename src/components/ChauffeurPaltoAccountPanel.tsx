@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import { IdCard, Shield, Wallet } from 'lucide-react'
+import { IdCard, Pencil, User, Wallet } from 'lucide-react'
 import { toast } from 'sonner'
 import { useLanguage } from '../contexts/LanguageContext'
 import { stripeCheckoutEnabled, stripePublishableKey } from '../constants/featureFlags'
@@ -17,7 +17,6 @@ import {
 } from '../services/clientStripeApi'
 import {
   getDashboardAuthorizationHeader,
-  isClientAuthenticated,
   PALTO_CHAUFFEUR_SESSION_CHANGED_EVENT,
   PALTO_CLIENT_SESSION_CHANGED_EVENT,
 } from '../services/authService'
@@ -64,8 +63,7 @@ export default function ChauffeurPaltoAccountPanel({
   const stripeOn = clientStripeApiEnabled()
   const stripePk = stripePublishableKey()?.trim() ?? ''
   const hasChauffeurAuth = Boolean(getDashboardAuthorizationHeader())
-  const hasClientAuth = isClientAuthenticated()
-  const canCallStripeApi = hasChauffeurAuth || hasClientAuth
+  const canCallStripeApi = hasChauffeurAuth
 
   const clientFullName = useMemo(
     () => `${profile.prenom.trim()} ${profile.nom.trim()}`.trim(),
@@ -192,11 +190,6 @@ export default function ChauffeurPaltoAccountPanel({
     [clientFullName, isEn, refreshStripePaymentMethods]
   )
 
-  const clientCompteHref = useMemo(() => {
-    const prefix = typeof window !== 'undefined' && window.location.pathname.startsWith('/en') ? '/en' : '/fr'
-    return `${prefix}/compte`
-  }, [])
-
   const personalDirty =
     prenomDraft.trim() !== profile.prenom.trim() ||
     nomDraft.trim() !== profile.nom.trim() ||
@@ -208,21 +201,30 @@ export default function ChauffeurPaltoAccountPanel({
   return (
     <div className="client-compte-account-layout chauffeur-palto-account-layout">
       <aside className="client-compte-account-sidebar" aria-label={isEn ? 'Palto account' : 'Compte Palto'}>
-        <div className="client-compte-account-profile-head">
-          <label className="client-compte-account-photo-btn">
-            {photoDraftUrl ? (
-              <img src={photoDraftUrl} alt="" className="client-compte-account-photo-btn__img" />
-            ) : (
-              <span className="client-compte-account-photo-btn__placeholder" aria-hidden>
-                <IdCard size={20} />
+        <div className="client-compte-account-profile">
+          <label className="client-compte-account-avatar-uploader">
+            <span className="client-compte-account-avatar-uploader__visual">
+              <span className="dashboard-user-avatar-lg">
+                {photoDraftUrl ? (
+                  <img src={photoDraftUrl} alt="" />
+                ) : (
+                  <User size={22} aria-hidden />
+                )}
               </span>
-            )}
-            <input
-              type="file"
-              accept="image/jpeg,image/png,image/webp"
-              hidden
-              onChange={(e) => void onPhotoPick(e.target.files?.[0])}
-            />
+              <span className="client-compte-account-avatar-uploader__overlay" aria-hidden>
+                <Pencil size={22} strokeWidth={2.25} />
+              </span>
+              <input
+                type="file"
+                accept="image/jpeg,image/png,image/webp"
+                aria-label={isEn ? 'Change profile photo' : 'Changer la photo de profil'}
+                className="client-compte-account-avatar-uploader__input"
+                onChange={(e) => {
+                  void onPhotoPick(e.target.files?.[0])
+                  e.currentTarget.value = ''
+                }}
+              />
+            </span>
           </label>
           <div className="client-compte-account-profile-meta">
             <strong>
@@ -327,29 +329,26 @@ export default function ChauffeurPaltoAccountPanel({
             <p className="client-compte-payment-stripe-notice" role="status">
               {stripeOn
                 ? isEn
-                  ? 'Save a card with Stripe (test: 4242…). Billing address required. Used when you book as a passenger on Go.'
-                  : 'Enregistrez une carte Stripe (test : 4242…). Adresse de facturation obligatoire. Utilisable si vous reservez en passager sur Go.'
+                  ? 'Save a card with Stripe (test: 4242…). Billing address required. Linked to your driver account.'
+                  : 'Enregistrez une carte Stripe (test : 4242…). Adresse de facturation obligatoire. Liee a votre compte chauffeur.'
                 : stripeCheckoutEnabled()
                   ? isEn
-                    ? 'Sign in to save a card with Stripe.'
-                    : 'Connectez-vous pour enregistrer une carte Stripe.'
+                    ? 'Sign in as a driver to save a card with Stripe.'
+                    : 'Connectez-vous en tant que chauffeur pour enregistrer une carte Stripe.'
                   : isEn
                     ? 'Online card payment is not configured.'
                     : 'Le paiement carte en ligne n’est pas encore configure.'}
             </p>
 
-            {!canCallStripeApi ? (
+            {!hasChauffeurAuth ? (
               <p className="dashboard-field-error" role="alert">
-                {isEn ? 'Palto session required.' : 'Session Palto requise.'}
+                {isEn ? 'Driver session required.' : 'Session chauffeur requise.'}
               </p>
             ) : null}
 
             {stripeLinkError ? (
               <p className="dashboard-field-error" role="alert">
-                {stripeLinkError}{' '}
-                <a href={clientCompteHref}>
-                  {isEn ? 'Open passenger account' : 'Ouvrir Mon compte passager'}
-                </a>
+                {stripeLinkError}
               </p>
             ) : null}
 
@@ -433,15 +432,6 @@ export default function ChauffeurPaltoAccountPanel({
               </>
             ) : null}
 
-            {!hasClientAuth && hasChauffeurAuth ? (
-              <p className="dashboard-field-hint" style={{ marginTop: 12 }}>
-                <Shield size={14} aria-hidden style={{ verticalAlign: 'middle', marginRight: 4 }} />
-                {isEn
-                  ? 'Cards are stored on your passenger profile (same email). You can also sign in from '
-                  : 'Les cartes sont enregistrees sur le profil passager (meme email). Vous pouvez aussi vous connecter depuis '}
-                <a href={clientCompteHref}>{isEn ? 'My account' : 'Mon compte'}</a>.
-              </p>
-            ) : null}
           </section>
         )}
       </div>

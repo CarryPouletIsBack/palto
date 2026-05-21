@@ -34,7 +34,17 @@ type ApiRide = {
   booking_kind: string
   started_at: string | null
   client_comment?: string | null
+  payment_method?: string | null
+  stripe_payment_intent_id?: string | null
   clients: { full_name: string; email: string | null; phone: string } | null
+}
+
+function mapPaymentMode(row: ApiRide): 'carte' | 'especes' {
+  const pm = (row.payment_method ?? '').trim().toLowerCase()
+  if (pm === 'card') return 'carte'
+  if (pm === 'cash') return 'especes'
+  if (row.stripe_payment_intent_id?.trim()) return 'carte'
+  return 'especes'
 }
 
 function mapStatus(s: string): CourseStatut {
@@ -78,7 +88,7 @@ function mapRide(row: ApiRide): CourseRowState {
     km,
     statut: mapStatus(row.status),
     montant: row.amount_eur,
-    modePaiement: 'carte',
+    modePaiement: mapPaymentMode(row),
     startedAt: row.started_at ? Date.parse(row.started_at) : undefined,
     bookingKind: mapBookingKind(row.booking_kind),
     clientComment: row.client_comment?.trim() || undefined,

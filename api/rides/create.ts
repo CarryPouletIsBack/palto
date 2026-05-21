@@ -10,6 +10,7 @@ import {
   createManualCapturePaymentIntent,
   isStripePaymentsEnabled,
 } from '../../server/lib/rideStripePayments.js'
+import { parseCoursePaymentMethod, type CoursePaymentMethod } from '../../server/lib/coursePaymentMethod.js'
 
 function readBearerToken(req: VercelRequest): string | null {
   const raw = req.headers.authorization
@@ -39,6 +40,7 @@ const BodySchema = z
     pickupLat: z.number().finite().nullable().optional(),
     dropoffLng: z.number().finite().nullable().optional(),
     dropoffLat: z.number().finite().nullable().optional(),
+    paymentMethod: z.enum(['card', 'cash']).optional(),
   })
   .superRefine((data, ctx) => {
     if (data.bookingKind === 'instant') {
@@ -211,6 +213,12 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   const driverAmountEur = b.amountEur
   const paltoFeeEur = PALTO_PLATFORM_FEE_EUR
   const totalEur = totalChargeEur(driverAmountEur, paltoFeeEur)
+  const paymentMethod: CoursePaymentMethod = parseCoursePaymentMethod(b.paymentMethod ?? 'cash')
+  if (paymentMethod === 'card' && !isStripePaymentsEnabled()) {
+    return res.status(400).json({
+      error: 'Paiement par carte indisponible pour le moment. Choisissez le reglement en especes.',
+    })
+  }
   const insertPayload = {
     external_code: code,
     client_id: clientId,
@@ -229,6 +237,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     pickup_lat: b.pickupLat ?? null,
     dropoff_lng: b.dropoffLng ?? null,
     dropoff_lat: b.dropoffLat ?? null,
+    payment_method: paymentMethod,
   }
 
   const { data: courseRow, error: courseErr } = await supabase
@@ -260,7 +269,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   let stripeCustomerId: string | null = null
   let stripeSetupWarning: string | null = null
 
-  if (isStripePaymentsEnabled()) {
+  if (paymentMethod === 'card' && isStripePaymentsEnabled()) {
     try {
       const paltoToken = readBearerToken(req)
       if (paltoToken) {
@@ -317,6 +326,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     driverAmountEur,
     paltoFeeEur,
     totalChargeEur: totalEur,
+    paymentMethod,
     stripeEnabled: isStripePaymentsEnabled(),
     stripeClientSecret,
     stripePaymentIntentId,

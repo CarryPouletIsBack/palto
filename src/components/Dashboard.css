@@ -1775,6 +1775,38 @@ button.dashboard-panel--overview-empty:focus-visible {
   background: #fff;
 }
 
+/* Formulaire profil chauffeur : champs utilisables sur iOS (Chrome/Safari) */
+.dashboard-chauffeur-profile-form input,
+.dashboard-chauffeur-profile-form select {
+  pointer-events: auto;
+  touch-action: manipulation;
+  -webkit-user-select: text;
+  user-select: text;
+}
+
+.dashboard-container--chauffeur .dashboard-chauffeur-profile-form input,
+.dashboard-container--chauffeur .dashboard-chauffeur-profile-form select {
+  border: 1px solid #d1d5db !important;
+  background: #fff !important;
+  color: #111827 !important;
+  box-shadow: none;
+  outline: none;
+}
+
+.dashboard-container--chauffeur .dashboard-chauffeur-profile-form select {
+  -webkit-appearance: menulist-button;
+  appearance: auto;
+}
+
+@media (max-width: 768px) {
+  .dashboard-chauffeur-profile-form input,
+  .dashboard-chauffeur-profile-form select {
+    font-size: 16px;
+    min-height: 44px;
+    line-height: 1.25;
+  }
+}
+
 .dashboard-field-hint,
 .dashboard-field-error {
   font-size: 11px;

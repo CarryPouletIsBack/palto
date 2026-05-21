@@ -20,3 +20,15 @@ export function chauffeurVehicleTypeLabel(slug: string | null | undefined): stri
   if (!key || !isChauffeurVehicleType(key)) return ''
   return CHAUFFEUR_VEHICLE_TYPE_LABELS[key]
 }
+
+/** Valeur fiable pour `<select>` (slug ou libellé legacy → slug). */
+export function normalizeVehicleSlugForSelect(value: string | null | undefined): ChauffeurVehicleType | '' {
+  const raw = (value ?? '').trim()
+  if (!raw) return ''
+  const lower = raw.toLowerCase()
+  if (isChauffeurVehicleType(lower)) return lower
+  const fromLabel = (
+    Object.entries(CHAUFFEUR_VEHICLE_TYPE_LABELS) as [ChauffeurVehicleType, string][]
+  ).find(([, label]) => label.toLowerCase() === lower)
+  return fromLabel?.[0] ?? ''
+}

@@ -521,7 +521,9 @@ export default function DriverNavigationView({ courseId, onClose }: Props) {
       montant != null && Number.isFinite(montant) && kmPlanned > 0.05 ? montant / kmPlanned : null
     const surplusIndicatif =
       prixAuKm != null && montant != null ? Math.round(deltaKm * prixAuKm * 100) / 100 : null
-    const mode = snapshot.modePaiement ?? 'carte'
+    const rawMode = (snapshot.modePaiement ?? 'carte').trim().toLowerCase()
+    const mode: 'carte' | 'especes' =
+      rawMode === 'especes' || rawMode === 'cash' ? 'especes' : 'carte'
     return {
       mode,
       montant,

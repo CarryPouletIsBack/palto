@@ -21,6 +21,7 @@ export type CreateRideOrderPayload = {
   pickupLat?: number | null
   dropoffLng?: number | null
   dropoffLat?: number | null
+  paymentMethod?: 'card' | 'cash'
 }
 
 export type CreateRideOrderResult = {

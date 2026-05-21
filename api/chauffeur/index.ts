@@ -26,6 +26,10 @@ import {
   sanitizeChauffeurProfileSnapshot,
 } from '../../server/lib/chauffeurProfileSanitize.js'
 import { mergeChauffeurProfileSnapshots } from '../../server/lib/chauffeurProfileMerge.js'
+import {
+  CHAUFFEUR_PROFILE_TABLE_MISSING_HINT,
+  isChauffeurProfileTableMissing,
+} from '../../server/lib/chauffeurProfileDb.js'
 import { sameDriverExternalKey } from '../../server/lib/driverIdentity.js'
 import {
   applyCancelPaymentOutcome,
@@ -107,6 +111,8 @@ type CourseRow = {
   completed_at: string | null
   cancelled_at: string | null
   created_at: string
+  payment_method: string | null
+  stripe_payment_intent_id: string | null
   clients?: { full_name: string; email: string | null; phone: string } | null
 }
 
@@ -172,7 +178,7 @@ async function handleRidesGet(res: VercelResponse, driverKey: string) {
   const { data, error } = await supabase
     .from('courses')
     .select(
-      'id, external_code, client_id, scheduled_date, scheduled_time, pickup_address, dropoff_address, status, amount_eur, distance_km, pickup_lng, pickup_lat, dropoff_lng, dropoff_lat, booking_kind, requested_driver_external_key, assigned_driver_external_key, accepted_at, started_at, completed_at, cancelled_at, created_at'
+      'id, external_code, client_id, scheduled_date, scheduled_time, pickup_address, dropoff_address, status, amount_eur, distance_km, pickup_lng, pickup_lat, dropoff_lng, dropoff_lat, booking_kind, requested_driver_external_key, assigned_driver_external_key, accepted_at, started_at, completed_at, cancelled_at, created_at, payment_method, stripe_payment_intent_id'
     )
     .order('created_at', { ascending: false })
     .limit(200)
@@ -588,11 +594,19 @@ async function handleProfilePut(req: VercelRequest, res: VercelResponse, account
   const incoming = sanitizeChauffeurProfileSnapshot(parsed.data.account ?? {})
   const supabase = getSupabaseAdmin()
 
-  const { data: existingRow } = await supabase
+  const { data: existingRow, error: existingErr } = await supabase
     .from('chauffeur_profile_data')
     .select('account_snapshot')
     .eq('account_id', accountId)
     .maybeSingle()
+
+  if (existingErr && isChauffeurProfileTableMissing(existingErr)) {
+    console.warn('[chauffeur/profile PUT] table absente — migration 0010')
+    return res.status(503).json({
+      error: CHAUFFEUR_PROFILE_TABLE_MISSING_HINT,
+      code: 'PROFILE_TABLE_MISSING',
+    })
+  }
 
   const existing = sanitizeChauffeurProfileSnapshot(existingRow?.account_snapshot ?? {})
   const account = mergeChauffeurProfileSnapshots(existing, incoming)
@@ -643,11 +657,19 @@ async function handleProfilePut(req: VercelRequest, res: VercelResponse, account
     .single()
 
   if (error || !data) {
+    if (error && isChauffeurProfileTableMissing(error)) {
+      console.warn('[chauffeur/profile PUT] table absente — migration 0010')
+      return res.status(503).json({
+        error: CHAUFFEUR_PROFILE_TABLE_MISSING_HINT,
+        code: 'PROFILE_TABLE_MISSING',
+        appAccountsUpdated: !accountErr,
+      })
+    }
     console.error('[chauffeur/profile PUT]', error)
     return res.status(500).json({ error: 'Enregistrement profil impossible' })
   }
 
-  return res.status(200).json({ ok: true, updatedAt: data.updated_at })
+  return res.status(200).json({ ok: true, updatedAt: data.updated_at, profileStorageReady: true })
 }
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {

@@ -120,26 +120,7 @@ async function requireStripePayerSession(
   }
 
   if (session.role === 'chauffeur') {
-    const { data: clientAccount, error } = await supabase
-      .from('app_accounts')
-      .select('id')
-      .eq('email', session.email)
-      .eq('role', 'client')
-      .maybeSingle()
-    if (error) {
-      console.error('[stripe/payer] client lookup', error)
-      res.status(503).json({ error: 'Service indisponible' })
-      return null
-    }
-    const clientId = String(clientAccount?.id ?? '').trim()
-    if (!clientId) {
-      res.status(403).json({
-        error:
-          'Aucun compte passager lie a cet email. Creez ou connectez un compte client avec la meme adresse pour enregistrer une carte.',
-      })
-      return null
-    }
-    return { supabase, accountId: clientId, email: session.email }
+    return { supabase, accountId: session.accountId, email: session.email }
   }
 
   res.status(401).json({ error: 'Non autorise' })

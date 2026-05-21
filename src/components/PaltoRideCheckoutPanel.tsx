@@ -3,6 +3,7 @@ import { useLanguage } from '../contexts/LanguageContext'
 import { stripeCheckoutEnabled, stripePublishableKey } from '../constants/featureFlags'
 import { PALTO_PLATFORM_FEE_EUR } from '../constants/stripeFees'
 import PaltoGoStripePayment from './PaltoGoStripePayment'
+import RidePaymentMethodPicker, { type RidePaymentMethod } from './RidePaymentMethodPicker'
 import {
   clientStripeApiEnabled,
   fetchClientStripePaymentMethods,
@@ -20,6 +21,9 @@ export type PaltoRideCheckoutPanelProps = {
   clientLoggedInEmail?: string | null
   stripeClientSecret: string | null
   stripeCustomerId?: string | null
+  paymentMethod: RidePaymentMethod
+  onPaymentMethodChange: (value: RidePaymentMethod) => void
+  cardPaymentAvailable?: boolean
   checkoutError: string | null
   checkoutSuccessMessage: string | null
   onStripeSuccess: () => void
@@ -37,6 +41,9 @@ export default function PaltoRideCheckoutPanel({
   clientLoggedInEmail,
   stripeClientSecret,
   stripeCustomerId: _stripeCustomerId,
+  paymentMethod,
+  onPaymentMethodChange,
+  cardPaymentAvailable = true,
   checkoutError,
   checkoutSuccessMessage,
   onStripeSuccess,
@@ -98,11 +105,21 @@ export default function PaltoRideCheckoutPanel({
 
       <div className="palto-checkout__summary">{summary}</div>
 
-      <p className="palto-checkout__lead">
-        {stripeOn
-          ? t('search.checkoutStripeLead', { fee: String(PALTO_PLATFORM_FEE_EUR) })
-          : t('search.checkoutStripeOff')}
-      </p>
+      {!showCardStep ? (
+        <RidePaymentMethodPicker
+          value={paymentMethod}
+          onChange={onPaymentMethodChange}
+          cardAvailable={cardPaymentAvailable && stripeOn}
+        />
+      ) : null}
+
+      {!showCardStep && paymentMethod === 'card' ? (
+        <p className="palto-checkout__lead">
+          {stripeOn
+            ? t('search.checkoutStripeLead', { fee: String(PALTO_PLATFORM_FEE_EUR) })
+            : t('search.checkoutStripeOff')}
+        </p>
+      ) : null}
 
       {!showCardStep ? (
         <>

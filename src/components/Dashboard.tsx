@@ -145,6 +145,7 @@ import {
   CHAUFFEUR_VEHICLE_TYPES,
   CHAUFFEUR_VEHICLE_TYPE_LABELS,
   isChauffeurVehicleType,
+  normalizeVehicleSlugForSelect,
 } from '../constants/chauffeurVehicleType';
 import {
   fetchChauffeurRideProfileFromServer,
@@ -1631,7 +1632,7 @@ const Dashboard = ({
             date: current.date,
             heure: current.heure,
             montantPrevuEuros: current.montant,
-            modePaiement: 'especes',
+            modePaiement: current.modePaiement ?? 'carte',
             startedAt,
             pickupLng: current.pickupLng,
             pickupLat: current.pickupLat,
@@ -1880,8 +1881,10 @@ const Dashboard = ({
       return;
     }
 
+    const vehicleSlug = normalizeVehicleSlugForSelect(userProfileDraft.vehicule);
     const nextProfile: ChauffeurProfile = {
       ...userProfileDraft,
+      vehicule: vehicleSlug,
       plaque: normalizedPlate,
       telephone: buildInternationalPhone(phoneCountryDraft, normalizedNationalPhone),
       profilePhotoUrl: profilePhotoDraftUrl,
@@ -1901,12 +1904,12 @@ const Dashboard = ({
       const merged = loadStoredChauffeurProfile(normalizeChauffeurEmail(nextProfile.email));
       if (merged) applyChauffeurProfileToUi(merged);
     });
-    const vehicleSlug = isChauffeurVehicleType(nextProfile.vehicule) ? nextProfile.vehicule : null;
+    const vehicleSlugForApi = vehicleSlug || null;
     void syncChauffeurRideProfileToServer({
       petFriendly: chauffeurRideSettings.petFriendly,
       luggageAssistance: chauffeurRideSettings.luggageAssistance,
       insulatedBag: chauffeurRideSettings.insulatedBag,
-      vehicleType: vehicleSlug,
+      vehicleType: vehicleSlugForApi,
     });
     setProfilePhotoUrl(profilePhotoDraftUrl);
     setOrganizationPhotoUrl(organizationPhotoDraftUrl);
@@ -1994,11 +1997,15 @@ const Dashboard = ({
       }))
       const vehicleSlug = profile.vehicleType ?? '';
       setChauffeurProfile((prev) => {
+        if (prev.vehicule.trim()) return prev;
         const next = { ...prev, vehicule: vehicleSlug };
         persistStoredChauffeurProfile(next);
         return next;
       });
-      setUserProfileDraft((prev) => ({ ...prev, vehicule: vehicleSlug }));
+      setUserProfileDraft((prev) => {
+        if (prev.vehicule.trim()) return prev;
+        return { ...prev, vehicule: vehicleSlug };
+      });
     })
   }, [])
 
@@ -3481,7 +3488,7 @@ const Dashboard = ({
                               </div>
                             </div>
                             <form
-                              className="dashboard-user-edit-grid"
+                              className="dashboard-user-edit-grid dashboard-chauffeur-profile-form"
                               onSubmit={(e) => {
                                 e.preventDefault();
                                 saveUserProfileEdit();
@@ -3523,30 +3530,34 @@ const Dashboard = ({
                                   Ville
                                   <input
                                     type="text"
-                                    list="reunion-city-suggestions"
+                                    name="chauffeur-ville"
+                                    autoComplete="address-level2"
+                                    enterKeyHint="next"
                                     value={userProfileDraft.ville}
                                     onChange={(e) =>
                                       setUserProfileDraft((prev) => ({ ...prev, ville: e.target.value }))
                                     }
+                                    onInput={(e) =>
+                                      setUserProfileDraft((prev) => ({
+                                        ...prev,
+                                        ville: e.currentTarget.value,
+                                      }))
+                                    }
                                     required
                                   />
-                                  <datalist id="reunion-city-suggestions">
-                                    {REUNION_CITY_SUGGESTIONS.map((city) => (
-                                      <option key={city} value={city} />
-                                    ))}
-                                  </datalist>
+                                  <small className="dashboard-field-hint">
+                                    Ex. {REUNION_CITY_SUGGESTIONS.slice(0, 3).join(', ')}…
+                                  </small>
                                 </label>
                                 <label>
                                   Véhicule
                                   <select
-                                    value={
-                                      isChauffeurVehicleType(userProfileDraft.vehicule)
-                                        ? userProfileDraft.vehicule
-                                        : ''
-                                    }
-                                    onChange={(e) =>
-                                      setUserProfileDraft((prev) => ({ ...prev, vehicule: e.target.value }))
-                                    }
+                                    name="chauffeur-vehicule"
+                                    value={normalizeVehicleSlugForSelect(userProfileDraft.vehicule)}
+                                    onChange={(e) => {
+                                      const slug = normalizeVehicleSlugForSelect(e.target.value);
+                                      setUserProfileDraft((prev) => ({ ...prev, vehicule: slug }));
+                                    }}
                                   >
                                     <option value="">Non renseigné</option>
                                     {CHAUFFEUR_VEHICLE_TYPES.map((type) => (

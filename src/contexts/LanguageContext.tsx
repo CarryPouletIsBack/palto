@@ -226,6 +226,13 @@ const TRANSLATIONS: Record<Language, Record<string, unknown>> = {
         'Renseignez le départ, la destination et l’heure, puis appuyez sur Réserver pour voir le récapitulatif.',
       bookingRecapConfirmScheduled: 'Finaliser la réservation',
       checkoutTitle: 'Paiement de la course',
+      checkoutPaymentMethodLabel: 'Mode de paiement',
+      checkoutPaymentCard: 'Carte bancaire',
+      checkoutPaymentCash: 'Espèces',
+      checkoutPaymentCardHint:
+        'Autorisation sur votre carte en fin de commande (sans débit immédiat). Commission Palto incluse dans le total autorisé.',
+      checkoutPaymentCashHint:
+        'Vous réglez le tarif chauffeur en espèces à la fin de la course (pas de prélèvement carte).',
       checkoutLead: 'Vérifiez le récapitulatif, puis validez votre commande.',
       checkoutLoggedInAs: 'Compte passager : {email}',
       checkoutStepsAria: 'Étapes de commande',
@@ -960,6 +967,13 @@ const TRANSLATIONS: Record<Language, Record<string, unknown>> = {
         'Enter pickup, destination and time, then tap Book to see your summary.',
       bookingRecapConfirmScheduled: 'Complete booking',
       checkoutTitle: 'Ride payment',
+      checkoutPaymentMethodLabel: 'Payment method',
+      checkoutPaymentCard: 'Bank card',
+      checkoutPaymentCash: 'Cash',
+      checkoutPaymentCardHint:
+        'Card authorization at checkout (no immediate charge). Palto fee is included in the authorized total.',
+      checkoutPaymentCashHint:
+        'Pay the driver fare in cash at the end of the ride (no card charge).',
       checkoutLead: 'Review your trip summary, then confirm your booking.',
       checkoutLoggedInAs: 'Passenger account: {email}',
       checkoutStepsAria: 'Booking steps',

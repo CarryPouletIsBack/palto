@@ -50,6 +50,14 @@ Mêmes clés en mode **test** puis **live** au go-live.
 
 Vérification : Table Editor → `courses` → colonnes `palto_fee_eur`, `stripe_payment_intent_id`, etc.
 
+**Profil chauffeur multi-appareils (obligatoire si `/api/chauffeur?resource=profile` renvoie 500)** :
+
+1. Même SQL Editor
+2. Colle le contenu de `scripts/apply-migration-0010.sql` (table `chauffeur_profile_data`)
+3. **Run**
+
+Vérification : Table Editor → table `chauffeur_profile_data` visible.
+
 ### Méthode B — CLI Supabase (si tu veux `db push` plus tard)
 
 ```bash

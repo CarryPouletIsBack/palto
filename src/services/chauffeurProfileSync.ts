@@ -32,7 +32,12 @@ type RemoteProfilePayload = {
   account?: Partial<ChauffeurProfileSnapshot>
   updatedAt?: string | null
   hasAccount?: boolean
+  profileStorageReady?: boolean
+  code?: string
+  hint?: string
 }
+
+let profileTableMissingWarned = false
 
 async function fetchRemoteProfile(): Promise<RemoteProfilePayload | null> {
   const auth = getDashboardAuthorizationHeader()
@@ -42,11 +47,19 @@ async function fetchRemoteProfile(): Promise<RemoteProfilePayload | null> {
       headers: { Authorization: auth },
     })
     if (res.status === 404) return { account: {}, updatedAt: null }
+    const data = (await res.json().catch(() => ({}))) as RemoteProfilePayload
+    if (res.status === 503 && data.code === 'PROFILE_TABLE_MISSING') {
+      if (!profileTableMissingWarned) {
+        profileTableMissingWarned = true
+        console.warn('[chauffeurProfileSync] migration 0010 non appliquee — profil local uniquement')
+      }
+      return { account: {}, updatedAt: null, profileStorageReady: false }
+    }
     if (!res.ok) {
       console.warn('[chauffeurProfileSync] GET failed', res.status)
       return null
     }
-    return (await res.json()) as RemoteProfilePayload
+    return data
   } catch (e) {
     console.warn('[chauffeurProfileSync] fetch failed', e)
     return null
@@ -67,8 +80,18 @@ async function pushRemoteProfile(email: string, account: ChauffeurProfileSnapsho
       body: JSON.stringify({ account }),
     })
     if (!res.ok) {
-      const body = (await res.json().catch(() => ({}))) as { error?: string }
-      console.warn('[chauffeurProfileSync] PUT failed', res.status, body.error)
+      const body = (await res.json().catch(() => ({}))) as {
+        error?: string
+        code?: string
+      }
+      if (body.code === 'PROFILE_TABLE_MISSING') {
+        if (!profileTableMissingWarned) {
+          profileTableMissingWarned = true
+          console.warn('[chauffeurProfileSync] migration 0010 requise pour sync serveur:', body.error)
+        }
+      } else {
+        console.warn('[chauffeurProfileSync] PUT failed', res.status, body.error)
+      }
     }
     return res.ok
   } catch (e) {
