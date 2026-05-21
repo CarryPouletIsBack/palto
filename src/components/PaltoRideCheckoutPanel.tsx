@@ -1,10 +1,8 @@
 import { useEffect, useState, type ReactNode } from 'react'
 import { useLanguage } from '../contexts/LanguageContext'
 import { stripeCheckoutEnabled, stripePublishableKey } from '../constants/featureFlags'
-import { stripeTestMode } from '../constants/stripeTestMode'
 import { PALTO_PLATFORM_FEE_EUR } from '../constants/stripeFees'
-import PaltoStripePaymentForm from './PaltoStripePaymentForm'
-import PaltoStripeTestCardHint from './PaltoStripeTestCardHint'
+import PaltoGoStripePayment from './PaltoGoStripePayment'
 import {
   clientStripeApiEnabled,
   fetchClientStripePaymentMethods,
@@ -38,22 +36,18 @@ export default function PaltoRideCheckoutPanel({
   onClientCommentChange,
   clientLoggedInEmail,
   stripeClientSecret,
-  stripeCustomerId,
+  stripeCustomerId: _stripeCustomerId,
   checkoutError,
   checkoutSuccessMessage,
   onStripeSuccess,
   onStripeError,
 }: PaltoRideCheckoutPanelProps) {
-  const { t } = useLanguage()
+  const { t, language } = useLanguage()
+  const isEn = language === 'en'
   const stripeOn = stripeCheckoutEnabled()
   const showCardStep = Boolean(stripeClientSecret && stripePublishableKey())
   const pk = stripePublishableKey()
   const [savedCards, setSavedCards] = useState<ClientStripePaymentMethod[]>([])
-  const [resolvedCustomerId, setResolvedCustomerId] = useState<string | null>(stripeCustomerId?.trim() || null)
-
-  useEffect(() => {
-    setResolvedCustomerId(stripeCustomerId?.trim() || null)
-  }, [stripeCustomerId])
 
   useEffect(() => {
     if (!showCardStep || !clientStripeApiEnabled() || !clientLoggedInEmail) {
@@ -62,10 +56,9 @@ export default function PaltoRideCheckoutPanel({
     }
     let cancelled = false
     void fetchClientStripePaymentMethods(customerName.trim() || undefined)
-      .then(({ items, stripeCustomerId: customerId }) => {
+      .then(({ items }) => {
         if (cancelled) return
         setSavedCards(items)
-        if (customerId) setResolvedCustomerId(customerId)
       })
       .catch(() => {
         if (!cancelled) setSavedCards([])
@@ -74,14 +67,6 @@ export default function PaltoRideCheckoutPanel({
       cancelled = true
     }
   }, [showCardStep, clientLoggedInEmail, customerName])
-
-  function formatCardBrand(brand: string): string {
-    const b = brand.toLowerCase()
-    if (b === 'visa') return 'Visa'
-    if (b === 'mastercard') return 'Mastercard'
-    if (b === 'amex') return 'American Express'
-    return brand.charAt(0).toUpperCase() + brand.slice(1)
-  }
 
   return (
     <div className="palto-checkout">
@@ -161,37 +146,24 @@ export default function PaltoRideCheckoutPanel({
       ) : null}
 
       {showCardStep && pk ? (
-        <>
-          {savedCards.length > 0 ? (
-            <div className="palto-checkout__saved-cards" role="status">
-              <p className="palto-checkout__saved-cards-title">{t('search.checkoutSavedCardsLead')}</p>
-              <ul className="palto-checkout__saved-cards-list">
-                {savedCards.map((pm) => (
-                  <li key={pm.id}>
-                    <strong>{formatCardBrand(pm.brand)}</strong>
-                    <span> •••• {pm.last4}</span>
-                    <span className="palto-checkout__saved-cards-exp">
-                      {' '}
-                      ({String(pm.expMonth).padStart(2, '0')}/{String(pm.expYear).slice(-2)})
-                    </span>
-                  </li>
-                ))}
-              </ul>
-              <p className="palto-checkout__lead palto-checkout__lead--card">{t('search.checkoutSavedCardsPick')}</p>
-            </div>
-          ) : (
-            <p className="palto-checkout__lead palto-checkout__lead--card">{t('search.checkoutCardLead')}</p>
-          )}
-          {stripeTestMode() && savedCards.length === 0 ? <PaltoStripeTestCardHint /> : null}
-          <PaltoStripePaymentForm
-            publishableKey={pk}
-            clientSecret={stripeClientSecret!}
-            stripeCustomerId={resolvedCustomerId}
-            submitLabel={t('search.checkoutAuthorizeCta')}
-            onSuccess={onStripeSuccess}
-            onError={onStripeError}
-          />
-        </>
+        <PaltoGoStripePayment
+          publishableKey={pk}
+          clientSecret={stripeClientSecret!}
+          savedCards={savedCards}
+          onSuccess={onStripeSuccess}
+          onError={onStripeError}
+          submitLabel={t('search.checkoutAuthorizeCta')}
+          labels={{
+            useSavedCard: isEn ? 'Saved card' : 'Carte enregistree',
+            useNewCard: isEn ? 'Another card' : 'Autre carte',
+            savedCardHint: isEn
+              ? 'Select a card and authorize payment — no need to re-enter card details.'
+              : 'Choisissez une carte et autorisez le paiement — pas besoin de ressaisir les coordonnees.',
+            newCardHint: isEn
+              ? 'Enter card details below.'
+              : 'Saisissez les coordonnees de la carte ci-dessous.',
+          }}
+        />
       ) : null}
 
       {checkoutError ? <p className="palto-checkout__error">{checkoutError}</p> : null}

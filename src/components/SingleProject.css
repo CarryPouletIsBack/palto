@@ -6312,6 +6312,42 @@ html[data-app-theme='dark'] .palto-ride-timing-expand__option:hover {
   color: var(--sp-text-subtle);
 }
 
+.palto-go-stripe-payment__mode {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.palto-go-stripe-payment__mode-btn {
+  flex: 1;
+  border: 1px solid var(--sp-edge, #e2e8f0);
+  border-radius: 10px;
+  padding: 10px 12px;
+  background: var(--sp-warm-surface, #fff);
+  color: var(--sp-text, #0f172a);
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.palto-go-stripe-payment__mode-btn.is-active {
+  border-color: #2563eb;
+  background: #eff6ff;
+  color: #1d4ed8;
+}
+
+.palto-go-stripe-payment__saved-option {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  cursor: pointer;
+  font-size: 14px;
+}
+
+.palto-go-stripe-payment__hint {
+  margin: 0 0 10px;
+}
+
 .palto-checkout-test-hint {
   border: 1px solid #ffd6a8;
   border-radius: 10px;
