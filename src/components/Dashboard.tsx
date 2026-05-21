@@ -86,6 +86,7 @@ import ChauffeurPaltoAccountPanel, {
 } from './ChauffeurPaltoAccountPanel';
 import ChauffeurRideSettingsForm from './ChauffeurRideSettingsForm';
 import { toast } from 'sonner';
+import { chauffeurCancelledPaymentLabel } from '../lib/chauffeurPaymentStatusLabel';
 import './Dashboard.css';
 import './Dashboard.app-theme.css';
 import './ClientCompteDashboard.css';
@@ -279,13 +280,37 @@ function readFormControlValue(
   return e.currentTarget?.value ?? '';
 }
 
+const CHAUFFEUR_SEEN_CANCEL_STORAGE_KEY = 'palto:chauffeur-seen-cancel-ids-v1';
+
 type DashboardAlertItem = {
   id: string;
-  kind: 'org_invite' | 'demand' | 'upcoming' | 'system';
+  kind: 'org_invite' | 'demand' | 'upcoming' | 'system' | 'cancel';
   title: string;
   description: string;
   courseId?: string;
 };
+
+function loadSeenCancelCourseIds(): Set<string> {
+  if (typeof window === 'undefined') return new Set();
+  try {
+    const raw = localStorage.getItem(CHAUFFEUR_SEEN_CANCEL_STORAGE_KEY);
+    if (!raw) return new Set();
+    const parsed = JSON.parse(raw) as unknown;
+    if (!Array.isArray(parsed)) return new Set();
+    return new Set(parsed.filter((id): id is string => typeof id === 'string' && id.length > 0));
+  } catch {
+    return new Set();
+  }
+}
+
+function persistSeenCancelCourseIds(ids: Set<string>): void {
+  if (typeof window === 'undefined') return;
+  try {
+    localStorage.setItem(CHAUFFEUR_SEEN_CANCEL_STORAGE_KEY, JSON.stringify([...ids].slice(-200)));
+  } catch {
+    /* ignore */
+  }
+}
 
 function inferProfileFromEmail(emailRaw: string): Pick<ChauffeurProfile, 'prenom' | 'nom'> {
   const localPart = emailRaw.split('@')[0] ?? '';
@@ -666,6 +691,9 @@ const Dashboard = ({
   const [courseRows, setCourseRows] = useState<CourseRowState[]>(() => {
     return [];
   });
+  const seenCancelIdsRef = useRef<Set<string>>(loadSeenCancelCourseIds());
+  const [seenCancelIds, setSeenCancelIds] = useState<Set<string>>(() => loadSeenCancelCourseIds());
+  const cancelNotifyInitializedRef = useRef(false);
 
   const clientRows = useMemo(() => buildDashboardClientRowsFromCourses(courseRows), [courseRows]);
   const [selectedClientId, setSelectedClientId] = useState<string | null>(null);
@@ -701,6 +729,62 @@ const Dashboard = ({
       void refreshRides();
     });
   }, [persistRides, refreshRides]);
+
+  useEffect(() => {
+    if (!persistRides) return;
+    const cancelled = courseRows.filter((c) => c.statut === 'Annulee');
+    const seen = seenCancelIdsRef.current;
+
+    if (!cancelNotifyInitializedRef.current) {
+      cancelNotifyInitializedRef.current = true;
+      for (const c of cancelled) seen.add(c.id);
+      seenCancelIdsRef.current = seen;
+      setSeenCancelIds(new Set(seen));
+      persistSeenCancelCourseIds(seen);
+      return;
+    }
+
+    const fresh = cancelled.filter((c) => !seen.has(c.id));
+    if (fresh.length === 0) return;
+
+    for (const course of fresh.slice(0, 5)) {
+      const paymentNote = chauffeurCancelledPaymentLabel(course);
+      toast.warning('Course annulee', {
+        description: `${course.client} · ${course.depart} → ${course.arrivee}${
+          paymentNote ? ` — ${paymentNote}` : ''
+        }`,
+        duration: 10_000,
+      });
+      seen.add(course.id);
+    }
+    seenCancelIdsRef.current = seen;
+    setSeenCancelIds(new Set(seen));
+    persistSeenCancelCourseIds(seen);
+  }, [courseRows, persistRides]);
+
+  const cancelledCoursesForRefundView = useMemo(
+    () =>
+      [...courseRows]
+        .filter((c) => c.statut === 'Annulee')
+        .sort((a, b) => (b.cancelledAt ?? b.date).localeCompare(a.cancelledAt ?? a.date))
+        .slice(0, 25),
+    [courseRows]
+  );
+
+  const markCancelAlertsRead = useCallback(() => {
+    const seen = new Set(seenCancelIdsRef.current);
+    let changed = false;
+    for (const course of courseRows) {
+      if (course.statut === 'Annulee' && !seen.has(course.id)) {
+        seen.add(course.id);
+        changed = true;
+      }
+    }
+    if (!changed) return;
+    seenCancelIdsRef.current = seen;
+    setSeenCancelIds(seen);
+    persistSeenCancelCourseIds(seen);
+  }, [courseRows]);
 
   const [chauffeurProfile, setChauffeurProfile] = useState<ChauffeurProfile>(() => {
     const currentUserEmail = getChauffeurSessionEmail();
@@ -1505,6 +1589,22 @@ const Dashboard = ({
         courseId: c.id,
       }));
 
+    const cancelAlerts = courseRows
+      .filter((c) => c.statut === 'Annulee' && !seenCancelIds.has(c.id))
+      .slice(0, 5)
+      .map((c) => {
+        const paymentNote = chauffeurCancelledPaymentLabel(c);
+        return {
+          id: `cancel-${c.id}`,
+          kind: 'cancel' as const,
+          title: 'Course annulee',
+          description: `${c.client} · ${c.depart} → ${c.arrivee}${
+            paymentNote ? ` · ${paymentNote}` : ''
+          }`,
+          courseId: c.id,
+        };
+      });
+
     const systemHint = {
       id: 'system-hint-1',
       kind: 'system' as const,
@@ -1516,8 +1616,8 @@ const Dashboard = ({
         })} · classement par distance active`,
     };
 
-    return [...inboxRows, ...pendingDemands, systemHint];
-  }, [courseRows, chauffeurProfile.email, inboxTick, t]);
+    return [...inboxRows, ...cancelAlerts, ...pendingDemands, systemHint];
+  }, [courseRows, chauffeurProfile.email, inboxTick, seenCancelIds, t]);
 
   const planningYear = planningMonth.getFullYear();
   const planningMonthIndex = planningMonth.getMonth();
@@ -2066,6 +2166,9 @@ const Dashboard = ({
       insulatedBag: rideSettingsDraft.insulatedBag,
       vehicleType: vehicleSlug,
     });
+    toast.success('Paramètres de course enregistrés', {
+      description: 'Tarifs locaux + préférences synchronisées.',
+    });
   }, [chauffeurProfile.vehicule, rideSettingsDraft]);
 
   /** Au chargement : lire Supabase (vérité pour la page Go), pas écraser la base avec le localStorage. */
@@ -2307,7 +2410,11 @@ const Dashboard = ({
                     aria-label="Notifications"
                     onClick={() => {
                       setMoreMenuOpen(false);
-                      setAlertsOpen((prev) => !prev);
+                      setAlertsOpen((prev) => {
+                        const next = !prev;
+                        if (next) markCancelAlertsRead();
+                        return next;
+                      });
                     }}
                   >
                     <Bell size={16} />
@@ -2680,6 +2787,8 @@ const Dashboard = ({
                                 className={`alert-dot ${
                                   alert.kind === 'org_invite'
                                     ? 'info'
+                                    : alert.kind === 'cancel'
+                                      ? 'warning'
                                     : alert.kind === 'demand'
                                       ? 'warning'
                                       : alert.kind === 'upcoming'
@@ -3869,6 +3978,36 @@ const Dashboard = ({
                                   </div>
                                 ) : null}
                               </form>
+                            </section>
+                            <section className="dashboard-user-subcard" style={{ marginTop: 16 }}>
+                              <h4>
+                                {language === 'en' ? 'Cancellations & card refunds' : 'Annulations & remboursements carte'}
+                              </h4>
+                              <p className="dashboard-field-hint" style={{ margin: '0 0 8px' }}>
+                                {language === 'en'
+                                  ? 'Stripe status after a cancellation (full release or cancellation fee).'
+                                  : 'Statut Stripe apres annulation (liberation de l’autorisation ou frais d’annulation).'}
+                              </p>
+                              {cancelledCoursesForRefundView.length === 0 ? (
+                                <p className="dashboard-field-hint" style={{ margin: 0 }}>
+                                  {language === 'en' ? 'No cancelled rides.' : 'Aucune course annulee.'}
+                                </p>
+                              ) : (
+                                <div className="dashboard-chauffeur-refund-list">
+                                  {cancelledCoursesForRefundView.map((course) => (
+                                    <div key={course.id} className="dashboard-chauffeur-refund-row">
+                                      <strong>
+                                        {course.date} {course.heure} — {course.client}
+                                      </strong>
+                                      <p>
+                                        {course.depart} → {course.arrivee}
+                                        {course.modePaiement === 'carte' ? ' · CB' : ' · especes'}
+                                      </p>
+                                      <p>{chauffeurCancelledPaymentLabel(course)}</p>
+                                    </div>
+                                  ))}
+                                </div>
+                              )}
                             </section>
                           </div>
                         ) : null}

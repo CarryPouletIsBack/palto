@@ -25,4 +25,8 @@ export type CourseRowState = {
   pickupLat?: number
   dropoffLng?: number
   dropoffLat?: number
+  cancelledAt?: string | null
+  cancelledReason?: string | null
+  stripePaymentStatus?: string | null
+  cancellationFeeCapturedCents?: number | null
 }

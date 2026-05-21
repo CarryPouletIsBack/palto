@@ -3922,21 +3922,61 @@ button.dashboard-org-sidebar-brand--home:focus-visible {
   background: transparent;
 }
 
-/* Compte chauffeur : un seul scroll (.dashboard-content), pas de capture tactile sur les inputs */
+/* Compte chauffeur : un seul scroll (.dashboard-content), contenu non coupe */
 .dashboard-container--chauffeur.dashboard-container--chauffeur-account .dashboard-org-layout {
   flex: 1 1 auto;
   min-height: 0;
-  overflow: hidden;
+  overflow: visible;
+  align-items: stretch;
 }
 
 .dashboard-container--chauffeur.dashboard-container--chauffeur-account .dashboard-org-main {
   overflow: visible;
   min-height: 0;
+  flex: 1 1 auto;
+  width: 100%;
 }
 
+.dashboard-container--chauffeur.dashboard-container--chauffeur-account .dashboard-user-card,
+.dashboard-container--chauffeur.dashboard-container--chauffeur-account .dashboard-user-subcard,
 .dashboard-container--chauffeur.dashboard-container--chauffeur-account .dashboard-ride-settings-edit-layout .dashboard-panel {
+  border: 1px solid #e5e7eb !important;
+  background: #ffffff !important;
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.06) !important;
   position: relative;
   z-index: 1;
+}
+
+.dashboard-chauffeur-refund-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 12px;
+}
+
+.dashboard-chauffeur-refund-row {
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+  padding: 10px 12px;
+  background: #f8fafc;
+}
+
+.dashboard-chauffeur-refund-row strong {
+  display: block;
+  font-size: 13px;
+  color: #0f172a;
+  margin-bottom: 4px;
+}
+
+.dashboard-chauffeur-refund-row p {
+  margin: 0;
+  font-size: 12px;
+  line-height: 1.4;
+  color: #475569;
+}
+
+.topbar-alert-item.cancel {
+  border-left: 3px solid #dc2626;
 }
 
 .dashboard-org-main-lead {

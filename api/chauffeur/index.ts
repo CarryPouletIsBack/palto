@@ -111,9 +111,12 @@ type CourseRow = {
   started_at: string | null
   completed_at: string | null
   cancelled_at: string | null
+  cancelled_reason: string | null
   created_at: string
   payment_method: string | null
   stripe_payment_intent_id: string | null
+  stripe_payment_status: string | null
+  cancellation_fee_captured_cents: number | null
   clients?: { full_name: string; email: string | null; phone: string } | null
 }
 

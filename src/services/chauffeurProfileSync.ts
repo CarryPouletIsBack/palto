@@ -89,6 +89,8 @@ async function pushRemoteProfile(email: string, account: ChauffeurProfileSnapsho
           profileTableMissingWarned = true
           console.warn('[chauffeurProfileSync] migration 0010 requise pour sync serveur:', body.error)
         }
+      } else if (res.status === 400 && body.error === 'Rien a enregistrer') {
+        /* Profil local vide ou sans champ serveur — pas une erreur bloquante. */
       } else {
         console.warn('[chauffeurProfileSync] PUT failed', res.status, body.error)
       }

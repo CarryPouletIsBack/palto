@@ -36,6 +36,10 @@ type ApiRide = {
   client_comment?: string | null
   payment_method?: string | null
   stripe_payment_intent_id?: string | null
+  stripe_payment_status?: string | null
+  cancelled_at?: string | null
+  cancelled_reason?: string | null
+  cancellation_fee_captured_cents?: number | null
   clients: { full_name: string; email: string | null; phone: string } | null
 }
 
@@ -100,6 +104,14 @@ function mapRide(row: ApiRide): CourseRowState {
       typeof row.dropoff_lng === 'number' && Number.isFinite(row.dropoff_lng) ? row.dropoff_lng : undefined,
     dropoffLat:
       typeof row.dropoff_lat === 'number' && Number.isFinite(row.dropoff_lat) ? row.dropoff_lat : undefined,
+    cancelledAt: row.cancelled_at ?? null,
+    cancelledReason: row.cancelled_reason?.trim() || null,
+    stripePaymentStatus: row.stripe_payment_status?.trim() || null,
+    cancellationFeeCapturedCents:
+      typeof row.cancellation_fee_captured_cents === 'number' &&
+      Number.isFinite(row.cancellation_fee_captured_cents)
+        ? row.cancellation_fee_captured_cents
+        : null,
   }
 }
 
