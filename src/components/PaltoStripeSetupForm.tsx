@@ -8,7 +8,7 @@ import {
 } from '@stripe/react-stripe-js'
 import { loadStripe, type StripeAddressElementOptions, type StripeElementsOptions } from '@stripe/stripe-js'
 import { paltoStripeElementsAppearance } from '../utils/stripeElementsAppearance'
-import { paltoPaymentElementCardOnlyOptions } from '../utils/stripePaymentElementOptions'
+import { PALTO_PAYMENT_ELEMENT_CARD_ONLY_OPTIONS } from '../utils/stripePaymentElementOptions'
 import Button from './Button'
 
 type InnerProps = {
@@ -109,7 +109,7 @@ function SetupFormInner({ customerEmail, onSuccess, onError, submitLabel }: Inne
       <p className="palto-checkout-stripe__section-label" style={{ marginTop: 12 }}>
         Carte bancaire
       </p>
-      <PaymentElement options={paltoPaymentElementCardOnlyOptions()} />
+      <PaymentElement options={PALTO_PAYMENT_ELEMENT_CARD_ONLY_OPTIONS} />
       <Button
         variant="primary"
         type="button"

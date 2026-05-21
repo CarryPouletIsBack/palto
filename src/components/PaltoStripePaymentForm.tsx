@@ -2,7 +2,7 @@ import { useMemo, useState } from 'react'
 import { Elements, PaymentElement, useElements, useStripe } from '@stripe/react-stripe-js'
 import { loadStripe, type StripeElementsOptions } from '@stripe/stripe-js'
 import { paltoStripeElementsAppearance } from '../utils/stripeElementsAppearance'
-import { paltoPaymentElementOptions } from '../utils/stripePaymentElementOptions'
+import { PALTO_PAYMENT_ELEMENT_OPTIONS } from '../utils/stripePaymentElementOptions'
 import Button from './Button'
 
 type InnerProps = {
@@ -43,7 +43,7 @@ function PaymentFormInner({ onSuccess, onError, submitLabel }: InnerProps) {
 
   return (
     <div className="palto-checkout-stripe">
-      <PaymentElement options={paltoPaymentElementOptions()} />
+      <PaymentElement options={PALTO_PAYMENT_ELEMENT_OPTIONS} />
       <Button
         variant="primary"
         type="button"

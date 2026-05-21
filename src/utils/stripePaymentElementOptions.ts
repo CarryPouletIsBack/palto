@@ -1,25 +1,29 @@
 import type { StripePaymentElementOptions } from '@stripe/stripe-js'
 
 /**
- * Options Payment Element (Stripe.js charge via CDN).
- * `billingDetails` doit être 'auto' ou 'never' (pas d'objet name/email/address).
- * 'auto' : Stripe affiche les champs de facturation utiles (dont l'adresse si nécessaire).
+ * Stripe.js (CDN) n’accepte que billingDetails: 'auto' | 'never' (pas d’objet { name, email, address }).
+ * Ne pas réintroduire l’ancienne syntaxe — elle provoque IntegrationError au montage du Payment Element.
  */
-export function paltoPaymentElementOptions(): StripePaymentElementOptions {
-  return {
-    layout: 'tabs',
-    fields: {
-      billingDetails: 'auto',
-    },
-  }
+
+/** Paiement course / recharge portefeuille : Stripe gère la facturation par défaut. */
+export const PALTO_PAYMENT_ELEMENT_OPTIONS: StripePaymentElementOptions = {
+  layout: 'tabs',
 }
 
-/** Carte seule : l’adresse est collectée via AddressElement (modale compte). */
+/** Enregistrement carte compte : adresse via AddressElement, carte sans champs facturation dupliqués. */
+export const PALTO_PAYMENT_ELEMENT_CARD_ONLY_OPTIONS: StripePaymentElementOptions = {
+  layout: 'tabs',
+  fields: {
+    billingDetails: 'never',
+  },
+}
+
+/** @deprecated Utiliser PALTO_PAYMENT_ELEMENT_OPTIONS */
+export function paltoPaymentElementOptions(): StripePaymentElementOptions {
+  return PALTO_PAYMENT_ELEMENT_OPTIONS
+}
+
+/** @deprecated Utiliser PALTO_PAYMENT_ELEMENT_CARD_ONLY_OPTIONS */
 export function paltoPaymentElementCardOnlyOptions(): StripePaymentElementOptions {
-  return {
-    layout: 'tabs',
-    fields: {
-      billingDetails: 'never',
-    },
-  }
+  return PALTO_PAYMENT_ELEMENT_CARD_ONLY_OPTIONS
 }

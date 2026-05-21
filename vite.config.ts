@@ -21,6 +21,8 @@ export default defineConfig({
       manifest: false,
       includeAssets: ['manifest.json', 'images/placeholder-app-icon.svg', 'images/placeholder-cover.svg'],
       workbox: {
+        skipWaiting: true,
+        clientsClaim: true,
         /** Contourne le crash terser en build (Vercel / CI) ; le SW reste fonctionnel. */
         mode: 'development',
         cleanupOutdatedCaches: true,
