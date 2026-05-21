@@ -7,7 +7,9 @@ export function formatDriverMetaLine(driver: NearbyDriver, pickup: GeoPoint | nu
   const parts: string[] = []
   const vehicle = driver.moto.trim()
   if (vehicle) parts.push(vehicle)
-  if (pickup) {
+  const driverOk =
+    Number.isFinite(driver.latitude) && Number.isFinite(driver.longitude)
+  if (pickup && driverOk) {
     const km = haversineDistanceKm(pickup, {
       latitude: driver.latitude,
       longitude: driver.longitude,

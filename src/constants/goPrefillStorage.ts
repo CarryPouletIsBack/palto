@@ -5,6 +5,11 @@ export type GoPrefillPayload = {
   destination: string
   timing?: 'now' | 'later'
   datetime?: string
+  /** Coordonnées départ (compte client → Go, évite un état carte invalide avant géocodage). */
+  pickupLng?: number
+  pickupLat?: number
+  destinationLng?: number
+  destinationLat?: number
   /** @deprecated Préférer `homeDepartmentId`. */
   homeCommune?: string
   /** Département / zone d’accueil (`heroDepartments`). */

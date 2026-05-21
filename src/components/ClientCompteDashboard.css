@@ -1460,6 +1460,23 @@ html[data-app-theme='dark'] .client-compte-account-edit-modal-input {
   color: #3b82f6;
 }
 
+.client-compte-payment-stripe-notice {
+  margin: 0;
+  padding: 10px 12px;
+  border-radius: 10px;
+  border: 1px solid #ffd6a8;
+  background: #fff8f0;
+  color: #9a3412;
+  font-size: 13px;
+  line-height: 1.45;
+}
+
+html[data-app-theme='dark'] .client-compte-payment-stripe-notice {
+  background: #2a2218;
+  border-color: #6b4f2a;
+  color: #fdba74;
+}
+
 .client-compte-payment-layout {
   display: flex;
   flex-direction: column;

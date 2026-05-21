@@ -141,6 +141,25 @@ Action API : `POST /api/chauffeur?resource=rides` body `{ courseId, action: "no_
 
 ---
 
+## Ce qui est branché (MVP)
+
+| Zone | Stripe | Détail |
+|------|--------|--------|
+| **Page Go — checkout** | Oui | `PaymentIntent` + Elements (`4242…` en test) |
+| **Compte passager — « Ajouter un mode de paiement »** | Non (local) | Aperçu localStorage ; **pas** de débit Stripe depuis le compte |
+| **Dashboard chauffeur — IBAN / virement** | Non | Données locales (mock) |
+| **Fin de course chauffeur** | Oui (si PI créé) | `capture` via API chauffeur |
+| **Annulation / no-show** | Oui (si PI créé) | `cancel` / capture 5 € |
+
+Prochaine étape compte passager : **Stripe Customer** + `SetupIntent` pour réutiliser une carte sur Go.
+
+### Erreur 502 « Impossible de preparer le paiement Stripe »
+
+Vérifier sur Vercel : `STRIPE_SECRET_KEY` (sk_test_…), pas seulement la clé publishable.  
+Si Stripe échoue, la commande est **quand même enregistrée** (fallback) avec message `stripeSetupWarning` — le passager règle avec le chauffeur.
+
+---
+
 ## « Ça ne fait rien » — diagnostic
 
 ### `supabase db push` sans effet visible

@@ -47,7 +47,9 @@ export async function fetchNearbyDriversFromApi(params: {
       return []
     }
     if (!Array.isArray(data.drivers)) return []
-    return data.drivers.map((raw) => normalizeNearbyDriver(raw))
+    return data.drivers
+      .map((raw) => normalizeNearbyDriver(raw))
+      .filter((d) => Number.isFinite(d.longitude) && Number.isFinite(d.latitude))
   } catch (e) {
     console.warn('[nearbyDriversApi] fetch failed', e)
     return []

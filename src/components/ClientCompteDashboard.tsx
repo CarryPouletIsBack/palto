@@ -90,6 +90,14 @@ import {
   loadChauffeurOrg,
 } from '../constants/chauffeurOrganizationStorage';
 import { simplifyAddressDisplay } from '../services/addressDisplay';
+import { saveGoPrefill } from '../constants/goPrefillStorage';
+import {
+  loadClientPaymentMethods,
+  saveClientPaymentMethod,
+  type ClientSavedPaymentMethod,
+} from '../constants/clientPaymentMethodsStorage';
+import { DEFAULT_HERO_DEPARTMENT_ID } from '../data/heroDepartments';
+import { stripeCheckoutEnabled } from '../constants/featureFlags';
 import {
   getCurrentClientUser,
   isClientAuthenticated,
@@ -293,6 +301,9 @@ export default function ClientCompteDashboard({ onBack, onOpenClientLiveMeet }: 
     postalCode: '',
   });
   const [paymentErrors, setPaymentErrors] = useState<Record<string, string>>({});
+  const [savedPaymentMethods, setSavedPaymentMethods] = useState<ClientSavedPaymentMethod[]>(() =>
+    loadClientPaymentMethods(getCurrentClientUser()?.email)
+  );
   const [placesDraft, setPlacesDraft] = useState<ClientSavedPlacesSnapshot>(() =>
     loadClientSavedPlaces(getCurrentClientUser()?.email)
   );
@@ -654,6 +665,10 @@ export default function ClientCompteDashboard({ onBack, onOpenClientLiveMeet }: 
     });
   }, [activeClientEmail]);
 
+  useEffect(() => {
+    setSavedPaymentMethods(loadClientPaymentMethods(activeClientEmail));
+  }, [activeClientEmail, authSessionTick]);
+
   const toggleAppNotify = useCallback((key: 'notifyEmail' | 'notifySms' | 'notifyPush') => {
     const email = activeClientEmail || undefined;
     setAppPrefs((prev) => {
@@ -950,8 +965,30 @@ export default function ClientCompteDashboard({ onBack, onOpenClientLiveMeet }: 
       setPaymentErrors(errors);
       return;
     }
-    setPaymentModalOpen(false);
-  }, [isEn, paymentForm]);
+    const brand = cardDigits.startsWith('4') ? 'Visa' : 'Carte'
+    const next = saveClientPaymentMethod(activeClientEmail, {
+      brand,
+      last4: cardDigits.slice(-4),
+      cardholderName: paymentForm.cardholderName.trim(),
+      expiryMonth: paymentForm.expiryMonth,
+      expiryYear: paymentForm.expiryYear,
+      billing: {
+        country: paymentForm.country,
+        addressLine1: paymentForm.addressLine1.trim(),
+        city: paymentForm.city.trim(),
+        postalCode: paymentForm.postalCode.trim(),
+      },
+    })
+    setSavedPaymentMethods(next)
+    setProfile((p) => ({ ...p, preferredPayment: 'card' }))
+    setDraft((p) => ({ ...p, preferredPayment: 'card' }))
+    setPaymentModalOpen(false)
+    toast.success(
+      isEn
+        ? 'Card saved locally (preview). Online payment is completed on the Go page with Stripe.'
+        : 'Carte enregistree localement (apercu). Le paiement en ligne se fait sur la page Go avec Stripe.'
+    )
+  }, [activeClientEmail, isEn, paymentForm]);
 
   const savePlaces = useCallback(
     (e: FormEvent) => {
@@ -1091,10 +1128,21 @@ export default function ClientCompteDashboard({ onBack, onOpenClientLiveMeet }: 
 
   const handleGoPage = useCallback(() => {
     const prefix = language === 'en' ? '/en' : '/fr';
+    const domicile = placesDraft.domicile.trim();
+    const coords = placesDraft.domicileCoords;
+    saveGoPrefill({
+      pickup: domicile,
+      destination: '',
+      timing: 'now',
+      homeDepartmentId: DEFAULT_HERO_DEPARTMENT_ID,
+      ...(coords && Number.isFinite(coords.lng) && Number.isFinite(coords.lat)
+        ? { pickupLng: coords.lng, pickupLat: coords.lat }
+        : {}),
+    });
     window.history.pushState({}, '', `${prefix}/go`);
     window.dispatchEvent(new PopStateEvent('popstate'));
     trackEvent('click', 'client_account', 'overview_go_cta');
-  }, [language]);
+  }, [language, placesDraft.domicile, placesDraft.domicileCoords]);
 
   const overviewPlacesPreview = useMemo(() => {
     const out: Array<{ key: string; label: string; address: string; kind: 'home' | 'work' | 'airport' | 'other' }> = [];
@@ -1812,52 +1860,64 @@ export default function ClientCompteDashboard({ onBack, onOpenClientLiveMeet }: 
                   </header>
                   {accountManageSection === 'payment' ? (
                     <section className="client-compte-payment-layout">
-                      <p className="dashboard-field-hint">
-                        {isEn
-                          ? 'Your default payment method is also used for subscriptions and shared family purchases.'
-                          : 'Votre mode de paiement par defaut est aussi utilise pour les abonnements et achats partages.'}
-                      </p>
-                      <p className="dashboard-field-hint">
-                        {isEn
-                          ? 'You can add multiple methods and reorder priority if one payment fails.'
-                          : 'Vous pouvez ajouter plusieurs moyens de paiement et reordonner la priorite en cas d echec.'}
+                      <p className="client-compte-payment-stripe-notice" role="status">
+                        {stripeCheckoutEnabled()
+                          ? isEn
+                            ? 'Ride payment uses Stripe on the Go page (test card 4242…). Cards saved here are stored locally only until Stripe Customer is connected — they are not charged from this screen.'
+                            : 'Le paiement des courses passe par Stripe sur la page Go (carte test 4242…). Les cartes ajoutees ici sont enregistrees localement (apercu) — pas encore debitees depuis cet ecran.'
+                          : isEn
+                            ? 'Online card payment is not configured yet. Rides can be paid directly to the driver.'
+                            : 'Le paiement carte en ligne n est pas encore configure. Reglement prevu avec le chauffeur.'}
                       </p>
 
                       <div className="client-compte-payment-row">
-                        <article className="dashboard-user-card client-compte-payment-card">
-                          <div className="client-compte-payment-card-head">
-                            <strong>Visa</strong>
-                            <span>•••• 3364</span>
-                          </div>
-                          <div className="client-compte-payment-card-brand" aria-hidden>
-                            VISA
-                          </div>
-                        </article>
+                        {savedPaymentMethods.length > 0 ? (
+                          savedPaymentMethods.map((pm) => (
+                            <article key={pm.id} className="dashboard-user-card client-compte-payment-card">
+                              <div className="client-compte-payment-card-head">
+                                <strong>{pm.brand}</strong>
+                                <span>•••• {pm.last4}</span>
+                              </div>
+                              <p className="dashboard-field-hint" style={{ margin: '6px 0 0' }}>
+                                {pm.cardholderName} · {pm.expiryMonth}/{pm.expiryYear}
+                              </p>
+                              <div className="client-compte-payment-card-brand" aria-hidden>
+                                {pm.brand.toUpperCase().slice(0, 4)}
+                              </div>
+                            </article>
+                          ))
+                        ) : (
+                          <article className="dashboard-user-card client-compte-payment-card client-compte-payment-address-card--empty">
+                            <p className="dashboard-field-hint" style={{ margin: 0 }}>
+                              {isEn
+                                ? 'No card saved yet. Add one below (local preview) or pay on Go with Stripe.'
+                                : 'Aucune carte enregistree. Ajoutez-en une ci-dessous (apercu local) ou payez sur Go avec Stripe.'}
+                            </p>
+                          </article>
+                        )}
                         <div className="client-compte-payment-actions">
                           <button type="button" className="client-compte-payment-link" onClick={openPaymentModal}>
                             {isEn ? 'Add payment method' : 'Ajouter un mode de paiement'}
                           </button>
-                          <button type="button" className="client-compte-payment-link">
-                            {isEn ? 'Reorder methods' : 'Reorganiser'}
-                          </button>
                         </div>
                       </div>
 
-                      <h4 className="client-compte-payment-delivery-title">
-                        {isEn ? 'Billing address' : 'Adresse de facturation'}
-                      </h4>
-                      <p className="dashboard-field-hint">
-                        {isEn
-                          ? 'Used for payment receipts and invoicing when you register a payment method. Nothing is pre-filled here — you add your own billing details when you add a card.'
-                          : 'Utilisée pour les reçus de paiement et la facturation lorsque vous enregistrez un moyen de paiement. Rien n’est pré-rempli ici : vous saisissez votre adresse de facturation lors de l’ajout d’une carte.'}
-                      </p>
-                      <article className="dashboard-user-card client-compte-payment-address-card client-compte-payment-address-card--empty">
-                        <p className="dashboard-field-hint" style={{ margin: 0 }}>
-                          {isEn
-                            ? 'No billing address saved yet. Use "Add payment method" above to enter your billing address with your card.'
-                            : 'Aucune adresse de facturation enregistrée. Utilisez « Ajouter un mode de paiement » ci-dessus pour saisir votre adresse de facturation avec votre carte.'}
-                        </p>
-                      </article>
+                      {savedPaymentMethods[0] ? (
+                        <>
+                          <h4 className="client-compte-payment-delivery-title">
+                            {isEn ? 'Billing address' : 'Adresse de facturation'}
+                          </h4>
+                          <article className="dashboard-user-card client-compte-payment-address-card">
+                            <p style={{ margin: 0 }}>
+                              {savedPaymentMethods[0].billing.addressLine1}
+                              <br />
+                              {savedPaymentMethods[0].billing.postalCode} {savedPaymentMethods[0].billing.city}
+                              <br />
+                              {savedPaymentMethods[0].billing.country}
+                            </p>
+                          </article>
+                        </>
+                      ) : null}
                     </section>
                   ) : (
                   <section className="client-compte-manage-grid">

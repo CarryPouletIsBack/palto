@@ -248,6 +248,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
   let stripeClientSecret: string | null = null
   let stripePaymentIntentId: string | null = null
+  let stripeSetupWarning: string | null = null
 
   if (isStripePaymentsEnabled()) {
     try {
@@ -269,9 +270,16 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         })
         .eq('id', courseRow.id)
     } catch (e) {
+      const detail = e instanceof Error ? e.message : String(e)
       console.error('[rides/create] stripe PI', e)
-      await supabase.from('courses').delete().eq('id', courseRow.id)
-      return res.status(502).json({ error: 'Impossible de preparer le paiement Stripe' })
+      stripeSetupWarning =
+        'Paiement en ligne temporairement indisponible. La commande est enregistree ; reglement prevu avec le chauffeur.'
+      await supabase.from('course_events').insert({
+        course_id: courseRow.id,
+        event_type: 'stripe_setup_failed',
+        event_note: detail.slice(0, 500),
+        payload: { detail },
+      })
     }
   }
 
@@ -289,5 +297,6 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     stripeClientSecret,
     stripePaymentIntentId,
     stripePublishableKey: process.env.VITE_STRIPE_PUBLISHABLE_KEY?.trim() || process.env.STRIPE_PUBLISHABLE_KEY?.trim() || null,
+    stripeSetupWarning,
   })
 }

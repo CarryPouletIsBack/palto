@@ -32,6 +32,8 @@ export type CreateRideOrderResult = {
   stripeClientSecret?: string | null
   stripePaymentIntentId?: string | null
   stripePublishableKey?: string | null
+  /** Paiement Stripe non prepare (commande conservee, fallback hors ligne). */
+  stripeSetupWarning?: string | null
 }
 
 export async function createRideOrder(body: CreateRideOrderPayload): Promise<CreateRideOrderResult> {

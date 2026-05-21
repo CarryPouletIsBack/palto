@@ -470,26 +470,30 @@ const SingleProjectNew: FC<SingleProjectProps> = ({
   const [pickupAutoGeolocAsked, setPickupAutoGeolocAsked] = useState(false);
   const destinationAutocompleteTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const embeddedMapFlyToTarget = useMemo(() => {
-    if (pickupResolvedPoint && paltoMapSelectedDestination && !paltoMapRouteFeature) {
+    const pickup =
+      pickupResolvedPoint &&
+      Number.isFinite(pickupResolvedPoint.longitude) &&
+      Number.isFinite(pickupResolvedPoint.latitude)
+        ? pickupResolvedPoint
+        : null;
+    const dest =
+      paltoMapSelectedDestination &&
+      Number.isFinite(paltoMapSelectedDestination.longitude) &&
+      Number.isFinite(paltoMapSelectedDestination.latitude)
+        ? paltoMapSelectedDestination
+        : null;
+    if (pickup && dest && !paltoMapRouteFeature) {
       return {
-        longitude: (pickupResolvedPoint.longitude + paltoMapSelectedDestination.longitude) / 2,
-        latitude: (pickupResolvedPoint.latitude + paltoMapSelectedDestination.latitude) / 2,
+        longitude: (pickup.longitude + dest.longitude) / 2,
+        latitude: (pickup.latitude + dest.latitude) / 2,
         zoom: 12.4,
       };
     }
-    if (pickupResolvedPoint) {
-      return {
-        longitude: pickupResolvedPoint.longitude,
-        latitude: pickupResolvedPoint.latitude,
-        zoom: 15.5,
-      };
+    if (pickup) {
+      return { longitude: pickup.longitude, latitude: pickup.latitude, zoom: 15.5 };
     }
-    if (paltoMapSelectedDestination) {
-      return {
-        longitude: paltoMapSelectedDestination.longitude,
-        latitude: paltoMapSelectedDestination.latitude,
-        zoom: 13.5,
-      };
+    if (dest) {
+      return { longitude: dest.longitude, latitude: dest.latitude, zoom: 13.5 };
     }
     return null;
   }, [pickupResolvedPoint, paltoMapSelectedDestination, paltoMapRouteFeature]);
@@ -655,7 +659,32 @@ const SingleProjectNew: FC<SingleProjectProps> = ({
       }
 
       let pickupReady = false;
-      if (prefill.pickup.trim()) {
+      const prefillPickupLng = prefill.pickupLng;
+      const prefillPickupLat = prefill.pickupLat;
+      if (
+        typeof prefillPickupLng === 'number' &&
+        typeof prefillPickupLat === 'number' &&
+        Number.isFinite(prefillPickupLng) &&
+        Number.isFinite(prefillPickupLat)
+      ) {
+        try {
+          const picked = await resolvePickOnRoad(prefillPickupLng, prefillPickupLat, {
+            searchRadiusMeters: GO_SNAP_SEARCH_RADIUS_M,
+          });
+          if (!cancelled && isLngLatInsideReunionIsland(picked.longitude, picked.latitude) && !isLegacyDevPickupOrigin(picked)) {
+            const label = prefill.pickup.trim()
+              ? simplifyRideAddress(prefill.pickup.trim())
+              : simplifyRideAddress(getHeroDepartmentLabel(DEFAULT_HERO_DEPARTMENT_ID, language));
+            setPaltoPickupLocation(label);
+            setPickupResolvedPoint(picked);
+            setLastConfirmedPickupText(label);
+            pickupReady = true;
+          }
+        } catch {
+          /* fallback géocodage texte */
+        }
+      }
+      if (!pickupReady && prefill.pickup.trim()) {
         const pickupQ = prefill.pickup.trim();
         setPaltoPickupLocation(simplifyRideAddress(pickupQ));
         const res = await geocodePickupForRide(pickupQ, language);
@@ -665,9 +694,9 @@ const SingleProjectNew: FC<SingleProjectProps> = ({
           setLastConfirmedPickupText(simplifyRideAddress(res.queryUsed));
           pickupReady = true;
         }
-      } else if (prefill.homeDepartmentId?.trim()) {
+      } else if (!pickupReady && prefill.homeDepartmentId?.trim()) {
         pickupReady = await applyDepartmentPickup(prefill.homeDepartmentId);
-      } else if (prefill.homeCommune?.trim()) {
+      } else if (!pickupReady && prefill.homeCommune?.trim()) {
         const area = getHeroDepartmentGeocodeArea(DEFAULT_HERO_DEPARTMENT_ID);
         const legacyQ = `${prefill.homeCommune.trim()}, ${area}`;
         setPaltoPickupLocation(simplifyRideAddress(legacyQ));
@@ -679,7 +708,7 @@ const SingleProjectNew: FC<SingleProjectProps> = ({
           setLastConfirmedPickupText(simplifyRideAddress(res.queryUsed));
           pickupReady = true;
         }
-      } else {
+      } else if (!pickupReady) {
         pickupReady = await applyDepartmentPickup(DEFAULT_HERO_DEPARTMENT_ID);
       }
 
@@ -1901,8 +1930,10 @@ const SingleProjectNew: FC<SingleProjectProps> = ({
         bookingKind === 'instant' && paltoSelectedDriver
           ? paltoSelectedDriver.name
           : 'un chauffeur disponible'
-      const successMessage =
-        bookingKind === 'scheduled'
+      const stripeWarn = result.stripeSetupWarning?.trim()
+      const successMessage = stripeWarn
+        ? `${stripeWarn} Ref. ${result.externalCode}. Suivi : ${email}.`
+        : bookingKind === 'scheduled'
           ? `Demande prise en compte (${result.externalCode}). Un chauffeur l'acceptera prochainement. Suivi : ${email}.`
           : `Commande enregistree (${result.externalCode}). Chauffeur : ${driverLabel}. Suivi : ${email}.`
       setCheckoutSuccessMessage(successMessage)

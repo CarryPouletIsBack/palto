@@ -64,10 +64,15 @@ export async function createManualCapturePaymentIntent(params: {
   const totalEur = totalChargeEur(params.driverAmountEur, paltoFee)
   const amountCents = eurosToCents(totalEur)
 
+  if (amountCents < 50) {
+    throw new Error('Montant minimum Stripe (0,50 EUR) non atteint')
+  }
+
   const pi = await stripe.paymentIntents.create({
     amount: amountCents,
     currency: 'eur',
     capture_method: 'manual',
+    payment_method_types: ['card'],
     receipt_email: params.clientEmail.trim().toLowerCase(),
     metadata: {
       course_id: params.courseId,
@@ -75,7 +80,6 @@ export async function createManualCapturePaymentIntent(params: {
       driver_amount_eur: String(params.driverAmountEur),
       palto_fee_eur: String(paltoFee),
     },
-    automatic_payment_methods: { enabled: true },
   })
 
   if (!pi.client_secret) {

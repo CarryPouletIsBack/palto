@@ -18,6 +18,7 @@ import {
   REUNION_MAP_MAX_BOUNDS,
 } from '../constants/reunionIsland'
 import type { GeoPoint } from '../services/distanceGeo'
+import { isValidMapLngLat } from '../utils/mapLngLat'
 
 /** Centre carte : La Réunion (île), zoom large pour contexte local. */
 export const HOME_MAP_INITIAL_VIEW = {
@@ -143,6 +144,13 @@ export default function HomeOsmMapBackground({
   const resolvedUserOrigin: GeoPoint | null =
     userOriginProp === undefined ? DEFAULT_USER_ORIGIN : userOriginProp
 
+  const safeNearbyDrivers = nearbyDrivers.filter(
+    (d): d is NearbyDriverMapPoint =>
+      d != null && Number.isFinite(d.longitude) && Number.isFinite(d.latitude)
+  )
+  const safeUserOrigin = isValidMapLngLat(resolvedUserOrigin) ? resolvedUserOrigin : null
+  const safeDestination = isValidMapLngLat(selectedDestination) ? selectedDestination : null
+
   const mapRef = useRef<MapRef>(null)
   const containerRef = useRef<HTMLDivElement>(null)
   const userLeftDefaultView = useRef(false)
@@ -150,12 +158,12 @@ export default function HomeOsmMapBackground({
   flyToTargetRef.current = flyToTarget
   const routeFeatureRef = useRef(routeFeature)
   routeFeatureRef.current = routeFeature
-  const nearbyDriversRef = useRef(nearbyDrivers)
-  nearbyDriversRef.current = nearbyDrivers
-  const resolvedUserOriginRef = useRef(resolvedUserOrigin)
-  resolvedUserOriginRef.current = resolvedUserOrigin
-  const selectedDestinationRef = useRef(selectedDestination)
-  selectedDestinationRef.current = selectedDestination
+  const nearbyDriversRef = useRef(safeNearbyDrivers)
+  nearbyDriversRef.current = safeNearbyDrivers
+  const resolvedUserOriginRef = useRef(safeUserOrigin)
+  resolvedUserOriginRef.current = safeUserOrigin
+  const selectedDestinationRef = useRef(safeDestination)
+  selectedDestinationRef.current = safeDestination
   const view3DRef = useRef(view3D)
   view3DRef.current = view3D
 
@@ -250,12 +258,7 @@ export default function HomeOsmMapBackground({
 
     const originPt = resolvedUserOriginRef.current
     const destPt = selectedDestinationRef.current
-    if (
-      originPt &&
-      destPt &&
-      Number.isFinite(originPt.longitude) &&
-      Number.isFinite(destPt.longitude)
-    ) {
+    if (isValidMapLngLat(originPt) && isValidMapLngLat(destPt)) {
       const minLng = Math.min(originPt.longitude, destPt.longitude)
       const maxLng = Math.max(originPt.longitude, destPt.longitude)
       const minLat = Math.min(originPt.latitude, destPt.latitude)
@@ -270,14 +273,18 @@ export default function HomeOsmMapBackground({
       return
     }
 
-    const drivers = nearbyDriversRef.current
+    const drivers = nearbyDriversRef.current.filter(
+      (d): d is NearbyDriverMapPoint =>
+        d != null && Number.isFinite(d.longitude) && Number.isFinite(d.latitude)
+    )
     const origin = resolvedUserOriginRef.current
-    if (drivers.length > 0) {
-      let minLng = origin?.longitude ?? drivers[0].longitude
-      let maxLng = origin?.longitude ?? drivers[0].longitude
-      let minLat = origin?.latitude ?? drivers[0].latitude
-      let maxLat = origin?.latitude ?? drivers[0].latitude
-      if (origin) {
+    const firstDriver = drivers[0]
+    if (firstDriver) {
+      let minLng = isValidMapLngLat(origin) ? origin.longitude : firstDriver.longitude
+      let maxLng = minLng
+      let minLat = isValidMapLngLat(origin) ? origin.latitude : firstDriver.latitude
+      let maxLat = minLat
+      if (isValidMapLngLat(origin)) {
         minLng = Math.min(minLng, origin.longitude)
         maxLng = Math.max(maxLng, origin.longitude)
         minLat = Math.min(minLat, origin.latitude)
@@ -402,10 +409,10 @@ export default function HomeOsmMapBackground({
                 : 'grab'
           }
         >
-          {resolvedUserOrigin ? (
+          {safeUserOrigin ? (
             <Marker
-              longitude={resolvedUserOrigin.longitude}
-              latitude={resolvedUserOrigin.latitude}
+              longitude={safeUserOrigin.longitude}
+              latitude={safeUserOrigin.latitude}
               anchor="bottom"
               style={{ pointerEvents: 'none' }}
             >
@@ -413,10 +420,10 @@ export default function HomeOsmMapBackground({
             </Marker>
           ) : null}
 
-          {selectedDestination ? (
+          {safeDestination ? (
             <Marker
-              longitude={selectedDestination.longitude}
-              latitude={selectedDestination.latitude}
+              longitude={safeDestination.longitude}
+              latitude={safeDestination.latitude}
               anchor="bottom"
               style={{ pointerEvents: 'none' }}
             >
@@ -424,7 +431,7 @@ export default function HomeOsmMapBackground({
             </Marker>
           ) : null}
 
-          {nearbyDrivers.map((d) => (
+          {safeNearbyDrivers.map((d) => (
             <Marker
               key={d.id}
               longitude={d.longitude}
