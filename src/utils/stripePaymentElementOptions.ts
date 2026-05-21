@@ -13,3 +13,13 @@ export function paltoPaymentElementOptions(): StripePaymentElementOptions {
     },
   }
 }
+
+/** Carte seule : l’adresse est collectée via AddressElement (modale compte). */
+export function paltoPaymentElementCardOnlyOptions(): StripePaymentElementOptions {
+  return {
+    layout: 'tabs',
+    fields: {
+      billingDetails: 'never',
+    },
+  }
+}

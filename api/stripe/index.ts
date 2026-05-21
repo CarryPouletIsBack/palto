@@ -13,8 +13,10 @@ import {
   createSetupIntentForCustomer,
   createWalletTopUpPaymentIntent,
   creditWalletFromPaymentIntent,
+  detachCustomerPaymentMethod,
   getClientWalletBalanceCents,
   listCustomerPaymentMethods,
+  updateCustomerPaymentMethodBilling,
 } from '../../server/lib/stripeWallet.js'
 
 /** Stripe exige le corps brut pour vérifier la signature (Vercel ne doit pas parser le JSON). */
@@ -39,6 +41,22 @@ const WalletTopUpCreateSchema = z.object({
 
 const WalletTopUpConfirmSchema = z.object({
   paymentIntentId: z.string().min(3).max(200),
+})
+
+const PaymentMethodIdSchema = z.object({
+  paymentMethodId: z.string().min(3).max(200),
+  fullName: z.string().max(200).optional(),
+})
+
+const UpdateBillingSchema = PaymentMethodIdSchema.extend({
+  billing: z.object({
+    name: z.string().max(200).optional().nullable(),
+    line1: z.string().min(3).max(300),
+    line2: z.string().max(300).optional().nullable(),
+    city: z.string().min(2).max(120),
+    postalCode: z.string().min(2).max(20),
+    country: z.string().length(2),
+  }),
 })
 
 async function readRawBody(req: VercelRequest): Promise<string> {
@@ -190,6 +208,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   const clientActions = new Set([
     'setup-intent',
     'list-payment-methods',
+    'detach-payment-method',
+    'update-payment-method-billing',
     'wallet-balance',
     'wallet-topup-create',
     'wallet-topup-confirm',
@@ -249,6 +269,41 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         return
       }
 
+      if (action === 'detach-payment-method') {
+        const parsed = PaymentMethodIdSchema.safeParse(body)
+        if (!parsed.success) {
+          res.status(400).json({ error: 'Payload invalide', details: parsed.error.flatten() })
+          return
+        }
+        await detachCustomerPaymentMethod({
+          supabase,
+          accountId,
+          email,
+          fullName: parsed.data.fullName,
+          paymentMethodId: parsed.data.paymentMethodId,
+        })
+        res.status(200).json({ ok: true })
+        return
+      }
+
+      if (action === 'update-payment-method-billing') {
+        const parsed = UpdateBillingSchema.safeParse(body)
+        if (!parsed.success) {
+          res.status(400).json({ error: 'Payload invalide', details: parsed.error.flatten() })
+          return
+        }
+        await updateCustomerPaymentMethodBilling({
+          supabase,
+          accountId,
+          email,
+          fullName: parsed.data.fullName,
+          paymentMethodId: parsed.data.paymentMethodId,
+          billing: parsed.data.billing,
+        })
+        res.status(200).json({ ok: true })
+        return
+      }
+
       if (action === 'wallet-balance') {
         const balanceCents = await getClientWalletBalanceCents(supabase, accountId)
         res.status(200).json({ balanceCents })
@@ -296,6 +351,6 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
   res.status(400).json({
     error:
-      'action invalide (webhook | confirm-authorized | setup-intent | list-payment-methods | wallet-balance | wallet-topup-create | wallet-topup-confirm)',
+      'action invalide (webhook | confirm-authorized | setup-intent | list-payment-methods | detach-payment-method | update-payment-method-billing | wallet-balance | wallet-topup-create | wallet-topup-confirm)',
   })
 }

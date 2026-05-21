@@ -106,6 +106,8 @@ import {
   confirmClientWalletTopUp,
   createClientSetupIntent,
   createClientWalletTopUp,
+  detachClientPaymentMethod,
+  updateClientPaymentMethodBilling,
   fetchClientStripePaymentMethods,
   fetchClientWalletBalanceCents,
   type ClientStripePaymentMethod,
@@ -347,6 +349,17 @@ export default function ClientCompteDashboard({ onBack, onOpenClientLiveMeet }: 
   const [walletTopupClientSecret, setWalletTopupClientSecret] = useState<string | null>(null);
   const [walletTopupPaymentIntentId, setWalletTopupPaymentIntentId] = useState<string | null>(null);
   const [walletTopupLoading, setWalletTopupLoading] = useState(false);
+  const [paymentViewPm, setPaymentViewPm] = useState<ClientStripePaymentMethod | null>(null);
+  const [paymentEditPm, setPaymentEditPm] = useState<ClientStripePaymentMethod | null>(null);
+  const [paymentEditForm, setPaymentEditForm] = useState({
+    name: '',
+    line1: '',
+    line2: '',
+    city: '',
+    postalCode: '',
+    country: 'FR',
+  });
+  const [paymentEditSaving, setPaymentEditSaving] = useState(false);
   const stripeOn = clientStripeApiEnabled();
   const stripePk = stripePublishableKey();
   const [placesDraft, setPlacesDraft] = useState<ClientSavedPlacesSnapshot>(() =>
@@ -1108,6 +1121,76 @@ export default function ClientCompteDashboard({ onBack, onOpenClientLiveMeet }: 
     setWalletTopupPaymentIntentId(null);
     setPendingWalletTopupEur(null);
   }, []);
+
+  const openPaymentMethodView = useCallback((pm: ClientStripePaymentMethod) => {
+    setPaymentViewPm(pm);
+  }, []);
+
+  const openPaymentMethodEdit = useCallback((pm: ClientStripePaymentMethod) => {
+    const b = pm.billing;
+    setPaymentEditPm(pm);
+    setPaymentEditForm({
+      name: b?.name?.trim() || clientFullName,
+      line1: b?.line1?.trim() || '',
+      line2: b?.line2?.trim() || '',
+      city: b?.city?.trim() || '',
+      postalCode: b?.postalCode?.trim() || '',
+      country: (b?.country?.trim() || 'FR').toUpperCase().slice(0, 2),
+    });
+  }, [clientFullName]);
+
+  const closePaymentMethodView = useCallback(() => setPaymentViewPm(null), []);
+  const closePaymentMethodEdit = useCallback(() => setPaymentEditPm(null), []);
+
+  const savePaymentMethodEdit = useCallback(() => {
+    if (!paymentEditPm) return;
+    const { name, line1, line2, city, postalCode, country } = paymentEditForm;
+    if (line1.trim().length < 3 || city.trim().length < 2 || postalCode.trim().length < 2) {
+      toast.error(isEn ? 'Complete billing address.' : 'Adresse de facturation incomplete.');
+      return;
+    }
+    setPaymentEditSaving(true);
+    void updateClientPaymentMethodBilling(
+      paymentEditPm.id,
+      {
+        name: name.trim() || null,
+        line1: line1.trim(),
+        line2: line2.trim() || null,
+        city: city.trim(),
+        postalCode: postalCode.trim(),
+        country: country.trim().toUpperCase().slice(0, 2),
+      },
+      clientFullName || undefined
+    )
+      .then(() => refreshStripePaymentMethods())
+      .then(() => {
+        setPaymentEditPm(null);
+        toast.success(isEn ? 'Billing address updated.' : 'Adresse de facturation mise a jour.');
+      })
+      .catch((e) => {
+        toast.error(e instanceof Error ? e.message : isEn ? 'Update failed' : 'Mise a jour impossible');
+      })
+      .finally(() => setPaymentEditSaving(false));
+  }, [clientFullName, isEn, paymentEditForm, paymentEditPm, refreshStripePaymentMethods]);
+
+  const deletePaymentMethod = useCallback(
+    (pm: ClientStripePaymentMethod) => {
+      const label = `${formatStripeCardBrand(pm.brand)} •••• ${pm.last4}`;
+      const ok = window.confirm(
+        isEn
+          ? `Remove card ${label} from your account?`
+          : `Supprimer la carte ${label} de votre compte ?`
+      );
+      if (!ok) return;
+      void detachClientPaymentMethod(pm.id, clientFullName || undefined)
+        .then(() => refreshStripePaymentMethods())
+        .then(() => toast.success(isEn ? 'Card removed.' : 'Carte supprimee.'))
+        .catch((e) => {
+          toast.error(e instanceof Error ? e.message : isEn ? 'Delete failed' : 'Suppression impossible');
+        });
+    },
+    [clientFullName, isEn, refreshStripePaymentMethods]
+  );
 
   useEffect(() => {
     if (activeNav !== 'account' || accountManageSection !== 'payment') {
@@ -2138,19 +2221,50 @@ export default function ClientCompteDashboard({ onBack, onOpenClientLiveMeet }: 
                       {stripeOn ? <PaltoStripeTestCardHint className="client-compte-payment-test-hint" /> : null}
 
                       <div className="client-compte-payment-row">
+                        <div className="client-compte-payment-cards-list">
                         {stripeOn ? (
                           stripePaymentMethods.length > 0 ? (
                             stripePaymentMethods.map((pm) => (
                               <article key={pm.id} className="dashboard-user-card client-compte-payment-card">
-                                <div className="client-compte-payment-card-head">
-                                  <strong>{formatStripeCardBrand(pm.brand)}</strong>
-                                  <span>•••• {pm.last4}</span>
+                                <div className="client-compte-payment-card-main">
+                                  <div>
+                                    <div className="client-compte-payment-card-head">
+                                      <strong>{formatStripeCardBrand(pm.brand)}</strong>
+                                      <span>•••• {pm.last4}</span>
+                                    </div>
+                                    <p className="dashboard-field-hint" style={{ margin: '6px 0 0' }}>
+                                      {String(pm.expMonth).padStart(2, '0')}/{String(pm.expYear).slice(-2)}
+                                      {pm.billing?.line1
+                                        ? ` · ${pm.billing.city || pm.billing.line1}`
+                                        : ''}
+                                    </p>
+                                  </div>
+                                  <div className="client-compte-payment-card-brand" aria-hidden>
+                                    {formatStripeCardBrand(pm.brand).toUpperCase().slice(0, 4)}
+                                  </div>
                                 </div>
-                                <p className="dashboard-field-hint" style={{ margin: '6px 0 0' }}>
-                                  {String(pm.expMonth).padStart(2, '0')}/{String(pm.expYear).slice(-2)}
-                                </p>
-                                <div className="client-compte-payment-card-brand" aria-hidden>
-                                  {formatStripeCardBrand(pm.brand).toUpperCase().slice(0, 4)}
+                                <div className="client-compte-payment-card-toolbar">
+                                  <button
+                                    type="button"
+                                    className="client-compte-payment-card-action"
+                                    onClick={() => openPaymentMethodView(pm)}
+                                  >
+                                    {isEn ? 'View' : 'Voir'}
+                                  </button>
+                                  <button
+                                    type="button"
+                                    className="client-compte-payment-card-action"
+                                    onClick={() => openPaymentMethodEdit(pm)}
+                                  >
+                                    {isEn ? 'Edit' : 'Modifier'}
+                                  </button>
+                                  <button
+                                    type="button"
+                                    className="client-compte-payment-card-action client-compte-payment-card-action--danger"
+                                    onClick={() => deletePaymentMethod(pm)}
+                                  >
+                                    {isEn ? 'Remove' : 'Supprimer'}
+                                  </button>
                                 </div>
                               </article>
                             ))
@@ -2166,15 +2280,17 @@ export default function ClientCompteDashboard({ onBack, onOpenClientLiveMeet }: 
                         ) : savedPaymentMethods.length > 0 ? (
                           savedPaymentMethods.map((pm) => (
                             <article key={pm.id} className="dashboard-user-card client-compte-payment-card">
-                              <div className="client-compte-payment-card-head">
-                                <strong>{pm.brand}</strong>
-                                <span>•••• {pm.last4}</span>
-                              </div>
-                              <p className="dashboard-field-hint" style={{ margin: '6px 0 0' }}>
-                                {pm.cardholderName} · {pm.expiryMonth}/{pm.expiryYear}
-                              </p>
-                              <div className="client-compte-payment-card-brand" aria-hidden>
-                                {pm.brand.toUpperCase().slice(0, 4)}
+                              <div className="client-compte-payment-card-main">
+                                <div className="client-compte-payment-card-head">
+                                  <strong>{pm.brand}</strong>
+                                  <span>•••• {pm.last4}</span>
+                                </div>
+                                <p className="dashboard-field-hint" style={{ margin: '6px 0 0' }}>
+                                  {pm.cardholderName} · {pm.expiryMonth}/{pm.expiryYear}
+                                </p>
+                                <div className="client-compte-payment-card-brand" aria-hidden>
+                                  {pm.brand.toUpperCase().slice(0, 4)}
+                                </div>
                               </div>
                             </article>
                           ))
@@ -2187,6 +2303,7 @@ export default function ClientCompteDashboard({ onBack, onOpenClientLiveMeet }: 
                             </p>
                           </article>
                         )}
+                        </div>
                         <div className="client-compte-payment-actions">
                           <button
                             type="button"
@@ -2611,6 +2728,148 @@ export default function ClientCompteDashboard({ onBack, onOpenClientLiveMeet }: 
                     </button>
                     <button type="button" className="dashboard-user-edit-btn" onClick={saveAccountEditModal}>
                       {isEn ? 'Save' : 'Enregistrer'}
+                    </button>
+                  </div>
+                </div>
+              </div>
+            ) : null}
+
+            {paymentViewPm ? (
+              <div className="client-compte-account-edit-modal-backdrop" role="presentation" onClick={closePaymentMethodView}>
+                <div
+                  className="client-compte-account-edit-modal client-compte-payment-modal"
+                  role="dialog"
+                  aria-modal="true"
+                  aria-label={isEn ? 'Card details' : 'Details de la carte'}
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  <div className="client-compte-account-edit-modal-head">
+                    <h4>{isEn ? 'Card details' : 'Details de la carte'}</h4>
+                  </div>
+                  <p style={{ margin: '0 0 8px' }}>
+                    <strong>{formatStripeCardBrand(paymentViewPm.brand)}</strong> •••• {paymentViewPm.last4}
+                  </p>
+                  <p className="dashboard-field-hint" style={{ margin: '0 0 12px' }}>
+                    {String(paymentViewPm.expMonth).padStart(2, '0')}/{String(paymentViewPm.expYear).slice(-2)}
+                  </p>
+                  <h5 className="client-compte-payment-delivery-title" style={{ marginTop: 0 }}>
+                    {isEn ? 'Billing address' : 'Adresse de facturation'}
+                  </h5>
+                  {paymentViewPm.billing?.line1 ? (
+                    <p style={{ margin: 0 }}>
+                      {paymentViewPm.billing.name ? (
+                        <>
+                          {paymentViewPm.billing.name}
+                          <br />
+                        </>
+                      ) : null}
+                      {formatStripeBillingLines(paymentViewPm.billing).map((line) => (
+                        <span key={line}>
+                          {line}
+                          <br />
+                        </span>
+                      ))}
+                    </p>
+                  ) : (
+                    <p className="dashboard-field-hint" style={{ margin: 0 }}>
+                      {isEn ? 'No billing address on file.' : 'Aucune adresse de facturation enregistree.'}
+                    </p>
+                  )}
+                  <div className="client-compte-account-edit-modal-actions">
+                    <button type="button" className="dashboard-user-edit-btn" onClick={closePaymentMethodView}>
+                      {isEn ? 'Close' : 'Fermer'}
+                    </button>
+                  </div>
+                </div>
+              </div>
+            ) : null}
+
+            {paymentEditPm ? (
+              <div className="client-compte-account-edit-modal-backdrop" role="presentation" onClick={closePaymentMethodEdit}>
+                <div
+                  className="client-compte-account-edit-modal client-compte-payment-modal"
+                  role="dialog"
+                  aria-modal="true"
+                  aria-label={isEn ? 'Edit billing address' : 'Modifier adresse de facturation'}
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  <div className="client-compte-account-edit-modal-head">
+                    <h4>{isEn ? 'Edit billing address' : 'Modifier adresse de facturation'}</h4>
+                    <p className="dashboard-field-hint" style={{ margin: '8px 0 0' }}>
+                      {formatStripeCardBrand(paymentEditPm.brand)} •••• {paymentEditPm.last4}
+                    </p>
+                  </div>
+                  <div className="client-compte-account-edit-modal-grid">
+                    <label className="client-compte-account-edit-modal-row">
+                      <span>{isEn ? 'Name' : 'Nom'}</span>
+                      <input
+                        className="client-compte-account-edit-modal-input"
+                        value={paymentEditForm.name}
+                        onChange={(e) => setPaymentEditForm((p) => ({ ...p, name: e.target.value }))}
+                      />
+                    </label>
+                    <label className="client-compte-account-edit-modal-row">
+                      <span>{isEn ? 'Address' : 'Adresse'}</span>
+                      <input
+                        className="client-compte-account-edit-modal-input"
+                        value={paymentEditForm.line1}
+                        onChange={(e) => setPaymentEditForm((p) => ({ ...p, line1: e.target.value }))}
+                      />
+                    </label>
+                    <label className="client-compte-account-edit-modal-row">
+                      <span>{isEn ? 'Address line 2' : 'Complement'}</span>
+                      <input
+                        className="client-compte-account-edit-modal-input"
+                        value={paymentEditForm.line2}
+                        onChange={(e) => setPaymentEditForm((p) => ({ ...p, line2: e.target.value }))}
+                      />
+                    </label>
+                    <div className="client-compte-payment-modal-row-2">
+                      <label className="client-compte-account-edit-modal-row">
+                        <span>{isEn ? 'City' : 'Ville'}</span>
+                        <input
+                          className="client-compte-account-edit-modal-input"
+                          value={paymentEditForm.city}
+                          onChange={(e) => setPaymentEditForm((p) => ({ ...p, city: e.target.value }))}
+                        />
+                      </label>
+                      <label className="client-compte-account-edit-modal-row">
+                        <span>{isEn ? 'Postal code' : 'Code postal'}</span>
+                        <input
+                          className="client-compte-account-edit-modal-input"
+                          value={paymentEditForm.postalCode}
+                          onChange={(e) => setPaymentEditForm((p) => ({ ...p, postalCode: e.target.value }))}
+                        />
+                      </label>
+                    </div>
+                    <label className="client-compte-account-edit-modal-row">
+                      <span>{isEn ? 'Country' : 'Pays'}</span>
+                      <select
+                        className="client-compte-account-edit-modal-input"
+                        value={paymentEditForm.country}
+                        onChange={(e) => setPaymentEditForm((p) => ({ ...p, country: e.target.value }))}
+                      >
+                        <option value="FR">France</option>
+                        <option value="RE">La Reunion</option>
+                        <option value="MU">Maurice</option>
+                      </select>
+                    </label>
+                  </div>
+                  <div className="client-compte-account-edit-modal-actions">
+                    <button
+                      type="button"
+                      className="dashboard-user-edit-btn dashboard-user-edit-btn--secondary"
+                      onClick={closePaymentMethodEdit}
+                    >
+                      {isEn ? 'Cancel' : 'Annuler'}
+                    </button>
+                    <button
+                      type="button"
+                      className="dashboard-user-edit-btn"
+                      disabled={paymentEditSaving}
+                      onClick={() => void savePaymentMethodEdit()}
+                    >
+                      {paymentEditSaving ? (isEn ? 'Saving…' : 'Enregistrement…') : isEn ? 'Save' : 'Enregistrer'}
                     </button>
                   </div>
                 </div>

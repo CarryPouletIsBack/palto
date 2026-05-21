@@ -1,14 +1,30 @@
 import { useMemo, useState } from 'react'
-import { Elements, PaymentElement, useElements, useStripe } from '@stripe/react-stripe-js'
-import { loadStripe, type StripeElementsOptions } from '@stripe/stripe-js'
+import {
+  AddressElement,
+  Elements,
+  PaymentElement,
+  useElements,
+  useStripe,
+} from '@stripe/react-stripe-js'
+import { loadStripe, type StripeAddressElementOptions, type StripeElementsOptions } from '@stripe/stripe-js'
 import { paltoStripeElementsAppearance } from '../utils/stripeElementsAppearance'
-import { paltoPaymentElementOptions } from '../utils/stripePaymentElementOptions'
+import { paltoPaymentElementCardOnlyOptions } from '../utils/stripePaymentElementOptions'
 import Button from './Button'
 
 type InnerProps = {
   onSuccess: () => void
   onError: (message: string) => void
   submitLabel: string
+}
+
+const addressElementOptions: StripeAddressElementOptions = {
+  mode: 'billing',
+  fields: {
+    phone: 'never',
+  },
+  display: {
+    name: 'split',
+  },
 }
 
 function SetupFormInner({ onSuccess, onError, submitLabel }: InnerProps) {
@@ -41,8 +57,13 @@ function SetupFormInner({ onSuccess, onError, submitLabel }: InnerProps) {
   }
 
   return (
-    <div className="palto-checkout-stripe">
-      <PaymentElement options={paltoPaymentElementOptions()} />
+    <div className="palto-checkout-stripe palto-checkout-stripe--setup">
+      <p className="palto-checkout-stripe__section-label">Adresse de facturation</p>
+      <AddressElement options={addressElementOptions} />
+      <p className="palto-checkout-stripe__section-label" style={{ marginTop: 12 }}>
+        Carte bancaire
+      </p>
+      <PaymentElement options={paltoPaymentElementCardOnlyOptions()} />
       <Button
         variant="primary"
         type="button"

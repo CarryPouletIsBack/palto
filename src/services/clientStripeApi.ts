@@ -111,6 +111,35 @@ export async function createClientWalletTopUp(
   }
 }
 
+export async function detachClientPaymentMethod(
+  paymentMethodId: string,
+  fullName?: string | null
+): Promise<void> {
+  await postStripeAction('detach-payment-method', {
+    paymentMethodId,
+    fullName: fullName?.trim() || undefined,
+  })
+}
+
+export async function updateClientPaymentMethodBilling(
+  paymentMethodId: string,
+  billing: {
+    name?: string | null
+    line1: string
+    line2?: string | null
+    city: string
+    postalCode: string
+    country: string
+  },
+  fullName?: string | null
+): Promise<void> {
+  await postStripeAction('update-payment-method-billing', {
+    paymentMethodId,
+    billing,
+    fullName: fullName?.trim() || undefined,
+  })
+}
+
 export async function confirmClientWalletTopUp(paymentIntentId: string): Promise<number> {
   const data = await postStripeAction<{ balanceCents?: number }>('wallet-topup-confirm', {
     paymentIntentId,

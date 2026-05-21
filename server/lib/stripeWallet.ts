@@ -181,6 +181,78 @@ export async function creditWalletFromPaymentIntent(
   return { balanceCents: nextBalance, credited: true }
 }
 
+export async function assertPaymentMethodOwnedByCustomer(
+  accountId: string,
+  email: string,
+  fullName: string | null | undefined,
+  paymentMethodId: string,
+  supabase: SupabaseClient
+): Promise<string> {
+  const customerId = await getOrCreateStripeCustomer(supabase, accountId, email, fullName)
+  const stripe = getStripe()
+  const pm = await stripe.paymentMethods.retrieve(paymentMethodId)
+  const pmCustomer = typeof pm.customer === 'string' ? pm.customer : pm.customer?.id
+  if (pmCustomer !== customerId) {
+    throw new Error('Carte non autorisee pour ce compte')
+  }
+  return customerId
+}
+
+export async function detachCustomerPaymentMethod(params: {
+  supabase: SupabaseClient
+  accountId: string
+  email: string
+  fullName?: string | null
+  paymentMethodId: string
+}): Promise<void> {
+  await assertPaymentMethodOwnedByCustomer(
+    params.accountId,
+    params.email,
+    params.fullName,
+    params.paymentMethodId,
+    params.supabase
+  )
+  const stripe = getStripe()
+  await stripe.paymentMethods.detach(params.paymentMethodId)
+}
+
+export async function updateCustomerPaymentMethodBilling(params: {
+  supabase: SupabaseClient
+  accountId: string
+  email: string
+  fullName?: string | null
+  paymentMethodId: string
+  billing: {
+    name?: string | null
+    line1: string
+    line2?: string | null
+    city: string
+    postalCode: string
+    country: string
+  }
+}): Promise<void> {
+  await assertPaymentMethodOwnedByCustomer(
+    params.accountId,
+    params.email,
+    params.fullName,
+    params.paymentMethodId,
+    params.supabase
+  )
+  const stripe = getStripe()
+  await stripe.paymentMethods.update(params.paymentMethodId, {
+    billing_details: {
+      name: params.billing.name?.trim() || undefined,
+      address: {
+        line1: params.billing.line1.trim(),
+        line2: params.billing.line2?.trim() || undefined,
+        city: params.billing.city.trim(),
+        postal_code: params.billing.postalCode.trim(),
+        country: params.billing.country.trim().toUpperCase().slice(0, 2),
+      },
+    },
+  })
+}
+
 export async function handleWalletTopUpWebhook(
   pi: Stripe.PaymentIntent,
   supabase: SupabaseClient

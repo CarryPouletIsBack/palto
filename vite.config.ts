@@ -23,6 +23,7 @@ export default defineConfig({
       workbox: {
         /** Contourne le crash terser en build (Vercel / CI) ; le SW reste fonctionnel. */
         mode: 'development',
+        cleanupOutdatedCaches: true,
         globPatterns: ['**/*.{js,css,html,ico,svg,png,webp,woff2,json,webmanifest}'],
         /** Bundle principal > 2 Mo ; image OG souvent lourde — hors precache SW. */
         maximumFileSizeToCacheInBytes: 3 * 1024 * 1024,
