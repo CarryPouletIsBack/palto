@@ -1,5 +1,4 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
-// import { SpeedInsights } from '@vercel/speed-insights/react'
 import AnalyticsGuard from './components/AnalyticsGuard'
 import Header from './components/Header'
 import Hero from './components/Hero'

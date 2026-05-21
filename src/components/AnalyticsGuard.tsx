@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { Analytics } from '@vercel/analytics/react';
+import { SpeedInsights } from '@vercel/speed-insights/react';
 
 const RB2B_KEY = 'W6Z57HZJ57OX';
 const ADMIN_STORAGE_KEY = 'exclude_analytics';
@@ -46,5 +47,10 @@ export default function AnalyticsGuard() {
     return null;
   }
 
-  return <Analytics />;
+  return (
+    <>
+      <Analytics />
+      <SpeedInsights />
+    </>
+  );
 }
