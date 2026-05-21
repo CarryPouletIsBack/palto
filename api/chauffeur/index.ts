@@ -21,6 +21,11 @@ async function handleCronExpireInstant(req: VercelRequest, res: VercelResponse) 
 }
 import { getSupabaseAdmin } from '../../server/lib/supabaseAdmin.js'
 import { getVerifiedChauffeurSession } from '../../server/lib/chauffeurAuth.js'
+import {
+  chauffeurProfileSnapshotHasContent,
+  sanitizeChauffeurProfileSnapshot,
+} from '../../server/lib/chauffeurProfileSanitize.js'
+import { mergeChauffeurProfileSnapshots } from '../../server/lib/chauffeurProfileMerge.js'
 import { sameDriverExternalKey } from '../../server/lib/driverIdentity.js'
 import {
   applyCancelPaymentOutcome,
@@ -541,6 +546,110 @@ async function handleRideProfilePut(req: VercelRequest, res: VercelResponse, acc
   return res.status(200).json({ ok: true })
 }
 
+const ProfilePutBodySchema = z.object({
+  account: z.unknown().optional(),
+})
+
+async function handleProfileGet(res: VercelResponse, accountId: string) {
+  const supabase = getSupabaseAdmin()
+  const { data, error } = await supabase
+    .from('chauffeur_profile_data')
+    .select('account_snapshot, updated_at')
+    .eq('account_id', accountId)
+    .maybeSingle()
+
+  if (error) {
+    console.error('[chauffeur/profile GET]', error)
+    return res.status(500).json({ error: 'Lecture profil impossible' })
+  }
+
+  const account = sanitizeChauffeurProfileSnapshot(data?.account_snapshot ?? {})
+  return res.status(200).json({
+    account,
+    updatedAt: data?.updated_at ?? null,
+    hasAccount: chauffeurProfileSnapshotHasContent(account),
+  })
+}
+
+async function handleProfilePut(req: VercelRequest, res: VercelResponse, accountId: string, email: string) {
+  let body: unknown = req.body
+  if (typeof req.body === 'string') {
+    try {
+      body = JSON.parse(req.body)
+    } catch {
+      return res.status(400).json({ error: 'Payload JSON invalide' })
+    }
+  }
+  const parsed = ProfilePutBodySchema.safeParse(body)
+  if (!parsed.success) {
+    return res.status(400).json({ error: 'Payload invalide', details: parsed.error.flatten() })
+  }
+
+  const incoming = sanitizeChauffeurProfileSnapshot(parsed.data.account ?? {})
+  const supabase = getSupabaseAdmin()
+
+  const { data: existingRow } = await supabase
+    .from('chauffeur_profile_data')
+    .select('account_snapshot')
+    .eq('account_id', accountId)
+    .maybeSingle()
+
+  const existing = sanitizeChauffeurProfileSnapshot(existingRow?.account_snapshot ?? {})
+  const account = mergeChauffeurProfileSnapshots(existing, incoming)
+  const emailNorm = email.trim().toLowerCase()
+  const accountWithEmail = {
+    ...account,
+    email: (account.email && String(account.email).trim()) || emailNorm,
+  }
+
+  if (!chauffeurProfileSnapshotHasContent(accountWithEmail)) {
+    return res.status(400).json({ error: 'Rien a enregistrer' })
+  }
+
+  const fullName = [accountWithEmail.prenom, accountWithEmail.nom]
+    .map((s) => (s && String(s).trim()) || '')
+    .filter(Boolean)
+    .join(' ')
+  const phone = (accountWithEmail.telephone && String(accountWithEmail.telephone).trim()) || null
+  const vehicleSlug = (accountWithEmail.vehicule && String(accountWithEmail.vehicule).trim().toLowerCase()) || ''
+  const vehicleUpdate =
+    vehicleSlug && ChauffeurVehicleTypeSchema.safeParse(vehicleSlug).success ? vehicleSlug : undefined
+
+  const accountPatch: Record<string, unknown> = { updated_at: new Date().toISOString() }
+  if (fullName) accountPatch.full_name = fullName
+  if (phone) accountPatch.phone = phone
+  if (vehicleUpdate) accountPatch.vehicle_type = vehicleUpdate
+
+  const { error: accountErr } = await supabase
+    .from('app_accounts')
+    .update(accountPatch)
+    .eq('id', accountId)
+    .eq('role', 'chauffeur')
+  if (accountErr) {
+    console.error('[chauffeur/profile] app_accounts', accountErr)
+  }
+
+  const { data, error } = await supabase
+    .from('chauffeur_profile_data')
+    .upsert(
+      {
+        account_id: accountId,
+        account_snapshot: accountWithEmail,
+        updated_at: new Date().toISOString(),
+      },
+      { onConflict: 'account_id' }
+    )
+    .select('updated_at')
+    .single()
+
+  if (error || !data) {
+    console.error('[chauffeur/profile PUT]', error)
+    return res.status(500).json({ error: 'Enregistrement profil impossible' })
+  }
+
+  return res.status(200).json({ ok: true, updatedAt: data.updated_at })
+}
+
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   res.setHeader('Access-Control-Allow-Origin', '*')
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, OPTIONS')
@@ -561,6 +670,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
   if (req.method === 'GET' && resource === 'ride-profile') return handleRideProfileGet(res, driverKey)
   if (req.method === 'PUT' && resource === 'ride-profile') return handleRideProfilePut(req, res, driverKey)
+  if (req.method === 'GET' && resource === 'profile') return handleProfileGet(res, driverKey)
+  if (req.method === 'PUT' && resource === 'profile') return handleProfilePut(req, res, driverKey, dashboardEmail)
   if (req.method === 'POST' && resource === 'presence') return handlePresencePost(req, res, driverKey)
   if (req.method === 'GET' && resource === 'rides') return handleRidesGet(res, driverKey)
   if (req.method === 'POST' && resource === 'rides-action') return handleRidesActionPost(req, res, driverKey, dashboardEmail)

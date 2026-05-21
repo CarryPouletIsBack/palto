@@ -75,7 +75,6 @@ import {
   type AppTheme,
   type ClientAppPreferencesSnapshot,
 } from '../constants/clientAppPreferencesStorage';
-import { loadClientAccountSnapshot } from '../constants/clientAccountStorage';
 import { trackEvent } from '../services/googleAnalyticsTracking';
 import { useChauffeurPresenceHeartbeat } from '../hooks/useChauffeurPresenceHeartbeat';
 import { ChauffeurPresenceGeoBar } from './ChauffeurPresenceGeoBar';
@@ -151,6 +150,13 @@ import {
   fetchChauffeurRideProfileFromServer,
   syncChauffeurRideProfileToServer,
 } from '../services/chauffeurRideProfileApi';
+import {
+  loadStoredChauffeurProfile,
+  persistStoredChauffeurProfile,
+  PALTO_CHAUFFEUR_PROFILE_SYNCED_EVENT,
+  type ChauffeurProfileSnapshot,
+} from '../constants/chauffeurProfileStorage';
+import { syncChauffeurProfileWithServer } from '../services/chauffeurProfileSync';
 import ChauffeurDocumentsChecklist from './ChauffeurDocumentsChecklist';
 
 interface DashboardProps {
@@ -239,21 +245,7 @@ type UserSubView =
   | 'preferences'
   | 'help';
 
-type ChauffeurProfile = {
-  nom: string;
-  prenom: string;
-  email: string;
-  telephone: string;
-  ville: string;
-  vehicule: string;
-  plaque: string;
-  profilePhotoUrl?: string | null;
-  organizationPhotoUrl?: string | null;
-  vehiclePhotoUrl?: string | null;
-  profilePhotoName?: string;
-  organizationPhotoName?: string;
-  vehiclePhotoName?: string;
-};
+type ChauffeurProfile = ChauffeurProfileSnapshot;
 
 type ChauffeurPayment = {
   ibanMasked: string;
@@ -271,7 +263,6 @@ type ChauffeurDocument = {
   uploadedFileName?: string;
 };
 
-const CHAUFFEUR_PROFILE_STORAGE_KEY = 'palto:chauffeur_profile_v1';
 const REUNION_CITY_SUGGESTIONS = [
   'Saint-Denis',
   'Sainte-Marie',
@@ -298,33 +289,6 @@ const REUNION_CITY_SUGGESTIONS = [
   'Saint-Philippe',
   'Cilaos',
 ] as const;
-
-function loadStoredChauffeurProfiles(): Record<string, ChauffeurProfile> {
-  if (typeof window === 'undefined') return {};
-  try {
-    const raw = localStorage.getItem(CHAUFFEUR_PROFILE_STORAGE_KEY);
-    if (!raw) return {};
-    const parsed = JSON.parse(raw) as unknown;
-    if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) return {};
-    return parsed as Record<string, ChauffeurProfile>;
-  } catch {
-    return {};
-  }
-}
-
-function loadStoredChauffeurProfile(emailNorm: string): ChauffeurProfile | null {
-  if (!emailNorm) return null;
-  return loadStoredChauffeurProfiles()[emailNorm] ?? null;
-}
-
-function persistStoredChauffeurProfile(profile: ChauffeurProfile): void {
-  if (typeof window === 'undefined') return;
-  const emailNorm = normalizeChauffeurEmail(profile.email);
-  if (!emailNorm) return;
-  const allProfiles = loadStoredChauffeurProfiles();
-  allProfiles[emailNorm] = profile;
-  localStorage.setItem(CHAUFFEUR_PROFILE_STORAGE_KEY, JSON.stringify(allProfiles));
-}
 
 type DashboardAlertItem = {
   id: string;
@@ -827,18 +791,25 @@ const Dashboard = ({
   const useStatsApi = statsApiEnabled();
   const paltoIdentity = useMemo(() => {
     const sessionEmail = getChauffeurSessionEmail().trim().toLowerCase();
-    const snap = loadClientAccountSnapshot(sessionEmail);
-    const fullName = `${snap.prenom.trim()} ${snap.nom.trim()}`.trim();
-    const fallbackName = `${chauffeurProfile.prenom} ${chauffeurProfile.nom}`.trim();
     const inferred = inferProfileFromEmail(sessionEmail);
     const inferredName = `${inferred.prenom} ${inferred.nom}`.trim();
-    const photo = typeof snap.profilePhotoUrl === 'string' && snap.profilePhotoUrl.trim() ? snap.profilePhotoUrl : null;
+    const driverName = `${chauffeurProfile.prenom} ${chauffeurProfile.nom}`.trim();
+    const photo =
+      typeof chauffeurProfile.profilePhotoUrl === 'string' && chauffeurProfile.profilePhotoUrl.trim()
+        ? chauffeurProfile.profilePhotoUrl
+        : null;
     return {
-      email: snap.email.trim() || sessionEmail || chauffeurProfile.email,
-      fullName: fullName || fallbackName || inferredName || 'Compte Palto',
+      email: sessionEmail || chauffeurProfile.email,
+      fullName: driverName || inferredName || 'Compte Palto',
       photoUrl: photo,
     };
-  }, [authSessionTick, chauffeurProfile.email, chauffeurProfile.nom, chauffeurProfile.prenom]);
+  }, [
+    authSessionTick,
+    chauffeurProfile.email,
+    chauffeurProfile.nom,
+    chauffeurProfile.prenom,
+    chauffeurProfile.profilePhotoUrl,
+  ]);
   useEffect(() => {
     const bump = () => setAuthSessionTick((n) => n + 1);
     const onStorage = (e: StorageEvent) => {
@@ -849,36 +820,47 @@ const Dashboard = ({
     };
     window.addEventListener(PALTO_CLIENT_SESSION_CHANGED_EVENT, bump as EventListener);
     window.addEventListener(PALTO_CHAUFFEUR_SESSION_CHANGED_EVENT, bump as EventListener);
+    window.addEventListener(PALTO_CHAUFFEUR_PROFILE_SYNCED_EVENT, bump as EventListener);
     window.addEventListener('storage', onStorage);
     return () => {
       window.removeEventListener(PALTO_CLIENT_SESSION_CHANGED_EVENT, bump as EventListener);
       window.removeEventListener(PALTO_CHAUFFEUR_SESSION_CHANGED_EVENT, bump as EventListener);
+      window.removeEventListener(PALTO_CHAUFFEUR_PROFILE_SYNCED_EVENT, bump as EventListener);
       window.removeEventListener('storage', onStorage);
     };
+  }, []);
+
+  const applyChauffeurProfileToUi = useCallback((profile: ChauffeurProfile) => {
+    setChauffeurProfile(profile);
+    setUserProfileDraft(profile);
+    setProfilePhotoUrl(profile.profilePhotoUrl ?? null);
+    setOrganizationPhotoUrl(profile.organizationPhotoUrl ?? null);
+    setVehiclePhotoUrl(profile.vehiclePhotoUrl ?? null);
+    setProfilePhotoName(profile.profilePhotoName ?? '');
+    setOrganizationPhotoName(profile.organizationPhotoName ?? '');
+    setVehiclePhotoName(profile.vehiclePhotoName ?? '');
+    const parsedStoredPhone = parseStoredPhone(profile.telephone);
+    if (profile.telephone.trim()) {
+      setPhoneCountryDraft(parsedStoredPhone.country);
+      setPhoneNationalDraft(parsedStoredPhone.nationalNumber);
+    }
   }, []);
 
   useEffect(() => {
     const sessionEmail = getChauffeurSessionEmail().toLowerCase();
     if (!sessionEmail) return;
-    const storedProfile = loadStoredChauffeurProfile(normalizeChauffeurEmail(sessionEmail));
+    const emailNorm = normalizeChauffeurEmail(sessionEmail);
+    let cancelled = false;
+
+    const storedProfile = loadStoredChauffeurProfile(emailNorm);
     if (storedProfile) {
-      setChauffeurProfile(storedProfile);
-      setUserProfileDraft(storedProfile);
-      setProfilePhotoUrl(storedProfile.profilePhotoUrl ?? null);
-      setOrganizationPhotoUrl(storedProfile.organizationPhotoUrl ?? null);
-      setVehiclePhotoUrl(storedProfile.vehiclePhotoUrl ?? null);
-      setProfilePhotoName(storedProfile.profilePhotoName ?? '');
-      setOrganizationPhotoName(storedProfile.organizationPhotoName ?? '');
-      setVehiclePhotoName(storedProfile.vehiclePhotoName ?? '');
-      const parsedStoredPhone = parseStoredPhone(storedProfile.telephone);
-      if (storedProfile.telephone.trim()) {
-        setPhoneCountryDraft(parsedStoredPhone.country);
-        setPhoneNationalDraft(parsedStoredPhone.nationalNumber);
-      }
+      applyChauffeurProfileToUi(storedProfile);
     }
+
     const inferred = inferProfileFromEmail(sessionEmail);
-    const registryPhone = loadChauffeurRegistry()[normalizeChauffeurEmail(sessionEmail)]?.phoneInternational ?? '';
+    const registryPhone = loadChauffeurRegistry()[emailNorm]?.phoneInternational ?? '';
     const parsedRegistryPhone = parseStoredPhone(registryPhone);
+
     setChauffeurProfile((prev) => ({
       ...prev,
       email: prev.email.trim() ? prev.email : sessionEmail,
@@ -893,11 +875,21 @@ const Dashboard = ({
       nom: prev.nom.trim() ? prev.nom : inferred.nom,
       telephone: prev.telephone.trim() ? prev.telephone : registryPhone,
     }));
-    if (registryPhone.trim()) {
+    if (registryPhone.trim() && !storedProfile?.telephone.trim()) {
       setPhoneCountryDraft(parsedRegistryPhone.country);
       setPhoneNationalDraft(parsedRegistryPhone.nationalNumber);
     }
-  }, [authSessionTick]);
+
+    void syncChauffeurProfileWithServer(sessionEmail).then(() => {
+      if (cancelled) return;
+      const merged = loadStoredChauffeurProfile(emailNorm);
+      if (merged) applyChauffeurProfileToUi(merged);
+    });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [applyChauffeurProfileToUi, authSessionTick]);
 
   useEffect(() => {
     saveChauffeurOrg(chauffeurOrg);
@@ -1905,6 +1897,10 @@ const Dashboard = ({
     setChauffeurProfile(nextProfile);
     setUserProfileDraft(nextProfile);
     persistStoredChauffeurProfile(nextProfile);
+    void syncChauffeurProfileWithServer(nextProfile.email).then(() => {
+      const merged = loadStoredChauffeurProfile(normalizeChauffeurEmail(nextProfile.email));
+      if (merged) applyChauffeurProfileToUi(merged);
+    });
     const vehicleSlug = isChauffeurVehicleType(nextProfile.vehicule) ? nextProfile.vehicule : null;
     void syncChauffeurRideProfileToServer({
       petFriendly: chauffeurRideSettings.petFriendly,
@@ -1918,7 +1914,9 @@ const Dashboard = ({
     setProfilePhotoName(profilePhotoDraftName);
     setOrganizationPhotoName(organizationPhotoDraftName);
     setVehiclePhotoName(vehiclePhotoDraftName);
-    toast.success('Profil chauffeur enregistré');
+    toast.success('Profil chauffeur enregistré', {
+      description: 'Synchronisation multi-appareils en cours…',
+    });
   }, [
     organizationPhotoDraftName,
     organizationPhotoDraftUrl,
@@ -1932,6 +1930,7 @@ const Dashboard = ({
     userProfileDraft,
     vehiclePhotoDraftName,
     vehiclePhotoDraftUrl,
+    applyChauffeurProfileToUi,
   ]);
 
   const handlePlateBlurLookup = useCallback(() => {
