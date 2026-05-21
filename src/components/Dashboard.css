@@ -59,7 +59,7 @@
   flex-shrink: 0;
 }
 
-.dashboard-container--chauffeur .chauffeur-presence-geo {
+.dashboard-container--chauffeur .dashboard-content > .chauffeur-presence-geo {
   flex-shrink: 0;
 }
 
@@ -1809,9 +1809,11 @@ button.dashboard-panel--overview-empty:focus-visible {
 .dashboard-chauffeur-profile-form input,
 .dashboard-chauffeur-profile-form select {
   pointer-events: auto;
-  touch-action: manipulation;
+  touch-action: auto;
   -webkit-user-select: text;
   user-select: text;
+  position: relative;
+  z-index: 2;
 }
 
 .dashboard-container--chauffeur .dashboard-chauffeur-profile-form input,
@@ -4475,12 +4477,6 @@ button.dashboard-org-sidebar-brand--home:focus-visible {
     -webkit-overflow-scrolling: touch;
     overscroll-behavior: contain;
     touch-action: pan-y;
-  }
-
-  .dashboard-container--chauffeur .dashboard-main--chauffeur-mobile-floating-account .dashboard-content {
-    max-height: calc(
-      100dvh - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px) - 56px - 52px
-    );
   }
 
   .dashboard-container--chauffeur .dashboard-content.dashboard-content--org-fullbleed {

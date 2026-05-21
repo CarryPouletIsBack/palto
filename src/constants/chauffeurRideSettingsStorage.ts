@@ -61,6 +61,23 @@ export function loadChauffeurRideSettingsSnapshot(): ChauffeurRideSettingsSnapsh
   }
 }
 
+export function areChauffeurRideSettingsEqual(
+  a: ChauffeurRideSettingsSnapshot,
+  b: ChauffeurRideSettingsSnapshot
+): boolean {
+  return (
+    a.baseFareEur === b.baseFareEur &&
+    a.pricePerKmEur === b.pricePerKmEur &&
+    a.nightSurchargePercent === b.nightSurchargePercent &&
+    a.elevationSurchargeEurPer100m === b.elevationSurchargeEurPer100m &&
+    a.pricingMultiplierPercent === b.pricingMultiplierPercent &&
+    a.maxPickupKm === b.maxPickupKm &&
+    a.petFriendly === b.petFriendly &&
+    a.luggageAssistance === b.luggageAssistance &&
+    a.insulatedBag === b.insulatedBag
+  );
+}
+
 export function saveChauffeurRideSettingsSnapshot(snapshot: ChauffeurRideSettingsSnapshot): void {
   if (typeof window === 'undefined') return;
   try {

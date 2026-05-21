@@ -37,3 +37,24 @@ export const REUNION_COMMUNES_SORTED: readonly string[] = [...REUNION_COMMUNES_F
 )
 
 export const DEFAULT_HERO_COMMUNE: ReunionCommuneFr = 'Le Port'
+
+/** Anciennes orthographes (sans accent, libellés raccourcis) → commune canonique. */
+const LEGACY_COMMUNE_ALIASES: Record<string, ReunionCommuneFr> = {
+  'Saint-Andre': 'Saint-André',
+  'Saint-Benoit': 'Saint-Benoît',
+  "L'Etang-Sale": "L'Étang-Salé",
+  'L Etang-Sale': "L'Étang-Salé",
+  'Trois-Bassins': 'Les Trois-Bassins',
+  'Petite-Ile': 'Petite-Île',
+}
+
+/** Valeur fiable pour `<select>` (commune exacte ou alias legacy). */
+export function normalizeReunionCommuneForSelect(value: string | null | undefined): string {
+  const raw = (value ?? '').trim()
+  if (!raw) return ''
+  const insensitive = REUNION_COMMUNES_FR.find(
+    (c) => c.localeCompare(raw, 'fr', { sensitivity: 'base' }) === 0
+  )
+  if (insensitive) return insensitive
+  return LEGACY_COMMUNE_ALIASES[raw] ?? ''
+}

@@ -1,4 +1,4 @@
-import type { Dispatch, SetStateAction } from 'react'
+import type { ChangeEvent, Dispatch, SetStateAction } from 'react'
 import type { Language } from '../contexts/LanguageContext'
 import type { ChauffeurRideSettingsSnapshot } from '../constants/chauffeurRideSettingsStorage'
 
@@ -7,6 +7,12 @@ type Props = {
   rideSettingsDraft: ChauffeurRideSettingsSnapshot
   setRideSettingsDraft: Dispatch<SetStateAction<ChauffeurRideSettingsSnapshot>>
   computeAppliedPrice: (raw: string, multiplierPercent: number) => string
+}
+
+function readFormControlValue(
+  e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
+): string {
+  return e.currentTarget?.value ?? ''
 }
 
 export default function ChauffeurRideSettingsForm({
@@ -38,7 +44,7 @@ export default function ChauffeurRideSettingsForm({
               inputMode="decimal"
               value={rideSettingsDraft.baseFareEur}
               onChange={(e) =>
-                setRideSettingsDraft((prev) => ({ ...prev, baseFareEur: e.target.value }))
+                setRideSettingsDraft((prev) => ({ ...prev, baseFareEur: readFormControlValue(e) }))
               }
               placeholder="2,20"
               required
@@ -51,7 +57,7 @@ export default function ChauffeurRideSettingsForm({
               inputMode="decimal"
               value={rideSettingsDraft.pricePerKmEur}
               onChange={(e) =>
-                setRideSettingsDraft((prev) => ({ ...prev, pricePerKmEur: e.target.value }))
+                setRideSettingsDraft((prev) => ({ ...prev, pricePerKmEur: readFormControlValue(e) }))
               }
               placeholder="1,40"
               required
@@ -64,7 +70,7 @@ export default function ChauffeurRideSettingsForm({
               inputMode="decimal"
               value={rideSettingsDraft.nightSurchargePercent}
               onChange={(e) =>
-                setRideSettingsDraft((prev) => ({ ...prev, nightSurchargePercent: e.target.value }))
+                setRideSettingsDraft((prev) => ({ ...prev, nightSurchargePercent: readFormControlValue(e) }))
               }
               placeholder="18"
               required
@@ -82,7 +88,7 @@ export default function ChauffeurRideSettingsForm({
               onChange={(e) =>
                 setRideSettingsDraft((prev) => ({
                   ...prev,
-                  elevationSurchargeEurPer100m: e.target.value,
+                  elevationSurchargeEurPer100m: readFormControlValue(e),
                 }))
               }
               placeholder="1,50"
@@ -141,7 +147,7 @@ export default function ChauffeurRideSettingsForm({
               onChange={(e) =>
                 setRideSettingsDraft((prev) => ({
                   ...prev,
-                  pricingMultiplierPercent: Number(e.target.value),
+                  pricingMultiplierPercent: Number(readFormControlValue(e)),
                 }))
               }
               required
@@ -159,7 +165,7 @@ export default function ChauffeurRideSettingsForm({
               onChange={(e) =>
                 setRideSettingsDraft((prev) => ({
                   ...prev,
-                  pricingMultiplierPercent: Number(e.target.value),
+                  pricingMultiplierPercent: Number(readFormControlValue(e)),
                 }))
               }
             />
@@ -185,7 +191,7 @@ export default function ChauffeurRideSettingsForm({
               min="1"
               value={rideSettingsDraft.maxPickupKm}
               onChange={(e) =>
-                setRideSettingsDraft((prev) => ({ ...prev, maxPickupKm: e.target.value }))
+                setRideSettingsDraft((prev) => ({ ...prev, maxPickupKm: readFormControlValue(e) }))
               }
               required
             />

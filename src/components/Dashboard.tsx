@@ -24,6 +24,7 @@ import DashboardStats, {
   type ChauffeurHeatmapStatsForView,
 } from './DashboardStats';
 import {
+  formatFrenchPlateInput,
   normalizeFrenchPlate,
 } from '../services/vehiclePlate';
 import {
@@ -134,6 +135,7 @@ import {
   normalizeChauffeurEmail,
 } from '../constants/chauffeurRegistrationStorage';
 import {
+  areChauffeurRideSettingsEqual,
   loadChauffeurRideSettingsSnapshot,
   saveChauffeurRideSettingsSnapshot,
   type ChauffeurRideSettingsSnapshot,
@@ -148,6 +150,10 @@ import {
   isChauffeurVehicleType,
   normalizeVehicleSlugForSelect,
 } from '../constants/chauffeurVehicleType';
+import {
+  normalizeReunionCommuneForSelect,
+  REUNION_COMMUNES_SORTED,
+} from '../data/reunionCommunes';
 import {
   fetchChauffeurRideProfileFromServer,
   syncChauffeurRideProfileToServer,
@@ -271,33 +277,6 @@ function readFormControlValue(
 ): string {
   return e.currentTarget?.value ?? '';
 }
-
-const REUNION_CITY_SUGGESTIONS = [
-  'Saint-Denis',
-  'Sainte-Marie',
-  'Sainte-Suzanne',
-  'Saint-Andre',
-  'Bras-Panon',
-  'Saint-Benoit',
-  'La Plaine-des-Palmistes',
-  'Sainte-Rose',
-  'Salazie',
-  'La Possession',
-  'Le Port',
-  'Saint-Paul',
-  'Trois-Bassins',
-  'Saint-Leu',
-  'Les Avirons',
-  "L'Etang-Sale",
-  'Saint-Louis',
-  'Entre-Deux',
-  'Le Tampon',
-  'Saint-Pierre',
-  'Petite-Ile',
-  'Saint-Joseph',
-  'Saint-Philippe',
-  'Cilaos',
-] as const;
 
 type DashboardAlertItem = {
   id: string;
@@ -843,9 +822,10 @@ const Dashboard = ({
   const applyChauffeurProfileToUi = useCallback(
     (profile: ChauffeurProfile, options?: { overwriteDraft?: boolean }) => {
       const vehiculeSlug = normalizeVehicleSlugForSelect(profile.vehicule);
+      const villeCommune = normalizeReunionCommuneForSelect(profile.ville);
       const normalized: ChauffeurProfile = {
         ...profile,
-        ville: profile.ville ?? '',
+        ville: villeCommune || (profile.ville ?? '').trim(),
         vehicule: vehiculeSlug || (profile.vehicule ?? '').trim(),
         plaque: profile.plaque ?? '',
         prenom: profile.prenom ?? '',
@@ -1898,8 +1878,10 @@ const Dashboard = ({
     const savedPhone = parseStoredPhone(chauffeurProfile.telephone);
     const draftVehicle = normalizeVehicleSlugForSelect(userProfileDraft.vehicule);
     const savedVehicle = normalizeVehicleSlugForSelect(chauffeurProfile.vehicule);
+    const draftVille = normalizeReunionCommuneForSelect(userProfileDraft.ville);
+    const savedVille = normalizeReunionCommuneForSelect(chauffeurProfile.ville);
     return (
-      userProfileDraft.ville.trim() !== chauffeurProfile.ville.trim() ||
+      draftVille !== savedVille ||
       draftVehicle !== savedVehicle ||
       normalizeFrenchPlate(userProfileDraft.plaque) !== normalizeFrenchPlate(chauffeurProfile.plaque) ||
       phoneNationalDraft !== savedPhone.nationalNumber ||
@@ -1975,8 +1957,10 @@ const Dashboard = ({
     }
 
     const vehicleSlug = normalizeVehicleSlugForSelect(userProfileDraft.vehicule);
+    const villeCommune = normalizeReunionCommuneForSelect(userProfileDraft.ville);
     const nextProfile: ChauffeurProfile = {
       ...userProfileDraft,
+      ville: villeCommune,
       vehicule: vehicleSlug,
       plaque: normalizedPlate,
       telephone: buildInternationalPhone(phoneCountryDraft, normalizedNationalPhone),
@@ -2107,12 +2091,7 @@ const Dashboard = ({
   }, [])
 
   const isRideSettingsDirty = useMemo(
-    () =>
-      rideSettingsDraft.pricingMultiplierPercent !== chauffeurRideSettings.pricingMultiplierPercent ||
-      rideSettingsDraft.maxPickupKm !== chauffeurRideSettings.maxPickupKm ||
-      rideSettingsDraft.petFriendly !== chauffeurRideSettings.petFriendly ||
-      rideSettingsDraft.luggageAssistance !== chauffeurRideSettings.luggageAssistance ||
-      rideSettingsDraft.insulatedBag !== chauffeurRideSettings.insulatedBag,
+    () => !areChauffeurRideSettingsEqual(rideSettingsDraft, chauffeurRideSettings),
     [rideSettingsDraft, chauffeurRideSettings]
   );
 
@@ -2441,15 +2420,14 @@ const Dashboard = ({
               </div>
             </header>
 
-            <ChauffeurPresenceGeoBar
-              onActivate={chauffeurPresence.startTracking}
-              onRefresh={chauffeurPresence.refreshLocation}
-              error={chauffeurPresence.geoError}
-              tracking={chauffeurPresence.tracking}
-            />
-
             {activeView === 'stats' ? (
               <div className="dashboard-content">
+                <ChauffeurPresenceGeoBar
+                  onActivate={chauffeurPresence.startTracking}
+                  onRefresh={chauffeurPresence.refreshLocation}
+                  error={chauffeurPresence.geoError}
+                  tracking={chauffeurPresence.tracking}
+                />
                 {isMobileViewport && !topbarLaunchCourse ? (
                   <div className="dashboard-topbar-title-stack dashboard-topbar-title-stack--in-content">
                     <h2 className="dashboard-chauffeur-main-title">{dashboardTopTitle}</h2>
@@ -2466,6 +2444,12 @@ const Dashboard = ({
                     activeView === 'organization' ? ' dashboard-content--org-fullbleed' : ''
                   }`}
                 >
+                  <ChauffeurPresenceGeoBar
+                    onActivate={chauffeurPresence.startTracking}
+                    onRefresh={chauffeurPresence.refreshLocation}
+                    error={chauffeurPresence.geoError}
+                    tracking={chauffeurPresence.tracking}
+                  />
                   {isMobileViewport && !topbarLaunchCourse ? (
                     <div className="dashboard-topbar-title-stack dashboard-topbar-title-stack--in-content">
                       <h2 className="dashboard-chauffeur-main-title">{dashboardTopTitle}</h2>
@@ -3630,23 +3614,25 @@ const Dashboard = ({
                                   )}
                                 </label>
                                 <label>
-                                  Ville
-                                  <input
-                                    type="text"
+                                  Commune (La Réunion)
+                                  <select
                                     name="chauffeur-ville"
                                     autoComplete="address-level2"
-                                    enterKeyHint="next"
-                                    value={userProfileDraft.ville ?? ''}
+                                    value={normalizeReunionCommuneForSelect(userProfileDraft.ville)}
                                     onChange={(e) => {
                                       markProfileFormDirty();
-                                      const ville = readFormControlValue(e);
+                                      const ville = normalizeReunionCommuneForSelect(readFormControlValue(e));
                                       setUserProfileDraft((prev) => ({ ...prev, ville }));
                                     }}
                                     required
-                                  />
-                                  <small className="dashboard-field-hint">
-                                    Ex. {REUNION_CITY_SUGGESTIONS.slice(0, 3).join(', ')}…
-                                  </small>
+                                  >
+                                    <option value="">Choisir une commune</option>
+                                    {REUNION_COMMUNES_SORTED.map((commune) => (
+                                      <option key={commune} value={commune}>
+                                        {commune}
+                                      </option>
+                                    ))}
+                                  </select>
                                 </label>
                                 <label>
                                   Véhicule
@@ -3671,16 +3657,23 @@ const Dashboard = ({
                                   Plaque
                                   <input
                                     type="text"
+                                    name="chauffeur-plaque"
+                                    autoComplete="off"
+                                    autoCapitalize="characters"
+                                    spellCheck={false}
+                                    inputMode="text"
+                                    enterKeyHint="done"
                                     value={userProfileDraft.plaque ?? ''}
                                     onChange={(e) => {
                                       markProfileFormDirty();
+                                      const plaque = formatFrenchPlateInput(readFormControlValue(e));
                                       setUserProfileDraft((prev) => ({
                                         ...prev,
-                                        plaque: readFormControlValue(e),
+                                        plaque,
                                       }));
                                     }}
                                     onBlur={() => {
-                                      void handlePlateBlurLookup();
+                                      handlePlateBlurLookup();
                                     }}
                                     placeholder="AA-123-BB"
                                     required

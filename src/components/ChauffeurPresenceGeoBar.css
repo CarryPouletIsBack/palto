@@ -1,6 +1,9 @@
 .chauffeur-presence-geo {
   margin: 0 0 1rem;
-  padding: 0 0.5rem;
+  padding: 0;
+  flex-shrink: 0;
+  position: relative;
+  z-index: 0;
 }
 
 .chauffeur-presence-geo__inner {
@@ -12,6 +15,9 @@
   border-radius: 12px;
   border: 1px solid rgba(99, 102, 241, 0.35);
   background: linear-gradient(135deg, rgba(99, 102, 241, 0.08), rgba(168, 85, 247, 0.06));
+  /* Ne pas intercepter le scroll du conteneur parent (.dashboard-content) */
+  touch-action: manipulation;
+  pointer-events: auto;
 }
 
 .chauffeur-presence-geo__icon {

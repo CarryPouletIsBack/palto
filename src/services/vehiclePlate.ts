@@ -13,6 +13,11 @@ export function normalizeFrenchPlate(raw: string): string {
     .replace(/^-+|-+$/g, '')
 }
 
+/** Saisie en cours : majuscules, espaces/tirets conservés (normalisation complète au blur / enregistrement). */
+export function formatFrenchPlateInput(raw: string): string {
+  return raw.toUpperCase().replace(/[^A-Z0-9\s-]/g, '')
+}
+
 export function isValidFrenchPlate(normalized: string): boolean {
   if (!normalized) return false
   return SIV_PLATE_RE.test(normalized)
