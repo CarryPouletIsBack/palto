@@ -82,6 +82,7 @@ import { ChauffeurPresenceGeoBar } from './ChauffeurPresenceGeoBar';
 import ChauffeurPaltoAccountPanel, {
   type ChauffeurPaltoAccountSection,
 } from './ChauffeurPaltoAccountPanel';
+import ChauffeurRideSettingsForm from './ChauffeurRideSettingsForm';
 import { toast } from 'sonner';
 import './Dashboard.css';
 import './Dashboard.app-theme.css';
@@ -2704,155 +2705,12 @@ const Dashboard = ({
                           saveRideSettingsEdit();
                         }}
                       >
-                        <article className="dashboard-panel">
-                          <div className="dashboard-section-title dashboard-section-title-inline">
-                            <h3>Référence Palto</h3>
-                            <span>Base + tarif appliqué</span>
-                          </div>
-                          <div className="dashboard-metric-list">
-                            <div className="dashboard-metric-row">
-                              <span>Prise en charge Palto</span>
-                              <strong>{chauffeurRideSettings.baseFareEur} EUR</strong>
-                            </div>
-                            <div className="dashboard-metric-row">
-                              <span>Prix/km Palto</span>
-                              <strong>{chauffeurRideSettings.pricePerKmEur} EUR / km</strong>
-                            </div>
-                            <div className="dashboard-metric-row">
-                              <span>Majoration nuit Palto</span>
-                              <strong>+{chauffeurRideSettings.nightSurchargePercent}%</strong>
-                            </div>
-                            <div className="dashboard-metric-row">
-                              <span>Prise en charge appliquée</span>
-                              <strong>
-                                {computeAppliedPrice(
-                                  chauffeurRideSettings.baseFareEur,
-                                  rideSettingsDraft.pricingMultiplierPercent
-                                )}{' '}
-                                EUR
-                              </strong>
-                            </div>
-                            <div className="dashboard-metric-row">
-                              <span>Prix/km appliqué</span>
-                              <strong>
-                                {computeAppliedPrice(
-                                  chauffeurRideSettings.pricePerKmEur,
-                                  rideSettingsDraft.pricingMultiplierPercent
-                                )}{' '}
-                                EUR / km
-                              </strong>
-                            </div>
-                          </div>
-                          <p className="dashboard-field-hint" style={{ margin: '10px 0 0' }}>
-                            La base tarifaire est définie par Palto. Tu ajustes uniquement un multiplicateur global.
-                          </p>
-                        </article>
-
-                        <article className="dashboard-panel">
-                          <div className="dashboard-section-title dashboard-section-title-inline">
-                            <h3>Jauge de flexibilité</h3>
-                            <span>90% à 110%</span>
-                          </div>
-                          <div className="dashboard-payment-edit-grid">
-                            <label>
-                              Multiplicateur global
-                              <input
-                                type="number"
-                                min="90"
-                                max="110"
-                                step="1"
-                                value={rideSettingsDraft.pricingMultiplierPercent}
-                                onChange={(e) =>
-                                  setRideSettingsDraft((prev) => ({
-                                    ...prev,
-                                    pricingMultiplierPercent: Number(e.target.value),
-                                  }))
-                                }
-                                required
-                              />
-                            </label>
-                            <label className="dashboard-ride-slider-field">
-                              Ajustement de tarif
-                              <input
-                                className="dashboard-ride-setting-range"
-                                type="range"
-                                min="90"
-                                max="110"
-                                step="1"
-                                value={rideSettingsDraft.pricingMultiplierPercent}
-                                onChange={(e) =>
-                                  setRideSettingsDraft((prev) => ({
-                                    ...prev,
-                                    pricingMultiplierPercent: Number(e.target.value),
-                                  }))
-                                }
-                              />
-                              <span className="dashboard-field-hint">
-                                90%: plus compétitif · 100%: standard Palto · 110%: premium
-                              </span>
-                            </label>
-                          </div>
-                        </article>
-
-                        <article className="dashboard-panel">
-                          <div className="dashboard-section-title dashboard-section-title-inline">
-                            <h3>Exploitation</h3>
-                            <span>Zone et service</span>
-                          </div>
-                          <div className="dashboard-payment-edit-grid">
-                            <label>
-                              Rayon prise en charge (km)
-                              <input
-                                type="number"
-                                min="1"
-                                value={rideSettingsDraft.maxPickupKm}
-                                onChange={(e) =>
-                                  setRideSettingsDraft((prev) => ({ ...prev, maxPickupKm: e.target.value }))
-                                }
-                                required
-                              />
-                            </label>
-                            <label className="dashboard-ride-setting-toggle-row">
-                              <span>Animaux acceptés</span>
-                              <input
-                                className="dashboard-ride-setting-switch"
-                                type="checkbox"
-                                checked={rideSettingsDraft.petFriendly}
-                                onChange={(e) =>
-                                  setRideSettingsDraft((prev) => ({ ...prev, petFriendly: e.target.checked }))
-                                }
-                              />
-                            </label>
-                            <label className="dashboard-ride-setting-toggle-row">
-                              <span>Aide bagages disponible</span>
-                              <input
-                                className="dashboard-ride-setting-switch"
-                                type="checkbox"
-                                checked={rideSettingsDraft.luggageAssistance}
-                                onChange={(e) =>
-                                  setRideSettingsDraft((prev) => ({
-                                    ...prev,
-                                    luggageAssistance: e.target.checked,
-                                  }))
-                                }
-                              />
-                            </label>
-                            <label className="dashboard-ride-setting-toggle-row">
-                              <span>Sac isotherme</span>
-                              <input
-                                className="dashboard-ride-setting-switch"
-                                type="checkbox"
-                                checked={rideSettingsDraft.insulatedBag}
-                                onChange={(e) =>
-                                  setRideSettingsDraft((prev) => ({
-                                    ...prev,
-                                    insulatedBag: e.target.checked,
-                                  }))
-                                }
-                              />
-                            </label>
-                          </div>
-                        </article>
+                        <ChauffeurRideSettingsForm
+                          language={language}
+                          rideSettingsDraft={rideSettingsDraft}
+                          setRideSettingsDraft={setRideSettingsDraft}
+                          computeAppliedPrice={computeAppliedPrice}
+                        />
 
                         <div className="dashboard-payment-edit-actions">
                           <button type="submit" className="dashboard-user-save-btn" disabled={!isRideSettingsDirty}>
@@ -3904,155 +3762,12 @@ const Dashboard = ({
                                   saveRideSettingsEdit();
                                 }}
                               >
-                                <article className="dashboard-panel">
-                                  <div className="dashboard-section-title dashboard-section-title-inline">
-                                    <h3>Référence Palto</h3>
-                                    <span>Base + tarif appliqué</span>
-                                  </div>
-                                  <div className="dashboard-metric-list">
-                                    <div className="dashboard-metric-row">
-                                      <span>Prise en charge Palto</span>
-                                      <strong>{chauffeurRideSettings.baseFareEur} EUR</strong>
-                                    </div>
-                                    <div className="dashboard-metric-row">
-                                      <span>Prix/km Palto</span>
-                                      <strong>{chauffeurRideSettings.pricePerKmEur} EUR / km</strong>
-                                    </div>
-                                    <div className="dashboard-metric-row">
-                                      <span>Majoration nuit Palto</span>
-                                      <strong>+{chauffeurRideSettings.nightSurchargePercent}%</strong>
-                                    </div>
-                                    <div className="dashboard-metric-row">
-                                      <span>Prise en charge appliquée</span>
-                                      <strong>
-                                        {computeAppliedPrice(
-                                          chauffeurRideSettings.baseFareEur,
-                                          rideSettingsDraft.pricingMultiplierPercent
-                                        )}{' '}
-                                        EUR
-                                      </strong>
-                                    </div>
-                                    <div className="dashboard-metric-row">
-                                      <span>Prix/km appliqué</span>
-                                      <strong>
-                                        {computeAppliedPrice(
-                                          chauffeurRideSettings.pricePerKmEur,
-                                          rideSettingsDraft.pricingMultiplierPercent
-                                        )}{' '}
-                                        EUR / km
-                                      </strong>
-                                    </div>
-                                  </div>
-                                  <p className="dashboard-field-hint" style={{ margin: '10px 0 0' }}>
-                                    La base tarifaire est définie par Palto. Tu ajustes uniquement un multiplicateur global.
-                                  </p>
-                                </article>
-
-                                <article className="dashboard-panel">
-                                  <div className="dashboard-section-title dashboard-section-title-inline">
-                                    <h3>Jauge de flexibilité</h3>
-                                    <span>90% à 110%</span>
-                                  </div>
-                                  <div className="dashboard-payment-edit-grid">
-                                    <label>
-                                      Multiplicateur global
-                                      <input
-                                        type="number"
-                                        min="90"
-                                        max="110"
-                                        step="1"
-                                        value={rideSettingsDraft.pricingMultiplierPercent}
-                                        onChange={(e) =>
-                                          setRideSettingsDraft((prev) => ({
-                                            ...prev,
-                                            pricingMultiplierPercent: Number(e.target.value),
-                                          }))
-                                        }
-                                        required
-                                      />
-                                    </label>
-                                    <label className="dashboard-ride-slider-field">
-                                      Ajustement de tarif
-                                      <input
-                                        className="dashboard-ride-setting-range"
-                                        type="range"
-                                        min="90"
-                                        max="110"
-                                        step="1"
-                                        value={rideSettingsDraft.pricingMultiplierPercent}
-                                        onChange={(e) =>
-                                          setRideSettingsDraft((prev) => ({
-                                            ...prev,
-                                            pricingMultiplierPercent: Number(e.target.value),
-                                          }))
-                                        }
-                                      />
-                                      <span className="dashboard-field-hint">
-                                        90%: plus compétitif · 100%: standard Palto · 110%: premium
-                                      </span>
-                                    </label>
-                                  </div>
-                                </article>
-
-                                <article className="dashboard-panel">
-                                  <div className="dashboard-section-title dashboard-section-title-inline">
-                                    <h3>Exploitation</h3>
-                                    <span>Zone et service</span>
-                                  </div>
-                                  <div className="dashboard-payment-edit-grid">
-                                    <label>
-                                      Rayon prise en charge (km)
-                                      <input
-                                        type="number"
-                                        min="1"
-                                        value={rideSettingsDraft.maxPickupKm}
-                                        onChange={(e) =>
-                                          setRideSettingsDraft((prev) => ({ ...prev, maxPickupKm: e.target.value }))
-                                        }
-                                        required
-                                      />
-                                    </label>
-                                    <label className="dashboard-ride-setting-toggle-row">
-                                      <span>Animaux acceptés</span>
-                                      <input
-                                        className="dashboard-ride-setting-switch"
-                                        type="checkbox"
-                                        checked={rideSettingsDraft.petFriendly}
-                                        onChange={(e) =>
-                                          setRideSettingsDraft((prev) => ({ ...prev, petFriendly: e.target.checked }))
-                                        }
-                                      />
-                                    </label>
-                                    <label className="dashboard-ride-setting-toggle-row">
-                                      <span>Aide bagages disponible</span>
-                                      <input
-                                        className="dashboard-ride-setting-switch"
-                                        type="checkbox"
-                                        checked={rideSettingsDraft.luggageAssistance}
-                                        onChange={(e) =>
-                                          setRideSettingsDraft((prev) => ({
-                                            ...prev,
-                                            luggageAssistance: e.target.checked,
-                                          }))
-                                        }
-                                      />
-                                    </label>
-                                    <label className="dashboard-ride-setting-toggle-row">
-                                      <span>Sac isotherme</span>
-                                      <input
-                                        className="dashboard-ride-setting-switch"
-                                        type="checkbox"
-                                        checked={rideSettingsDraft.insulatedBag}
-                                        onChange={(e) =>
-                                          setRideSettingsDraft((prev) => ({
-                                            ...prev,
-                                            insulatedBag: e.target.checked,
-                                          }))
-                                        }
-                                      />
-                                    </label>
-                                  </div>
-                                </article>
+                                <ChauffeurRideSettingsForm
+                                  language={language}
+                                  rideSettingsDraft={rideSettingsDraft}
+                                  setRideSettingsDraft={setRideSettingsDraft}
+                                  computeAppliedPrice={computeAppliedPrice}
+                                />
 
                                 <div className="dashboard-payment-edit-actions">
                                   <button type="submit" className="dashboard-user-save-btn" disabled={!isRideSettingsDirty}>

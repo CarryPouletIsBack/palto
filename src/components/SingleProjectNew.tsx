@@ -393,6 +393,12 @@ const SingleProjectNew: FC<SingleProjectProps> = ({
     const parsed = Number.parseFloat(chauffeurRideSettings.nightSurchargePercent.replace(',', '.'));
     return Number.isFinite(parsed) && parsed > 0 ? parsed / 100 : 0;
   }, [chauffeurRideSettings.nightSurchargePercent]);
+  const effectiveElevationEurPerM = useMemo(() => {
+    const parsed = Number.parseFloat(
+      chauffeurRideSettings.elevationSurchargeEurPer100m.replace(',', '.')
+    );
+    return Number.isFinite(parsed) && parsed > 0 ? parsed / 100 : 0.015;
+  }, [chauffeurRideSettings.elevationSurchargeEurPer100m]);
   const effectiveDriverSearchRadiusKm = useMemo(() => {
     const parsed = Number.parseFloat(chauffeurRideSettings.maxPickupKm.replace(',', '.'));
     return Number.isFinite(parsed) && parsed > 0 ? parsed : PICKUP_DRIVER_SEARCH_RADIUS_KM;
@@ -521,7 +527,7 @@ const SingleProjectNew: FC<SingleProjectProps> = ({
       const deniveleM = paltoRouteDeniveleEstimateM ?? 0;
       const dynamicTtcRaw =
         routeKm !== null
-          ? (effectiveBaseFareEur + routeKm * effectivePricePerKmEur + deniveleM * 0.015) *
+          ? (effectiveBaseFareEur + routeKm * effectivePricePerKmEur + deniveleM * effectiveElevationEurPerM) *
             driverCoef *
             effectiveDriverPricingMultiplier *
             (1 + (isNightRide ? effectiveNightSurchargeRate : 0))
@@ -536,6 +542,7 @@ const SingleProjectNew: FC<SingleProjectProps> = ({
       effectivePricePerKmEur,
       effectiveDriverPricingMultiplier,
       effectiveNightSurchargeRate,
+      effectiveElevationEurPerM,
       isNightRide,
     ]
   );

@@ -2,6 +2,8 @@ export interface ChauffeurRideSettingsSnapshot {
   baseFareEur: string;
   pricePerKmEur: string;
   nightSurchargePercent: string;
+  /** Majoration linéaire pour le dénivelé estimé (EUR pour 100 m de dénivelé). */
+  elevationSurchargeEurPer100m: string;
   pricingMultiplierPercent: number;
   maxPickupKm: string;
   petFriendly: boolean;
@@ -15,6 +17,7 @@ export const DEFAULT_CHAUFFEUR_RIDE_SETTINGS: ChauffeurRideSettingsSnapshot = {
   baseFareEur: '2,20',
   pricePerKmEur: '1,40',
   nightSurchargePercent: '18',
+  elevationSurchargeEurPer100m: '1,50',
   pricingMultiplierPercent: 100,
   maxPickupKm: '15',
   petFriendly: true,
@@ -35,6 +38,10 @@ export function loadChauffeurRideSettingsSnapshot(): ChauffeurRideSettingsSnapsh
         typeof parsed.nightSurchargePercent === 'string'
           ? parsed.nightSurchargePercent
           : DEFAULT_CHAUFFEUR_RIDE_SETTINGS.nightSurchargePercent,
+      elevationSurchargeEurPer100m:
+        typeof parsed.elevationSurchargeEurPer100m === 'string'
+          ? parsed.elevationSurchargeEurPer100m
+          : DEFAULT_CHAUFFEUR_RIDE_SETTINGS.elevationSurchargeEurPer100m,
       pricingMultiplierPercent:
         typeof parsed.pricingMultiplierPercent === 'number'
           ? parsed.pricingMultiplierPercent
