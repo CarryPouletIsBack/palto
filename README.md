@@ -2,7 +2,32 @@
 
 Application web autour de la **mobilité à La Réunion** : carte **OSM** dans la **grille d’accueil** (colonne carte), **recherche / clic carte → destination**, **itinéraire routier**, marqueurs départ / arrivée, **chauffeurs à proximité** (données mock + icônes moto sur la carte), et outils d’**estimation de distance** / barème kilométrique (usage indicatif, voir `src/services/`).
 
-Le dépôt reprend une base **React + Vite + TypeScript** : périmètre produit **Palto** (carte, trajets, réservation Go, comptes, dashboard). Les **domaines et URLs d’exemple** dans la doc (`https://votre-domaine.re`, `nom-du-projet.vercel.app`, etc.) sont des **placeholders** à remplacer par ton déploiement réel.
+Le dépôt reprend une base **React + Vite + TypeScript** : périmètre produit **Palto** (carte, trajets, réservation Go, comptes, dashboard). Déploiement de référence : **[palto-six.vercel.app](https://palto-six.vercel.app)**.
+
+## Vérification (build, prod, BDD, Stripe)
+
+| Contrôle | Commande / URL | Résultat attendu |
+|----------|----------------|------------------|
+| **Qualité + build** | `npm run verify` (lint + typecheck + `vite build`) | Exit 0 ; PWA / Workbox générés dans `dist/` |
+| **Variables Supabase (local)** | `npm run check:supabase` | Les 4 clés `SUPABASE_*` / `VITE_SUPABASE_*` présentes |
+| **Front prod** | `GET https://palto-six.vercel.app/` | `200` |
+| **Géocodage prod** | `GET /api/geocode?mode=search&q=Saint-Denis` | `200` + suggestions JSON |
+| **Auth Realtime** | `GET /api/auth/realtime-token` (sans Bearer) | `401` (route vivante) |
+| **Stripe API** | `POST /api/stripe?action=wallet-balance` (sans Bearer) | `401` (pas `503` = clés Stripe serveur actives sur Vercel) |
+| **Création course** | `POST /api/rides/create` (body vide) | `400` validation Zod (handler actif) |
+
+**Migrations Supabase** (SQL Editor — projet `uzjplpdpbxvzhisxgwfz`) : appliquer si manquantes, dans l’ordre :
+
+| Script | Rôle |
+|--------|------|
+| `scripts/apply-migration-0008.sql` | Colonnes paiement Stripe sur `courses` |
+| `scripts/apply-migration-0009.sql` | Portefeuille client (`client_wallet`, etc.) |
+| `scripts/apply-migration-0010.sql` | Table `chauffeur_profile_data` (sinon `GET …/chauffeur?resource=profile` → 500) |
+| `scripts/apply-migration-0011.sql` | `courses.payment_method` (`card` \| `cash`) |
+
+Guide détaillé : **[docs/SUPABASE-CONNEXION.md](./docs/SUPABASE-CONNEXION.md)**, **[docs/STRIPE-SETUP.md](./docs/STRIPE-SETUP.md)**.
+
+**Dev API locale** : `npm run dev:api` (`vercel dev`) — `npm run dev` seul ne sert pas toutes les routes `/api/*` (proxy limité).
 
 ## Périmètre livré & évolutions (2026)
 
@@ -26,8 +51,10 @@ Le cœur **Palto** (accueil carte, **Go**, comptes, dashboard chauffeur) est **m
 ## Compte passager (`/compte`)
 
 - **UI** : `ClientCompteDashboard.tsx` (aperçu, cours, lieux, portefeuille simulé local, sécurité, réglages) ; entrée **« Gérer mon compte Palto »** (tuiles style Apple) pour nom, téléphone, e-mail affiché, langue, etc.
-- **Persistance** : profil, lieux, portefeuille, sécurité et préférences sont stockés dans **`localStorage` scoping par e-mail** (ex. `palto_client_account_by_email_v1` pour le profil — voir `src/constants/clientAccountStorage.ts`). Les modifications depuis la modale d’édition appellent **`saveClientAccountSnapshot`** et émettent **`palto:client-session-changed`** pour rafraîchir la **topbar** (nom / photo) sans recharger la page.
-- **Courses** : si le flag API client est actif, liste et détail via **`GET /api/client/rides`** (`api/client/rides.ts`) ; annulation **`POST`** pour les statuts **pending** / **accepted**. Un **abonnement Realtime** optionnel sur la table `courses` (`src/services/paltoCoursesRealtime.ts`) complète le polling.
+- **Persistance** : profil, lieux, sécurité et préférences en **`localStorage` par e-mail** (`src/constants/clientAccountStorage.ts`) ; sync profil serveur via **`PUT /api/client/profile`** quand l’API client est active.
+- **Portefeuille — Derniers mouvements** : la liste affichée sur `/compte` (bento + page portefeuille) est dérivée des **courses API** (`clientRides` / `ridesForUi`), pas d’un tableau mock vide.
+- **Courses** : si `VITE_USE_CLIENT_RIDES_API` est actif (défaut : oui), liste via **`GET /api/client/rides`** ; annulation **`POST`** (`pending` / `accepted`) avec logique Stripe si carte ; chauffeurs proches **`GET ?mode=nearby`**. Realtime optionnel : `src/services/paltoCoursesRealtime.ts`.
+- **Paiement carte / portefeuille Stripe** : si `VITE_STRIPE_PUBLISHABLE_KEY` est défini — cartes enregistrées, solde, recharge via **`POST /api/stripe?action=…`** (Bearer client ou chauffeur avec compte passager lié).
 - **Rencontre chauffeur** : page dédiée + lien depuis la topbar quand une course est **in_progress** ; positions **broadcast** si `VITE_SUPABASE_*` + token Realtime (`/api/auth/realtime-token`) sont configurés — voir `src/services/paltoRideLocationRealtime.ts`.
 
 ## Fonctionnalités (Palto / carte)
@@ -59,12 +86,29 @@ La cover du projet **Go** et le panneau de réservation échangent des événeme
 
 **Correctif** (mai 2026) : ne mettre à jour le state que si les coordonnées **changent réellement** (tolérance float + `setState` fonctionnel qui conserve la référence précédente quand c’est identique) ; effets et dépendances basés sur **`longitude` / `latitude`** plutôt que sur l’objet point entier. Fichiers concernés : **`src/components/SingleProjectNew.tsx`**, **`src/components/ProjectCoverCarousel.tsx`**. La navigation chauffeur annule aussi les requêtes OSRM en cours via le même **`AbortSignal`** (`osrmRouting` + `DriverNavigationView.tsx`).
 
-> **Statut actuel (avril 2026)** : la page **Go** est mise en pause côté évolutions.  
-> Le flux actuel (recherche, sélection chauffeur, recap, checkout simulé) est conservé tel quel ; intégration paiement réel (ex. Stripe Connect) prévue plus tard.
+> **Paiement Go (2026)** : avec `VITE_STRIPE_PUBLISHABLE_KEY` + `STRIPE_SECRET_KEY`, création de course **`POST /api/rides/create`** (PaymentIntent si `payment_method=card`) puis confirmation **`POST /api/stripe?action=confirm-authorized`**. Espèces : `payment_method=cash` sans Stripe. Voir **[docs/STRIPE-SETUP.md](./docs/STRIPE-SETUP.md)**.
+
+## API serverless (`/api/*`)
+
+**9 fonctions** Vercel (limite Hobby : 12) — ne pas ajouter de fichier sous `api/` sans fusionner une route existante.
+
+| Fichier | Méthodes | Paramètres / corps | Rôle |
+|---------|----------|-------------------|------|
+| `api/auth/index.ts` | `POST`, `GET` | `?role=client\|chauffeur&action=login\|register` ; `?action=realtime-token` | Auth Palto + JWT Realtime |
+| `api/client/rides.ts` | `GET`, `POST` | `GET` : `email`, `status`, `limit` ou `mode=nearby` ; `POST` : `{ courseId }` annulation | Courses client + chauffeurs à proximité |
+| `api/client/profile.ts` | `GET`, `PUT` | Bearer client | Profil client Supabase |
+| `api/chauffeur/index.ts` | `GET`, `PUT`, `POST` | `?resource=` : `rides`, `rides-action`, `profile`, `ride-profile`, `presence`, `stats`, `organization`, `compliance`, `cron-expire-instant` | Dashboard chauffeur |
+| `api/rides/create.ts` | `POST` | Corps réservation (instant / scheduled, adresses, montant, email, `payment_method`) | Création course + Stripe si carte |
+| `api/stripe/index.ts` | `POST` | `?action=` : `webhook`, `confirm-authorized`, `setup-intent`, `list-payment-methods`, `detach-payment-method`, `update-payment-method-billing`, `wallet-balance`, `wallet-topup-create`, `wallet-topup-confirm` | Paiements, portefeuille, webhook |
+| `api/geocode.ts` | `GET` | `mode=search&q=…` ou `mode=reverse&lon&lat` | BAN + Nominatim + Photon |
+| `api/google-auth/[action].ts` | `GET`, `POST` | `?action=callback\|token\|refresh` | OAuth Google |
+| `api/send.ts` | `POST` | Formulaire contact (Resend) | Email contact |
+
+**Rewrites** (`vercel.json`) : chemins courts auth (`/api/auth/client/login`, `/api/auth/realtime-token`, …) et cron **`/api/cron/expire-instant-pending`** → `chauffeur?resource=cron-expire-instant` (planifié **02:00 UTC**).
 
 ## Stack technique
 
-- **React 19**, **TypeScript**, **Vite**
+- **React 18.3**, **TypeScript**, **Vite**
 - **OSM** (carte, marqueurs, tracés)
 - **Framer Motion**, **GSAP**, **MUI**, **Radix**, **Tailwind** (selon pages)
 - **Navigation SPA** (`history.pushState` / `popstate`, sans React Router pour le cœur)
@@ -92,16 +136,25 @@ Créer un fichier **`.env.local`** à la racine (non versionné). Exemple minima
 # Dashboard / GA : voir .env.example et les guides VERCEL_*.md
 ```
 
-Copier **`.env.example`** vers **`.env.local`** ; **dashboard** : `VITE_DASHBOARD_EMAIL` / `VITE_DASHBOARD_PASSWORD` (local) et sur Vercel `DASHBOARD_EMAIL` / `DASHBOARD_PASSWORD` ; réseaux sociaux footer : `VITE_SOCIAL_*` (optionnel). Voir aussi Google OAuth dans les guides listés plus bas.
+Copier **`.env.example`** vers **`.env.local`**. Indispensables pour le parcours complet :
+
+- **Supabase** : `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY`, `SUPABASE_JWT_SECRET` (Realtime)
+- **Stripe (Go + portefeuille)** : `STRIPE_SECRET_KEY`, `VITE_STRIPE_PUBLISHABLE_KEY` ; `STRIPE_WEBHOOK_SECRET` optionnel
+- **Dashboard chauffeur** : `VITE_DASHBOARD_*` (local) / `DASHBOARD_*` (Vercel)
+
+Flags front (défauts dans `src/constants/featureFlags.ts`) : `VITE_USE_CLIENT_RIDES_API`, `VITE_CHAUFFEUR_RIDES_PERSIST`, `VITE_CHAUFFEUR_PRESENCE_API`, `VITE_USE_ORG_API`, `VITE_USE_COMPLIANCE_API`, `VITE_USE_STATS_API`, `VITE_USE_PRICING_API`.
 
 ## Scripts npm
 
 | Commande        | Description                                      |
 |-----------------|--------------------------------------------------|
 | `npm run dev`   | Serveur Vite (frontend seul ; `/api/*` limité)  |
-| `npm run build` | Build production dans `dist/` (+ **PWA** / Workbox en fin de pipeline) |
-| `npm run lint` / `npm run typecheck` | Qualité (le typecheck complet peut signaler une dépréciation `baseUrl` TS selon la version locale) |
-| `npm run calc-frais` | Exemple CLI distance + barème (`tsx`, voir `scripts/calc-frais-transport.ts`) |
+| `npm run dev:api` | `vercel dev` — API + front comme en prod |
+| `npm run verify` | `lint` + `typecheck` + `build` (CI locale) |
+| `npm run check:supabase` | Vérifie les variables Supabase dans `.env.local` |
+| `npm run build` | Build production dans `dist/` (+ **PWA** / Workbox) |
+| `npm run lint` / `npm run typecheck` | Qualité |
+| `npm run calc-frais` | Exemple CLI distance + barème (`tsx`) |
 
 Après un build : `npx vite preview` sert le contenu de `dist/` en local (script npm non défini dans `package.json`, commande Vite standard).
 
@@ -147,6 +200,8 @@ Les fichiers ci-dessous décrivent des intégrations (SEO, OAuth, email, etc.) a
 | Fichier | Sujet |
 |---------|--------|
 | [DEPLOY.md](./DEPLOY.md) | Déploiement Vercel / GitHub Pages |
+| [docs/SUPABASE-CONNEXION.md](./docs/SUPABASE-CONNEXION.md) | Projet Supabase, clés, Realtime |
+| [docs/STRIPE-SETUP.md](./docs/STRIPE-SETUP.md) | Clés test/live, migrations 0008–0011, webhook |
 | [SEO_INDEXATION.md](./SEO_INDEXATION.md) | SEO, `VITE_SITE_URL` |
 | [VERCEL_GOOGLE_OAUTH_SETUP.md](./VERCEL_GOOGLE_OAUTH_SETUP.md) | OAuth Google |
 | [GOOGLE_CLOUD_CONSOLE_CONFIG.md](./GOOGLE_CLOUD_CONSOLE_CONFIG.md) | URIs de redirection |
@@ -166,16 +221,13 @@ Référence arbres **user flow** : implémentation surtout sur la page **Go** (`
 
 ---
 
-### Dernière mise à jour README — **9 mai 2026**
+### Dernière mise à jour README — **19 mai 2026**
 
-- **Backstage** : section dédiée + **`catalog-info.yaml`** corrigé (`/go#design-system`, tags, liens GitHub) ; sans impact déploiement Vercel.
-- **Compte passager** : édition **Nom / Prénom / Téléphone** (et tuiles associées) **persistée** via `saveClientAccountSnapshot` + événement `palto:client-session-changed` pour la topbar.
-- **Courses & temps réel** : API **`/api/client/rides`** ; suivi **`ride_geo:{courseId}`** (broadcast) ; récap client après clôture chauffeur quand les champs API le permettent.
-- **Nettoyage local** : migration ponctuelle des brouillons navigateur via `purgeStaleLocalSnapshotsOnce` (`src/services/purgeStaleLocalSnapshots.ts`).
-- **Géocodage / suggestions** : `/api/geocode` — **BAN** + **Nominatim** (page **Go** et champs adresse).
-- **Session** : unifiée client/chauffeur ; annulation client en `pending` / `accepted`.
-- **Dashboard chauffeur** : profil local par e-mail + stats `recharts` ; navigation course avec envoi position optionnel.
-- **Stabilité Go / réseau** : plus de boucle infinie **cover ↔ panneau** (égalité des coordonnées + deps sur lat/lng) — voir sous-section *Synchro carte cover ↔ panneau Go* ; **OSRM** avec debounce + annulation (`osrmRouting.ts`, `SingleProjectNew`, `DriverNavigationView`) pour limiter `ERR_INSUFFICIENT_RESOURCES`.
-- **Nommage carte** : composant carte **`HomeOsmMapBackground`** (tuiles OSM uniquement) ; services **`addressGeocoding.ts`** et **`osrmRouting.ts`** (plus de dépendance `mapbox-gl`).
+- **Audit déploiement** : section [Vérification](#vérification-build-prod-bdd-stripe) ; prod **palto-six.vercel.app** (`200`, géocode `200`, Stripe `401` pas `503`).
+- **Routes API** : tableau des **9** fonctions serverless + rewrites / cron Vercel.
+- **Supabase** : checklist migrations **0008–0011** ; `npm run check:supabase`.
+- **Stripe** : parcours Go documenté ; lien **docs/STRIPE-SETUP.md** ; actions `/api/stripe`.
+- **Compte client** : mouvements portefeuille depuis les **courses API** (plus de liste mock vide).
+- **Stack** : React **18.3** (aligné `package.json`).
 
-*Palto — **OSM** + **`/api/geocode`** ; **Go** `/go` ; **compte** `/compte` ; **dashboard** `/dashboard` ; mock chauffeurs accueil ; API + Supabase selon configuration.*
+*Palto — prod [palto-six.vercel.app](https://palto-six.vercel.app) · **OSM** + **`/api/geocode`** · **Go** `/go` · **compte** `/compte` · **dashboard** `/dashboard` · API + Supabase + Stripe selon `.env` / Vercel.*
