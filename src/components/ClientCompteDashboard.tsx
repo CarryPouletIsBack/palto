@@ -363,6 +363,10 @@ export default function ClientCompteDashboard({ onBack, onOpenClientLiveMeet }: 
   const [paymentEditSaving, setPaymentEditSaving] = useState(false);
   const stripeOn = clientStripeApiEnabled();
   const stripePk = stripePublishableKey();
+  const [placesDraft, setPlacesDraft] = useState<ClientSavedPlacesSnapshot>(() =>
+    loadClientSavedPlaces(getCurrentClientUser()?.email)
+  );
+  const [mapPickTarget, setMapPickTarget] = useState<ClientPlaceMapTarget | null>(null);
   const clientCompteModalOpen =
     accountEditModal.open ||
     paymentModalOpen ||
@@ -370,10 +374,6 @@ export default function ClientCompteDashboard({ onBack, onOpenClientLiveMeet }: 
     paymentEditPm !== null ||
     mapPickTarget !== null;
   useBodyScrollLock(clientCompteModalOpen);
-  const [placesDraft, setPlacesDraft] = useState<ClientSavedPlacesSnapshot>(() =>
-    loadClientSavedPlaces(getCurrentClientUser()?.email)
-  );
-  const [mapPickTarget, setMapPickTarget] = useState<ClientPlaceMapTarget | null>(null);
   const [security, setSecurity] = useState<ClientSecuritySnapshot>(() =>
     loadClientSecuritySnapshot(getCurrentClientUser()?.email)
   );
