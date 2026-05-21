@@ -97,7 +97,19 @@ import {
   type ClientSavedPaymentMethod,
 } from '../constants/clientPaymentMethodsStorage';
 import { DEFAULT_HERO_DEPARTMENT_ID } from '../data/heroDepartments';
-import { stripeCheckoutEnabled } from '../constants/featureFlags';
+import { stripeCheckoutEnabled, stripePublishableKey } from '../constants/featureFlags';
+import PaltoStripeSetupForm from './PaltoStripeSetupForm';
+import PaltoStripePaymentForm from './PaltoStripePaymentForm';
+import PaltoStripeTestCardHint from './PaltoStripeTestCardHint';
+import {
+  clientStripeApiEnabled,
+  confirmClientWalletTopUp,
+  createClientSetupIntent,
+  createClientWalletTopUp,
+  fetchClientStripePaymentMethods,
+  fetchClientWalletBalanceCents,
+  type ClientStripePaymentMethod,
+} from '../services/clientStripeApi';
 import {
   getCurrentClientUser,
   isClientAuthenticated,
@@ -192,6 +204,14 @@ const WALLET_SAMPLE_MOVEMENTS: Array<{
   amountCents: number;
   labelKey: 'clientAccount.walletMov1' | 'clientAccount.walletMov2' | 'clientAccount.walletMov3';
 }> = [];
+
+function formatStripeCardBrand(brand: string): string {
+  const b = brand.toLowerCase();
+  if (b === 'visa') return 'Visa';
+  if (b === 'mastercard') return 'Mastercard';
+  if (b === 'amex') return 'American Express';
+  return brand.charAt(0).toUpperCase() + brand.slice(1);
+}
 
 function paymentLabel(t: (k: string) => string, p: ClientPreferredPayment): string {
   if (p === 'card') return t('clientAccount.prefCard');
@@ -304,6 +324,15 @@ export default function ClientCompteDashboard({ onBack, onOpenClientLiveMeet }: 
   const [savedPaymentMethods, setSavedPaymentMethods] = useState<ClientSavedPaymentMethod[]>(() =>
     loadClientPaymentMethods(getCurrentClientUser()?.email)
   );
+  const [stripePaymentMethods, setStripePaymentMethods] = useState<ClientStripePaymentMethod[]>([]);
+  const [setupClientSecret, setSetupClientSecret] = useState<string | null>(null);
+  const [paymentModalLoading, setPaymentModalLoading] = useState(false);
+  const [walletTopupAmountEur, setWalletTopupAmountEur] = useState(10);
+  const [walletTopupClientSecret, setWalletTopupClientSecret] = useState<string | null>(null);
+  const [walletTopupPaymentIntentId, setWalletTopupPaymentIntentId] = useState<string | null>(null);
+  const [walletTopupLoading, setWalletTopupLoading] = useState(false);
+  const stripeOn = clientStripeApiEnabled();
+  const stripePk = stripePublishableKey();
   const [placesDraft, setPlacesDraft] = useState<ClientSavedPlacesSnapshot>(() =>
     loadClientSavedPlaces(getCurrentClientUser()?.email)
   );
@@ -412,6 +441,10 @@ export default function ClientCompteDashboard({ onBack, onOpenClientLiveMeet }: 
     if (fromSession) return fromSession;
     return profile.email.trim().toLowerCase();
   }, [profile.email, ridesSyncTick, authSessionTick]);
+  const clientFullName = useMemo(
+    () => `${profile.prenom} ${profile.nom}`.trim(),
+    [profile.prenom, profile.nom]
+  );
   const [isEditing, setIsEditing] = useState(false);
   const [draft, setDraft] = useState<ClientAccountSnapshot>(profile);
   const [phoneCountryDraft, setPhoneCountryDraft] = useState<SupportedPhoneCountry>('RE');
@@ -643,6 +676,39 @@ export default function ClientCompteDashboard({ onBack, onOpenClientLiveMeet }: 
     setWallet(next);
     trackEvent('click', 'client_account', 'wallet_simulate_topup');
   }, [activeClientEmail]);
+
+  const refreshStripeWalletBalance = useCallback(async () => {
+    if (!stripeOn || !isClientAuthenticated()) return;
+    try {
+      const balanceCents = await fetchClientWalletBalanceCents();
+      const next = { balanceCents };
+      setWallet(next);
+      if (activeClientEmail) saveClientWalletSnapshot(next, activeClientEmail);
+    } catch (e) {
+      console.warn('[client/stripe] wallet balance', e);
+    }
+  }, [activeClientEmail, stripeOn]);
+
+  const refreshStripePaymentMethods = useCallback(async () => {
+    if (!stripeOn || !isClientAuthenticated()) return;
+    try {
+      const items = await fetchClientStripePaymentMethods(clientFullName || undefined);
+      setStripePaymentMethods(items);
+    } catch (e) {
+      console.warn('[client/stripe] payment methods', e);
+    }
+  }, [clientFullName, stripeOn]);
+
+  useEffect(() => {
+    if (!stripeOn || !isClientAuthenticated()) return;
+    void refreshStripeWalletBalance();
+    void refreshStripePaymentMethods();
+  }, [stripeOn, authSessionTick, refreshStripePaymentMethods, refreshStripeWalletBalance]);
+
+  useEffect(() => {
+    if (!stripeOn || activeNav !== 'wallet') return;
+    void refreshStripeWalletBalance();
+  }, [activeNav, refreshStripeWalletBalance, stripeOn]);
 
   const setAppTheme = useCallback((theme: AppTheme) => {
     const email = activeClientEmail || undefined;
@@ -936,12 +1002,75 @@ export default function ClientCompteDashboard({ onBack, onOpenClientLiveMeet }: 
 
   const openPaymentModal = useCallback(() => {
     setPaymentErrors({});
+    setSetupClientSecret(null);
     setPaymentModalOpen(true);
-  }, []);
+    if (!stripeOn) return;
+    setPaymentModalLoading(true);
+    void createClientSetupIntent(clientFullName || undefined)
+      .then((secret) => setSetupClientSecret(secret))
+      .catch((e) => {
+        toast.error(e instanceof Error ? e.message : isEn ? 'Stripe unavailable' : 'Stripe indisponible');
+      })
+      .finally(() => setPaymentModalLoading(false));
+  }, [clientFullName, isEn, stripeOn]);
 
   const closePaymentModal = useCallback(() => {
     setPaymentModalOpen(false);
     setPaymentErrors({});
+    setSetupClientSecret(null);
+    setPaymentModalLoading(false);
+  }, []);
+
+  const handleSetupCardSuccess = useCallback(() => {
+    void refreshStripePaymentMethods();
+    setProfile((p) => ({ ...p, preferredPayment: 'card' }));
+    setDraft((p) => ({ ...p, preferredPayment: 'card' }));
+    setPaymentModalOpen(false);
+    setSetupClientSecret(null);
+    toast.success(
+      isEn
+        ? 'Card saved with Stripe. You can use it for rides and wallet top-ups.'
+        : 'Carte enregistree avec Stripe. Utilisable pour les courses et les recharges portefeuille.'
+    );
+  }, [isEn, refreshStripePaymentMethods]);
+
+  const startWalletTopUp = useCallback(() => {
+    if (!stripeOn || !stripePk) return;
+    setWalletTopupLoading(true);
+    setWalletTopupClientSecret(null);
+    setWalletTopupPaymentIntentId(null);
+    void createClientWalletTopUp(walletTopupAmountEur, clientFullName || undefined)
+      .then(({ clientSecret, paymentIntentId }) => {
+        setWalletTopupClientSecret(clientSecret);
+        setWalletTopupPaymentIntentId(paymentIntentId);
+      })
+      .catch((e) => {
+        toast.error(e instanceof Error ? e.message : isEn ? 'Top-up failed' : 'Recharge impossible');
+      })
+      .finally(() => setWalletTopupLoading(false));
+  }, [clientFullName, isEn, stripeOn, stripePk, walletTopupAmountEur]);
+
+  const handleWalletTopUpSuccess = useCallback(() => {
+    const piId = walletTopupPaymentIntentId;
+    if (!piId) return;
+    void confirmClientWalletTopUp(piId)
+      .then((balanceCents) => {
+        const next = { balanceCents };
+        setWallet(next);
+        if (activeClientEmail) saveClientWalletSnapshot(next, activeClientEmail);
+        setWalletTopupClientSecret(null);
+        setWalletTopupPaymentIntentId(null);
+        toast.success(isEn ? 'Wallet topped up.' : 'Portefeuille recharge.');
+        trackEvent('click', 'client_account', 'wallet_stripe_topup');
+      })
+      .catch((e) => {
+        toast.error(e instanceof Error ? e.message : isEn ? 'Confirmation failed' : 'Confirmation impossible');
+      });
+  }, [activeClientEmail, isEn, walletTopupPaymentIntentId]);
+
+  const cancelWalletTopUp = useCallback(() => {
+    setWalletTopupClientSecret(null);
+    setWalletTopupPaymentIntentId(null);
   }, []);
 
   const submitPaymentMethod = useCallback(() => {
@@ -1861,17 +1990,48 @@ export default function ClientCompteDashboard({ onBack, onOpenClientLiveMeet }: 
                   {accountManageSection === 'payment' ? (
                     <section className="client-compte-payment-layout">
                       <p className="client-compte-payment-stripe-notice" role="status">
-                        {stripeCheckoutEnabled()
+                        {stripeOn
                           ? isEn
-                            ? 'Ride payment uses Stripe on the Go page (test card 4242…). Cards saved here are stored locally only until Stripe Customer is connected — they are not charged from this screen.'
-                            : 'Le paiement des courses passe par Stripe sur la page Go (carte test 4242…). Les cartes ajoutees ici sont enregistrees localement (apercu) — pas encore debitees depuis cet ecran.'
-                          : isEn
-                            ? 'Online card payment is not configured yet. Rides can be paid directly to the driver.'
-                            : 'Le paiement carte en ligne n est pas encore configure. Reglement prevu avec le chauffeur.'}
+                            ? 'Save a card with Stripe (test mode: 4242 4242 4242 4242). It is stored on your Stripe customer profile for rides on Go and wallet top-ups.'
+                            : 'Enregistrez une carte avec Stripe (mode test : 4242 4242 4242 4242). Elle est liee a votre compte pour les courses sur Go et les recharges portefeuille.'
+                          : stripeCheckoutEnabled()
+                            ? isEn
+                              ? 'Sign in to save a card with Stripe.'
+                              : 'Connectez-vous pour enregistrer une carte Stripe.'
+                            : isEn
+                              ? 'Online card payment is not configured yet. Rides can be paid directly to the driver.'
+                              : 'Le paiement carte en ligne n est pas encore configure. Reglement prevu avec le chauffeur.'}
                       </p>
 
+                      {stripeOn ? <PaltoStripeTestCardHint className="client-compte-payment-test-hint" /> : null}
+
                       <div className="client-compte-payment-row">
-                        {savedPaymentMethods.length > 0 ? (
+                        {stripeOn ? (
+                          stripePaymentMethods.length > 0 ? (
+                            stripePaymentMethods.map((pm) => (
+                              <article key={pm.id} className="dashboard-user-card client-compte-payment-card">
+                                <div className="client-compte-payment-card-head">
+                                  <strong>{formatStripeCardBrand(pm.brand)}</strong>
+                                  <span>•••• {pm.last4}</span>
+                                </div>
+                                <p className="dashboard-field-hint" style={{ margin: '6px 0 0' }}>
+                                  {String(pm.expMonth).padStart(2, '0')}/{String(pm.expYear).slice(-2)}
+                                </p>
+                                <div className="client-compte-payment-card-brand" aria-hidden>
+                                  {formatStripeCardBrand(pm.brand).toUpperCase().slice(0, 4)}
+                                </div>
+                              </article>
+                            ))
+                          ) : (
+                            <article className="dashboard-user-card client-compte-payment-card client-compte-payment-address-card--empty">
+                              <p className="dashboard-field-hint" style={{ margin: 0 }}>
+                                {isEn
+                                  ? 'No card on file yet. Add one below with Stripe Elements.'
+                                  : 'Aucune carte enregistree. Ajoutez-en une ci-dessous via Stripe.'}
+                              </p>
+                            </article>
+                          )
+                        ) : savedPaymentMethods.length > 0 ? (
                           savedPaymentMethods.map((pm) => (
                             <article key={pm.id} className="dashboard-user-card client-compte-payment-card">
                               <div className="client-compte-payment-card-head">
@@ -1890,19 +2050,24 @@ export default function ClientCompteDashboard({ onBack, onOpenClientLiveMeet }: 
                           <article className="dashboard-user-card client-compte-payment-card client-compte-payment-address-card--empty">
                             <p className="dashboard-field-hint" style={{ margin: 0 }}>
                               {isEn
-                                ? 'No card saved yet. Add one below (local preview) or pay on Go with Stripe.'
-                                : 'Aucune carte enregistree. Ajoutez-en une ci-dessous (apercu local) ou payez sur Go avec Stripe.'}
+                                ? 'No card saved yet. Configure Stripe to save cards securely.'
+                                : 'Aucune carte enregistree. Configurez Stripe pour enregistrer une carte.'}
                             </p>
                           </article>
                         )}
                         <div className="client-compte-payment-actions">
-                          <button type="button" className="client-compte-payment-link" onClick={openPaymentModal}>
+                          <button
+                            type="button"
+                            className="client-compte-payment-link"
+                            onClick={openPaymentModal}
+                            disabled={stripeOn && !isClientAuthenticated()}
+                          >
                             {isEn ? 'Add payment method' : 'Ajouter un mode de paiement'}
                           </button>
                         </div>
                       </div>
 
-                      {savedPaymentMethods[0] ? (
+                      {!stripeOn && savedPaymentMethods[0] ? (
                         <>
                           <h4 className="client-compte-payment-delivery-title">
                             {isEn ? 'Billing address' : 'Adresse de facturation'}
@@ -2309,65 +2474,93 @@ export default function ClientCompteDashboard({ onBack, onOpenClientLiveMeet }: 
                   <div className="client-compte-account-edit-modal-head">
                     <h4>{isEn ? 'Add payment method' : 'Ajouter un mode de paiement'}</h4>
                   </div>
-                  <div className="client-compte-account-edit-modal-grid">
-                    <label className="client-compte-account-edit-modal-row">
-                      <span>{isEn ? 'Card number' : 'Numero de carte'}</span>
-                      <input className={`client-compte-account-edit-modal-input${paymentErrors.cardNumber ? ' is-invalid' : ''}`} value={paymentForm.cardNumber} onChange={(e) => setPaymentForm((p) => ({ ...p, cardNumber: e.target.value }))} />
-                      {paymentErrors.cardNumber ? <small className="client-compte-account-edit-modal-error">{paymentErrors.cardNumber}</small> : null}
-                    </label>
-                    <label className="client-compte-account-edit-modal-row">
-                      <span>{isEn ? 'Cardholder name' : 'Nom du titulaire'}</span>
-                      <input className={`client-compte-account-edit-modal-input${paymentErrors.cardholderName ? ' is-invalid' : ''}`} value={paymentForm.cardholderName} onChange={(e) => setPaymentForm((p) => ({ ...p, cardholderName: e.target.value }))} />
-                      {paymentErrors.cardholderName ? <small className="client-compte-account-edit-modal-error">{paymentErrors.cardholderName}</small> : null}
-                    </label>
-                    <div className="client-compte-payment-modal-row-3">
-                      <label className="client-compte-account-edit-modal-row">
-                        <span>MM</span>
-                        <input className={`client-compte-account-edit-modal-input${paymentErrors.expiryMonth ? ' is-invalid' : ''}`} value={paymentForm.expiryMonth} onChange={(e) => setPaymentForm((p) => ({ ...p, expiryMonth: e.target.value }))} />
-                      </label>
-                      <label className="client-compte-account-edit-modal-row">
-                        <span>{isEn ? 'YY' : 'AA'}</span>
-                        <input className={`client-compte-account-edit-modal-input${paymentErrors.expiryYear ? ' is-invalid' : ''}`} value={paymentForm.expiryYear} onChange={(e) => setPaymentForm((p) => ({ ...p, expiryYear: e.target.value }))} />
-                      </label>
-                      <label className="client-compte-account-edit-modal-row">
-                        <span>CVC</span>
-                        <input className={`client-compte-account-edit-modal-input${paymentErrors.cvc ? ' is-invalid' : ''}`} value={paymentForm.cvc} onChange={(e) => setPaymentForm((p) => ({ ...p, cvc: e.target.value }))} />
-                      </label>
+                  {stripeOn && stripePk ? (
+                    <>
+                      <PaltoStripeTestCardHint className="client-compte-payment-test-hint" />
+                      {paymentModalLoading || !setupClientSecret ? (
+                        <p className="dashboard-field-hint" style={{ margin: '12px 0' }}>
+                          {isEn ? 'Loading secure form…' : 'Chargement du formulaire securise…'}
+                        </p>
+                      ) : (
+                        <PaltoStripeSetupForm
+                          publishableKey={stripePk}
+                          clientSecret={setupClientSecret}
+                          onSuccess={handleSetupCardSuccess}
+                          onError={(msg) => toast.error(msg)}
+                          submitLabel={isEn ? 'Save card' : 'Enregistrer la carte'}
+                        />
+                      )}
+                    </>
+                  ) : (
+                    <>
+                      <div className="client-compte-account-edit-modal-grid">
+                        <label className="client-compte-account-edit-modal-row">
+                          <span>{isEn ? 'Card number' : 'Numero de carte'}</span>
+                          <input className={`client-compte-account-edit-modal-input${paymentErrors.cardNumber ? ' is-invalid' : ''}`} value={paymentForm.cardNumber} onChange={(e) => setPaymentForm((p) => ({ ...p, cardNumber: e.target.value }))} />
+                          {paymentErrors.cardNumber ? <small className="client-compte-account-edit-modal-error">{paymentErrors.cardNumber}</small> : null}
+                        </label>
+                        <label className="client-compte-account-edit-modal-row">
+                          <span>{isEn ? 'Cardholder name' : 'Nom du titulaire'}</span>
+                          <input className={`client-compte-account-edit-modal-input${paymentErrors.cardholderName ? ' is-invalid' : ''}`} value={paymentForm.cardholderName} onChange={(e) => setPaymentForm((p) => ({ ...p, cardholderName: e.target.value }))} />
+                          {paymentErrors.cardholderName ? <small className="client-compte-account-edit-modal-error">{paymentErrors.cardholderName}</small> : null}
+                        </label>
+                        <div className="client-compte-payment-modal-row-3">
+                          <label className="client-compte-account-edit-modal-row">
+                            <span>MM</span>
+                            <input className={`client-compte-account-edit-modal-input${paymentErrors.expiryMonth ? ' is-invalid' : ''}`} value={paymentForm.expiryMonth} onChange={(e) => setPaymentForm((p) => ({ ...p, expiryMonth: e.target.value }))} />
+                          </label>
+                          <label className="client-compte-account-edit-modal-row">
+                            <span>{isEn ? 'YY' : 'AA'}</span>
+                            <input className={`client-compte-account-edit-modal-input${paymentErrors.expiryYear ? ' is-invalid' : ''}`} value={paymentForm.expiryYear} onChange={(e) => setPaymentForm((p) => ({ ...p, expiryYear: e.target.value }))} />
+                          </label>
+                          <label className="client-compte-account-edit-modal-row">
+                            <span>CVC</span>
+                            <input className={`client-compte-account-edit-modal-input${paymentErrors.cvc ? ' is-invalid' : ''}`} value={paymentForm.cvc} onChange={(e) => setPaymentForm((p) => ({ ...p, cvc: e.target.value }))} />
+                          </label>
+                        </div>
+                        <label className="client-compte-account-edit-modal-row">
+                          <span>{isEn ? 'Country' : 'Pays'}</span>
+                          <select className="client-compte-account-edit-modal-input" value={paymentForm.country} onChange={(e) => setPaymentForm((p) => ({ ...p, country: e.target.value }))}>
+                            <option value="FR">France</option>
+                            <option value="RE">La Reunion</option>
+                            <option value="MU">Maurice</option>
+                          </select>
+                        </label>
+                        <label className="client-compte-account-edit-modal-row">
+                          <span>{isEn ? 'Address' : 'Adresse'}</span>
+                          <input className={`client-compte-account-edit-modal-input${paymentErrors.addressLine1 ? ' is-invalid' : ''}`} value={paymentForm.addressLine1} onChange={(e) => setPaymentForm((p) => ({ ...p, addressLine1: e.target.value }))} />
+                          {paymentErrors.addressLine1 ? <small className="client-compte-account-edit-modal-error">{paymentErrors.addressLine1}</small> : null}
+                        </label>
+                        <div className="client-compte-payment-modal-row-2">
+                          <label className="client-compte-account-edit-modal-row">
+                            <span>{isEn ? 'City' : 'Ville'}</span>
+                            <input className={`client-compte-account-edit-modal-input${paymentErrors.city ? ' is-invalid' : ''}`} value={paymentForm.city} onChange={(e) => setPaymentForm((p) => ({ ...p, city: e.target.value }))} />
+                            {paymentErrors.city ? <small className="client-compte-account-edit-modal-error">{paymentErrors.city}</small> : null}
+                          </label>
+                          <label className="client-compte-account-edit-modal-row">
+                            <span>{isEn ? 'Postal code' : 'Code postal'}</span>
+                            <input className={`client-compte-account-edit-modal-input${paymentErrors.postalCode ? ' is-invalid' : ''}`} value={paymentForm.postalCode} onChange={(e) => setPaymentForm((p) => ({ ...p, postalCode: e.target.value }))} />
+                            {paymentErrors.postalCode ? <small className="client-compte-account-edit-modal-error">{paymentErrors.postalCode}</small> : null}
+                          </label>
+                        </div>
+                      </div>
+                      <div className="client-compte-account-edit-modal-actions">
+                        <button type="button" className="dashboard-user-edit-btn dashboard-user-edit-btn--secondary" onClick={closePaymentModal}>
+                          {isEn ? 'Cancel' : 'Annuler'}
+                        </button>
+                        <button type="button" className="dashboard-user-edit-btn" onClick={submitPaymentMethod}>
+                          {isEn ? 'Save card' : 'Enregistrer la carte'}
+                        </button>
+                      </div>
+                    </>
+                  )}
+                  {stripeOn ? (
+                    <div className="client-compte-account-edit-modal-actions">
+                      <button type="button" className="dashboard-user-edit-btn dashboard-user-edit-btn--secondary" onClick={closePaymentModal}>
+                        {isEn ? 'Cancel' : 'Annuler'}
+                      </button>
                     </div>
-                    <label className="client-compte-account-edit-modal-row">
-                      <span>{isEn ? 'Country' : 'Pays'}</span>
-                      <select className="client-compte-account-edit-modal-input" value={paymentForm.country} onChange={(e) => setPaymentForm((p) => ({ ...p, country: e.target.value }))}>
-                        <option value="FR">France</option>
-                        <option value="RE">La Reunion</option>
-                        <option value="MU">Maurice</option>
-                      </select>
-                    </label>
-                    <label className="client-compte-account-edit-modal-row">
-                      <span>{isEn ? 'Address' : 'Adresse'}</span>
-                      <input className={`client-compte-account-edit-modal-input${paymentErrors.addressLine1 ? ' is-invalid' : ''}`} value={paymentForm.addressLine1} onChange={(e) => setPaymentForm((p) => ({ ...p, addressLine1: e.target.value }))} />
-                      {paymentErrors.addressLine1 ? <small className="client-compte-account-edit-modal-error">{paymentErrors.addressLine1}</small> : null}
-                    </label>
-                    <div className="client-compte-payment-modal-row-2">
-                      <label className="client-compte-account-edit-modal-row">
-                        <span>{isEn ? 'City' : 'Ville'}</span>
-                        <input className={`client-compte-account-edit-modal-input${paymentErrors.city ? ' is-invalid' : ''}`} value={paymentForm.city} onChange={(e) => setPaymentForm((p) => ({ ...p, city: e.target.value }))} />
-                        {paymentErrors.city ? <small className="client-compte-account-edit-modal-error">{paymentErrors.city}</small> : null}
-                      </label>
-                      <label className="client-compte-account-edit-modal-row">
-                        <span>{isEn ? 'Postal code' : 'Code postal'}</span>
-                        <input className={`client-compte-account-edit-modal-input${paymentErrors.postalCode ? ' is-invalid' : ''}`} value={paymentForm.postalCode} onChange={(e) => setPaymentForm((p) => ({ ...p, postalCode: e.target.value }))} />
-                        {paymentErrors.postalCode ? <small className="client-compte-account-edit-modal-error">{paymentErrors.postalCode}</small> : null}
-                      </label>
-                    </div>
-                  </div>
-                  <div className="client-compte-account-edit-modal-actions">
-                    <button type="button" className="dashboard-user-edit-btn dashboard-user-edit-btn--secondary" onClick={closePaymentModal}>
-                      {isEn ? 'Cancel' : 'Annuler'}
-                    </button>
-                    <button type="button" className="dashboard-user-edit-btn" onClick={submitPaymentMethod}>
-                      {isEn ? 'Save card' : 'Enregistrer la carte'}
-                    </button>
-                  </div>
+                  ) : null}
                 </div>
               </div>
             ) : null}
@@ -2679,13 +2872,81 @@ export default function ClientCompteDashboard({ onBack, onOpenClientLiveMeet }: 
                   <p className="client-compte-wallet-balance" aria-live="polite">
                     {formatWalletEUR(wallet.balanceCents, language)}
                   </p>
-                  <div className="dashboard-payment-actions" style={{ marginTop: 8 }}>
-                    <button type="button" className="dashboard-user-edit-btn" onClick={handleWalletSimulateTopup}>
-                      {t('clientAccount.walletSimulateTopup')}
-                    </button>
-                  </div>
+                  {stripeOn && stripePk ? (
+                    <div className="client-compte-wallet-topup" style={{ marginTop: 12 }}>
+                      <p className="dashboard-field-hint" style={{ margin: '0 0 8px' }}>
+                        {isEn
+                          ? 'Top up with your card (Stripe test: 4242…). Balance is stored on your account.'
+                          : 'Rechargez par carte (test Stripe : 4242…). Le solde est enregistre sur votre compte.'}
+                      </p>
+                      <PaltoStripeTestCardHint className="client-compte-payment-test-hint" />
+                      {!walletTopupClientSecret ? (
+                        <>
+                          <div className="client-compte-wallet-topup-amounts" role="group" aria-label={isEn ? 'Top-up amount' : 'Montant de recharge'}>
+                            {[5, 10, 20].map((eur) => (
+                              <button
+                                key={eur}
+                                type="button"
+                                className={`dashboard-user-edit-btn${walletTopupAmountEur === eur ? '' : ' dashboard-user-edit-btn--secondary'}`}
+                                onClick={() => setWalletTopupAmountEur(eur)}
+                              >
+                                {formatWalletEUR(eur * 100, language)}
+                              </button>
+                            ))}
+                          </div>
+                          <button
+                            type="button"
+                            className="dashboard-user-edit-btn"
+                            style={{ marginTop: 8 }}
+                            disabled={walletTopupLoading || !isClientAuthenticated()}
+                            onClick={startWalletTopUp}
+                          >
+                            {walletTopupLoading
+                              ? isEn
+                                ? 'Preparing…'
+                                : 'Preparation…'
+                              : isEn
+                                ? 'Pay with card'
+                                : 'Payer par carte'}
+                          </button>
+                        </>
+                      ) : (
+                        <>
+                          <PaltoStripePaymentForm
+                            publishableKey={stripePk}
+                            clientSecret={walletTopupClientSecret}
+                            onSuccess={handleWalletTopUpSuccess}
+                            onError={(msg) => toast.error(msg)}
+                            submitLabel={
+                              isEn
+                                ? `Pay ${formatWalletEUR(walletTopupAmountEur * 100, language)}`
+                                : `Payer ${formatWalletEUR(walletTopupAmountEur * 100, language)}`
+                            }
+                          />
+                          <button
+                            type="button"
+                            className="dashboard-user-edit-btn dashboard-user-edit-btn--secondary"
+                            style={{ marginTop: 8 }}
+                            onClick={cancelWalletTopUp}
+                          >
+                            {isEn ? 'Cancel' : 'Annuler'}
+                          </button>
+                        </>
+                      )}
+                    </div>
+                  ) : (
+                    <div className="dashboard-payment-actions" style={{ marginTop: 8 }}>
+                      <button type="button" className="dashboard-user-edit-btn" onClick={handleWalletSimulateTopup}>
+                        {t('clientAccount.walletSimulateTopup')}
+                      </button>
+                    </div>
+                  )}
                   <p className="dashboard-field-hint" style={{ marginTop: 16 }}>
-                    {t('clientAccount.walletActivityNote')}
+                    {stripeOn
+                      ? isEn
+                        ? 'Wallet balance syncs from the server after each successful card payment.'
+                        : 'Le solde se met a jour sur le serveur apres chaque paiement carte reussi.'
+                      : t('clientAccount.walletActivityNote')}
                   </p>
                 </article>
                 <article className="dashboard-user-card" style={{ marginTop: 20 }}>

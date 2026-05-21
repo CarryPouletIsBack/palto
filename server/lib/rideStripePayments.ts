@@ -12,6 +12,7 @@ import {
   totalChargeEur,
 } from './stripeConfig.js'
 import { getStripe } from './stripeClient.js'
+import { handleWalletTopUpWebhook } from './stripeWallet.js'
 
 export type CoursePaymentRow = {
   id: string
@@ -264,5 +265,9 @@ export async function handleStripeWebhookEvent(event: Stripe.Event, supabase: Su
       .from('courses')
       .update({ stripe_payment_status: 'canceled', updated_at: new Date().toISOString() })
       .eq('id', courseId)
+  }
+  if (event.type === 'payment_intent.succeeded') {
+    const pi = event.data.object as Stripe.PaymentIntent
+    await handleWalletTopUpWebhook(pi, supabase)
   }
 }

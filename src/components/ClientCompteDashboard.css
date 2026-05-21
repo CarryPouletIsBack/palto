@@ -1460,6 +1460,17 @@ html[data-app-theme='dark'] .client-compte-account-edit-modal-input {
   color: #3b82f6;
 }
 
+.client-compte-wallet-topup-amounts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.client-compte-payment-test-hint {
+  margin: 12px 0;
+}
+
 .client-compte-payment-stripe-notice {
   margin: 0;
   padding: 10px 12px;

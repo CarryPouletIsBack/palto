@@ -8,6 +8,14 @@ import {
   syncPaymentIntentStatus,
 } from '../../server/lib/rideStripePayments.js'
 import { stripeWebhookConfigured } from '../../server/lib/stripeConfig.js'
+import { getPaltoAppSessionByToken } from '../../server/lib/paltoAppSession.js'
+import {
+  createSetupIntentForCustomer,
+  createWalletTopUpPaymentIntent,
+  creditWalletFromPaymentIntent,
+  getClientWalletBalanceCents,
+  listCustomerPaymentMethods,
+} from '../../server/lib/stripeWallet.js'
 
 /** Stripe exige le corps brut pour vérifier la signature (Vercel ne doit pas parser le JSON). */
 export const config = {
@@ -18,6 +26,19 @@ export const config = {
 
 const ConfirmBodySchema = z.object({
   courseId: z.string().uuid(),
+})
+
+const ClientBodySchema = z.object({
+  fullName: z.string().max(200).optional(),
+})
+
+const WalletTopUpCreateSchema = z.object({
+  amountEur: z.coerce.number().positive().max(200),
+  fullName: z.string().max(200).optional(),
+})
+
+const WalletTopUpConfirmSchema = z.object({
+  paymentIntentId: z.string().min(3).max(200),
 })
 
 async function readRawBody(req: VercelRequest): Promise<string> {
@@ -39,10 +60,39 @@ function parseJsonBody(raw: string): unknown {
   return JSON.parse(raw) as unknown
 }
 
+function readBearerToken(req: VercelRequest): string | null {
+  const raw = req.headers.authorization
+  if (!raw?.toLowerCase().startsWith('bearer ')) return null
+  const token = raw.slice(7).trim()
+  return token || null
+}
+
+async function requireClientSession(req: VercelRequest, res: VercelResponse) {
+  const token = readBearerToken(req)
+  if (!token) {
+    res.status(401).json({ error: 'Non autorise' })
+    return null
+  }
+  let supabase
+  try {
+    supabase = getSupabaseAdmin()
+  } catch (e) {
+    console.error('[stripe/client]', e)
+    res.status(503).json({ error: 'Service indisponible' })
+    return null
+  }
+  const session = await getPaltoAppSessionByToken(supabase, token)
+  if (!session || session.role !== 'client') {
+    res.status(401).json({ error: 'Non autorise' })
+    return null
+  }
+  return { supabase, session }
+}
+
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   res.setHeader('Access-Control-Allow-Origin', '*')
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS')
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Stripe-Signature')
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Stripe-Signature, Authorization')
 
   if (req.method === 'OPTIONS') {
     res.status(200).end()
@@ -137,5 +187,115 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     return
   }
 
-  res.status(400).json({ error: 'action invalide (webhook | confirm-authorized)' })
+  const clientActions = new Set([
+    'setup-intent',
+    'list-payment-methods',
+    'wallet-balance',
+    'wallet-topup-create',
+    'wallet-topup-confirm',
+  ])
+
+  if (clientActions.has(action)) {
+    if (!isStripePaymentsEnabled()) {
+      res.status(503).json({ error: 'Paiement Stripe desactive' })
+      return
+    }
+
+    const ctx = await requireClientSession(req, res)
+    if (!ctx) return
+
+    let body: unknown
+    try {
+      body = parseJsonBody(rawBody)
+    } catch {
+      res.status(400).json({ error: 'Payload invalide' })
+      return
+    }
+
+    const { supabase, session } = ctx
+    const accountId = session.accountId
+    const email = session.email
+
+    try {
+      if (action === 'setup-intent') {
+        const parsed = ClientBodySchema.safeParse(body)
+        if (!parsed.success) {
+          res.status(400).json({ error: 'Payload invalide' })
+          return
+        }
+        const result = await createSetupIntentForCustomer(
+          supabase,
+          accountId,
+          email,
+          parsed.data.fullName
+        )
+        res.status(200).json(result)
+        return
+      }
+
+      if (action === 'list-payment-methods') {
+        const parsed = ClientBodySchema.safeParse(body)
+        if (!parsed.success) {
+          res.status(400).json({ error: 'Payload invalide' })
+          return
+        }
+        const items = await listCustomerPaymentMethods(
+          supabase,
+          accountId,
+          email,
+          parsed.data.fullName
+        )
+        res.status(200).json({ items })
+        return
+      }
+
+      if (action === 'wallet-balance') {
+        const balanceCents = await getClientWalletBalanceCents(supabase, accountId)
+        res.status(200).json({ balanceCents })
+        return
+      }
+
+      if (action === 'wallet-topup-create') {
+        const parsed = WalletTopUpCreateSchema.safeParse(body)
+        if (!parsed.success) {
+          res.status(400).json({ error: 'Payload invalide', details: parsed.error.flatten() })
+          return
+        }
+        const result = await createWalletTopUpPaymentIntent({
+          supabase,
+          accountId,
+          email,
+          fullName: parsed.data.fullName,
+          amountEur: parsed.data.amountEur,
+        })
+        res.status(200).json(result)
+        return
+      }
+
+      if (action === 'wallet-topup-confirm') {
+        const parsed = WalletTopUpConfirmSchema.safeParse(body)
+        if (!parsed.success) {
+          res.status(400).json({ error: 'Payload invalide', details: parsed.error.flatten() })
+          return
+        }
+        const result = await creditWalletFromPaymentIntent(
+          supabase,
+          accountId,
+          parsed.data.paymentIntentId
+        )
+        res.status(200).json(result)
+        return
+      }
+    } catch (e) {
+      console.error(`[stripe/${action}]`, e)
+      const msg = e instanceof Error ? e.message : 'Erreur Stripe'
+      res.status(500).json({ error: msg })
+    }
+    return
+  }
+
+  res.status(400).json({
+    error:
+      'action invalide (webhook | confirm-authorized | setup-intent | list-payment-methods | wallet-balance | wallet-topup-create | wallet-topup-confirm)',
+  })
 }

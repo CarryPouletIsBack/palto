@@ -146,12 +146,24 @@ Action API : `POST /api/chauffeur?resource=rides` body `{ courseId, action: "no_
 | Zone | Stripe | Détail |
 |------|--------|--------|
 | **Page Go — checkout** | Oui | `PaymentIntent` + Elements (`4242…` en test) |
-| **Compte passager — « Ajouter un mode de paiement »** | Non (local) | Aperçu localStorage ; **pas** de débit Stripe depuis le compte |
+| **Compte passager — carte + portefeuille** | Oui (si clés Stripe) | `SetupIntent` (carte enregistrée) + recharge portefeuille (`wallet_topup`) ; carte test `4242…` |
 | **Dashboard chauffeur — IBAN / virement** | Non | Données locales (mock) |
 | **Fin de course chauffeur** | Oui (si PI créé) | `capture` via API chauffeur |
 | **Annulation / no-show** | Oui (si PI créé) | `cancel` / capture 5 € |
 
-Prochaine étape compte passager : **Stripe Customer** + `SetupIntent` pour réutiliser une carte sur Go.
+### Compte passager (carte + portefeuille)
+
+1. Appliquer la migration **`0009`** : `scripts/apply-migration-0009.sql` dans le SQL Editor Supabase (`stripe_customer_id`, `wallet_balance_cents`, table `client_wallet_topups`).
+2. **Gérer mon compte → Paiement → Ajouter un mode de paiement** : formulaire Stripe Elements + `SetupIntent` (carte test `4242 4242 4242 4242`, expiration future, CVC quelconque).
+3. **Portefeuille** : boutons 5 / 10 / 20 € puis « Payer par carte » → `PaymentIntent` metadata `wallet_topup` → solde mis à jour via API + webhook.
+
+Actions API (`POST`, header `Authorization: Bearer <token client>`) :
+
+- `?action=setup-intent`
+- `?action=list-payment-methods`
+- `?action=wallet-balance`
+- `?action=wallet-topup-create` body `{ "amountEur": 10 }`
+- `?action=wallet-topup-confirm` body `{ "paymentIntentId": "pi_…" }`
 
 ### Erreur 502 « Impossible de preparer le paiement Stripe »
 
