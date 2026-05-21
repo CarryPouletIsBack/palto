@@ -242,6 +242,9 @@ const TRANSLATIONS: Record<Language, Record<string, unknown>> = {
       checkoutCommentPlaceholder:
         'Ex. : l’entrée de mon bâtiment est derrière la poste.',
       checkoutCardLead: 'Saisissez une carte de test ci-dessous (mode test Stripe, aucun vrai débit).',
+      checkoutSavedCardsLead: 'Cartes enregistrées sur votre compte Palto',
+      checkoutSavedCardsPick:
+        'Sélectionnez une carte dans le formulaire Stripe ci-dessous, ou ajoutez-en une nouvelle.',
       checkoutAuthorizeCta: 'Autoriser le paiement sur la carte',
       checkoutContinuePayment: 'Continuer vers le paiement',
       checkoutPreparing: 'Préparation…',
@@ -972,6 +975,8 @@ const TRANSLATIONS: Record<Language, Record<string, unknown>> = {
       checkoutCommentLabel: 'Note for driver (optional)',
       checkoutCommentPlaceholder: 'E.g. building entrance behind the post office.',
       checkoutCardLead: 'Enter a Stripe test card below (test mode, no real charge).',
+      checkoutSavedCardsLead: 'Cards saved on your Palto account',
+      checkoutSavedCardsPick: 'Pick a saved card in the Stripe form below, or add a new one.',
       checkoutAuthorizeCta: 'Authorize payment on card',
       checkoutContinuePayment: 'Continue to payment',
       checkoutPreparing: 'Preparing…',

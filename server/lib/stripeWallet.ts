@@ -4,12 +4,22 @@ import { eurosToCents } from './stripeConfig.js'
 import { getStripe } from './stripeClient.js'
 import { getOrCreateStripeCustomer } from './stripeCustomer.js'
 
+export type StripePaymentMethodBilling = {
+  name: string | null
+  line1: string | null
+  line2: string | null
+  city: string | null
+  postalCode: string | null
+  country: string | null
+}
+
 export type StripePaymentMethodSummary = {
   id: string
   brand: string
   last4: string
   expMonth: number
   expYear: number
+  billing: StripePaymentMethodBilling | null
 }
 
 export async function getClientWalletBalanceCents(
@@ -31,20 +41,32 @@ export async function listCustomerPaymentMethods(
   accountId: string,
   email: string,
   fullName?: string | null
-): Promise<StripePaymentMethodSummary[]> {
+): Promise<{ stripeCustomerId: string; items: StripePaymentMethodSummary[] }> {
   const customerId = await getOrCreateStripeCustomer(supabase, accountId, email, fullName)
   const stripe = getStripe()
   const pms = await stripe.paymentMethods.list({ customer: customerId, type: 'card' })
-  return pms.data.map((pm) => {
+  const items = pms.data.map((pm) => {
     const card = pm.card
+    const addr = pm.billing_details?.address
     return {
       id: pm.id,
       brand: card?.brand ?? 'card',
       last4: card?.last4 ?? '????',
       expMonth: card?.exp_month ?? 0,
       expYear: card?.exp_year ?? 0,
+      billing: addr
+        ? {
+            name: pm.billing_details?.name ?? null,
+            line1: addr.line1 ?? null,
+            line2: addr.line2 ?? null,
+            city: addr.city ?? null,
+            postalCode: addr.postal_code ?? null,
+            country: addr.country ?? null,
+          }
+        : null,
     }
   })
+  return { stripeCustomerId: customerId, items }
 }
 
 export async function createSetupIntentForCustomer(

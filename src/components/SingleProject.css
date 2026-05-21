@@ -6279,6 +6279,37 @@ html[data-app-theme='dark'] .palto-ride-timing-expand__option:hover {
   margin-top: 4px;
 }
 
+.palto-checkout__saved-cards {
+  margin: 0 0 12px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  border: 1px solid #c7d7f5;
+  background: #f0f6ff;
+}
+
+.palto-checkout__saved-cards-title {
+  margin: 0 0 8px;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--sp-text);
+}
+
+.palto-checkout__saved-cards-list {
+  margin: 0 0 8px;
+  padding-left: 18px;
+  font-size: 14px;
+  color: var(--sp-text);
+}
+
+.palto-checkout__saved-cards-list li + li {
+  margin-top: 4px;
+}
+
+.palto-checkout__saved-cards-exp {
+  font-size: 12px;
+  color: var(--sp-text-subtle);
+}
+
 .palto-checkout-test-hint {
   border: 1px solid #ffd6a8;
   border-radius: 10px;

@@ -1,4 +1,5 @@
 import { apiBaseUrl } from '../constants/featureFlags'
+import { getClientAuthorizationHeader } from './authService'
 
 const API_BASE_URL = apiBaseUrl()
 
@@ -31,15 +32,20 @@ export type CreateRideOrderResult = {
   stripeEnabled?: boolean
   stripeClientSecret?: string | null
   stripePaymentIntentId?: string | null
+  stripeCustomerId?: string | null
   stripePublishableKey?: string | null
   /** Paiement Stripe non prepare (commande conservee, fallback hors ligne). */
   stripeSetupWarning?: string | null
 }
 
 export async function createRideOrder(body: CreateRideOrderPayload): Promise<CreateRideOrderResult> {
+  const auth = getClientAuthorizationHeader()
+  const headers: HeadersInit = { 'Content-Type': 'application/json' }
+  if (auth) headers.Authorization = auth
+
   const res = await fetch(`${API_BASE_URL}/rides/create`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers,
     body: JSON.stringify(body),
   })
   const data = (await res.json().catch(() => ({}))) as CreateRideOrderResult & { error?: string }

@@ -1754,6 +1754,7 @@ const SingleProjectNew: FC<SingleProjectProps> = ({
   const [checkoutSuccessMessage, setCheckoutSuccessMessage] = useState<string | null>(null);
   const [checkoutSubmitting, setCheckoutSubmitting] = useState(false);
   const [checkoutStripeClientSecret, setCheckoutStripeClientSecret] = useState<string | null>(null);
+  const [checkoutStripeCustomerId, setCheckoutStripeCustomerId] = useState<string | null>(null);
   const [checkoutPendingCourseId, setCheckoutPendingCourseId] = useState<string | null>(null);
   const [checkoutPendingExternalCode, setCheckoutPendingExternalCode] = useState<string | null>(null);
   useEffect(() => {
@@ -1775,6 +1776,7 @@ const SingleProjectNew: FC<SingleProjectProps> = ({
     setIsCheckoutPopupOpen(false);
     setCheckoutError(null);
     setCheckoutStripeClientSecret(null);
+    setCheckoutStripeCustomerId(null);
     setCheckoutPendingCourseId(null);
     setCheckoutPendingExternalCode(null);
   }, []);
@@ -1922,6 +1924,7 @@ const SingleProjectNew: FC<SingleProjectProps> = ({
         setCheckoutPendingCourseId(result.courseId)
         setCheckoutPendingExternalCode(result.externalCode)
         setCheckoutStripeClientSecret(result.stripeClientSecret)
+        setCheckoutStripeCustomerId(result.stripeCustomerId?.trim() || null)
         setCheckoutSubmitting(false)
         return
       }
@@ -3505,6 +3508,7 @@ const SingleProjectNew: FC<SingleProjectProps> = ({
                   onCustomerEmailChange={setCheckoutCustomerEmail}
                   onClientCommentChange={setCheckoutClientComment}
                   stripeClientSecret={checkoutStripeClientSecret}
+                  stripeCustomerId={checkoutStripeCustomerId}
                   checkoutError={checkoutError}
                   checkoutSuccessMessage={checkoutSuccessMessage}
                   onStripeSuccess={() => void finishCheckoutAfterPayment()}

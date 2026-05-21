@@ -239,13 +239,13 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           res.status(400).json({ error: 'Payload invalide' })
           return
         }
-        const items = await listCustomerPaymentMethods(
+        const listed = await listCustomerPaymentMethods(
           supabase,
           accountId,
           email,
           parsed.data.fullName
         )
-        res.status(200).json({ items })
+        res.status(200).json({ items: listed.items, stripeCustomerId: listed.stripeCustomerId })
         return
       }
 

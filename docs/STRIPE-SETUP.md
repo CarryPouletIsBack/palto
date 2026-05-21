@@ -145,7 +145,7 @@ Action API : `POST /api/chauffeur?resource=rides` body `{ courseId, action: "no_
 
 | Zone | Stripe | Détail |
 |------|--------|--------|
-| **Page Go — checkout** | Oui | `PaymentIntent` + Elements (`4242…` en test) |
+| **Page Go — checkout** | Oui | `PaymentIntent` + Elements ; **cartes enregistrées** si client connecté (Bearer + `customer` Stripe) |
 | **Compte passager — carte + portefeuille** | Oui (si clés Stripe) | `SetupIntent` (carte enregistrée) + recharge portefeuille (`wallet_topup`) ; carte test `4242…` |
 | **Dashboard chauffeur — IBAN / virement** | Non | Données locales (mock) |
 | **Fin de course chauffeur** | Oui (si PI créé) | `capture` via API chauffeur |
@@ -154,8 +154,8 @@ Action API : `POST /api/chauffeur?resource=rides` body `{ courseId, action: "no_
 ### Compte passager (carte + portefeuille)
 
 1. Appliquer la migration **`0009`** : `scripts/apply-migration-0009.sql` dans le SQL Editor Supabase (`stripe_customer_id`, `wallet_balance_cents`, table `client_wallet_topups`).
-2. **Gérer mon compte → Paiement → Ajouter un mode de paiement** : formulaire Stripe Elements + `SetupIntent` (carte test `4242 4242 4242 4242`, expiration future, CVC quelconque).
-3. **Portefeuille** : boutons 5 / 10 / 20 € puis « Payer par carte » → `PaymentIntent` metadata `wallet_topup` → solde mis à jour via API + webhook.
+2. **Gérer mon compte → Paiement → Ajouter un mode de paiement** : Stripe Elements + `SetupIntent` — carte test `4242…`, **adresse de facturation obligatoire** dans le formulaire.
+3. **Portefeuille** : montant 5 / 10 / 20 € → **Continuer vers le paiement** → ouvre **Gérer le compte → Paiement** (ajout carte si besoin, puis paiement de la recharge). Pas de saisie carte directement sur l’onglet Portefeuille.
 
 Actions API (`POST`, header `Authorization: Bearer <token client>`) :
 

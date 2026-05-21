@@ -4,10 +4,19 @@ import { randomBytes } from 'crypto'
 import { getSupabaseAdmin } from '../../server/lib/supabaseAdmin.js'
 import { resolveRequestedDriverKeyForInsert } from '../../server/lib/driverIdentity.js'
 import { PALTO_PLATFORM_FEE_EUR, totalChargeEur } from '../../server/lib/stripeConfig.js'
+import { getPaltoAppSessionByToken } from '../../server/lib/paltoAppSession.js'
+import { getOrCreateStripeCustomer } from '../../server/lib/stripeCustomer.js'
 import {
   createManualCapturePaymentIntent,
   isStripePaymentsEnabled,
 } from '../../server/lib/rideStripePayments.js'
+
+function readBearerToken(req: VercelRequest): string | null {
+  const raw = req.headers.authorization
+  if (!raw?.toLowerCase().startsWith('bearer ')) return null
+  const token = raw.slice(7).trim()
+  return token || null
+}
 
 const BodySchema = z
   .object({
@@ -108,7 +117,7 @@ function normalizeAddressForStorage(raw: string): string {
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   res.setHeader('Access-Control-Allow-Origin', '*')
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS')
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type')
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization')
 
   if (req.method === 'OPTIONS') {
     res.status(200).end()
@@ -248,16 +257,31 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
   let stripeClientSecret: string | null = null
   let stripePaymentIntentId: string | null = null
+  let stripeCustomerId: string | null = null
   let stripeSetupWarning: string | null = null
 
   if (isStripePaymentsEnabled()) {
     try {
+      const paltoToken = readBearerToken(req)
+      if (paltoToken) {
+        const session = await getPaltoAppSessionByToken(supabase, paltoToken)
+        if (session?.role === 'client') {
+          stripeCustomerId = await getOrCreateStripeCustomer(
+            supabase,
+            session.accountId,
+            session.email,
+            fullName
+          )
+        }
+      }
+
       const pi = await createManualCapturePaymentIntent({
         courseId: courseRow.id,
         externalCode: courseRow.external_code ?? code,
         driverAmountEur,
         paltoFeeEur,
         clientEmail: emailNorm,
+        stripeCustomerId,
       })
       stripeClientSecret = pi.clientSecret
       stripePaymentIntentId = pi.paymentIntentId
@@ -296,6 +320,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     stripeEnabled: isStripePaymentsEnabled(),
     stripeClientSecret,
     stripePaymentIntentId,
+    stripeCustomerId,
     stripePublishableKey: process.env.VITE_STRIPE_PUBLISHABLE_KEY?.trim() || process.env.STRIPE_PUBLISHABLE_KEY?.trim() || null,
     stripeSetupWarning,
   })

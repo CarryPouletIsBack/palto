@@ -59,6 +59,8 @@ export async function createManualCapturePaymentIntent(params: {
   driverAmountEur: number
   paltoFeeEur?: number
   clientEmail: string
+  /** Customer Stripe (cartes enregistrees dans le compte passager). */
+  stripeCustomerId?: string | null
 }): Promise<{ paymentIntentId: string; clientSecret: string; totalEur: number }> {
   const stripe = getStripe()
   const paltoFee = params.paltoFeeEur ?? PALTO_PLATFORM_FEE_EUR
@@ -69,12 +71,14 @@ export async function createManualCapturePaymentIntent(params: {
     throw new Error('Montant minimum Stripe (0,50 EUR) non atteint')
   }
 
+  const customerId = params.stripeCustomerId?.trim() || undefined
   const pi = await stripe.paymentIntents.create({
     amount: amountCents,
     currency: 'eur',
     capture_method: 'manual',
     payment_method_types: ['card'],
     receipt_email: params.clientEmail.trim().toLowerCase(),
+    ...(customerId ? { customer: customerId } : {}),
     metadata: {
       course_id: params.courseId,
       external_code: params.externalCode,

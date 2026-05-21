@@ -3,12 +3,27 @@ import { getClientAuthorizationHeader } from './authService'
 
 const API_BASE_URL = apiBaseUrl()
 
+export type ClientStripePaymentMethodBilling = {
+  name: string | null
+  line1: string | null
+  line2: string | null
+  city: string | null
+  postalCode: string | null
+  country: string | null
+}
+
 export type ClientStripePaymentMethod = {
   id: string
   brand: string
   last4: string
   expMonth: number
   expYear: number
+  billing: ClientStripePaymentMethodBilling | null
+}
+
+export type ClientStripePaymentMethodsResult = {
+  items: ClientStripePaymentMethod[]
+  stripeCustomerId: string | null
 }
 
 function stripeApiEnabled(): boolean {
@@ -44,12 +59,18 @@ export function clientStripeApiEnabled(): boolean {
 
 export async function fetchClientStripePaymentMethods(
   fullName?: string | null
-): Promise<ClientStripePaymentMethod[]> {
-  if (!stripeApiEnabled()) return []
-  const data = await postStripeAction<{ items?: ClientStripePaymentMethod[] }>('list-payment-methods', {
+): Promise<ClientStripePaymentMethodsResult> {
+  if (!stripeApiEnabled()) return { items: [], stripeCustomerId: null }
+  const data = await postStripeAction<{
+    items?: ClientStripePaymentMethod[]
+    stripeCustomerId?: string
+  }>('list-payment-methods', {
     fullName: fullName?.trim() || undefined,
   })
-  return Array.isArray(data.items) ? data.items : []
+  return {
+    items: Array.isArray(data.items) ? data.items : [],
+    stripeCustomerId: data.stripeCustomerId?.trim() || null,
+  }
 }
 
 export async function createClientSetupIntent(fullName?: string | null): Promise<string> {

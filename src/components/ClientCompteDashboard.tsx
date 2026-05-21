@@ -109,6 +109,7 @@ import {
   fetchClientStripePaymentMethods,
   fetchClientWalletBalanceCents,
   type ClientStripePaymentMethod,
+  type ClientStripePaymentMethodBilling,
 } from '../services/clientStripeApi';
 import {
   getCurrentClientUser,
@@ -211,6 +212,18 @@ function formatStripeCardBrand(brand: string): string {
   if (b === 'mastercard') return 'Mastercard';
   if (b === 'amex') return 'American Express';
   return brand.charAt(0).toUpperCase() + brand.slice(1);
+}
+
+function formatStripeBillingLines(
+  billing: ClientStripePaymentMethodBilling | null | undefined
+): string[] {
+  if (!billing?.line1) return [];
+  const lines: string[] = [billing.line1];
+  if (billing.line2?.trim()) lines.push(billing.line2.trim());
+  const cityLine = [billing.postalCode, billing.city].filter(Boolean).join(' ').trim();
+  if (cityLine) lines.push(cityLine);
+  if (billing.country?.trim()) lines.push(billing.country.trim());
+  return lines;
 }
 
 function paymentLabel(t: (k: string) => string, p: ClientPreferredPayment): string {
@@ -325,9 +338,12 @@ export default function ClientCompteDashboard({ onBack, onOpenClientLiveMeet }: 
     loadClientPaymentMethods(getCurrentClientUser()?.email)
   );
   const [stripePaymentMethods, setStripePaymentMethods] = useState<ClientStripePaymentMethod[]>([]);
+  const [stripeCustomerId, setStripeCustomerId] = useState<string | null>(null);
   const [setupClientSecret, setSetupClientSecret] = useState<string | null>(null);
   const [paymentModalLoading, setPaymentModalLoading] = useState(false);
+  const [pendingWalletTopupEur, setPendingWalletTopupEur] = useState<number | null>(null);
   const [walletTopupAmountEur, setWalletTopupAmountEur] = useState(10);
+  const walletTopupPromptedRef = useRef(false);
   const [walletTopupClientSecret, setWalletTopupClientSecret] = useState<string | null>(null);
   const [walletTopupPaymentIntentId, setWalletTopupPaymentIntentId] = useState<string | null>(null);
   const [walletTopupLoading, setWalletTopupLoading] = useState(false);
@@ -692,8 +708,11 @@ export default function ClientCompteDashboard({ onBack, onOpenClientLiveMeet }: 
   const refreshStripePaymentMethods = useCallback(async () => {
     if (!stripeOn || !isClientAuthenticated()) return;
     try {
-      const items = await fetchClientStripePaymentMethods(clientFullName || undefined);
+      const { items, stripeCustomerId: customerId } = await fetchClientStripePaymentMethods(
+        clientFullName || undefined
+      );
       setStripePaymentMethods(items);
+      setStripeCustomerId(customerId);
     } catch (e) {
       console.warn('[client/stripe] payment methods', e);
     }
@@ -1021,25 +1040,22 @@ export default function ClientCompteDashboard({ onBack, onOpenClientLiveMeet }: 
     setPaymentModalLoading(false);
   }, []);
 
-  const handleSetupCardSuccess = useCallback(() => {
-    void refreshStripePaymentMethods();
-    setProfile((p) => ({ ...p, preferredPayment: 'card' }));
-    setDraft((p) => ({ ...p, preferredPayment: 'card' }));
-    setPaymentModalOpen(false);
-    setSetupClientSecret(null);
-    toast.success(
-      isEn
-        ? 'Card saved with Stripe. You can use it for rides and wallet top-ups.'
-        : 'Carte enregistree avec Stripe. Utilisable pour les courses et les recharges portefeuille.'
-    );
-  }, [isEn, refreshStripePaymentMethods]);
+  const goToPaymentForWalletTopUp = useCallback(() => {
+    if (!stripeOn) return;
+    setPendingWalletTopupEur(walletTopupAmountEur);
+    setWalletTopupClientSecret(null);
+    setWalletTopupPaymentIntentId(null);
+    openManageAccount('payment');
+    trackEvent('click', 'client_account', 'wallet_goto_payment');
+  }, [openManageAccount, stripeOn, walletTopupAmountEur]);
 
   const startWalletTopUp = useCallback(() => {
     if (!stripeOn || !stripePk) return;
+    const amountEur = pendingWalletTopupEur ?? walletTopupAmountEur;
     setWalletTopupLoading(true);
     setWalletTopupClientSecret(null);
     setWalletTopupPaymentIntentId(null);
-    void createClientWalletTopUp(walletTopupAmountEur, clientFullName || undefined)
+    void createClientWalletTopUp(amountEur, clientFullName || undefined)
       .then(({ clientSecret, paymentIntentId }) => {
         setWalletTopupClientSecret(clientSecret);
         setWalletTopupPaymentIntentId(paymentIntentId);
@@ -1048,7 +1064,24 @@ export default function ClientCompteDashboard({ onBack, onOpenClientLiveMeet }: 
         toast.error(e instanceof Error ? e.message : isEn ? 'Top-up failed' : 'Recharge impossible');
       })
       .finally(() => setWalletTopupLoading(false));
-  }, [clientFullName, isEn, stripeOn, stripePk, walletTopupAmountEur]);
+  }, [clientFullName, isEn, pendingWalletTopupEur, stripeOn, stripePk, walletTopupAmountEur]);
+
+  const handleSetupCardSuccess = useCallback(() => {
+    void refreshStripePaymentMethods().then(() => {
+      setProfile((p) => ({ ...p, preferredPayment: 'card' }));
+      setDraft((p) => ({ ...p, preferredPayment: 'card' }));
+      setPaymentModalOpen(false);
+      setSetupClientSecret(null);
+      toast.success(
+        isEn
+          ? 'Card and billing address saved. You can top up your wallet below.'
+          : 'Carte et adresse de facturation enregistrees. Vous pouvez recharger le portefeuille ci-dessous.'
+      );
+      if (pendingWalletTopupEur != null) {
+        void startWalletTopUp();
+      }
+    });
+  }, [isEn, pendingWalletTopupEur, refreshStripePaymentMethods, startWalletTopUp]);
 
   const handleWalletTopUpSuccess = useCallback(() => {
     const piId = walletTopupPaymentIntentId;
@@ -1060,18 +1093,47 @@ export default function ClientCompteDashboard({ onBack, onOpenClientLiveMeet }: 
         if (activeClientEmail) saveClientWalletSnapshot(next, activeClientEmail);
         setWalletTopupClientSecret(null);
         setWalletTopupPaymentIntentId(null);
+        setPendingWalletTopupEur(null);
         toast.success(isEn ? 'Wallet topped up.' : 'Portefeuille recharge.');
         trackEvent('click', 'client_account', 'wallet_stripe_topup');
+        goNav('wallet');
       })
       .catch((e) => {
         toast.error(e instanceof Error ? e.message : isEn ? 'Confirmation failed' : 'Confirmation impossible');
       });
-  }, [activeClientEmail, isEn, walletTopupPaymentIntentId]);
+  }, [activeClientEmail, goNav, isEn, walletTopupPaymentIntentId]);
 
   const cancelWalletTopUp = useCallback(() => {
     setWalletTopupClientSecret(null);
     setWalletTopupPaymentIntentId(null);
+    setPendingWalletTopupEur(null);
   }, []);
+
+  useEffect(() => {
+    if (activeNav !== 'account' || accountManageSection !== 'payment') {
+      walletTopupPromptedRef.current = false;
+      return;
+    }
+    if (pendingWalletTopupEur == null || !stripeOn) return;
+    if (
+      stripePaymentMethods.length === 0 &&
+      !paymentModalOpen &&
+      !paymentModalLoading &&
+      !walletTopupPromptedRef.current
+    ) {
+      walletTopupPromptedRef.current = true;
+      openPaymentModal();
+    }
+  }, [
+    accountManageSection,
+    activeNav,
+    openPaymentModal,
+    paymentModalLoading,
+    paymentModalOpen,
+    pendingWalletTopupEur,
+    stripeOn,
+    stripePaymentMethods.length,
+  ]);
 
   const submitPaymentMethod = useCallback(() => {
     const errors: Record<string, string> = {};
@@ -1989,11 +2051,81 @@ export default function ClientCompteDashboard({ onBack, onOpenClientLiveMeet }: 
                   </header>
                   {accountManageSection === 'payment' ? (
                     <section className="client-compte-payment-layout">
+                      {pendingWalletTopupEur != null && stripeOn && stripePk ? (
+                        <article className="dashboard-user-card client-compte-payment-topup-pending">
+                          <h4 className="client-compte-section-title">
+                            {isEn ? 'Wallet top-up' : 'Recharge portefeuille'}
+                          </h4>
+                          <p className="dashboard-field-hint" style={{ margin: '0 0 12px' }}>
+                            {isEn
+                              ? `Amount: ${formatWalletEUR(pendingWalletTopupEur * 100, language)}. Add or select a card below, with billing address.`
+                              : `Montant : ${formatWalletEUR(pendingWalletTopupEur * 100, language)}. Ajoutez ou choisissez une carte ci-dessous (adresse de facturation requise).`}
+                          </p>
+                          {walletTopupClientSecret ? (
+                            <>
+                              <PaltoStripeTestCardHint className="client-compte-payment-test-hint" />
+                              <PaltoStripePaymentForm
+                                publishableKey={stripePk}
+                                clientSecret={walletTopupClientSecret}
+                                stripeCustomerId={stripeCustomerId}
+                                onSuccess={handleWalletTopUpSuccess}
+                                onError={(msg) => toast.error(msg)}
+                                submitLabel={
+                                  isEn
+                                    ? `Pay ${formatWalletEUR(pendingWalletTopupEur * 100, language)}`
+                                    : `Payer ${formatWalletEUR(pendingWalletTopupEur * 100, language)}`
+                                }
+                              />
+                              <button
+                                type="button"
+                                className="dashboard-user-edit-btn dashboard-user-edit-btn--secondary"
+                                style={{ marginTop: 8 }}
+                                onClick={cancelWalletTopUp}
+                              >
+                                {isEn ? 'Cancel top-up' : 'Annuler la recharge'}
+                              </button>
+                            </>
+                          ) : (
+                            <div className="dashboard-payment-actions">
+                              <button
+                                type="button"
+                                className="dashboard-user-edit-btn"
+                                disabled={
+                                  walletTopupLoading ||
+                                  !isClientAuthenticated() ||
+                                  stripePaymentMethods.length === 0
+                                }
+                                onClick={() => void startWalletTopUp()}
+                              >
+                                {walletTopupLoading
+                                  ? isEn
+                                    ? 'Preparing…'
+                                    : 'Preparation…'
+                                  : stripePaymentMethods.length === 0
+                                    ? isEn
+                                      ? 'Add a card first'
+                                      : "Ajoutez une carte d'abord"
+                                    : isEn
+                                      ? 'Continue to payment'
+                                      : 'Continuer vers le paiement'}
+                              </button>
+                              <button
+                                type="button"
+                                className="dashboard-user-edit-btn dashboard-user-edit-btn--secondary"
+                                style={{ marginLeft: 8 }}
+                                onClick={cancelWalletTopUp}
+                              >
+                                {isEn ? 'Cancel' : 'Annuler'}
+                              </button>
+                            </div>
+                          )}
+                        </article>
+                      ) : null}
                       <p className="client-compte-payment-stripe-notice" role="status">
                         {stripeOn
                           ? isEn
-                            ? 'Save a card with Stripe (test mode: 4242 4242 4242 4242). It is stored on your Stripe customer profile for rides on Go and wallet top-ups.'
-                            : 'Enregistrez une carte avec Stripe (mode test : 4242 4242 4242 4242). Elle est liee a votre compte pour les courses sur Go et les recharges portefeuille.'
+                            ? 'Save a card with Stripe (test: 4242…). Billing address is required. Used for Go rides and wallet top-ups.'
+                            : 'Enregistrez une carte Stripe (test : 4242…). Adresse de facturation obligatoire. Utilisable pour Go et le portefeuille.'
                           : stripeCheckoutEnabled()
                             ? isEn
                               ? 'Sign in to save a card with Stripe.'
@@ -2067,6 +2199,29 @@ export default function ClientCompteDashboard({ onBack, onOpenClientLiveMeet }: 
                         </div>
                       </div>
 
+                      {stripeOn && stripePaymentMethods[0]?.billing?.line1 ? (
+                        <>
+                          <h4 className="client-compte-payment-delivery-title">
+                            {isEn ? 'Billing address' : 'Adresse de facturation'}
+                          </h4>
+                          <article className="dashboard-user-card client-compte-payment-address-card">
+                            <p style={{ margin: 0 }}>
+                              {stripePaymentMethods[0].billing?.name ? (
+                                <>
+                                  {stripePaymentMethods[0].billing.name}
+                                  <br />
+                                </>
+                              ) : null}
+                              {formatStripeBillingLines(stripePaymentMethods[0].billing).map((line) => (
+                                <span key={line}>
+                                  {line}
+                                  <br />
+                                </span>
+                              ))}
+                            </p>
+                          </article>
+                        </>
+                      ) : null}
                       {!stripeOn && savedPaymentMethods[0] ? (
                         <>
                           <h4 className="client-compte-payment-delivery-title">
@@ -2476,6 +2631,11 @@ export default function ClientCompteDashboard({ onBack, onOpenClientLiveMeet }: 
                   </div>
                   {stripeOn && stripePk ? (
                     <>
+                      <p className="dashboard-field-hint" style={{ margin: '0 0 8px' }}>
+                        {isEn
+                          ? 'Card number, expiry, CVC and full billing address are required.'
+                          : 'Numero de carte, expiration, CVC et adresse de facturation complets sont requis.'}
+                      </p>
                       <PaltoStripeTestCardHint className="client-compte-payment-test-hint" />
                       {paymentModalLoading || !setupClientSecret ? (
                         <p className="dashboard-field-hint" style={{ margin: '12px 0' }}>
@@ -2872,67 +3032,34 @@ export default function ClientCompteDashboard({ onBack, onOpenClientLiveMeet }: 
                   <p className="client-compte-wallet-balance" aria-live="polite">
                     {formatWalletEUR(wallet.balanceCents, language)}
                   </p>
-                  {stripeOn && stripePk ? (
+                  {stripeOn ? (
                     <div className="client-compte-wallet-topup" style={{ marginTop: 12 }}>
                       <p className="dashboard-field-hint" style={{ margin: '0 0 8px' }}>
                         {isEn
-                          ? 'Top up with your card (Stripe test: 4242…). Balance is stored on your account.'
-                          : 'Rechargez par carte (test Stripe : 4242…). Le solde est enregistre sur votre compte.'}
+                          ? 'Choose an amount, then complete payment in Account → Payment (card + billing address).'
+                          : 'Choisissez un montant, puis finalisez dans Gerer le compte → Paiement (carte + adresse de facturation).'}
                       </p>
-                      <PaltoStripeTestCardHint className="client-compte-payment-test-hint" />
-                      {!walletTopupClientSecret ? (
-                        <>
-                          <div className="client-compte-wallet-topup-amounts" role="group" aria-label={isEn ? 'Top-up amount' : 'Montant de recharge'}>
-                            {[5, 10, 20].map((eur) => (
-                              <button
-                                key={eur}
-                                type="button"
-                                className={`dashboard-user-edit-btn${walletTopupAmountEur === eur ? '' : ' dashboard-user-edit-btn--secondary'}`}
-                                onClick={() => setWalletTopupAmountEur(eur)}
-                              >
-                                {formatWalletEUR(eur * 100, language)}
-                              </button>
-                            ))}
-                          </div>
+                      <div className="client-compte-wallet-topup-amounts" role="group" aria-label={isEn ? 'Top-up amount' : 'Montant de recharge'}>
+                        {[5, 10, 20].map((eur) => (
                           <button
+                            key={eur}
                             type="button"
-                            className="dashboard-user-edit-btn"
-                            style={{ marginTop: 8 }}
-                            disabled={walletTopupLoading || !isClientAuthenticated()}
-                            onClick={startWalletTopUp}
+                            className={`dashboard-user-edit-btn${walletTopupAmountEur === eur ? '' : ' dashboard-user-edit-btn--secondary'}`}
+                            onClick={() => setWalletTopupAmountEur(eur)}
                           >
-                            {walletTopupLoading
-                              ? isEn
-                                ? 'Preparing…'
-                                : 'Preparation…'
-                              : isEn
-                                ? 'Pay with card'
-                                : 'Payer par carte'}
+                            {formatWalletEUR(eur * 100, language)}
                           </button>
-                        </>
-                      ) : (
-                        <>
-                          <PaltoStripePaymentForm
-                            publishableKey={stripePk}
-                            clientSecret={walletTopupClientSecret}
-                            onSuccess={handleWalletTopUpSuccess}
-                            onError={(msg) => toast.error(msg)}
-                            submitLabel={
-                              isEn
-                                ? `Pay ${formatWalletEUR(walletTopupAmountEur * 100, language)}`
-                                : `Payer ${formatWalletEUR(walletTopupAmountEur * 100, language)}`
-                            }
-                          />
-                          <button
-                            type="button"
-                            className="dashboard-user-edit-btn dashboard-user-edit-btn--secondary"
-                            style={{ marginTop: 8 }}
-                            onClick={cancelWalletTopUp}
-                          >
-                            {isEn ? 'Cancel' : 'Annuler'}
-                          </button>
-                        </>
-                      )}
+                        ))}
+                      </div>
+                      <button
+                        type="button"
+                        className="dashboard-user-edit-btn"
+                        style={{ marginTop: 8 }}
+                        disabled={!isClientAuthenticated()}
+                        onClick={goToPaymentForWalletTopUp}
+                      >
+                        {isEn ? 'Continue to payment' : 'Continuer vers le paiement'}
+                      </button>
                     </div>
                   ) : (
                     <div className="dashboard-payment-actions" style={{ marginTop: 8 }}>
