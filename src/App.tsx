@@ -1023,7 +1023,24 @@ function App() {
       {currentPage.startsWith('project-') || currentPage === 'project' ? (
         renderCurrentPage()
       ) : (
-        <div className="app-page-font-zoom" style={{ zoom: appFontZoomFactor }}>
+        <div
+          className={`app-page-font-zoom${
+            currentPage === 'dashboard' ||
+            currentPage === 'dashboard-navigation' ||
+            currentPage === 'client-compte' ||
+            currentPage === 'client-meet-driver'
+              ? ' app-page-font-zoom--prefer-font-size'
+              : ''
+          }`}
+          style={
+            currentPage === 'dashboard' ||
+            currentPage === 'dashboard-navigation' ||
+            currentPage === 'client-compte' ||
+            currentPage === 'client-meet-driver'
+              ? undefined
+              : { zoom: appFontZoomFactor }
+          }
+        >
           {renderCurrentPage()}
         </div>
       )}

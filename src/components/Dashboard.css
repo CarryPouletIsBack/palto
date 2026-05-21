@@ -24,23 +24,53 @@
   align-items: stretch;
 }
 
-/* Chauffeur : html/body en overflow hidden — le scroll se fait dans la colonne principale. */
+/* Chauffeur : scroll dans .dashboard-content (chaîne flex sur toute la hauteur utile). */
+.page.active .main-accueil:has(.dashboard-container--chauffeur) {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-height: 0;
+  height: 100%;
+  max-height: 100%;
+  overflow: hidden;
+  margin-top: 0;
+  align-items: stretch;
+}
+
 .page.active .main-accueil:has(.dashboard-container--chauffeur) > .dashboard-container.dashboard-container--chauffeur {
   flex: 1 1 auto;
   min-height: 0;
   min-width: 0;
+  height: 100%;
+  max-height: 100%;
+  overflow: hidden;
 }
 
 .dashboard-container--chauffeur .dashboard-main {
+  flex: 1 1 auto;
   min-height: 0;
+  max-height: 100%;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.dashboard-container--chauffeur .dashboard-topbar {
+  flex-shrink: 0;
+}
+
+.dashboard-container--chauffeur .chauffeur-presence-geo {
+  flex-shrink: 0;
 }
 
 .dashboard-container--chauffeur .dashboard-content {
   flex: 1 1 auto;
   min-height: 0;
   overflow-y: auto;
+  overflow-x: hidden;
   -webkit-overflow-scrolling: touch;
   overscroll-behavior: contain;
+  touch-action: pan-y;
 }
 
 /* Sidebar */
@@ -4439,11 +4469,18 @@ button.dashboard-org-sidebar-brand--home:focus-visible {
   .dashboard-container--chauffeur .dashboard-content {
     flex: 1 1 auto;
     min-height: 0;
-    overflow-y: auto;
+    max-height: none;
+    overflow-y: scroll;
     overflow-x: hidden;
     -webkit-overflow-scrolling: touch;
     overscroll-behavior: contain;
     touch-action: pan-y;
+  }
+
+  .dashboard-container--chauffeur .dashboard-main--chauffeur-mobile-floating-account .dashboard-content {
+    max-height: calc(
+      100dvh - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px) - 56px - 52px
+    );
   }
 
   .dashboard-container--chauffeur .dashboard-content.dashboard-content--org-fullbleed {

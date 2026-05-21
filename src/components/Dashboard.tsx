@@ -792,6 +792,9 @@ const Dashboard = ({
   const [phoneNationalDraft, setPhoneNationalDraft] = useState('');
   const [phoneError, setPhoneError] = useState<string | null>(null);
   const [authSessionTick, setAuthSessionTick] = useState(0);
+  /** true pendant édition profil chauffeur — bloque l’écrasement du brouillon par la sync serveur. */
+  const profileFormDirtyRef = useRef(false);
+  const profileHydratedEmailRef = useRef<string | null>(null);
   const [complianceApiSnapshot, setComplianceApiSnapshot] = useState<ChauffeurComplianceSnapshot | null>(null);
   const [apiChauffeurStats, setApiChauffeurStats] = useState<ChauffeurActivityStatsForView | null>(null);
   const [apiHeatmapStats, setApiHeatmapStats] = useState<ChauffeurHeatmapStatsForView | null>(null);
@@ -829,41 +832,61 @@ const Dashboard = ({
     };
     window.addEventListener(PALTO_CLIENT_SESSION_CHANGED_EVENT, bump as EventListener);
     window.addEventListener(PALTO_CHAUFFEUR_SESSION_CHANGED_EVENT, bump as EventListener);
-    window.addEventListener(PALTO_CHAUFFEUR_PROFILE_SYNCED_EVENT, bump as EventListener);
     window.addEventListener('storage', onStorage);
     return () => {
       window.removeEventListener(PALTO_CLIENT_SESSION_CHANGED_EVENT, bump as EventListener);
       window.removeEventListener(PALTO_CHAUFFEUR_SESSION_CHANGED_EVENT, bump as EventListener);
-      window.removeEventListener(PALTO_CHAUFFEUR_PROFILE_SYNCED_EVENT, bump as EventListener);
       window.removeEventListener('storage', onStorage);
     };
   }, []);
 
-  const applyChauffeurProfileToUi = useCallback((profile: ChauffeurProfile) => {
-    const normalized: ChauffeurProfile = {
-      ...profile,
-      ville: profile.ville ?? '',
-      vehicule: profile.vehicule ?? '',
-      plaque: profile.plaque ?? '',
-      prenom: profile.prenom ?? '',
-      nom: profile.nom ?? '',
-      email: profile.email ?? '',
-      telephone: profile.telephone ?? '',
+  const applyChauffeurProfileToUi = useCallback(
+    (profile: ChauffeurProfile, options?: { overwriteDraft?: boolean }) => {
+      const vehiculeSlug = normalizeVehicleSlugForSelect(profile.vehicule);
+      const normalized: ChauffeurProfile = {
+        ...profile,
+        ville: profile.ville ?? '',
+        vehicule: vehiculeSlug || (profile.vehicule ?? '').trim(),
+        plaque: profile.plaque ?? '',
+        prenom: profile.prenom ?? '',
+        nom: profile.nom ?? '',
+        email: profile.email ?? '',
+        telephone: profile.telephone ?? '',
+      };
+      setChauffeurProfile(normalized);
+      const mayTouchDraft =
+        options?.overwriteDraft !== false && !profileFormDirtyRef.current;
+      if (mayTouchDraft) {
+        setUserProfileDraft(normalized);
+        const parsedStoredPhone = parseStoredPhone(normalized.telephone);
+        if (normalized.telephone.trim()) {
+          setPhoneCountryDraft(parsedStoredPhone.country);
+          setPhoneNationalDraft(parsedStoredPhone.nationalNumber);
+        }
+      }
+      setProfilePhotoUrl(profile.profilePhotoUrl ?? null);
+      setOrganizationPhotoUrl(profile.organizationPhotoUrl ?? null);
+      setVehiclePhotoUrl(profile.vehiclePhotoUrl ?? null);
+      setProfilePhotoName(profile.profilePhotoName ?? '');
+      setOrganizationPhotoName(profile.organizationPhotoName ?? '');
+      setVehiclePhotoName(profile.vehiclePhotoName ?? '');
+    },
+    []
+  );
+
+  useEffect(() => {
+    const onProfileSynced = () => {
+      if (profileFormDirtyRef.current) return;
+      const sessionEmail = getChauffeurSessionEmail().toLowerCase();
+      if (!sessionEmail) return;
+      const merged = loadStoredChauffeurProfile(normalizeChauffeurEmail(sessionEmail));
+      if (merged) applyChauffeurProfileToUi(merged, { overwriteDraft: true });
     };
-    setChauffeurProfile(normalized);
-    setUserProfileDraft(normalized);
-    setProfilePhotoUrl(profile.profilePhotoUrl ?? null);
-    setOrganizationPhotoUrl(profile.organizationPhotoUrl ?? null);
-    setVehiclePhotoUrl(profile.vehiclePhotoUrl ?? null);
-    setProfilePhotoName(profile.profilePhotoName ?? '');
-    setOrganizationPhotoName(profile.organizationPhotoName ?? '');
-    setVehiclePhotoName(profile.vehiclePhotoName ?? '');
-    const parsedStoredPhone = parseStoredPhone(normalized.telephone);
-    if (normalized.telephone.trim()) {
-      setPhoneCountryDraft(parsedStoredPhone.country);
-      setPhoneNationalDraft(parsedStoredPhone.nationalNumber);
-    }
-  }, []);
+    window.addEventListener(PALTO_CHAUFFEUR_PROFILE_SYNCED_EVENT, onProfileSynced);
+    return () => {
+      window.removeEventListener(PALTO_CHAUFFEUR_PROFILE_SYNCED_EVENT, onProfileSynced);
+    };
+  }, [applyChauffeurProfileToUi]);
 
   useEffect(() => {
     const sessionEmail = getChauffeurSessionEmail().toLowerCase();
@@ -871,39 +894,45 @@ const Dashboard = ({
     const emailNorm = normalizeChauffeurEmail(sessionEmail);
     let cancelled = false;
 
-    const storedProfile = loadStoredChauffeurProfile(emailNorm);
-    if (storedProfile) {
-      applyChauffeurProfileToUi(storedProfile);
+    const isNewSession = profileHydratedEmailRef.current !== emailNorm;
+    if (isNewSession) {
+      profileHydratedEmailRef.current = emailNorm;
+      profileFormDirtyRef.current = false;
+
+      const storedProfile = loadStoredChauffeurProfile(emailNorm);
+      if (storedProfile) {
+        applyChauffeurProfileToUi(storedProfile, { overwriteDraft: true });
+      }
+
+      const inferred = inferProfileFromEmail(sessionEmail);
+      const registryPhone = loadChauffeurRegistry()[emailNorm]?.phoneInternational ?? '';
+      const parsedRegistryPhone = parseStoredPhone(registryPhone);
+
+      setChauffeurProfile((prev) => ({
+        ...prev,
+        email: prev.email.trim() ? prev.email : sessionEmail,
+        prenom: prev.prenom.trim() ? prev.prenom : inferred.prenom,
+        nom: prev.nom.trim() ? prev.nom : inferred.nom,
+        telephone: prev.telephone.trim() ? prev.telephone : registryPhone,
+      }));
+      setUserProfileDraft((prev) => ({
+        ...prev,
+        email: prev.email.trim() ? prev.email : sessionEmail,
+        prenom: prev.prenom.trim() ? prev.prenom : inferred.prenom,
+        nom: prev.nom.trim() ? prev.nom : inferred.nom,
+        telephone: prev.telephone.trim() ? prev.telephone : registryPhone,
+      }));
+      if (registryPhone.trim() && !storedProfile?.telephone.trim()) {
+        setPhoneCountryDraft(parsedRegistryPhone.country);
+        setPhoneNationalDraft(parsedRegistryPhone.nationalNumber);
+      }
+
+      void syncChauffeurProfileWithServer(sessionEmail).then(() => {
+        if (cancelled || profileFormDirtyRef.current) return;
+        const merged = loadStoredChauffeurProfile(emailNorm);
+        if (merged) applyChauffeurProfileToUi(merged, { overwriteDraft: true });
+      });
     }
-
-    const inferred = inferProfileFromEmail(sessionEmail);
-    const registryPhone = loadChauffeurRegistry()[emailNorm]?.phoneInternational ?? '';
-    const parsedRegistryPhone = parseStoredPhone(registryPhone);
-
-    setChauffeurProfile((prev) => ({
-      ...prev,
-      email: prev.email.trim() ? prev.email : sessionEmail,
-      prenom: prev.prenom.trim() ? prev.prenom : inferred.prenom,
-      nom: prev.nom.trim() ? prev.nom : inferred.nom,
-      telephone: prev.telephone.trim() ? prev.telephone : registryPhone,
-    }));
-    setUserProfileDraft((prev) => ({
-      ...prev,
-      email: prev.email.trim() ? prev.email : sessionEmail,
-      prenom: prev.prenom.trim() ? prev.prenom : inferred.prenom,
-      nom: prev.nom.trim() ? prev.nom : inferred.nom,
-      telephone: prev.telephone.trim() ? prev.telephone : registryPhone,
-    }));
-    if (registryPhone.trim() && !storedProfile?.telephone.trim()) {
-      setPhoneCountryDraft(parsedRegistryPhone.country);
-      setPhoneNationalDraft(parsedRegistryPhone.nationalNumber);
-    }
-
-    void syncChauffeurProfileWithServer(sessionEmail).then(() => {
-      if (cancelled) return;
-      const merged = loadStoredChauffeurProfile(emailNorm);
-      if (merged) applyChauffeurProfileToUi(merged);
-    });
 
     return () => {
       cancelled = true;
@@ -1861,7 +1890,53 @@ const Dashboard = ({
       .sort((a, b) => a.ts - b.ts)[0]?.course;
   }, [courseRows]);
 
+  const markProfileFormDirty = useCallback(() => {
+    profileFormDirtyRef.current = true;
+  }, []);
+
+  const isChauffeurProfileFormDirty = useMemo(() => {
+    const savedPhone = parseStoredPhone(chauffeurProfile.telephone);
+    const draftVehicle = normalizeVehicleSlugForSelect(userProfileDraft.vehicule);
+    const savedVehicle = normalizeVehicleSlugForSelect(chauffeurProfile.vehicule);
+    return (
+      userProfileDraft.ville.trim() !== chauffeurProfile.ville.trim() ||
+      draftVehicle !== savedVehicle ||
+      normalizeFrenchPlate(userProfileDraft.plaque) !== normalizeFrenchPlate(chauffeurProfile.plaque) ||
+      phoneNationalDraft !== savedPhone.nationalNumber ||
+      phoneCountryDraft !== savedPhone.country ||
+      (profilePhotoDraftUrl ?? '') !== (profilePhotoUrl ?? '') ||
+      (organizationPhotoDraftUrl ?? '') !== (organizationPhotoUrl ?? '') ||
+      (vehiclePhotoDraftUrl ?? '') !== (vehiclePhotoUrl ?? '') ||
+      (profilePhotoDraftName ?? '') !== (profilePhotoName ?? '') ||
+      (organizationPhotoDraftName ?? '') !== (organizationPhotoName ?? '') ||
+      (vehiclePhotoDraftName ?? '') !== (vehiclePhotoName ?? '')
+    );
+  }, [
+    chauffeurProfile.plaque,
+    chauffeurProfile.telephone,
+    chauffeurProfile.vehicule,
+    chauffeurProfile.ville,
+    organizationPhotoDraftName,
+    organizationPhotoDraftUrl,
+    organizationPhotoName,
+    organizationPhotoUrl,
+    phoneCountryDraft,
+    phoneNationalDraft,
+    profilePhotoDraftName,
+    profilePhotoDraftUrl,
+    profilePhotoName,
+    profilePhotoUrl,
+    userProfileDraft.plaque,
+    userProfileDraft.vehicule,
+    userProfileDraft.ville,
+    vehiclePhotoDraftName,
+    vehiclePhotoDraftUrl,
+    vehiclePhotoName,
+    vehiclePhotoUrl,
+  ]);
+
   const cancelUserProfileEdit = useCallback(() => {
+    profileFormDirtyRef.current = false;
     const parsedPhone = parseStoredPhone(chauffeurProfile.telephone);
     setUserProfileDraft(chauffeurProfile);
     setPhoneCountryDraft(parsedPhone.country);
@@ -1915,12 +1990,13 @@ const Dashboard = ({
 
     setPlateError(null);
     setPhoneError(null);
+    profileFormDirtyRef.current = false;
     setChauffeurProfile(nextProfile);
     setUserProfileDraft(nextProfile);
     persistStoredChauffeurProfile(nextProfile);
     void syncChauffeurProfileWithServer(nextProfile.email).then(() => {
       const merged = loadStoredChauffeurProfile(normalizeChauffeurEmail(nextProfile.email));
-      if (merged) applyChauffeurProfileToUi(merged);
+      if (merged) applyChauffeurProfileToUi(merged, { overwriteDraft: true });
     });
     const vehicleSlugForApi = vehicleSlug || null;
     void syncChauffeurRideProfileToServer({
@@ -1956,11 +2032,14 @@ const Dashboard = ({
 
   const handlePlateBlurLookup = useCallback(() => {
     const normalizedPlate = normalizeFrenchPlate(userProfileDraft.plaque);
+    if (normalizedPlate !== userProfileDraft.plaque.trim()) {
+      markProfileFormDirty();
+    }
     setUserProfileDraft((prev) => ({ ...prev, plaque: normalizedPlate }));
     setPlateError(null);
     setPlateLookupHint(null);
     setIsPlateLookupLoading(false);
-  }, [userProfileDraft.plaque]);
+  }, [markProfileFormDirty, userProfileDraft.plaque]);
 
   const cancelPaymentEdit = useCallback(() => {
     setPaymentDraft(chauffeurPayment);
@@ -2013,15 +2092,15 @@ const Dashboard = ({
         luggageAssistance: profile.luggageAssistance,
         insulatedBag: profile.insulatedBag,
       }))
-      const vehicleSlug = profile.vehicleType ?? '';
+      const vehicleSlug = normalizeVehicleSlugForSelect(profile.vehicleType) || (profile.vehicleType ?? '').trim();
       setChauffeurProfile((prev) => {
-        if (prev.vehicule.trim()) return prev;
+        if (profileFormDirtyRef.current || prev.vehicule.trim()) return prev;
         const next = { ...prev, vehicule: vehicleSlug };
         persistStoredChauffeurProfile(next);
         return next;
       });
       setUserProfileDraft((prev) => {
-        if (prev.vehicule.trim()) return prev;
+        if (profileFormDirtyRef.current || prev.vehicule.trim()) return prev;
         return { ...prev, vehicule: vehicleSlug };
       });
     })
@@ -3517,7 +3596,12 @@ const Dashboard = ({
                                   <div className="dashboard-phone-input-row">
                                     <select
                                       value={phoneCountryDraft}
-                                      onChange={(e) => setPhoneCountryDraft(e.target.value as SupportedPhoneCountry)}
+                                      onChange={(e) => {
+                                        markProfileFormDirty();
+                                        setPhoneCountryDraft(
+                                          readFormControlValue(e) as SupportedPhoneCountry
+                                        );
+                                      }}
                                     >
                                       {PHONE_COUNTRIES.map((country) => (
                                         <option key={country.code} value={country.code}>
@@ -3529,6 +3613,7 @@ const Dashboard = ({
                                       type="text"
                                       value={phoneNationalDraft}
                                       onChange={(e) => {
+                                        markProfileFormDirty();
                                         setPhoneNationalDraft(readFormControlValue(e));
                                         if (phoneError) setPhoneError(null);
                                       }}
@@ -3553,6 +3638,7 @@ const Dashboard = ({
                                     enterKeyHint="next"
                                     value={userProfileDraft.ville ?? ''}
                                     onChange={(e) => {
+                                      markProfileFormDirty();
                                       const ville = readFormControlValue(e);
                                       setUserProfileDraft((prev) => ({ ...prev, ville }));
                                     }}
@@ -3568,6 +3654,7 @@ const Dashboard = ({
                                     name="chauffeur-vehicule"
                                     value={normalizeVehicleSlugForSelect(userProfileDraft.vehicule)}
                                     onChange={(e) => {
+                                      markProfileFormDirty();
                                       const slug = normalizeVehicleSlugForSelect(readFormControlValue(e));
                                       setUserProfileDraft((prev) => ({ ...prev, vehicule: slug }));
                                     }}
@@ -3584,13 +3671,14 @@ const Dashboard = ({
                                   Plaque
                                   <input
                                     type="text"
-                                    value={userProfileDraft.plaque}
-                                    onChange={(e) =>
+                                    value={userProfileDraft.plaque ?? ''}
+                                    onChange={(e) => {
+                                      markProfileFormDirty();
                                       setUserProfileDraft((prev) => ({
                                         ...prev,
                                         plaque: readFormControlValue(e),
-                                      }))
-                                    }
+                                      }));
+                                    }}
                                     onBlur={() => {
                                       void handlePlateBlurLookup();
                                     }}
@@ -3610,10 +3698,7 @@ const Dashboard = ({
                                   <strong>Statut compte</strong>
                                   <p>Actif</p>
                                 </div>
-                                {(JSON.stringify(userProfileDraft) !== JSON.stringify(chauffeurProfile) ||
-                                  phoneNationalDraft !== parseStoredPhone(chauffeurProfile.telephone).nationalNumber ||
-                                  phoneCountryDraft !== parseStoredPhone(chauffeurProfile.telephone).country ||
-                                  (profilePhotoDraftUrl ?? '') !== (profilePhotoUrl ?? '')) ? (
+                                {isChauffeurProfileFormDirty ? (
                                   <div className="dashboard-user-edit-actions">
                                     <button type="submit" className="dashboard-user-save-btn">
                                       Enregistrer

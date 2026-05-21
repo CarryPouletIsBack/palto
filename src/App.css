@@ -54,6 +54,11 @@
   min-width: 0;
 }
 
+/* Dashboard / compte : pas de zoom CSS (Chrome casse overflow-y sur .dashboard-content). */
+.app-page-font-zoom.app-page-font-zoom--prefer-font-size {
+  font-size: calc(1rem * var(--app-user-font-zoom, 1));
+}
+
 .app-page-font-zoom > .hero-accueil-root {
   flex: 1 1 auto;
   min-height: min-content;
