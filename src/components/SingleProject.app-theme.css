@@ -70,6 +70,25 @@ html[data-app-theme='dark'] .palto-checkout__payment {
   border-color: rgba(255, 255, 255, 0.18);
 }
 
+html[data-app-theme='dark'] .palto-checkout-test-hint {
+  background: #2a2218;
+  border-color: #6b4f2a;
+}
+
+html[data-app-theme='dark'] .palto-checkout-test-hint__title {
+  color: #fdba74;
+}
+
+html[data-app-theme='dark'] .palto-checkout-test-hint__copy {
+  background: #232d3f;
+  color: #fdba74;
+}
+
+html[data-app-theme='dark'] .palto-checkout__step--active {
+  background: #3d2e1f;
+  color: #fdba74;
+}
+
 html[data-app-theme='dark'] .palto-checkout__payment--active {
   background: rgba(251, 146, 60, 0.12);
   border-color: rgba(255, 140, 66, 0.55);

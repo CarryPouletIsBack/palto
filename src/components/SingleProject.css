@@ -6237,10 +6237,115 @@ html[data-app-theme='dark'] .palto-ride-timing-expand__option:hover {
   margin-top: 8px;
 }
 
+.palto-checkout__session {
+  margin: 0;
+  font-size: 13px;
+  color: var(--sp-text-subtle);
+}
+
+.palto-checkout__steps {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.palto-checkout__step {
+  font-size: 12px;
+  font-weight: 700;
+  padding: 6px 10px;
+  border-radius: 999px;
+  border: 1px solid var(--sp-edge-medium);
+  color: var(--sp-text-subtle);
+  background: var(--sp-surface-alt);
+}
+
+.palto-checkout__step--active {
+  border-color: #ff8c42;
+  color: #c2410c;
+  background: #fff3eb;
+}
+
+.palto-checkout__step--done {
+  border-color: #86efac;
+  color: #166534;
+  background: #ecfdf5;
+}
+
+.palto-checkout__step--pending {
+  opacity: 0.65;
+}
+
+.palto-checkout__lead--card {
+  margin-top: 4px;
+}
+
+.palto-checkout-test-hint {
+  border: 1px solid #ffd6a8;
+  border-radius: 10px;
+  padding: 10px 12px;
+  background: #fff8f0;
+  color: var(--sp-text);
+}
+
+.palto-checkout-test-hint__title {
+  margin: 0 0 4px;
+  font-size: 13px;
+  font-weight: 800;
+  color: #c2410c;
+}
+
+.palto-checkout-test-hint__lead {
+  margin: 0 0 8px;
+  font-size: 13px;
+  line-height: 1.4;
+  color: var(--sp-text-subtle);
+}
+
+.palto-checkout-test-hint__row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.palto-checkout-test-hint__code {
+  font-size: 15px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  padding: 6px 10px;
+  border-radius: 8px;
+  background: var(--sp-card-surface);
+  border: 1px dashed var(--sp-edge-dashed);
+}
+
+.palto-checkout-test-hint__copy {
+  border: 1px solid #ff8c42;
+  border-radius: 8px;
+  background: #fff;
+  color: #c2410c;
+  font-size: 12px;
+  font-weight: 700;
+  padding: 6px 10px;
+  cursor: pointer;
+}
+
+.palto-checkout-test-hint__meta {
+  margin: 8px 0 0;
+  padding-left: 18px;
+  font-size: 12px;
+  color: var(--sp-text-subtle);
+  line-height: 1.45;
+}
+
 .palto-checkout-stripe {
   display: grid;
   gap: 12px;
   margin-top: 4px;
+}
+
+.palto-checkout-stripe .p-Input,
+.palto-checkout-stripe .Input {
+  min-height: 44px;
 }
 
 .palto-checkout-stripe__pay {

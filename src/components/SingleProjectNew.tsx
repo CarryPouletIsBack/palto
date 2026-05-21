@@ -18,8 +18,8 @@ import { trackEvent } from '../services/googleAnalyticsTracking';
 import { createRideOrder } from '../services/createRideOrder';
 import { confirmRidePaymentAuthorized } from '../services/stripeRidePayment';
 import { stripeCheckoutEnabled, stripePublishableKey } from '../constants/featureFlags';
-import { formatRideTotalWithPaltoFee, PALTO_PLATFORM_FEE_EUR } from '../constants/stripeFees';
-import PaltoStripePaymentForm from './PaltoStripePaymentForm';
+import { formatRideTotalWithPaltoFee } from '../constants/stripeFees';
+import PaltoRideCheckoutPanel from './PaltoRideCheckoutPanel';
 import { motion, useMotionValue } from 'framer-motion';
 import { Swiper, SwiperSlide } from 'swiper/react';
 import { Pagination } from 'swiper/modules';
@@ -1738,7 +1738,7 @@ const SingleProjectNew: FC<SingleProjectProps> = ({
     if (fullName) {
       setCheckoutCustomerName((prev) => (prev.trim() ? prev : fullName));
     }
-  }, []);
+  }, [clientSessionTick]);
   const closeRecapPopup = useCallback(() => {
     setIsRecapPopupOpen(false);
   }, []);
@@ -3462,127 +3462,85 @@ const SingleProjectNew: FC<SingleProjectProps> = ({
                 >
                   ×
                 </button>
-                <h2 className="palto-ride-card__title">Checkout commande</h2>
-                <div className="palto-checkout">
-                  <p className="palto-checkout__lead">
-                    Verifiez les informations de la course avant confirmation.
-                  </p>
-                  <div className="palto-checkout__summary">
-                    <p>
-                      <span>Chauffeur :</span>{' '}
-                      <strong>
-                        {paltoPickupTiming === 'later'
-                          ? 'A confirmer par un chauffeur'
-                          : paltoSelectedDriver
-                            ? paltoSelectedDriver.name
-                            : '—'}
-                      </strong>
-                    </p>
-                    <p>
-                      <span>Vehicule :</span>{' '}
-                      <strong>
-                        {paltoPickupTiming === 'later'
-                          ? '—'
-                          : paltoSelectedDriver
-                            ? paltoSelectedDriver.moto
-                            : '—'}
-                      </strong>
-                    </p>
-                    {(() => {
-                      let driverEur = paltoPricing ? Number.parseFloat(paltoPricing.ttc) : NaN
-                      if (!Number.isFinite(driverEur) || driverEur <= 0) {
-                        const km = paltoRouteDistanceKm
-                        if (km != null && Number.isFinite(km)) {
-                          driverEur = Math.max(
-                            6,
-                            (effectiveBaseFareEur + km * effectivePricePerKmEur) *
-                              effectiveDriverPricingMultiplier *
-                              (1 + (isNightRide ? effectiveNightSurchargeRate : 0))
-                          )
+                <h2 className="palto-ride-card__title">{t('search.checkoutTitle')}</h2>
+                <PaltoRideCheckoutPanel
+                  clientLoggedInEmail={
+                    isClientAuthenticated() ? getCurrentClientUser()?.email?.trim() || null : null
+                  }
+                  customerName={checkoutCustomerName}
+                  customerEmail={checkoutCustomerEmail}
+                  clientComment={checkoutClientComment}
+                  onCustomerNameChange={setCheckoutCustomerName}
+                  onCustomerEmailChange={setCheckoutCustomerEmail}
+                  onClientCommentChange={setCheckoutClientComment}
+                  stripeClientSecret={checkoutStripeClientSecret}
+                  checkoutError={checkoutError}
+                  checkoutSuccessMessage={checkoutSuccessMessage}
+                  onStripeSuccess={() => void finishCheckoutAfterPayment()}
+                  onStripeError={(msg) => setCheckoutError(msg)}
+                  summary={
+                    <>
+                      <p>
+                        <span>{t('search.checkoutDriverLabel')}</span>{' '}
+                        <strong>
+                          {paltoPickupTiming === 'later'
+                            ? t('search.checkoutDriverLater')
+                            : paltoSelectedDriver
+                              ? paltoSelectedDriver.name
+                              : '—'}
+                        </strong>
+                      </p>
+                      <p>
+                        <span>{t('search.checkoutVehicleLabel')}</span>{' '}
+                        <strong>
+                          {paltoPickupTiming === 'later'
+                            ? '—'
+                            : paltoSelectedDriver
+                              ? paltoSelectedDriver.moto
+                              : '—'}
+                        </strong>
+                      </p>
+                      {(() => {
+                        let driverEur = paltoPricing ? Number.parseFloat(paltoPricing.ttc) : NaN
+                        if (!Number.isFinite(driverEur) || driverEur <= 0) {
+                          const km = paltoRouteDistanceKm
+                          if (km != null && Number.isFinite(km)) {
+                            driverEur = Math.max(
+                              6,
+                              (effectiveBaseFareEur + km * effectivePricePerKmEur) *
+                                effectiveDriverPricingMultiplier *
+                                (1 + (isNightRide ? effectiveNightSurchargeRate : 0))
+                            )
+                          }
                         }
-                      }
-                      const breakdown =
-                        Number.isFinite(driverEur) && driverEur > 0
-                          ? formatRideTotalWithPaltoFee(driverEur)
-                          : null
-                      return breakdown ? (
-                        <>
+                        const breakdown =
+                          Number.isFinite(driverEur) && driverEur > 0
+                            ? formatRideTotalWithPaltoFee(driverEur)
+                            : null
+                        return breakdown ? (
+                          <>
+                            <p>
+                              <span>{t('search.checkoutDriverFare')}</span>{' '}
+                              <strong>{breakdown.driverEur.toFixed(2)} EUR</strong>
+                            </p>
+                            <p>
+                              <span>{t('search.checkoutPaltoFee')}</span>{' '}
+                              <strong>{breakdown.paltoFeeEur.toFixed(2)} EUR</strong>
+                            </p>
+                            <p>
+                              <span>{t('search.checkoutTotalAuth')}</span>{' '}
+                              <strong>{breakdown.totalEur.toFixed(2)} EUR</strong>
+                            </p>
+                          </>
+                        ) : (
                           <p>
-                            <span>Tarif chauffeur (TTC) :</span>{' '}
-                            <strong>{breakdown.driverEur.toFixed(2)} EUR</strong>
+                            <span>{t('search.checkoutTotalEstimate')}</span> <strong>—</strong>
                           </p>
-                          <p>
-                            <span>Commission Palto :</span>{' '}
-                            <strong>{breakdown.paltoFeeEur.toFixed(2)} EUR</strong>
-                          </p>
-                          <p>
-                            <span>Total autorise sur la carte :</span>{' '}
-                            <strong>{breakdown.totalEur.toFixed(2)} EUR</strong>
-                          </p>
-                        </>
-                      ) : (
-                        <p>
-                          <span>Total estime TTC :</span> <strong>—</strong>
-                        </p>
-                      )
-                    })()}
-                    <p className="palto-checkout__lead">
-                      {stripeCheckoutEnabled()
-                        ? `Autorisation bancaire (sans debit immediat). Palto preleve ${PALTO_PLATFORM_FEE_EUR} EUR + le tarif chauffeur a la fin de course. Annulation rapide : aucun frais.`
-                        : 'Paiement en ligne non configure : reglement prevu directement avec le chauffeur.'}
-                    </p>
-                  </div>
-
-                  <label className="palto-checkout__field">
-                    <span>Nom (optionnel)</span>
-                    <input
-                      type="text"
-                      className="palto-ride-input"
-                      value={checkoutCustomerName}
-                      onChange={(e) => setCheckoutCustomerName(e.target.value)}
-                      placeholder="Votre nom"
-                      autoComplete="name"
-                    />
-                  </label>
-
-                  <label className="palto-checkout__field">
-                    <span>Email pour le recapitulatif</span>
-                    <input
-                      type="email"
-                      className="palto-ride-input"
-                      value={checkoutCustomerEmail}
-                      onChange={(e) => setCheckoutCustomerEmail(e.target.value)}
-                      placeholder="vous@example.com"
-                      autoComplete="email"
-                    />
-                  </label>
-                  <label className="palto-checkout__field">
-                    <span>Commentaire pour le chauffeur (optionnel)</span>
-                    <textarea
-                      className="palto-ride-input"
-                      value={checkoutClientComment}
-                      onChange={(e) => setCheckoutClientComment(e.target.value)}
-                      placeholder="Ex: l entree de mon batiment est derriere le batiment de la poste."
-                      maxLength={600}
-                      rows={3}
-                    />
-                  </label>
-
-                  {checkoutStripeClientSecret && stripePublishableKey() ? (
-                    <PaltoStripePaymentForm
-                      publishableKey={stripePublishableKey()!}
-                      clientSecret={checkoutStripeClientSecret}
-                      submitLabel="Autoriser le paiement sur la carte"
-                      onSuccess={() => void finishCheckoutAfterPayment()}
-                      onError={(msg) => setCheckoutError(msg)}
-                    />
-                  ) : null}
-
-                  {checkoutError ? <p className="palto-checkout__error">{checkoutError}</p> : null}
-                  {checkoutSuccessMessage ? (
-                    <p className="palto-checkout__success">{checkoutSuccessMessage}</p>
-                  ) : null}
-                </div>
+                        )
+                      })()}
+                    </>
+                  }
+                />
                 <div className="palto-ride-recap-modal__actions">
                   {!checkoutStripeClientSecret ? (
                     <Button
@@ -3597,12 +3555,12 @@ const SingleProjectNew: FC<SingleProjectProps> = ({
                       onClick={() => void handleCheckoutConfirm()}
                     >
                       {checkoutSubmitting
-                        ? 'Preparation…'
+                        ? t('search.checkoutPreparing')
                         : stripeCheckoutEnabled()
-                          ? 'Continuer vers le paiement'
+                          ? t('search.checkoutContinuePayment')
                           : paltoPickupTiming === 'later'
-                            ? 'Finaliser la reservation'
-                            : 'Confirmer la commande'}
+                            ? t('search.bookingRecapConfirmScheduled')
+                            : t('search.checkoutConfirmOrder')}
                     </Button>
                   ) : null}
                 </div>
