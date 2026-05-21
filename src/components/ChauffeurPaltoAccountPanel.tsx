@@ -494,49 +494,54 @@ export default function ChauffeurPaltoAccountPanel({
             </div>
           </div>
         </div>
-      ) : null}
+        ) : null
+      )}
 
-      {paymentViewPm ? (
-        <div
-          className="client-compte-account-edit-modal-backdrop"
-          role="presentation"
-          onClick={() => setPaymentViewPm(null)}
-        >
+      {mountAccountModal(
+        paymentViewPm ? (
           <div
-            className="client-compte-account-edit-modal"
-            role="dialog"
-            aria-modal="true"
-            onClick={(e) => e.stopPropagation()}
+            className="client-compte-account-edit-modal-backdrop"
+            role="presentation"
+            onClick={() => setPaymentViewPm(null)}
           >
-            <div className="client-compte-account-edit-modal-head">
-              <h4>{formatStripeCardBrand(paymentViewPm.brand)} •••• {paymentViewPm.last4}</h4>
-            </div>
-            <div className="client-compte-account-edit-modal-body">
-              <p>
-                {String(paymentViewPm.expMonth).padStart(2, '0')}/{String(paymentViewPm.expYear).slice(-2)}
-              </p>
-              {paymentViewPm.billing?.line1 ? (
+            <div
+              className="client-compte-account-edit-modal"
+              role="dialog"
+              aria-modal="true"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="client-compte-account-edit-modal-head">
+                <h4>
+                  {formatStripeCardBrand(paymentViewPm.brand)} •••• {paymentViewPm.last4}
+                </h4>
+              </div>
+              <div className="client-compte-account-edit-modal-body">
                 <p>
-                  {formatStripeBillingLines(paymentViewPm.billing).map((line) => (
-                    <span key={line}>
-                      {line}
-                      <br />
-                    </span>
-                  ))}
+                  {String(paymentViewPm.expMonth).padStart(2, '0')}/
+                  {String(paymentViewPm.expYear).slice(-2)}
                 </p>
-              ) : null}
-            </div>
-            <div className="client-compte-account-edit-modal-actions">
-              <button
-                type="button"
-                className="dashboard-user-edit-btn"
-                onClick={() => setPaymentViewPm(null)}
-              >
-                {isEn ? 'Close' : 'Fermer'}
-              </button>
+                {paymentViewPm.billing?.line1 ? (
+                  <p>
+                    {formatStripeBillingLines(paymentViewPm.billing).map((line) => (
+                      <span key={line}>
+                        {line}
+                        <br />
+                      </span>
+                    ))}
+                  </p>
+                ) : null}
+              </div>
+              <div className="client-compte-account-edit-modal-actions">
+                <button
+                  type="button"
+                  className="dashboard-user-edit-btn"
+                  onClick={() => setPaymentViewPm(null)}
+                >
+                  {isEn ? 'Close' : 'Fermer'}
+                </button>
+              </div>
             </div>
           </div>
-        </div>
         ) : null
       )}
     </div>
