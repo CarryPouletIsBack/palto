@@ -16,6 +16,21 @@ function isVehicleTypeSlug(value: string): boolean {
   return Boolean(vehicleTypeLabel(value))
 }
 
+function profilePhotoFromPayload(payload: Record<string, unknown>): string | undefined {
+  const keys = [
+    'driverProfilePhotoUrl',
+    'profilePhotoUrl',
+    'profile_photo_url',
+    'photoUrl',
+    'avatarUrl',
+  ] as const
+  for (const key of keys) {
+    const v = payload[key]
+    if (typeof v === 'string' && v.trim()) return v.trim()
+  }
+  return undefined
+}
+
 /** Métadonnées chauffeur stockées dans `course_events.payload` à l’acceptation. */
 export type AcceptedDriverPayload = {
   driverName: string
@@ -90,10 +105,7 @@ export function normalizeDriverMetaFromEventPayload(
     typeof payload.driverName === 'string' ? payload.driverName.trim() : undefined
   const driverPhone =
     typeof payload.driverPhone === 'string' ? payload.driverPhone.trim() : undefined
-  const driverProfilePhotoUrl =
-    typeof payload.driverProfilePhotoUrl === 'string'
-      ? payload.driverProfilePhotoUrl.trim()
-      : undefined
+  const driverProfilePhotoUrl = profilePhotoFromPayload(payload)
   const licensePlate =
     typeof payload.licensePlate === 'string' ? payload.licensePlate.trim() : undefined
   const vehicleType =
@@ -171,7 +183,8 @@ export function mergeDriverMeta(
   return {
     driverName: fromEvent.driverName || fromAccount.driverName,
     driverPhone: fromEvent.driverPhone || fromAccount.driverPhone,
-    driverProfilePhotoUrl: fromEvent.driverProfilePhotoUrl || fromAccount.driverProfilePhotoUrl,
+    driverProfilePhotoUrl:
+      fromAccount.driverProfilePhotoUrl || fromEvent.driverProfilePhotoUrl,
     licensePlate: fromEvent.licensePlate || fromAccount.licensePlate,
     vehicleType: fromEvent.vehicleType || fromAccount.vehicleType,
     vehicleModel: fromEvent.vehicleModel || fromAccount.vehicleModel,

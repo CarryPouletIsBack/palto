@@ -212,9 +212,10 @@ export default function ClientRideTrackingView(props: ClientRideTrackingViewProp
         longitude: driverLngLat.lng,
         latitude: driverLngLat.lat,
         name: driverName,
+        profilePhotoUrl: driverProfilePhotoUrl,
       },
     ];
-  }, [driverLngLat, driverName]);
+  }, [driverLngLat, driverName, driverProfilePhotoUrl]);
 
   /** Cadrage auto : prise en charge + arrivée uniquement (pas le chauffeur / GPS en direct). */
   const mapFlyTo = useMemo((): HomeMapFlyTo | null => {

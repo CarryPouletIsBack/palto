@@ -271,20 +271,20 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       .select('course_id,payload')
       .in('course_id', courseIds)
       .in('event_type', ['accepted', 'started', 'completed'])
-      .order('created_at', { ascending: false })
+      .order('created_at', { ascending: true })
     for (const row of (eventsData ?? []) as CourseEventRow[]) {
-      if (driverMetaByCourse.has(row.course_id)) continue
-      const meta = normalizeDriverMetaFromEventPayload(row.payload)
+      const prev = driverMetaByCourse.get(row.course_id) ?? {}
+      const chunk = normalizeDriverMetaFromEventPayload(row.payload)
       if (
-        !meta.driverName &&
-        !meta.vehicleLabel &&
-        !meta.driverProfilePhotoUrl &&
-        !meta.driverPhone &&
-        !meta.licensePlate
+        !chunk.driverName &&
+        !chunk.vehicleLabel &&
+        !chunk.driverProfilePhotoUrl &&
+        !chunk.driverPhone &&
+        !chunk.licensePlate
       ) {
         continue
       }
-      driverMetaByCourse.set(row.course_id, meta)
+      driverMetaByCourse.set(row.course_id, mergeDriverMeta(prev, chunk))
     }
   }
 

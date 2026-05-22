@@ -59,6 +59,8 @@ export type NearbyDriverMapPoint = {
   longitude: number
   latitude: number
   name?: string
+  /** Photo de profil chauffeur (sinon icône moto par défaut). */
+  profilePhotoUrl?: string
 }
 
 /** Source DEM relief — id dédié pour éviter les collisions avec le style. */
@@ -66,7 +68,28 @@ const MAP_TERRAIN_SOURCE_ID = 'palto-terrain-dem'
 
 const MAP_PITCH_3D = 60
 
-/** Icône moto (vue de profil) pour les chauffeurs sur la carte. */
+function DriverMapProfileAvatar({
+  photoUrl,
+  title,
+  ariaLabel,
+}: {
+  photoUrl: string
+  title?: string
+  ariaLabel: string
+}) {
+  return (
+    <div
+      className="home-osm-map-driver-avatar"
+      title={title}
+      role="img"
+      aria-label={ariaLabel}
+    >
+      <img src={photoUrl} alt="" className="home-osm-map-driver-avatar__img" />
+    </div>
+  )
+}
+
+/** Icône moto (vue de profil) pour les chauffeurs sans photo de profil. */
 function DriverMapMotoIcon({ title, ariaLabel }: { title?: string; ariaLabel: string }) {
   return (
     <div className="home-osm-map-driver-moto" title={title} role="img" aria-label={ariaLabel}>
@@ -488,10 +511,18 @@ export default function HomeOsmMapBackground({
               anchor="center"
               style={{ pointerEvents: 'none' }}
             >
-              <DriverMapMotoIcon
-                title={d.name ?? 'Chauffeur'}
-                ariaLabel={d.name ? `Chauffeur ${d.name}` : 'Chauffeur moto'}
-              />
+              {d.profilePhotoUrl?.trim() ? (
+                <DriverMapProfileAvatar
+                  photoUrl={d.profilePhotoUrl.trim()}
+                  title={d.name ?? 'Chauffeur'}
+                  ariaLabel={d.name ? `Chauffeur ${d.name}` : 'Chauffeur'}
+                />
+              ) : (
+                <DriverMapMotoIcon
+                  title={d.name ?? 'Chauffeur'}
+                  ariaLabel={d.name ? `Chauffeur ${d.name}` : 'Chauffeur moto'}
+                />
+              )}
             </Marker>
           ))}
 
