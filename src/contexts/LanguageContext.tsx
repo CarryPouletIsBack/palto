@@ -705,10 +705,12 @@ const TRANSLATIONS: Record<Language, Record<string, unknown>> = {
       rideEndTitle: 'Fin de course',
       rideEndLead: 'Course {route} avec {driver}. Vérifiez le montant, le temps et la distance, puis laissez un avis.',
       rideEndStatsAria: 'Montant, distance et durée de la course',
-      rideEndCashTitle: 'Règlement en espèces',
+      rideEndCashTitle: 'Paiement en espèces',
       rideEndCashHint:
-        'Pour le moment, seul le paiement en espèces est prévu sur cette vue. Préparez la monnaie exacte si possible.',
-      rideEndCashConfirm: 'Je confirme avoir réglé {amount} au chauffeur en espèces.',
+        'Réglez le montant indiqué directement au chauffeur. La confirmation du paiement est faite par le chauffeur dans son application.',
+      rideEndCardTitle: 'Paiement par carte',
+      rideEndCardHint:
+        'Votre carte a été débitée de {amount}. Le chauffeur confirmera la réception du paiement dans son application — aucune action de votre part n’est requise.',
       rideEndReviewTitle: 'Votre avis',
       rideEndReviewHint:
         'Note et commentaire sont une simulation : rien n’est envoyé au serveur pour le moment.',
@@ -1457,8 +1459,10 @@ const TRANSLATIONS: Record<Language, Record<string, unknown>> = {
       rideEndStatsAria: 'Fare, distance and trip duration',
       rideEndCashTitle: 'Cash payment',
       rideEndCashHint:
-        'For now only cash payment is supported on this screen. Exact change helps when possible.',
-      rideEndCashConfirm: 'I confirm I paid {amount} to the driver in cash.',
+        'Pay the amount shown directly to your driver. Payment confirmation is done by the driver in their app.',
+      rideEndCardTitle: 'Card payment',
+      rideEndCardHint:
+        'Your card was charged {amount}. Your driver will confirm payment in their app — you do not need to do anything else.',
       rideEndReviewTitle: 'Your review',
       rideEndReviewHint: 'Rating and comment are simulated; nothing is sent to a server yet.',
       rideEndStarsAria: 'Rating out of 5',

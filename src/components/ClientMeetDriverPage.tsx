@@ -32,6 +32,7 @@ type RecapState = {
   durationMin: number;
   driverName: string;
   route: string;
+  paymentMethod?: 'card' | 'cash' | null;
 };
 
 function durationMinFromCompletedRide(item: ClientRideItem): number {
@@ -91,6 +92,7 @@ export default function ClientMeetDriverPage({ onBack }: ClientMeetDriverPagePro
         durationMin: durationMinFromCompletedRide(row),
         driverName: row.driverName?.trim() || '—',
         route: `${simplifyAddressDisplay(row.pickupAddress)} -> ${simplifyAddressDisplay(row.dropoffAddress)}`,
+        paymentMethod: row.paymentMethod ?? null,
       });
       setMeet(null);
       clearClientLiveMeetRideModel();
@@ -156,6 +158,7 @@ export default function ClientMeetDriverPage({ onBack }: ClientMeetDriverPagePro
             durationMin={recap.durationMin}
             driverName={recap.driverName}
             route={recap.route}
+            paymentMethod={recap.paymentMethod}
             t={t}
           />
           <button type="button" className="client-meet-driver-fallback__back" onClick={onBack}>

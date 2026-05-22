@@ -48,15 +48,6 @@ function haversineMeters(a: LngLat, b: LngLat): number {
   return 2 * R * Math.asin(Math.min(1, Math.sqrt(s)));
 }
 
-function driverInitials(name: string): string {
-  return name
-    .split(/\s+/)
-    .map((p) => p[0])
-    .join('')
-    .slice(0, 2)
-    .toUpperCase();
-}
-
 function normalizeName(s: string): string {
   return s
     .trim()
@@ -520,26 +511,6 @@ export default function ClientRideTrackingView(props: ClientRideTrackingViewProp
           <ArrowLeft size={18} aria-hidden />
           {t('clientMeetDriver.back')}
         </button>
-        <div className="client-ride-tracking-header-main">
-          {driverProfilePhotoUrl ? (
-            <img
-              src={driverProfilePhotoUrl}
-              alt=""
-              className="client-ride-tracking-header-avatar"
-            />
-          ) : (
-            <div
-              className="client-ride-tracking-header-avatar client-ride-tracking-header-avatar--initials"
-              aria-hidden
-            >
-              {driverInitials(driverName)}
-            </div>
-          )}
-          <div className="client-ride-tracking-headlines">
-            <h1>{driverName}</h1>
-            <p title={route}>{route}</p>
-          </div>
-        </div>
         <button
           type="button"
           className="client-ride-tracking-help-btn"

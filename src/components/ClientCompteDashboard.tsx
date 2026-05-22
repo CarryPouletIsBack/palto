@@ -163,6 +163,7 @@ type ClientAccountRideRow = {
   vehicleLabel: string;
   paymentMethod: string;
   paymentMethodEn?: string;
+  paymentMethodCode?: 'card' | 'cash' | null;
   reference: string;
   flow?: ClientRideFlowKind | null;
   licensePlate?: string;
@@ -465,6 +466,7 @@ export default function ClientCompteDashboard({ onBack, onOpenClientLiveMeet }: 
         vehicleModel: driver?.vehicleModel,
         paymentMethod: payFr,
         paymentMethodEn: payEn,
+        paymentMethodCode: ride.paymentMethod ?? null,
         reference: ride.id,
         flow,
         meetPickupCoords: liveMeet?.meetPickupCoords,
@@ -3141,6 +3143,7 @@ export default function ClientCompteDashboard({ onBack, onOpenClientLiveMeet }: 
                           durationMin={selectedRide.durationMin}
                           driverName={selectedRide.driverName}
                           route={selectedRide.route}
+                          paymentMethod={selectedRide.paymentMethodCode}
                           t={t}
                         />
                       ) : null}

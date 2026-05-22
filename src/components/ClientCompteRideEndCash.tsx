@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Banknote, Clock, MapPinned, Star } from 'lucide-react';
+import { Banknote, Clock, CreditCard, MapPinned, Star } from 'lucide-react';
 import { trackEvent } from '../services/googleAnalyticsTracking';
 
 export type ClientCompteRideEndCashProps = {
@@ -8,6 +8,7 @@ export type ClientCompteRideEndCashProps = {
   durationMin: number;
   driverName: string;
   route: string;
+  paymentMethod?: 'card' | 'cash' | null;
   t: (key: string, params?: Record<string, string | number>) => string;
 };
 
@@ -17,14 +18,15 @@ export default function ClientCompteRideEndCash({
   durationMin,
   driverName,
   route,
+  paymentMethod,
   t,
 }: ClientCompteRideEndCashProps) {
-  const [paidConfirmed, setPaidConfirmed] = useState(false);
   const [rating, setRating] = useState(0);
   const [comment, setComment] = useState('');
   const [submitted, setSubmitted] = useState(false);
 
-  const canSubmit = paidConfirmed && rating >= 1 && !submitted;
+  const isCard = paymentMethod === 'card';
+  const canSubmit = rating >= 1 && !submitted;
   const amountFormatted = t('clientAccount.ridePriceEur', { n: priceEur });
 
   const submit = () => {
@@ -42,7 +44,7 @@ export default function ClientCompteRideEndCash({
         <div className="client-compte-ride-flow__stat">
           <Banknote size={18} className="client-compte-ride-flow__stat-icon" aria-hidden />
           <span className="client-compte-ride-flow__stat-label">{t('clientAccount.ridePrice')}</span>
-          <span className="client-compte-ride-flow__stat-value">{t('clientAccount.ridePriceEur', { n: priceEur })}</span>
+          <span className="client-compte-ride-flow__stat-value">{amountFormatted}</span>
         </div>
         <div className="client-compte-ride-flow__stat">
           <MapPinned size={18} className="client-compte-ride-flow__stat-icon" aria-hidden />
@@ -58,21 +60,34 @@ export default function ClientCompteRideEndCash({
             {t('clientAccount.rideDurationMinutes', { n: durationMin })}
           </span>
         </div>
+        <div className="client-compte-ride-flow__stat">
+          {isCard ? (
+            <CreditCard size={18} className="client-compte-ride-flow__stat-icon" aria-hidden />
+          ) : (
+            <Banknote size={18} className="client-compte-ride-flow__stat-icon" aria-hidden />
+          )}
+          <span className="client-compte-ride-flow__stat-label">{t('clientAccount.ridePayment')}</span>
+          <span className="client-compte-ride-flow__stat-value">
+            {isCard ? t('clientAccount.prefCard') : t('clientAccount.prefCash')}
+          </span>
+        </div>
       </div>
 
-      <section className="client-compte-ride-flow__block" aria-labelledby="ride-end-cash-heading">
-        <h6 id="ride-end-cash-heading" className="client-compte-ride-flow__block-title">
-          {t('clientAccount.rideEndCashTitle')}
+      <section
+        className="client-compte-ride-flow__block"
+        aria-labelledby={isCard ? 'ride-end-card-heading' : 'ride-end-cash-heading'}
+      >
+        <h6
+          id={isCard ? 'ride-end-card-heading' : 'ride-end-cash-heading'}
+          className="client-compte-ride-flow__block-title"
+        >
+          {isCard ? t('clientAccount.rideEndCardTitle') : t('clientAccount.rideEndCashTitle')}
         </h6>
-        <p className="client-compte-ride-flow__hint">{t('clientAccount.rideEndCashHint')}</p>
-        <label className="client-compte-ride-flow__check">
-          <input
-            type="checkbox"
-            checked={paidConfirmed}
-            onChange={(e) => setPaidConfirmed(e.target.checked)}
-          />
-          <span>{t('clientAccount.rideEndCashConfirm', { amount: amountFormatted })}</span>
-        </label>
+        <p className="client-compte-ride-flow__hint">
+          {isCard
+            ? t('clientAccount.rideEndCardHint', { amount: amountFormatted })
+            : t('clientAccount.rideEndCashHint')}
+        </p>
       </section>
 
       <section className="client-compte-ride-flow__block" aria-labelledby="ride-end-review-heading">

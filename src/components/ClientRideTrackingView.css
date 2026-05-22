@@ -65,12 +65,11 @@
   z-index: 6;
   display: flex;
   align-items: center;
+  justify-content: space-between;
   gap: 8px;
   padding: max(10px, env(safe-area-inset-top, 0px)) 10px 10px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.12);
-  background: rgba(15, 23, 42, 0.55);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
+  background: transparent;
+  border: none;
 }
 
 .client-ride-tracking-back {
@@ -93,37 +92,6 @@
   background: rgba(30, 41, 59, 0.85);
 }
 
-.client-ride-tracking-header-main {
-  min-width: 0;
-  flex: 1;
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-
-.client-ride-tracking-header-avatar {
-  flex-shrink: 0;
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
-  object-fit: cover;
-}
-
-.client-ride-tracking-header-avatar--initials {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 13px;
-  font-weight: 700;
-  background: #334155;
-  color: #e2e8f0;
-}
-
-.client-ride-tracking-headlines {
-  min-width: 0;
-  flex: 1;
-}
-
 .client-ride-tracking-help-btn {
   flex-shrink: 0;
   display: inline-flex;
@@ -141,33 +109,6 @@
 
 .client-ride-tracking-help-btn:hover {
   background: rgba(30, 41, 59, 0.85);
-}
-
-.client-ride-tracking-headlines h1,
-.client-ride-tracking-headlines p {
-  width: 100%;
-  box-sizing: border-box;
-  text-align: left;
-  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.75);
-}
-
-.client-ride-tracking-headlines h1 {
-  margin: 0;
-  font-size: 15px;
-  font-weight: 700;
-  line-height: 1.25;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.client-ride-tracking-headlines p {
-  margin: 4px 0 0;
-  font-size: 12px;
-  color: #e2e8f0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
 }
 
 /* Sheet bas — position top pilotée au drag (comme SingleProject /go) */

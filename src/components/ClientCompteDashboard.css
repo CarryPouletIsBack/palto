@@ -2848,7 +2848,7 @@ html[data-app-theme='dark'] .client-compte-place-suggestions {
 
 .client-compte-ride-flow__stats {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(2, 1fr);
   gap: 10px;
   margin-bottom: 18px;
 }
@@ -2972,8 +2972,8 @@ html[data-app-theme='dark'] .client-compte-place-suggestions {
   box-sizing: border-box;
   margin-bottom: 4px;
   padding: 10px 12px;
-  font: inherit;
-  font-size: 13px;
+  font-family: inherit;
+  font-size: 16px;
   line-height: 1.4;
   border-radius: 8px;
   border: 1px solid #e2e8f0;
