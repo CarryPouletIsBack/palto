@@ -28,6 +28,11 @@ export type ClientRideItem = {
   driverName?: string | null
   vehicleLabel?: string | null
   driverProfilePhotoUrl?: string | null
+  driverPhone?: string | null
+  vehicleType?: string | null
+  vehicleModel?: string | null
+  licensePlate?: string | null
+  paymentMethod?: 'card' | 'cash' | null
 }
 
 export async function fetchClientRides(email: string, status: 'upcoming' | 'completed' | 'cancelled' | 'all' = 'all') {

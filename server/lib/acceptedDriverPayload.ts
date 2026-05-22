@@ -1,0 +1,135 @@
+import { sanitizeChauffeurProfileSnapshot } from './chauffeurProfileSanitize.js'
+
+const VEHICLE_TYPE_LABELS: Record<string, string> = {
+  berline: 'Berline',
+  utilitaire: 'Utilitaire',
+  moto: 'Moto',
+  scooter: 'Scooter',
+}
+
+function vehicleTypeLabel(slug: string | null | undefined): string {
+  const k = (slug ?? '').trim().toLowerCase()
+  return k ? (VEHICLE_TYPE_LABELS[k] ?? '') : ''
+}
+
+function isVehicleTypeSlug(value: string): boolean {
+  return Boolean(vehicleTypeLabel(value))
+}
+
+/** Métadonnées chauffeur stockées dans `course_events.payload` à l’acceptation. */
+export type AcceptedDriverPayload = {
+  driverName: string
+  driverEmail: string
+  driverPhone?: string
+  driverProfilePhotoUrl?: string
+  vehicleType?: string
+  vehicleModel?: string
+  licensePlate?: string
+  /** Ligne courte UI (type + modèle). */
+  vehicleLabel: string
+}
+
+export function buildAcceptedDriverPayload(input: {
+  driverName: string
+  driverEmail: string
+  accountPhone?: string | null
+  vehicleTypeSlug?: string | null
+  profileSnapshot?: unknown
+}): AcceptedDriverPayload {
+  const snap = sanitizeChauffeurProfileSnapshot(input.profileSnapshot ?? {})
+  const phone =
+    snap.telephone?.trim() || input.accountPhone?.trim() || undefined
+  const plate = snap.plaque?.trim() || undefined
+
+  const slugAccount = (input.vehicleTypeSlug ?? '').trim().toLowerCase()
+  const slugProfile = (snap.vehicule ?? '').trim().toLowerCase()
+  const typeSlug = isVehicleTypeSlug(slugAccount)
+    ? slugAccount
+    : isVehicleTypeSlug(slugProfile)
+      ? slugProfile
+      : ''
+
+  const typeLabel = vehicleTypeLabel(typeSlug) || vehicleTypeLabel(slugAccount) || vehicleTypeLabel(slugProfile)
+
+  const vehiculeRaw = (snap.vehicule ?? '').trim()
+  const vehicleModel =
+    vehiculeRaw && !isVehicleTypeSlug(vehiculeRaw) ? vehiculeRaw : undefined
+
+  const lineParts = [typeLabel, vehicleModel].filter(Boolean)
+  const vehicleLabel =
+    lineParts.join(' · ') || typeLabel || slugAccount || vehiculeRaw || ''
+
+  const photo = snap.profilePhotoUrl?.trim()
+
+  return {
+    driverName: input.driverName,
+    driverEmail: input.driverEmail,
+    vehicleLabel,
+    ...(phone ? { driverPhone: phone } : {}),
+    ...(plate ? { licensePlate: plate } : {}),
+    ...(typeSlug ? { vehicleType: typeSlug } : {}),
+    ...(vehicleModel ? { vehicleModel } : {}),
+    ...(photo ? { driverProfilePhotoUrl: photo } : {}),
+  }
+}
+
+/** Normalise un payload legacy (ex. `vehicleLabel: "berline"`). */
+export function normalizeDriverMetaFromEventPayload(
+  payload: Record<string, unknown> | null | undefined
+): {
+  driverName?: string
+  driverPhone?: string
+  driverProfilePhotoUrl?: string
+  vehicleLabel?: string
+  vehicleType?: string
+  vehicleModel?: string
+  licensePlate?: string
+} {
+  if (!payload || typeof payload !== 'object') return {}
+  const driverName =
+    typeof payload.driverName === 'string' ? payload.driverName.trim() : undefined
+  const driverPhone =
+    typeof payload.driverPhone === 'string' ? payload.driverPhone.trim() : undefined
+  const driverProfilePhotoUrl =
+    typeof payload.driverProfilePhotoUrl === 'string'
+      ? payload.driverProfilePhotoUrl.trim()
+      : undefined
+  const licensePlate =
+    typeof payload.licensePlate === 'string' ? payload.licensePlate.trim() : undefined
+  const vehicleType =
+    typeof payload.vehicleType === 'string' ? payload.vehicleType.trim().toLowerCase() : undefined
+  const vehicleModel =
+    typeof payload.vehicleModel === 'string' ? payload.vehicleModel.trim() : undefined
+  let vehicleLabel =
+    typeof payload.vehicleLabel === 'string' ? payload.vehicleLabel.trim() : undefined
+
+  if (vehicleLabel && isVehicleTypeSlug(vehicleLabel) && !vehicleType) {
+    const label = vehicleTypeLabel(vehicleLabel)
+    return {
+      driverName,
+      driverPhone,
+      driverProfilePhotoUrl,
+      licensePlate,
+      vehicleType: vehicleLabel.toLowerCase(),
+      vehicleLabel: label || vehicleLabel,
+      vehicleModel,
+    }
+  }
+
+  if (vehicleType && vehicleModel) {
+    const tl = vehicleTypeLabel(vehicleType)
+    vehicleLabel = [tl, vehicleModel].filter(Boolean).join(' · ') || vehicleLabel
+  } else if (vehicleType && !vehicleLabel) {
+    vehicleLabel = vehicleTypeLabel(vehicleType) || vehicleType
+  }
+
+  return {
+    driverName,
+    driverPhone,
+    driverProfilePhotoUrl,
+    licensePlate,
+    vehicleType,
+    vehicleModel,
+    vehicleLabel,
+  }
+}

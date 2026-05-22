@@ -2,6 +2,7 @@ import type { VercelRequest, VercelResponse } from '@vercel/node'
 import { z } from 'zod'
 import { getVerifiedClientSession } from '../../server/lib/clientAuth.js'
 import { expireStaleInstantPendingCourses } from '../../server/lib/expireStaleInstantPendingCourses.js'
+import { normalizeDriverMetaFromEventPayload } from '../../server/lib/acceptedDriverPayload.js'
 import { getSupabaseAdmin } from '../../server/lib/supabaseAdmin.js'
 import { listNearbyDriversFromPresence } from '../../server/lib/nearbyDriversFromPresence.js'
 import {
@@ -44,15 +45,12 @@ type RideRow = {
   created_at: string
   started_at: string | null
   completed_at: string | null
+  payment_method: string | null
 }
 
 type CourseEventRow = {
   course_id: string
-  payload: {
-    driverName?: string
-    vehicleLabel?: string
-    driverProfilePhotoUrl?: string
-  } | null
+  payload: Record<string, unknown> | null
 }
 
 type ClientRow = {
@@ -237,7 +235,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   let query = supabase
     .from('courses')
     .select(
-      'id,status,pickup_address,dropoff_address,scheduled_date,scheduled_time,amount_eur,distance_km,pickup_lng,pickup_lat,dropoff_lng,dropoff_lat,created_at,started_at,completed_at'
+      'id,status,pickup_address,dropoff_address,scheduled_date,scheduled_time,amount_eur,distance_km,payment_method,pickup_lng,pickup_lat,dropoff_lng,dropoff_lat,created_at,started_at,completed_at'
     )
     .in('client_id', clientIds)
     .order('scheduled_date', { ascending: false })
@@ -260,10 +258,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
   const rows = data as unknown as RideRow[]
   const courseIds = rows.map((r) => r.id)
-  const driverMetaByCourse = new Map<
-    string,
-    { driverName?: string; vehicleLabel?: string; driverProfilePhotoUrl?: string }
-  >()
+  const driverMetaByCourse = new Map<string, ReturnType<typeof normalizeDriverMetaFromEventPayload>>()
   if (courseIds.length > 0) {
     const { data: eventsData } = await supabase
       .from('course_events')
@@ -273,11 +268,17 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       .order('created_at', { ascending: false })
     for (const row of (eventsData ?? []) as CourseEventRow[]) {
       if (driverMetaByCourse.has(row.course_id)) continue
-      const driverName = row.payload?.driverName?.trim()
-      const vehicleLabel = row.payload?.vehicleLabel?.trim()
-      const driverProfilePhotoUrl = row.payload?.driverProfilePhotoUrl?.trim()
-      if (!driverName && !vehicleLabel && !driverProfilePhotoUrl) continue
-      driverMetaByCourse.set(row.course_id, { driverName, vehicleLabel, driverProfilePhotoUrl })
+      const meta = normalizeDriverMetaFromEventPayload(row.payload)
+      if (
+        !meta.driverName &&
+        !meta.vehicleLabel &&
+        !meta.driverProfilePhotoUrl &&
+        !meta.driverPhone &&
+        !meta.licensePlate
+      ) {
+        continue
+      }
+      driverMetaByCourse.set(row.course_id, meta)
     }
   }
 
@@ -290,6 +291,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     scheduledTime: row.scheduled_time,
     amountEur: row.amount_eur,
     distanceKm: row.distance_km,
+    paymentMethod: row.payment_method === 'card' || row.payment_method === 'cash' ? row.payment_method : null,
     pickupLng: row.pickup_lng,
     pickupLat: row.pickup_lat,
     dropoffLng: row.dropoff_lng,
@@ -300,6 +302,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     driverName: driverMetaByCourse.get(row.id)?.driverName ?? null,
     vehicleLabel: driverMetaByCourse.get(row.id)?.vehicleLabel ?? null,
     driverProfilePhotoUrl: driverMetaByCourse.get(row.id)?.driverProfilePhotoUrl ?? null,
+    driverPhone: driverMetaByCourse.get(row.id)?.driverPhone ?? null,
+    vehicleType: driverMetaByCourse.get(row.id)?.vehicleType ?? null,
+    vehicleModel: driverMetaByCourse.get(row.id)?.vehicleModel ?? null,
+    licensePlate: driverMetaByCourse.get(row.id)?.licensePlate ?? null,
   }))
 
   res.status(200).json({ items })

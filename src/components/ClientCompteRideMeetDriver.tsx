@@ -1,5 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { CircleHelp, MapPin } from 'lucide-react';
+import ClientDriverMeetCard from './ClientDriverMeetCard';
+import { clientDriverDisplayFromFields } from '../lib/clientDriverDisplay';
 import { toast } from 'sonner';
 import Map, { AttributionControl, Marker, type MapRef } from 'react-map-gl/maplibre';
 import 'maplibre-gl/dist/maplibre-gl.css';
@@ -19,6 +21,8 @@ export type ClientCompteRideMeetDriverProps = {
   courseId?: string;
   pickupLabel: string;
   driverName: string;
+  driverPhone?: string;
+  driverProfilePhotoUrl?: string;
   vehicleLabel: string;
   vehicleColor?: string;
   licensePlate?: string;
@@ -54,6 +58,8 @@ export default function ClientCompteRideMeetDriver({
   courseId,
   pickupLabel,
   driverName,
+  driverPhone,
+  driverProfilePhotoUrl,
   vehicleLabel,
   vehicleColor,
   licensePlate,
@@ -174,6 +180,15 @@ export default function ClientCompteRideMeetDriver({
       ? Math.round(haversineMeters(driverLngLat, meetPickupCoords) / 5) * 5
       : null;
 
+  const driverDisplay = clientDriverDisplayFromFields({
+    driverName,
+    driverPhone,
+    driverProfilePhotoUrl,
+    vehicleLabel,
+    licensePlate,
+    vehicleColor,
+  });
+
   return (
     <div className="client-compte-ride-flow client-compte-ride-flow--meet">
       <h5 className="client-compte-ride-flow__title">{t('clientAccount.rideMeetTitle')}</h5>
@@ -192,28 +207,7 @@ export default function ClientCompteRideMeetDriver({
 
       {hasLiveLocate ? (
         <div className="client-compte-ride-flow__driver-sync">
-          <div className="client-compte-ride-flow__driver-card" aria-label={t('clientAccount.rideMeetDriverCardAria')}>
-            <div className="client-compte-ride-flow__driver-avatar" aria-hidden>
-              {driverName
-                .split(/\s+/)
-                .map((p) => p[0])
-                .join('')
-                .slice(0, 2)
-                .toUpperCase()}
-            </div>
-            <div className="client-compte-ride-flow__driver-body">
-              <p className="client-compte-ride-flow__driver-name">{driverName}</p>
-              <p className="client-compte-ride-flow__driver-vehicle">{vehicleLabel}</p>
-              {vehicleColor ? (
-                <p className="client-compte-ride-flow__driver-meta">
-                  {t('clientAccount.rideMeetVehicleColor')} {vehicleColor}
-                </p>
-              ) : null}
-              {licensePlate ? (
-                <p className="client-compte-ride-flow__driver-plate">{licensePlate}</p>
-              ) : null}
-            </div>
-          </div>
+          <ClientDriverMeetCard {...driverDisplay} t={t} variant="compte" />
 
           <div className="client-compte-ride-flow__driver-locate" aria-label={t('clientAccount.rideMeetLocationAria')}>
             <div className="client-compte-ride-flow__driver-locate-head">
@@ -267,28 +261,7 @@ export default function ClientCompteRideMeetDriver({
           </div>
         </div>
       ) : (
-        <div className="client-compte-ride-flow__driver-card" aria-label={t('clientAccount.rideMeetDriverCardAria')}>
-          <div className="client-compte-ride-flow__driver-avatar" aria-hidden>
-            {driverName
-              .split(/\s+/)
-              .map((p) => p[0])
-              .join('')
-              .slice(0, 2)
-              .toUpperCase()}
-          </div>
-          <div className="client-compte-ride-flow__driver-body">
-            <p className="client-compte-ride-flow__driver-name">{driverName}</p>
-            <p className="client-compte-ride-flow__driver-vehicle">{vehicleLabel}</p>
-            {vehicleColor ? (
-              <p className="client-compte-ride-flow__driver-meta">
-                {t('clientAccount.rideMeetVehicleColor')} {vehicleColor}
-              </p>
-            ) : null}
-            {licensePlate ? (
-              <p className="client-compte-ride-flow__driver-plate">{licensePlate}</p>
-            ) : null}
-          </div>
-        </div>
+        <ClientDriverMeetCard {...driverDisplay} t={t} variant="compte" />
       )}
 
       <div className="client-compte-ride-flow__actions">

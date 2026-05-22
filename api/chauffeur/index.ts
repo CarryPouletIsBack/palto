@@ -21,6 +21,7 @@ async function handleCronExpireInstant(req: VercelRequest, res: VercelResponse) 
 }
 import { getSupabaseAdmin } from '../../server/lib/supabaseAdmin.js'
 import { getVerifiedChauffeurSession } from '../../server/lib/chauffeurAuth.js'
+import { buildAcceptedDriverPayload } from '../../server/lib/acceptedDriverPayload.js'
 import {
   chauffeurProfileSnapshotHasContent,
   sanitizeChauffeurProfileSnapshot,
@@ -234,34 +235,33 @@ async function handleRidesActionPost(
     if (upErr || !updated) return res.status(409).json({ error: 'Impossible d accepter' })
     const { data: account } = await supabase
       .from('app_accounts')
-      .select('id, full_name, vehicle_type')
+      .select('id, full_name, vehicle_type, phone')
       .eq('email', dashboardEmail)
       .eq('role', 'chauffeur')
       .maybeSingle()
     const fallbackName = dashboardEmail.split('@')[0] || 'Chauffeur'
     const driverName = (account?.full_name ?? '').trim() || fallbackName
-    const vehicleLabel = (account?.vehicle_type ?? '').trim() || ''
-    let driverProfilePhotoUrl: string | undefined
+    let profileSnapshot: unknown = {}
     if (account?.id) {
       const { data: profileRow } = await supabase
         .from('chauffeur_profile_data')
         .select('account_snapshot')
         .eq('account_id', account.id)
         .maybeSingle()
-      const snap = sanitizeChauffeurProfileSnapshot(profileRow?.account_snapshot ?? {})
-      const photo = snap.profilePhotoUrl?.trim()
-      if (photo) driverProfilePhotoUrl = photo
+      profileSnapshot = profileRow?.account_snapshot ?? {}
     }
+    const driverPayload = buildAcceptedDriverPayload({
+      driverName,
+      driverEmail: dashboardEmail,
+      accountPhone: account?.phone ?? null,
+      vehicleTypeSlug: account?.vehicle_type ?? null,
+      profileSnapshot,
+    })
     await supabase.from('course_events').insert({
       course_id: courseId,
       event_type: 'accepted',
       event_note: 'Course acceptee par chauffeur',
-      payload: {
-        driverName,
-        vehicleLabel,
-        driverEmail: dashboardEmail,
-        ...(driverProfilePhotoUrl ? { driverProfilePhotoUrl } : {}),
-      },
+      payload: driverPayload,
     })
     return res.status(200).json({ ok: true, status: updated.status })
   }

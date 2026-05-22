@@ -1,3 +1,4 @@
+import { clientDriverDisplayFromRideItem } from '../lib/clientDriverDisplay';
 import { simplifyAddressDisplay } from '../services/addressDisplay';
 import type { ClientRideItem } from '../services/clientRidesApi';
 
@@ -11,12 +12,20 @@ export type ClientLiveMeetRideModel = {
   departTime: string;
   driverName: string;
   driverProfilePhotoUrl?: string;
+  driverPhone?: string;
   vehicleLabel: string;
+  vehicleType?: string;
+  vehicleModel?: string;
   vehicleColor: string;
   licensePlate: string;
   meetPickupCoords: { lng: number; lat: number };
   meetDriverCoordsInitial: { lng: number; lat: number };
   dropoffCoords?: { lng: number; lat: number };
+  amountEur: number;
+  distanceKm: number | null;
+  durationMin?: number;
+  paymentMethod?: 'card' | 'cash';
+  startedAt?: string | null;
 };
 
 const CLIENT_LIVE_MEET_RIDE_STORAGE_KEY = 'palto:client-live-meet-ride';
@@ -37,6 +46,11 @@ export function getClientLiveMeetRideModel(): ClientLiveMeetRideModel | null {
         .split('→')
         .map((part) => simplifyAddressDisplay(part))
         .join(' → '),
+      amountEur: typeof parsed.amountEur === 'number' ? parsed.amountEur : 0,
+      distanceKm:
+        typeof parsed.distanceKm === 'number' && Number.isFinite(parsed.distanceKm)
+          ? parsed.distanceKm
+          : null,
     };
   } catch {
     return null;
@@ -59,6 +73,25 @@ export function clearClientLiveMeetRideModel(): void {
   } catch {
     // ignore quota/private mode
   }
+}
+
+function rideDurationMinutesFromItem(item: ClientRideItem): number {
+  const s = item.startedAt?.trim();
+  const c = item.completedAt?.trim();
+  if (s && c) {
+    const a = Date.parse(s);
+    const b = Date.parse(c);
+    if (!Number.isNaN(a) && !Number.isNaN(b) && b > a) {
+      return Math.max(1, Math.round((b - a) / 60000));
+    }
+  }
+  if (s && item.status === 'in_progress') {
+    const a = Date.parse(s);
+    if (!Number.isNaN(a)) {
+      return Math.max(1, Math.round((Date.now() - a) / 60000));
+    }
+  }
+  return 0;
 }
 
 function formatDepartTimeLabel(item: ClientRideItem): string {
@@ -86,20 +119,29 @@ export function buildClientLiveMeetRideFromRideItem(item: ClientRideItem): Clien
     typeof item.dropoffLng === 'number' && typeof item.dropoffLat === 'number'
       ? { lng: item.dropoffLng, lat: item.dropoffLat }
       : undefined;
+  const driver = clientDriverDisplayFromRideItem(item);
   return {
     courseId: item.id,
     rideStatus: item.status,
     pickupLabel: simplifyAddressDisplay(item.pickupAddress),
     route: `${simplifyAddressDisplay(item.pickupAddress)} → ${simplifyAddressDisplay(item.dropoffAddress)}`,
     departTime: formatDepartTimeLabel(item),
-    driverName: item.driverName?.trim() || 'Chauffeur Palto',
-    driverProfilePhotoUrl: item.driverProfilePhotoUrl?.trim() || undefined,
-    vehicleLabel: item.vehicleLabel?.trim() || '',
-    vehicleColor: '',
-    licensePlate: '',
+    driverName: driver.driverName,
+    driverProfilePhotoUrl: driver.driverProfilePhotoUrl,
+    driverPhone: driver.driverPhone,
+    vehicleLabel: driver.vehicleLine,
+    vehicleType: item.vehicleType?.trim() || undefined,
+    vehicleModel: driver.vehicleModel,
+    vehicleColor: driver.vehicleColor ?? '',
+    licensePlate: driver.licensePlate ?? '',
     meetPickupCoords: { lng, lat },
     /** Rempli par présence chauffeur ou broadcast `ride_geo` — pas de simulation. */
     meetDriverCoordsInitial: { lng, lat },
     dropoffCoords,
+    amountEur: Number(item.amountEur ?? 0),
+    distanceKm: item.distanceKm != null ? Number(item.distanceKm) : null,
+    durationMin: rideDurationMinutesFromItem(item) || undefined,
+    paymentMethod: item.paymentMethod ?? undefined,
+    startedAt: item.startedAt ?? null,
   };
 }

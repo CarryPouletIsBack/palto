@@ -124,6 +124,7 @@ import {
   buildClientLiveMeetRideFromRideItem,
   saveClientLiveMeetRideModel,
 } from '../constants/clientLiveMeetRide';
+import { clientDriverDisplayFromRideItem } from '../lib/clientDriverDisplay';
 import { cancelClientRide, clientRidesApiEnabled, fetchClientRides, type ClientRideItem } from '../services/clientRidesApi';
 import { scheduleClientProfilePush, syncClientProfileWithServer } from '../services/clientProfileSync';
 
@@ -166,6 +167,10 @@ type ClientAccountRideRow = {
   flow?: ClientRideFlowKind | null;
   licensePlate?: string;
   vehicleColor?: string;
+  driverPhone?: string;
+  driverProfilePhotoUrl?: string;
+  vehicleType?: string;
+  vehicleModel?: string;
   /** Prise en charge (carte « retrouver le chauffeur ») */
   meetPickupCoords?: { lng: number; lat: number };
   /** Position initiale du chauffeur (animation vers la prise en charge si pas de temps réel) */
@@ -424,12 +429,18 @@ export default function ClientCompteDashboard({ onBack, onOpenClientLiveMeet }: 
         trackModel && (ride.status === 'in_progress' || ride.status === 'accepted')
           ? trackModel
           : null;
+      const driver =
+        ride.driverName || ride.vehicleLabel || ride.driverPhone
+          ? clientDriverDisplayFromRideItem(ride)
+          : null;
       const flow: ClientRideFlowKind | null =
         ride.status === 'completed'
           ? 'end_cash'
           : liveMeet
             ? 'meet_driver'
             : null;
+      const payFr = ride.paymentMethod === 'cash' ? 'Espèces' : ride.paymentMethod === 'card' ? 'Carte' : '—';
+      const payEn = ride.paymentMethod === 'cash' ? 'Cash' : ride.paymentMethod === 'card' ? 'Card' : '—';
       return {
         id: ride.id,
         rawStatus: ride.status,
@@ -445,10 +456,15 @@ export default function ClientCompteDashboard({ onBack, onOpenClientLiveMeet }: 
         durationMin: ride.status === 'completed' ? clientRideDurationMinutes(ride) : 0,
         distanceKm: Number(ride.distanceKm ?? 0),
         priceEur: Number(ride.amountEur ?? 0),
-        driverName: ride.driverName?.trim() || '—',
-        vehicleLabel: ride.vehicleLabel?.trim() || '—',
-        paymentMethod: 'Carte',
-        paymentMethodEn: 'Card',
+        driverName: driver?.driverName ?? ride.driverName?.trim() || '—',
+        vehicleLabel: driver?.vehicleLine || ride.vehicleLabel?.trim() || '—',
+        driverPhone: driver?.driverPhone,
+        driverProfilePhotoUrl: driver?.driverProfilePhotoUrl,
+        licensePlate: driver?.licensePlate,
+        vehicleType: ride.vehicleType ?? undefined,
+        vehicleModel: driver?.vehicleModel,
+        paymentMethod: payFr,
+        paymentMethodEn: payEn,
         reference: ride.id,
         flow,
         meetPickupCoords: liveMeet?.meetPickupCoords,
@@ -3105,6 +3121,8 @@ export default function ClientCompteDashboard({ onBack, onOpenClientLiveMeet }: 
                           courseId={selectedRide.id}
                           pickupLabel={selectedRide.pickupLabel}
                           driverName={selectedRide.driverName}
+                          driverPhone={selectedRide.driverPhone}
+                          driverProfilePhotoUrl={selectedRide.driverProfilePhotoUrl}
                           vehicleLabel={selectedRide.vehicleLabel}
                           vehicleColor={selectedRide.vehicleColor}
                           licensePlate={selectedRide.licensePlate}
@@ -3169,8 +3187,24 @@ export default function ClientCompteDashboard({ onBack, onOpenClientLiveMeet }: 
                         </dd>
                         <dt>{t('clientAccount.rideDriver')}</dt>
                         <dd>{selectedRide.driverName}</dd>
+                        {selectedRide.driverPhone ? (
+                          <>
+                            <dt>{t('clientAccount.rideMeetDriverPhone')}</dt>
+                            <dd>
+                              <a href={`tel:${selectedRide.driverPhone.replace(/\s/g, '')}`}>
+                                {selectedRide.driverPhone}
+                              </a>
+                            </dd>
+                          </>
+                        ) : null}
                         <dt>{t('clientAccount.rideVehicle')}</dt>
                         <dd>{selectedRide.vehicleLabel}</dd>
+                        {selectedRide.licensePlate ? (
+                          <>
+                            <dt>{t('clientAccount.rideVehiclePlate')}</dt>
+                            <dd>{selectedRide.licensePlate}</dd>
+                          </>
+                        ) : null}
                         <dt>{t('clientAccount.ridePayment')}</dt>
                         <dd>{rideRowPaymentLabel(selectedRide, language)}</dd>
                       </dl>

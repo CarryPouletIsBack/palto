@@ -1,0 +1,144 @@
+.client-driver-meet-card {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+}
+
+.client-driver-meet-card__avatar {
+  flex-shrink: 0;
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  font-weight: 700;
+  background: #e2e8f0;
+  color: #334155;
+}
+
+.client-driver-meet-card__avatar--photo {
+  display: block;
+  object-fit: cover;
+}
+
+.client-driver-meet-card__body {
+  flex: 1;
+  min-width: 0;
+}
+
+.client-driver-meet-card__name {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.client-driver-meet-card__vehicle {
+  margin: 4px 0 0;
+  font-size: 13px;
+  color: #475569;
+}
+
+.client-driver-meet-card__meta {
+  margin: 4px 0 0;
+  font-size: 12px;
+  color: #64748b;
+}
+
+.client-driver-meet-card__plate {
+  margin: 6px 0 0;
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  background: #0f172a;
+  color: #f8fafc;
+}
+
+.client-driver-meet-card__phone {
+  margin: 8px 0 0;
+  font-size: 13px;
+  color: #334155;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 8px;
+  align-items: baseline;
+}
+
+.client-driver-meet-card__phone-label {
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: #64748b;
+}
+
+.client-driver-meet-card__phone-link {
+  font-weight: 600;
+  color: #0369a1;
+  text-decoration: none;
+}
+
+.client-driver-meet-card__phone-link:hover {
+  text-decoration: underline;
+}
+
+.client-driver-meet-card__call {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  border: 1px solid rgba(15, 23, 42, 0.12);
+  background: #f0f9ff;
+  color: #0369a1;
+  text-decoration: none;
+}
+
+.client-driver-meet-card__call:hover {
+  background: #e0f2fe;
+}
+
+.client-driver-meet-card--tracking {
+  margin-bottom: 10px;
+  padding: 12px;
+  border-radius: 12px;
+  background: #ffffff;
+  border: 1px solid rgba(15, 23, 42, 0.1);
+  align-items: center;
+}
+
+.client-driver-meet-card--compte {
+  padding: 12px;
+  border-radius: 12px;
+  background: var(--app-bg-subtle, #f8fafc);
+  border: 1px solid rgba(15, 23, 42, 0.08);
+  align-items: center;
+}
+
+html[data-app-theme='dark'] .client-driver-meet-card--tracking,
+html[data-app-theme='dark'] .client-driver-meet-card--compte {
+  background: rgba(30, 41, 59, 0.9);
+  border-color: rgba(255, 255, 255, 0.12);
+}
+
+html[data-app-theme='dark'] .client-driver-meet-card__name {
+  color: #f8fafc;
+}
+
+html[data-app-theme='dark'] .client-driver-meet-card__vehicle,
+html[data-app-theme='dark'] .client-driver-meet-card__phone {
+  color: #cbd5e1;
+}
+
+html[data-app-theme='dark'] .client-driver-meet-card__call {
+  background: rgba(14, 116, 144, 0.25);
+  border-color: rgba(255, 255, 255, 0.15);
+  color: #7dd3fc;
+}

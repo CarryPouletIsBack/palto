@@ -1,5 +1,13 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { ArrowLeft, CircleHelp, MapPin } from 'lucide-react';
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type MouseEvent as ReactMouseEvent,
+  type TouchEvent as ReactTouchEvent,
+} from 'react';
+import { ArrowLeft, Banknote, CircleHelp, Clock, CreditCard, MapPin, MapPinned } from 'lucide-react';
 import type { Feature, LineString } from 'geojson';
 import { toast } from 'sonner';
 import HomeOsmMapBackground, {
@@ -16,6 +24,8 @@ import {
 } from '../services/paltoRideLocationRealtime';
 import { fetchNearbyDriversAt } from '../services/clientRidesApi';
 import type { ClientLiveMeetRideModel } from '../constants/clientLiveMeetRide';
+import { clientDriverDisplayFromMeetModel } from '../lib/clientDriverDisplay';
+import ClientDriverMeetCard from './ClientDriverMeetCard';
 import './ClientRideTrackingView.css';
 import './HomeOsmMapBackground.css';
 
@@ -51,6 +61,21 @@ function normalizeName(s: string): string {
     .replace(/\s+/g, '');
 }
 
+const SHEET_TOP_DEFAULT_RATIO = 0.42;
+const SHEET_TOP_MIN_PX = 72;
+const SHEET_TOP_MAX_RATIO = 0.72;
+
+function snapSheetTop(top: number, minTop: number, defaultTop: number, maxTop: number): number {
+  const candidates = [minTop, defaultTop, maxTop];
+  return candidates.reduce((best, c) => (Math.abs(c - top) < Math.abs(best - top) ? c : best));
+}
+
+function formatDistanceKm(km: number | null | undefined): string {
+  if (km == null || !Number.isFinite(km)) return '—';
+  const rounded = Math.round(km * 10) / 10;
+  return Number.isInteger(rounded) ? String(rounded) : rounded.toFixed(1);
+}
+
 function pickDriverFromPresence(
   drivers: Awaited<ReturnType<typeof fetchNearbyDriversAt>>,
   expectedName: string
@@ -76,19 +101,44 @@ export default function ClientRideTrackingView({
   pickupLabel,
   driverName,
   driverProfilePhotoUrl,
+  driverPhone,
   vehicleLabel,
+  vehicleColor,
   licensePlate,
   route,
   departTime,
   meetPickupCoords,
   meetDriverCoordsInitial,
   dropoffCoords,
+  amountEur,
+  distanceKm,
+  durationMin: durationMinFromRide,
+  paymentMethod,
   onBack,
   t,
 }: ClientRideTrackingViewProps) {
+  const sheetRef = useRef<HTMLDivElement>(null);
+  const [sheetTopPx, setSheetTopPx] = useState(() =>
+    typeof window !== 'undefined' ? Math.round(window.innerHeight * SHEET_TOP_DEFAULT_RATIO) : 360
+  );
+  const [isSheetDragging, setIsSheetDragging] = useState(false);
+  const sheetDragRef = useRef<{ startY: number; startTop: number } | null>(null);
+
+  const screenHeight = useMemo(
+    () => (typeof window !== 'undefined' ? window.innerHeight : 800),
+    []
+  );
+  const sheetMinTop = SHEET_TOP_MIN_PX;
+  const sheetDefaultTop = useMemo(
+    () => Math.round(screenHeight * SHEET_TOP_DEFAULT_RATIO),
+    [screenHeight]
+  );
+  const sheetMaxTop = useMemo(() => Math.round(screenHeight * SHEET_TOP_MAX_RATIO), [screenHeight]);
+
   const [driverLngLat, setDriverLngLat] = useState<LngLat | null>(null);
   const [clientLngLat, setClientLngLat] = useState<LngLat | null>(null);
   const [routeFeature, setRouteFeature] = useState<Feature<LineString> | null>(null);
+  const [routeDurationMin, setRouteDurationMin] = useState<number | null>(null);
   const [loadingRoute, setLoadingRoute] = useState(Boolean(dropoffCoords));
   const [liveGeoActive, setLiveGeoActive] = useState(false);
   const geoRoomRef = useRef<{
@@ -165,6 +215,7 @@ export default function ClientRideTrackingView({
   useEffect(() => {
     if (!dropoffDest) {
       setRouteFeature(null);
+      setRouteDurationMin(null);
       setLoadingRoute(false);
       return;
     }
@@ -174,9 +225,18 @@ export default function ClientRideTrackingView({
       .then((feat) => {
         if (ac.signal.aborted) return;
         setRouteFeature(feat);
+        const ds = feat?.properties?.durationSeconds;
+        if (typeof ds === 'number' && ds > 0) {
+          setRouteDurationMin(Math.max(1, Math.round(ds / 60)));
+        } else {
+          setRouteDurationMin(null);
+        }
       })
       .catch(() => {
-        if (!ac.signal.aborted) setRouteFeature(null);
+        if (!ac.signal.aborted) {
+          setRouteFeature(null);
+          setRouteDurationMin(null);
+        }
       })
       .finally(() => {
         if (!ac.signal.aborted) setLoadingRoute(false);
@@ -270,6 +330,145 @@ export default function ClientRideTrackingView({
     toast.message(t('clientAccount.rideTrackDriverMissingToast'));
   }, [t]);
 
+  useEffect(() => {
+    const onResize = () => {
+      setSheetTopPx((prev) => {
+        const min = SHEET_TOP_MIN_PX;
+        const max = Math.round(window.innerHeight * SHEET_TOP_MAX_RATIO);
+        return Math.min(max, Math.max(min, prev));
+      });
+    };
+    window.addEventListener('resize', onResize);
+    return () => window.removeEventListener('resize', onResize);
+  }, []);
+
+  const beginSheetDrag = useCallback(
+    (clientY: number) => {
+      sheetDragRef.current = { startY: clientY, startTop: sheetTopPx };
+      setIsSheetDragging(true);
+    },
+    [sheetTopPx]
+  );
+
+  const handleSheetBarMouseDown = (e: ReactMouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    beginSheetDrag(e.clientY);
+  };
+
+  const handleSheetBarTouchStart = (e: ReactTouchEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    beginSheetDrag(e.touches[0].clientY);
+  };
+
+  useEffect(() => {
+    if (!isSheetDragging || !sheetDragRef.current) return;
+
+    const onMove = (clientY: number) => {
+      const start = sheetDragRef.current;
+      if (!start) return;
+      const next = start.startTop + (clientY - start.startY);
+      setSheetTopPx(Math.min(sheetMaxTop, Math.max(sheetMinTop, next)));
+    };
+
+    const onMouseMove = (e: MouseEvent) => {
+      e.preventDefault();
+      onMove(e.clientY);
+    };
+
+    const onTouchMove = (e: TouchEvent) => {
+      e.preventDefault();
+      onMove(e.touches[0].clientY);
+    };
+
+    const onEnd = () => {
+      setSheetTopPx((prev) => snapSheetTop(prev, sheetMinTop, sheetDefaultTop, sheetMaxTop));
+      setIsSheetDragging(false);
+      sheetDragRef.current = null;
+    };
+
+    window.addEventListener('mousemove', onMouseMove, { passive: false });
+    window.addEventListener('mouseup', onEnd, { passive: false });
+    window.addEventListener('touchmove', onTouchMove, { passive: false });
+    window.addEventListener('touchend', onEnd, { passive: false });
+
+    return () => {
+      window.removeEventListener('mousemove', onMouseMove);
+      window.removeEventListener('mouseup', onEnd);
+      window.removeEventListener('touchmove', onTouchMove);
+      window.removeEventListener('touchend', onEnd);
+    };
+  }, [isSheetDragging, sheetMinTop, sheetDefaultTop, sheetMaxTop]);
+
+  const durationLabel = useMemo(() => {
+    if (durationMinFromRide && durationMinFromRide > 0) {
+      return t('clientAccount.rideDurationMinutes', { n: durationMinFromRide });
+    }
+    if (routeDurationMin && routeDurationMin > 0) {
+      return t('clientAccount.rideTrackDurationEstimate', { n: routeDurationMin });
+    }
+    return '—';
+  }, [durationMinFromRide, routeDurationMin, t]);
+
+  const paymentLabel = useMemo(() => {
+    if (paymentMethod === 'card') return t('clientAccount.prefCard');
+    if (paymentMethod === 'cash') return t('clientAccount.prefCash');
+    return '—';
+  }, [paymentMethod, t]);
+
+  const distanceLabel =
+    distanceKm != null && Number.isFinite(distanceKm) && distanceKm > 0
+      ? t('clientAccount.rideDistanceKm', { n: formatDistanceKm(distanceKm) })
+      : '—';
+
+  const priceLabel =
+    amountEur > 0 ? t('clientAccount.ridePriceEur', { n: amountEur }) : '—';
+
+  const driverDisplay = useMemo(
+    () =>
+      clientDriverDisplayFromMeetModel({
+        courseId,
+        rideStatus,
+        pickupLabel,
+        route,
+        departTime,
+        driverName,
+        driverProfilePhotoUrl,
+        driverPhone,
+        vehicleLabel,
+        vehicleColor,
+        licensePlate,
+        meetPickupCoords,
+        meetDriverCoordsInitial,
+        dropoffCoords,
+        amountEur,
+        distanceKm,
+        durationMin: durationMinFromRide,
+        paymentMethod,
+      }),
+    [
+      courseId,
+      rideStatus,
+      pickupLabel,
+      route,
+      departTime,
+      driverName,
+      driverProfilePhotoUrl,
+      driverPhone,
+      vehicleLabel,
+      vehicleColor,
+      licensePlate,
+      meetPickupCoords,
+      meetDriverCoordsInitial,
+      dropoffCoords,
+      amountEur,
+      distanceKm,
+      durationMinFromRide,
+      paymentMethod,
+    ]
+  );
+
   return (
     <div className="client-ride-tracking-page" data-ride-tracking-ui="map-v2">
       <div className="client-ride-tracking-map-wrap">
@@ -332,8 +531,22 @@ export default function ClientRideTrackingView({
         </button>
       </header>
 
-      <div className="client-ride-tracking-sheet">
-        <div className="client-ride-tracking-sheet__handle" aria-hidden>
+      <div
+        ref={sheetRef}
+        className={`client-ride-tracking-sheet${isSheetDragging ? ' client-ride-tracking-sheet--dragging' : ''}`}
+        style={{ top: `${sheetTopPx}px` }}
+      >
+        <div
+          className="client-ride-tracking-sheet__handle"
+          role="slider"
+          aria-label={t('clientAccount.rideTrackSheetHandleAria')}
+          aria-valuemin={sheetMinTop}
+          aria-valuemax={sheetMaxTop}
+          aria-valuenow={sheetTopPx}
+          style={{ cursor: isSheetDragging ? 'grabbing' : 'grab' }}
+          onMouseDown={handleSheetBarMouseDown}
+          onTouchStart={handleSheetBarTouchStart}
+        >
           <span className="client-ride-tracking-sheet__handle-bar" />
         </div>
         <div className="client-ride-tracking-panel">
@@ -350,28 +563,44 @@ export default function ClientRideTrackingView({
           </div>
         </div>
 
-        <div className="client-ride-tracking-driver-card" aria-label={t('clientAccount.rideMeetDriverCardAria')}>
-          {driverProfilePhotoUrl ? (
-            <img
-              src={driverProfilePhotoUrl}
-              alt=""
-              className="client-ride-tracking-driver-avatar client-ride-tracking-driver-avatar--photo"
-            />
-          ) : (
-            <div className="client-ride-tracking-driver-avatar" aria-hidden>
-              {driverInitials(driverName)}
+        <section
+          className="client-ride-tracking-recap"
+          aria-label={t('clientAccount.rideTrackOrderRecapAria')}
+        >
+          <h2 className="client-ride-tracking-recap__title">{t('clientAccount.rideTrackOrderRecap')}</h2>
+          <dl className="client-ride-tracking-recap__grid">
+            <div className="client-ride-tracking-recap__item">
+              <dt>
+                <Banknote size={16} aria-hidden />
+                {t('clientAccount.ridePrice')}
+              </dt>
+              <dd>{priceLabel}</dd>
             </div>
-          )}
-          <div>
-            <p className="client-ride-tracking-driver-name">{driverName}</p>
-            {vehicleLabel ? (
-              <p className="client-ride-tracking-driver-vehicle">{vehicleLabel}</p>
-            ) : null}
-            {licensePlate ? (
-              <p className="client-ride-tracking-driver-plate">{licensePlate}</p>
-            ) : null}
-          </div>
-        </div>
+            <div className="client-ride-tracking-recap__item">
+              <dt>
+                <MapPinned size={16} aria-hidden />
+                {t('clientAccount.rideDistance')}
+              </dt>
+              <dd>{distanceLabel}</dd>
+            </div>
+            <div className="client-ride-tracking-recap__item">
+              <dt>
+                <Clock size={16} aria-hidden />
+                {t('clientAccount.rideDuration')}
+              </dt>
+              <dd>{durationLabel}</dd>
+            </div>
+            <div className="client-ride-tracking-recap__item">
+              <dt>
+                <CreditCard size={16} aria-hidden />
+                {t('clientAccount.ridePayment')}
+              </dt>
+              <dd>{paymentLabel}</dd>
+            </div>
+          </dl>
+        </section>
+
+        <ClientDriverMeetCard {...driverDisplay} t={t} variant="tracking" />
 
         {distanceM !== null ? (
           <p className="client-ride-tracking-distance" aria-live="polite">
