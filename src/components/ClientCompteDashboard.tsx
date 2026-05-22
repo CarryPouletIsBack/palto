@@ -456,7 +456,7 @@ export default function ClientCompteDashboard({ onBack, onOpenClientLiveMeet }: 
         durationMin: ride.status === 'completed' ? clientRideDurationMinutes(ride) : 0,
         distanceKm: Number(ride.distanceKm ?? 0),
         priceEur: Number(ride.amountEur ?? 0),
-        driverName: driver?.driverName ?? ride.driverName?.trim() || '—',
+        driverName: (driver?.driverName ?? ride.driverName?.trim()) || '—',
         vehicleLabel: driver?.vehicleLine || ride.vehicleLabel?.trim() || '—',
         driverPhone: driver?.driverPhone,
         driverProfilePhotoUrl: driver?.driverProfilePhotoUrl,
