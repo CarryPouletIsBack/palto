@@ -829,16 +829,6 @@ function App() {
                 />
               )
             )}
-            {currentPage === 'client-meet-driver' && (
-              <ClientMeetDriverPage
-                onBack={() => {
-                  const dest =
-                    previousPage && previousPage !== 'client-meet-driver' ? previousPage : 'accueil'
-                  setCurrentPage(dest)
-                  window.history.pushState({}, '', getPathFromPage(dest))
-                }}
-              />
-            )}
             {currentPage === 'dashboard' && (
               (authUiTick >= 0 && isAuthenticated()) ? (
                 <Dashboard
@@ -1019,23 +1009,30 @@ function App() {
         !currentPage.startsWith('destination-') && (
         <Header onContactClick={handleContactClick} onLogoClick={handleLogoClick} />
       )}
-      {currentPage.startsWith('project-') || currentPage === 'project' ? (
+      {currentPage === 'client-meet-driver' ? (
+        <ClientMeetDriverPage
+          onBack={() => {
+            const dest =
+              previousPage && previousPage !== 'client-meet-driver' ? previousPage : 'client-compte'
+            setCurrentPage(dest)
+            window.history.pushState({}, '', getPathFromPage(dest))
+          }}
+        />
+      ) : currentPage.startsWith('project-') || currentPage === 'project' ? (
         renderCurrentPage()
       ) : (
         <div
           className={`app-page-font-zoom${
             currentPage === 'dashboard' ||
             currentPage === 'dashboard-navigation' ||
-            currentPage === 'client-compte' ||
-            currentPage === 'client-meet-driver'
+            currentPage === 'client-compte'
               ? ' app-page-font-zoom--prefer-font-size'
               : ''
           }`}
           style={
             currentPage === 'dashboard' ||
             currentPage === 'dashboard-navigation' ||
-            currentPage === 'client-compte' ||
-            currentPage === 'client-meet-driver'
+            currentPage === 'client-compte'
               ? undefined
               : { zoom: appFontZoomFactor }
           }

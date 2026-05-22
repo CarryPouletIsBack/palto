@@ -116,10 +116,12 @@ export function useClientHomeTopbarRides(language: 'fr' | 'en') {
           });
         }
         const inProgress = allItems.find((item) => item.status === 'in_progress');
-        const meetModel = inProgress ? buildClientLiveMeetRideFromRideItem(inProgress) : null;
+        const meetModel =
+          (inProgress ? buildClientLiveMeetRideFromRideItem(inProgress) : null) ??
+          (first ? buildClientLiveMeetRideFromRideItem(first) : null);
         if (meetModel) {
           saveClientLiveMeetRideModel(meetModel);
-          setApiLiveMeetActive(true);
+          setApiLiveMeetActive(Boolean(inProgress));
         } else {
           clearClientLiveMeetRideModel();
           setApiLiveMeetActive(false);

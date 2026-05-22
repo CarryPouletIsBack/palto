@@ -120,7 +120,10 @@ import {
   logoutClientToHome,
   PALTO_CLIENT_SESSION_CHANGED_EVENT,
 } from '../services/authService';
-import { buildClientLiveMeetRideFromRideItem } from '../constants/clientLiveMeetRide';
+import {
+  buildClientLiveMeetRideFromRideItem,
+  saveClientLiveMeetRideModel,
+} from '../constants/clientLiveMeetRide';
 import { cancelClientRide, clientRidesApiEnabled, fetchClientRides, type ClientRideItem } from '../services/clientRidesApi';
 import { scheduleClientProfilePush, syncClientProfileWithServer } from '../services/clientProfileSync';
 
@@ -416,7 +419,11 @@ export default function ClientCompteDashboard({ onBack, onOpenClientLiveMeet }: 
         completed: 'Completed',
         cancelled: 'Cancelled',
       };
-      const liveMeet = ride.status === 'in_progress' ? buildClientLiveMeetRideFromRideItem(ride) : null;
+      const trackModel = buildClientLiveMeetRideFromRideItem(ride);
+      const liveMeet =
+        trackModel && (ride.status === 'in_progress' || ride.status === 'accepted')
+          ? trackModel
+          : null;
       const flow: ClientRideFlowKind | null =
         ride.status === 'completed'
           ? 'end_cash'
@@ -819,6 +826,26 @@ export default function ClientCompteDashboard({ onBack, onOpenClientLiveMeet }: 
     },
     [activeNav, isEditing, cancelEdit, isMobileViewport, language]
   );
+
+  const openClientRideTracking = useCallback(() => {
+    if (!onOpenClientLiveMeet) return;
+    const trackable = clientRides.find(
+      (r) =>
+        (r.status === 'accepted' || r.status === 'pending' || r.status === 'in_progress') &&
+        typeof r.pickupLng === 'number' &&
+        typeof r.pickupLat === 'number'
+    );
+    if (trackable) {
+      const model = buildClientLiveMeetRideFromRideItem(trackable);
+      if (model) {
+        saveClientLiveMeetRideModel(model);
+        trackEvent('click', 'client_account', 'overview_ride_tracking');
+        onOpenClientLiveMeet();
+        return;
+      }
+    }
+    goNav('courses');
+  }, [clientRides, onOpenClientLiveMeet, goNav]);
 
   const openManageAccount = useCallback((section: AccountManageSectionId = 'personal') => {
     setAccountManageSection(section);
@@ -1851,9 +1878,8 @@ export default function ClientCompteDashboard({ onBack, onOpenClientLiveMeet }: 
                   role="button"
                   tabIndex={0}
                   onClick={() => {
-                    if (onOpenClientLiveMeet && clientLiveMeetActive) {
-                      trackEvent('click', 'client_account', 'overview_live_meet');
-                      onOpenClientLiveMeet();
+                    if (clientUpcomingRide || clientLiveMeetActive) {
+                      openClientRideTracking();
                       return;
                     }
                     goNav('courses');
@@ -1861,9 +1887,8 @@ export default function ClientCompteDashboard({ onBack, onOpenClientLiveMeet }: 
                   onKeyDown={(e) => {
                     if (e.key !== 'Enter' && e.key !== ' ') return;
                     e.preventDefault();
-                    if (onOpenClientLiveMeet && clientLiveMeetActive) {
-                      trackEvent('click', 'client_account', 'overview_live_meet');
-                      onOpenClientLiveMeet();
+                    if (clientUpcomingRide || clientLiveMeetActive) {
+                      openClientRideTracking();
                       return;
                     }
                     goNav('courses');
@@ -3057,6 +3082,23 @@ export default function ClientCompteDashboard({ onBack, onOpenClientLiveMeet }: 
                           </button>
                         </div>
                       </div>
+                      {selectedRide.flow === 'meet_driver' ? (
+                        <button
+                          type="button"
+                          className="dashboard-user-edit-btn"
+                          style={{ marginBottom: 12 }}
+                          onClick={() => {
+                            const row = clientRides.find((r) => r.id === selectedRide.id);
+                            if (!row) return;
+                            const model = buildClientLiveMeetRideFromRideItem(row);
+                            if (!model || !onOpenClientLiveMeet) return;
+                            saveClientLiveMeetRideModel(model);
+                            onOpenClientLiveMeet();
+                          }}
+                        >
+                          {t('clientAccount.rideTrackOpenMap')}
+                        </button>
+                      ) : null}
                       {selectedRide.flow === 'meet_driver' ? (
                         <ClientCompteRideMeetDriver
                           key={`meet-${selectedRide.id}`}

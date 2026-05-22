@@ -5,6 +5,7 @@ import type { ClientRideItem } from '../services/clientRidesApi';
 export type ClientLiveMeetRideModel = {
   /** Id course Supabase — positions temps réel `ride_geo:{courseId}`. */
   courseId: string;
+  rideStatus?: string;
   pickupLabel: string;
   route: string;
   departTime: string;
@@ -14,6 +15,7 @@ export type ClientLiveMeetRideModel = {
   licensePlate: string;
   meetPickupCoords: { lng: number; lat: number };
   meetDriverCoordsInitial: { lng: number; lat: number };
+  dropoffCoords?: { lng: number; lat: number };
 };
 
 const CLIENT_LIVE_MEET_RIDE_STORAGE_KEY = 'palto:client-live-meet-ride';
@@ -58,22 +60,43 @@ export function clearClientLiveMeetRideModel(): void {
   }
 }
 
-/** Construit le modèle « meet » depuis une ligne API client (course `in_progress` + coords pickup). */
+function formatDepartTimeLabel(item: ClientRideItem): string {
+  const iso = `${item.scheduledDate}T${item.scheduledTime}`;
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return item.scheduledTime.slice(0, 5);
+  return d.toLocaleString('fr-FR', {
+    weekday: 'short',
+    day: 'numeric',
+    month: 'short',
+    hour: '2-digit',
+    minute: '2-digit',
+  });
+}
+
+/** Course suivie côté passager : acceptée, en attente (chauffeur assigné) ou en cours. */
 export function buildClientLiveMeetRideFromRideItem(item: ClientRideItem): ClientLiveMeetRideModel | null {
-  if (item.status !== 'in_progress') return null;
+  const trackable =
+    item.status === 'in_progress' || item.status === 'accepted' || item.status === 'pending';
+  if (!trackable) return null;
   if (typeof item.pickupLng !== 'number' || typeof item.pickupLat !== 'number') return null;
   const lng = item.pickupLng;
   const lat = item.pickupLat;
+  const dropoffCoords =
+    typeof item.dropoffLng === 'number' && typeof item.dropoffLat === 'number'
+      ? { lng: item.dropoffLng, lat: item.dropoffLat }
+      : undefined;
   return {
     courseId: item.id,
+    rideStatus: item.status,
     pickupLabel: simplifyAddressDisplay(item.pickupAddress),
     route: `${simplifyAddressDisplay(item.pickupAddress)} → ${simplifyAddressDisplay(item.dropoffAddress)}`,
-    departTime: item.scheduledTime.slice(0, 5),
+    departTime: formatDepartTimeLabel(item),
     driverName: item.driverName?.trim() || 'Chauffeur Palto',
     vehicleLabel: item.vehicleLabel?.trim() || '',
     vehicleColor: '',
     licensePlate: '',
     meetPickupCoords: { lng, lat },
     meetDriverCoordsInitial: { lng: lng - 0.0035, lat: lat + 0.0022 },
+    dropoffCoords,
   };
 }

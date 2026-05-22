@@ -1,8 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { ArrowLeft } from 'lucide-react';
 import { useLanguage } from '../contexts/LanguageContext';
-import { trackEvent } from '../services/googleAnalyticsTracking';
-import { isClientAuthenticated, getCurrentClientUser } from '../services/authService';
 import {
   buildClientLiveMeetRideFromRideItem,
   clearClientLiveMeetRideModel,
@@ -10,8 +7,8 @@ import {
   saveClientLiveMeetRideModel,
   type ClientLiveMeetRideModel,
 } from '../constants/clientLiveMeetRide';
-import ClientCompteRideMeetDriver from './ClientCompteRideMeetDriver';
 import ClientCompteRideEndCash from './ClientCompteRideEndCash';
+import ClientRideTrackingView from './ClientRideTrackingView';
 import {
   CLIENT_RIDES_POLL_FALLBACK_WHEN_REALTIME_MS,
   CLIENT_RIDES_POLL_INTERVAL_MS,
@@ -19,12 +16,10 @@ import {
   fetchClientRides,
   type ClientRideItem,
 } from '../services/clientRidesApi';
+import { isClientAuthenticated, getCurrentClientUser } from '../services/authService';
 import { supabaseRealtimeConfigured } from '../constants/featureFlags';
 import { subscribePaltoCoursesRealtime } from '../services/paltoCoursesRealtime';
 import { simplifyAddressDisplay } from '../services/addressDisplay';
-import './Dashboard.css';
-import './Dashboard.app-theme.css';
-import './ClientCompteDashboard.css';
 import './ClientMeetDriverPage.css';
 
 export interface ClientMeetDriverPageProps {
@@ -49,21 +44,33 @@ function durationMinFromCompletedRide(item: ClientRideItem): number {
   return Math.max(1, Math.round((b - a) / 60000));
 }
 
+/** Plein écran (hors `.app-page-font-zoom`), même logique que `DriverNavigationView`. */
 export default function ClientMeetDriverPage({ onBack }: ClientMeetDriverPageProps) {
   const { t } = useLanguage();
   const [meet, setMeet] = useState<ClientLiveMeetRideModel | null>(() => getClientLiveMeetRideModel());
   const [recap, setRecap] = useState<RecapState | null>(null);
-  const trackingCourseIdRef = useRef<string | null>(null);
+  const trackingCourseIdRef = useRef<string | null>(meet?.courseId ?? null);
 
   const reconcileFromItems = useCallback((items: ClientRideItem[]) => {
     if (trackingCourseIdRef.current == null) {
-      const inProg = items.find((r) => r.status === 'in_progress');
+      const trackable = items.find(
+        (r) =>
+          r.status === 'in_progress' ||
+          r.status === 'accepted' ||
+          r.status === 'pending'
+      );
       const sid = getClientLiveMeetRideModel()?.courseId ?? null;
-      trackingCourseIdRef.current = inProg?.id ?? sid ?? null;
+      trackingCourseIdRef.current = trackable?.id ?? sid ?? null;
     }
     if (trackingCourseIdRef.current == null) {
-      const inProg = items.find((r) => r.status === 'in_progress');
-      const m = inProg ? buildClientLiveMeetRideFromRideItem(inProg) : null;
+      const trackable = items.find(
+        (r) =>
+          (r.status === 'in_progress' ||
+            r.status === 'accepted' ||
+            r.status === 'pending') &&
+          typeof r.pickupLng === 'number'
+      );
+      const m = trackable ? buildClientLiveMeetRideFromRideItem(trackable) : null;
       if (m) {
         trackingCourseIdRef.current = m.courseId;
         setMeet(m);
@@ -98,13 +105,11 @@ export default function ClientMeetDriverPage({ onBack }: ClientMeetDriverPagePro
       return;
     }
 
-    if (row.status === 'in_progress') {
-      const m = buildClientLiveMeetRideFromRideItem(row);
-      if (m) {
-        setMeet(m);
-        setRecap(null);
-        saveClientLiveMeetRideModel(m);
-      }
+    const m = buildClientLiveMeetRideFromRideItem(row);
+    if (m) {
+      setMeet(m);
+      setRecap(null);
+      saveClientLiveMeetRideModel(m);
     }
   }, []);
 
@@ -140,28 +145,10 @@ export default function ClientMeetDriverPage({ onBack }: ClientMeetDriverPagePro
     };
   }, [reconcileFromItems]);
 
-  const ok = isClientAuthenticated() && (meet != null || recap != null);
-
-  return (
-    <div className="page active client-meet-driver-page">
-      <div className="client-meet-driver-page__inner">
-        <button
-          type="button"
-          className="client-meet-driver-page__back"
-          onClick={() => {
-            trackEvent('click', 'client_meet_driver', 'back');
-            onBack();
-          }}
-        >
-          <ArrowLeft size={18} aria-hidden />
-          {t('clientMeetDriver.back')}
-        </button>
-
-        {!ok ? (
-          <div className="client-meet-driver-page__empty" role="status">
-            <p>{t('clientMeetDriver.unavailable')}</p>
-          </div>
-        ) : recap ? (
+  if (recap) {
+    return (
+      <div className="client-meet-driver-fallback" data-ride-tracking-ui="recap">
+        <div className="client-meet-driver-fallback__inner">
           <ClientCompteRideEndCash
             key="ride-recap"
             priceEur={recap.priceEur}
@@ -171,22 +158,28 @@ export default function ClientMeetDriverPage({ onBack }: ClientMeetDriverPagePro
             route={recap.route}
             t={t}
           />
-        ) : meet ? (
-          <ClientCompteRideMeetDriver
-            courseId={meet.courseId}
-            pickupLabel={meet.pickupLabel}
-            driverName={meet.driverName}
-            vehicleLabel={meet.vehicleLabel}
-            vehicleColor={meet.vehicleColor}
-            licensePlate={meet.licensePlate}
-            route={meet.route}
-            departTime={meet.departTime}
-            meetPickupCoords={meet.meetPickupCoords}
-            meetDriverCoordsInitial={meet.meetDriverCoordsInitial}
-            t={t}
-          />
-        ) : null}
+          <button type="button" className="client-meet-driver-fallback__back" onClick={onBack}>
+            {t('clientMeetDriver.back')}
+          </button>
+        </div>
       </div>
-    </div>
-  );
+    );
+  }
+
+  if (!isClientAuthenticated() || !meet) {
+    return (
+      <div className="client-meet-driver-fallback" data-ride-tracking-ui="empty">
+        <div className="client-meet-driver-fallback__inner">
+          <div className="client-meet-driver-fallback__empty" role="status">
+            <p>{t('clientMeetDriver.unavailable')}</p>
+          </div>
+          <button type="button" className="client-meet-driver-fallback__back" onClick={onBack}>
+            {t('clientMeetDriver.back')}
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  return <ClientRideTrackingView {...meet} onBack={onBack} t={t} />;
 }

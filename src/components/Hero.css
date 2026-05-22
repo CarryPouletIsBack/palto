@@ -87,7 +87,7 @@ body.accueil-page :is(.page.active:not(.single-project-page), .hero-accueil-root
 
 /* :not(.client-meet-driver-page) — cette page gère ses propres marges dans ClientMeetDriverPage.css */
 body.document-scroll-page
-  .page.active:not(.single-project-page):not(.client-meet-driver-page):not(
+  .page.active:not(.single-project-page):not(.client-meet-driver-page):not(.client-meet-driver-page--tracking):not(
     :has(.dashboard-container--chauffeur)
   ) {
   position: relative;

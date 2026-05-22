@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { MapPin, Phone } from 'lucide-react';
+import { CircleHelp, MapPin } from 'lucide-react';
+import { toast } from 'sonner';
 import Map, { AttributionControl, Marker, type MapRef } from 'react-map-gl/maplibre';
 import 'maplibre-gl/dist/maplibre-gl.css';
 import { trackEvent } from '../services/googleAnalyticsTracking';
@@ -62,7 +63,6 @@ export default function ClientCompteRideMeetDriver({
   meetPickupCoords,
   meetDriverCoordsInitial,
 }: ClientCompteRideMeetDriverProps) {
-  const [confirmed, setConfirmed] = useState(false);
   const [driverLngLat, setDriverLngLat] = useState<LngLat | null>(meetDriverCoordsInitial ?? null);
   const [clientLngLat, setClientLngLat] = useState<LngLat | null>(null);
   const mapRef = useRef<MapRef>(null);
@@ -76,7 +76,7 @@ export default function ClientCompteRideMeetDriver({
   }, [meetDriverCoordsInitial?.lng, meetDriverCoordsInitial?.lat]);
 
   useEffect(() => {
-    if (useLiveBroadcast || !meetPickupCoords || !meetDriverCoordsInitial || confirmed) return;
+    if (useLiveBroadcast || !meetPickupCoords || !meetDriverCoordsInitial) return;
     const id = window.setInterval(() => {
       setDriverLngLat((prev) => {
         if (!prev || !meetPickupCoords) return prev;
@@ -91,11 +91,10 @@ export default function ClientCompteRideMeetDriver({
     meetPickupCoords?.lat,
     meetDriverCoordsInitial?.lng,
     meetDriverCoordsInitial?.lat,
-    confirmed,
   ]);
 
   useEffect(() => {
-    if (!useLiveBroadcast || !courseId || confirmed) return;
+    if (!useLiveBroadcast || !courseId) return;
     let cancelled = false;
     void joinRideGeoRoom(courseId, (p: RideGeoPayload) => {
       if (p.role !== 'driver') return;
@@ -109,10 +108,10 @@ export default function ClientCompteRideMeetDriver({
       geoRoomRef.current?.leave();
       geoRoomRef.current = null;
     };
-  }, [courseId, useLiveBroadcast, confirmed]);
+  }, [courseId, useLiveBroadcast]);
 
   useEffect(() => {
-    if (!useLiveBroadcast || !courseId || confirmed || !meetPickupCoords) return;
+    if (!useLiveBroadcast || !courseId || !meetPickupCoords) return;
     if (typeof navigator === 'undefined' || !navigator.geolocation) return;
 
     const watchId = navigator.geolocation.watchPosition(
@@ -129,7 +128,7 @@ export default function ClientCompteRideMeetDriver({
       { enableHighAccuracy: true, maximumAge: 5000, timeout: 20000 }
     );
     return () => navigator.geolocation.clearWatch(watchId);
-  }, [useLiveBroadcast, courseId, confirmed, meetPickupCoords]);
+  }, [useLiveBroadcast, courseId, meetPickupCoords]);
 
   const fitBounds = useCallback(() => {
     const map = mapRef.current?.getMap();
@@ -296,29 +295,25 @@ export default function ClientCompteRideMeetDriver({
         <button
           type="button"
           className="client-compte-ride-flow__btn client-compte-ride-flow__btn--secondary"
-          disabled
-          title={t('clientAccount.rideMeetCallDisabledHint')}
+          onClick={() => {
+            trackEvent('click', 'client_account', 'ride_track_help');
+            toast.message(t('clientAccount.rideTrackHelpToast'));
+          }}
         >
-          <Phone size={16} aria-hidden />
-          {t('clientAccount.rideMeetCall')}
+          <CircleHelp size={16} aria-hidden />
+          {t('clientAccount.rideTrackHelp')}
         </button>
         <button
           type="button"
           className="client-compte-ride-flow__btn client-compte-ride-flow__btn--primary"
-          disabled={confirmed}
           onClick={() => {
-            setConfirmed(true);
-            trackEvent('click', 'client_account', 'ride_meet_confirmed');
+            trackEvent('click', 'client_account', 'ride_driver_not_arrived');
+            toast.message(t('clientAccount.rideTrackDriverMissingToast'));
           }}
         >
-          {confirmed ? t('clientAccount.rideMeetConfirmed') : t('clientAccount.rideMeetCta')}
+          {t('clientAccount.rideTrackDriverMissing')}
         </button>
       </div>
-      {confirmed ? (
-        <p className="client-compte-ride-flow__toast" role="status">
-          {t('clientAccount.rideMeetToast')}
-        </p>
-      ) : null}
     </div>
   );
 }
