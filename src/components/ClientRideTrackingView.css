@@ -246,14 +246,29 @@
 }
 
 .client-ride-tracking-panel-cards {
-  display: block;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+@media (min-width: 640px) {
+  .client-ride-tracking-panel-cards {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    align-items: stretch;
+  }
+
+  .client-ride-tracking-panel-cards > .client-driver-meet-card--tracking {
+    grid-column: 1 / -1;
+  }
 }
 
 @media (max-width: 639px) {
   .client-ride-tracking-panel-cards {
     display: flex;
+    flex-direction: column;
     flex-wrap: wrap;
-    align-items: stretch;
     gap: 12px;
   }
 
