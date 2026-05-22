@@ -33,6 +33,15 @@ function haversineMeters(a: LngLat, b: LngLat): number {
   return 2 * R * Math.asin(Math.min(1, Math.sqrt(s)));
 }
 
+function driverInitials(name: string): string {
+  return name
+    .split(/\s+/)
+    .map((p) => p[0])
+    .join('')
+    .slice(0, 2)
+    .toUpperCase();
+}
+
 function normalizeName(s: string): string {
   return s
     .trim()
@@ -66,6 +75,7 @@ export default function ClientRideTrackingView({
   rideStatus,
   pickupLabel,
   driverName,
+  driverProfilePhotoUrl,
   vehicleLabel,
   licensePlate,
   route,
@@ -262,6 +272,23 @@ export default function ClientRideTrackingView({
 
   return (
     <div className="client-ride-tracking-page" data-ride-tracking-ui="map-v2">
+      <div className="client-ride-tracking-map-wrap">
+        {loadingRoute && !routeFeature ? (
+          <div className="client-ride-tracking-map-status">{t('clientAccount.rideTrackLoadingRoute')}</div>
+        ) : null}
+        <HomeOsmMapBackground
+          variant="dashboardBackdrop"
+          flyToTarget={mapFlyTo}
+          userOrigin={pickupOrigin}
+          selectedDestination={dropoffDest}
+          routeFeature={routeFeature}
+          nearbyDrivers={driverOnMap}
+          liveClientPosition={liveClientPosition}
+          view3D
+          mapStyleUrl={OPENSTREET_OUTDOORS_STYLE_URL}
+        />
+      </div>
+
       <header className="client-ride-tracking-header">
         <button
           type="button"
@@ -274,9 +301,25 @@ export default function ClientRideTrackingView({
           <ArrowLeft size={18} aria-hidden />
           {t('clientMeetDriver.back')}
         </button>
-        <div className="client-ride-tracking-headlines">
-          <h1>{driverName}</h1>
-          <p title={route}>{route}</p>
+        <div className="client-ride-tracking-header-main">
+          {driverProfilePhotoUrl ? (
+            <img
+              src={driverProfilePhotoUrl}
+              alt=""
+              className="client-ride-tracking-header-avatar"
+            />
+          ) : (
+            <div
+              className="client-ride-tracking-header-avatar client-ride-tracking-header-avatar--initials"
+              aria-hidden
+            >
+              {driverInitials(driverName)}
+            </div>
+          )}
+          <div className="client-ride-tracking-headlines">
+            <h1>{driverName}</h1>
+            <p title={route}>{route}</p>
+          </div>
         </div>
         <button
           type="button"
@@ -289,24 +332,11 @@ export default function ClientRideTrackingView({
         </button>
       </header>
 
-      <div className="client-ride-tracking-map-wrap">
-        {loadingRoute && !routeFeature ? (
-          <div className="client-ride-tracking-map-status">{t('clientAccount.rideTrackLoadingRoute')}</div>
-        ) : null}
-        <HomeOsmMapBackground
-          variant="embedded"
-          flyToTarget={mapFlyTo}
-          userOrigin={pickupOrigin}
-          selectedDestination={dropoffDest}
-          routeFeature={routeFeature}
-          nearbyDrivers={driverOnMap}
-          liveClientPosition={liveClientPosition}
-          view3D
-          mapStyleUrl={OPENSTREET_OUTDOORS_STYLE_URL}
-        />
-      </div>
-
-      <div className="client-ride-tracking-panel">
+      <div className="client-ride-tracking-sheet">
+        <div className="client-ride-tracking-sheet__handle" aria-hidden>
+          <span className="client-ride-tracking-sheet__handle-bar" />
+        </div>
+        <div className="client-ride-tracking-panel">
         <p className="client-ride-tracking-panel__lead">{t('clientAccount.rideMeetLead')}</p>
 
         <div className="client-ride-tracking-pickup">
@@ -321,14 +351,17 @@ export default function ClientRideTrackingView({
         </div>
 
         <div className="client-ride-tracking-driver-card" aria-label={t('clientAccount.rideMeetDriverCardAria')}>
-          <div className="client-ride-tracking-driver-avatar" aria-hidden>
-            {driverName
-              .split(/\s+/)
-              .map((p) => p[0])
-              .join('')
-              .slice(0, 2)
-              .toUpperCase()}
-          </div>
+          {driverProfilePhotoUrl ? (
+            <img
+              src={driverProfilePhotoUrl}
+              alt=""
+              className="client-ride-tracking-driver-avatar client-ride-tracking-driver-avatar--photo"
+            />
+          ) : (
+            <div className="client-ride-tracking-driver-avatar" aria-hidden>
+              {driverInitials(driverName)}
+            </div>
+          )}
           <div>
             <p className="client-ride-tracking-driver-name">{driverName}</p>
             {vehicleLabel ? (
@@ -355,6 +388,7 @@ export default function ClientRideTrackingView({
           >
             {t('clientAccount.rideTrackDriverMissing')}
           </button>
+        </div>
         </div>
       </div>
     </div>

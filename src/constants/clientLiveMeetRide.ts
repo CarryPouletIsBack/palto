@@ -10,6 +10,7 @@ export type ClientLiveMeetRideModel = {
   route: string;
   departTime: string;
   driverName: string;
+  driverProfilePhotoUrl?: string;
   vehicleLabel: string;
   vehicleColor: string;
   licensePlate: string;
@@ -92,6 +93,7 @@ export function buildClientLiveMeetRideFromRideItem(item: ClientRideItem): Clien
     route: `${simplifyAddressDisplay(item.pickupAddress)} → ${simplifyAddressDisplay(item.dropoffAddress)}`,
     departTime: formatDepartTimeLabel(item),
     driverName: item.driverName?.trim() || 'Chauffeur Palto',
+    driverProfilePhotoUrl: item.driverProfilePhotoUrl?.trim() || undefined,
     vehicleLabel: item.vehicleLabel?.trim() || '',
     vehicleColor: '',
     licensePlate: '',

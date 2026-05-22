@@ -234,13 +234,24 @@ async function handleRidesActionPost(
     if (upErr || !updated) return res.status(409).json({ error: 'Impossible d accepter' })
     const { data: account } = await supabase
       .from('app_accounts')
-      .select('full_name, vehicle_type')
+      .select('id, full_name, vehicle_type')
       .eq('email', dashboardEmail)
       .eq('role', 'chauffeur')
       .maybeSingle()
     const fallbackName = dashboardEmail.split('@')[0] || 'Chauffeur'
     const driverName = (account?.full_name ?? '').trim() || fallbackName
     const vehicleLabel = (account?.vehicle_type ?? '').trim() || ''
+    let driverProfilePhotoUrl: string | undefined
+    if (account?.id) {
+      const { data: profileRow } = await supabase
+        .from('chauffeur_profile_data')
+        .select('account_snapshot')
+        .eq('account_id', account.id)
+        .maybeSingle()
+      const snap = sanitizeChauffeurProfileSnapshot(profileRow?.account_snapshot ?? {})
+      const photo = snap.profilePhotoUrl?.trim()
+      if (photo) driverProfilePhotoUrl = photo
+    }
     await supabase.from('course_events').insert({
       course_id: courseId,
       event_type: 'accepted',
@@ -249,6 +260,7 @@ async function handleRidesActionPost(
         driverName,
         vehicleLabel,
         driverEmail: dashboardEmail,
+        ...(driverProfilePhotoUrl ? { driverProfilePhotoUrl } : {}),
       },
     })
     return res.status(200).json({ ok: true, status: updated.status })
