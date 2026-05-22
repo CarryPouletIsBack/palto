@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { CircleHelp, MapPin } from 'lucide-react';
+import { CircleHelp, MapPin, Route } from 'lucide-react';
 import ClientDriverMeetCard from './ClientDriverMeetCard';
 import { clientDriverDisplayFromFields } from '../lib/clientDriverDisplay';
 import { toast } from 'sonner';
@@ -71,6 +71,7 @@ export default function ClientCompteRideMeetDriver({
 }: ClientCompteRideMeetDriverProps) {
   const [driverLngLat, setDriverLngLat] = useState<LngLat | null>(meetDriverCoordsInitial ?? null);
   const [clientLngLat, setClientLngLat] = useState<LngLat | null>(null);
+  const [userMapLocked, setUserMapLocked] = useState(false);
   const mapRef = useRef<MapRef>(null);
   const geoRoomRef = useRef<{ send: (role: 'client' | 'driver', lng: number, lat: number) => Promise<void>; leave: () => void } | null>(null);
   const lastClientSendRef = useRef(0);
@@ -136,7 +137,8 @@ export default function ClientCompteRideMeetDriver({
     return () => navigator.geolocation.clearWatch(watchId);
   }, [useLiveBroadcast, courseId, meetPickupCoords]);
 
-  const fitBounds = useCallback(() => {
+  const fitBounds = useCallback((force = false) => {
+    if (!force && userMapLocked) return;
     const map = mapRef.current?.getMap();
     if (!map || !meetPickupCoords || !driverLngLat) return;
     const pts: LngLat[] = [meetPickupCoords, driverLngLat];
@@ -167,12 +169,19 @@ export default function ClientCompteRideMeetDriver({
     if (!map.isStyleLoaded()) {
       map.once('idle', run);
     }
-  }, [meetPickupCoords, driverLngLat, clientLngLat]);
+  }, [meetPickupCoords, driverLngLat, clientLngLat, userMapLocked]);
 
   useEffect(() => {
     if (!meetPickupCoords || !driverLngLat) return;
-    fitBounds();
-  }, [fitBounds, meetPickupCoords, driverLngLat, clientLngLat]);
+    setUserMapLocked(false);
+    const id = requestAnimationFrame(() => fitBounds(true));
+    return () => cancelAnimationFrame(id);
+  }, [
+    meetPickupCoords.lng,
+    meetPickupCoords.lat,
+    meetDriverCoordsInitial?.lng,
+    meetDriverCoordsInitial?.lat,
+  ]);
 
   const hasLiveLocate = Boolean(meetPickupCoords && meetDriverCoordsInitial && driverLngLat);
   const distanceM =
@@ -217,6 +226,19 @@ export default function ClientCompteRideMeetDriver({
               <span className="client-compte-ride-flow__driver-locate-badge">{t('clientAccount.rideMeetLocationLive')}</span>
             </div>
             <div className="client-compte-ride-flow__driver-map-box">
+              {userMapLocked ? (
+                <button
+                  type="button"
+                  className="client-compte-ride-flow__map-recenter"
+                  onClick={() => {
+                    setUserMapLocked(false);
+                    fitBounds(true);
+                  }}
+                >
+                  <Route size={14} aria-hidden />
+                  {t('clientAccount.mapRecenterRoute')}
+                </button>
+              ) : null}
               <Map
                 ref={mapRef}
                 mapStyle={HOME_OPENSTREET_STYLE_URL}
@@ -227,13 +249,22 @@ export default function ClientCompteRideMeetDriver({
                 }}
                 maxBounds={REUNION_MAP_MAX_BOUNDS}
                 style={{ width: '100%', height: '100%', minHeight: 200 }}
-                scrollZoom={false}
+                scrollZoom
                 dragRotate={false}
                 pitchWithRotate={false}
                 touchPitch={false}
                 reuseMaps
+                onMoveEnd={(e) => {
+                  if (e.originalEvent) setUserMapLocked(true);
+                }}
+                onZoomEnd={(e) => {
+                  if (e.originalEvent) setUserMapLocked(true);
+                }}
+                onDragEnd={(e) => {
+                  if (e.originalEvent) setUserMapLocked(true);
+                }}
                 onLoad={() => {
-                  requestAnimationFrame(() => fitBounds());
+                  requestAnimationFrame(() => fitBounds(true));
                 }}
               >
                 <AttributionControl position="bottom-right" compact />

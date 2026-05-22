@@ -133,3 +133,48 @@ export function normalizeDriverMetaFromEventPayload(
     vehicleLabel,
   }
 }
+
+export type ResolvedDriverMeta = ReturnType<typeof normalizeDriverMetaFromEventPayload>
+
+/** Construit les métadonnées affichage client depuis compte + profil chauffeur. */
+export function driverMetaFromChauffeurAccount(input: {
+  fullName?: string | null
+  email?: string | null
+  phone?: string | null
+  vehicleTypeSlug?: string | null
+  profileSnapshot?: unknown
+}): ResolvedDriverMeta {
+  const email = (input.email ?? '').trim().toLowerCase()
+  const fallbackName = email.split('@')[0] || 'Chauffeur'
+  const driverName = (input.fullName ?? '').trim() || fallbackName
+  const built = buildAcceptedDriverPayload({
+    driverName,
+    driverEmail: email || 'chauffeur@palto.local',
+    accountPhone: input.phone ?? null,
+    vehicleTypeSlug: input.vehicleTypeSlug ?? null,
+    profileSnapshot: input.profileSnapshot ?? {},
+  })
+  return normalizeDriverMetaFromEventPayload(built as unknown as Record<string, unknown>)
+}
+
+export function mergeDriverMeta(
+  fromEvent: ResolvedDriverMeta,
+  fromAccount: ResolvedDriverMeta
+): ResolvedDriverMeta {
+  const vehicleLabel =
+    fromAccount.vehicleLabel?.trim() ||
+    fromEvent.vehicleLabel?.trim() ||
+    vehicleTypeLabel(fromAccount.vehicleType) ||
+    vehicleTypeLabel(fromEvent.vehicleType) ||
+    undefined
+
+  return {
+    driverName: fromEvent.driverName || fromAccount.driverName,
+    driverPhone: fromEvent.driverPhone || fromAccount.driverPhone,
+    driverProfilePhotoUrl: fromEvent.driverProfilePhotoUrl || fromAccount.driverProfilePhotoUrl,
+    licensePlate: fromEvent.licensePlate || fromAccount.licensePlate,
+    vehicleType: fromEvent.vehicleType || fromAccount.vehicleType,
+    vehicleModel: fromEvent.vehicleModel || fromAccount.vehicleModel,
+    vehicleLabel,
+  }
+}

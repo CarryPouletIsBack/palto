@@ -2,7 +2,12 @@ import type { VercelRequest, VercelResponse } from '@vercel/node'
 import { z } from 'zod'
 import { getVerifiedClientSession } from '../../server/lib/clientAuth.js'
 import { expireStaleInstantPendingCourses } from '../../server/lib/expireStaleInstantPendingCourses.js'
-import { normalizeDriverMetaFromEventPayload } from '../../server/lib/acceptedDriverPayload.js'
+import {
+  driverMetaFromChauffeurAccount,
+  mergeDriverMeta,
+  normalizeDriverMetaFromEventPayload,
+  type ResolvedDriverMeta,
+} from '../../server/lib/acceptedDriverPayload.js'
 import { getSupabaseAdmin } from '../../server/lib/supabaseAdmin.js'
 import { listNearbyDriversFromPresence } from '../../server/lib/nearbyDriversFromPresence.js'
 import {
@@ -46,6 +51,7 @@ type RideRow = {
   started_at: string | null
   completed_at: string | null
   payment_method: string | null
+  assigned_driver_external_key: string | null
 }
 
 type CourseEventRow = {
@@ -235,7 +241,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   let query = supabase
     .from('courses')
     .select(
-      'id,status,pickup_address,dropoff_address,scheduled_date,scheduled_time,amount_eur,distance_km,payment_method,pickup_lng,pickup_lat,dropoff_lng,dropoff_lat,created_at,started_at,completed_at'
+      'id,status,pickup_address,dropoff_address,scheduled_date,scheduled_time,amount_eur,distance_km,payment_method,pickup_lng,pickup_lat,dropoff_lng,dropoff_lat,created_at,started_at,completed_at,assigned_driver_external_key'
     )
     .in('client_id', clientIds)
     .order('scheduled_date', { ascending: false })
@@ -258,7 +264,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
   const rows = data as unknown as RideRow[]
   const courseIds = rows.map((r) => r.id)
-  const driverMetaByCourse = new Map<string, ReturnType<typeof normalizeDriverMetaFromEventPayload>>()
+  const driverMetaByCourse = new Map<string, ResolvedDriverMeta>()
   if (courseIds.length > 0) {
     const { data: eventsData } = await supabase
       .from('course_events')
@@ -282,7 +288,52 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     }
   }
 
-  const items = rows.map((row) => ({
+  const assignedAccountIds = [
+    ...new Set(
+      rows
+        .map((r) => (r.assigned_driver_external_key ?? '').trim())
+        .filter((id) => id.length > 0)
+    ),
+  ]
+  const accountMetaById = new Map<string, ResolvedDriverMeta>()
+  if (assignedAccountIds.length > 0) {
+    const { data: accounts, error: accountsErr } = await supabase
+      .from('app_accounts')
+      .select('id, full_name, email, phone, vehicle_type')
+      .in('id', assignedAccountIds)
+      .eq('role', 'chauffeur')
+    if (accountsErr) {
+      console.error('[client/rides] chauffeur accounts', accountsErr)
+    } else {
+      const { data: profiles } = await supabase
+        .from('chauffeur_profile_data')
+        .select('account_id, account_snapshot')
+        .in('account_id', assignedAccountIds)
+      const snapshotById = new Map(
+        (profiles ?? []).map((p) => [String(p.account_id), p.account_snapshot])
+      )
+      for (const acc of accounts ?? []) {
+        const id = String(acc.id)
+        accountMetaById.set(
+          id,
+          driverMetaFromChauffeurAccount({
+            fullName: acc.full_name,
+            email: acc.email,
+            phone: acc.phone,
+            vehicleTypeSlug: acc.vehicle_type,
+            profileSnapshot: snapshotById.get(id) ?? {},
+          })
+        )
+      }
+    }
+  }
+
+  const items = rows.map((row) => {
+    const eventMeta = driverMetaByCourse.get(row.id) ?? {}
+    const accountId = (row.assigned_driver_external_key ?? '').trim()
+    const accountMeta = accountId ? (accountMetaById.get(accountId) ?? {}) : {}
+    const driverMeta = mergeDriverMeta(eventMeta, accountMeta)
+    return {
     id: row.id,
     status: row.status,
     pickupAddress: row.pickup_address,
@@ -299,14 +350,15 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     createdAt: row.created_at,
     startedAt: row.started_at,
     completedAt: row.completed_at,
-    driverName: driverMetaByCourse.get(row.id)?.driverName ?? null,
-    vehicleLabel: driverMetaByCourse.get(row.id)?.vehicleLabel ?? null,
-    driverProfilePhotoUrl: driverMetaByCourse.get(row.id)?.driverProfilePhotoUrl ?? null,
-    driverPhone: driverMetaByCourse.get(row.id)?.driverPhone ?? null,
-    vehicleType: driverMetaByCourse.get(row.id)?.vehicleType ?? null,
-    vehicleModel: driverMetaByCourse.get(row.id)?.vehicleModel ?? null,
-    licensePlate: driverMetaByCourse.get(row.id)?.licensePlate ?? null,
-  }))
+    driverName: driverMeta.driverName ?? null,
+    vehicleLabel: driverMeta.vehicleLabel ?? null,
+    driverProfilePhotoUrl: driverMeta.driverProfilePhotoUrl ?? null,
+    driverPhone: driverMeta.driverPhone ?? null,
+    vehicleType: driverMeta.vehicleType ?? null,
+    vehicleModel: driverMeta.vehicleModel ?? null,
+    licensePlate: driverMeta.licensePlate ?? null,
+  }
+  })
 
   res.status(200).json({ items })
 }

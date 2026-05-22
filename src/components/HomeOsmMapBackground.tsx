@@ -1,4 +1,5 @@
-import { useCallback, useEffect, useRef } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { Route } from 'lucide-react'
 import Map, {
   AttributionControl,
   Layer,
@@ -19,6 +20,7 @@ import {
 } from '../constants/reunionIsland'
 import type { GeoPoint } from '../services/distanceGeo'
 import { isValidMapLngLat } from '../utils/mapLngLat'
+import { computeMapAutoCameraKey, hasMapAutoFrameContent } from '../utils/mapAutoCameraKey'
 
 /** Centre carte : La Réunion (île), zoom large pour contexte local. */
 export const HOME_MAP_INITIAL_VIEW = {
@@ -126,6 +128,8 @@ type HomeMapBackgroundProps = {
   view3D?: boolean
   /** Style de carte optionnel (URL style JSON GL). */
   mapStyleUrl?: string
+  /** Libellé du bouton « recadrer sur le trajet » après zoom manuel. */
+  recenterRouteLabel?: string
 }
 
 /**
@@ -142,6 +146,7 @@ export default function HomeOsmMapBackground({
   onMapDestinationPick,
   view3D = false,
   mapStyleUrl,
+  recenterRouteLabel = 'Voir le trajet',
 }: HomeMapBackgroundProps) {
   /** Pin départ : défaut Dachau si la prop est omise ; `null` = masquer le pin. */
   const resolvedUserOrigin: GeoPoint | null =
@@ -158,6 +163,8 @@ export default function HomeOsmMapBackground({
   const mapRef = useRef<MapRef>(null)
   const containerRef = useRef<HTMLDivElement>(null)
   const userLeftDefaultView = useRef(false)
+  const [userCameraLocked, setUserCameraLocked] = useState(false)
+  const prevAutoCameraKeyRef = useRef('')
   const flyToTargetRef = useRef(flyToTarget)
   flyToTargetRef.current = flyToTarget
   const routeFeatureRef = useRef(routeFeature)
@@ -209,10 +216,35 @@ export default function HomeOsmMapBackground({
     }
   }, [view3D, applyTerrainAndPitch])
 
+  const nearbyDriverIdsKey = useMemo(
+    () => safeNearbyDrivers.map((d) => d.id).sort().join(','),
+    [safeNearbyDrivers]
+  )
+
+  const autoCameraKey = useMemo(
+    () =>
+      computeMapAutoCameraKey({
+        routeFeature,
+        userOrigin: safeUserOrigin,
+        selectedDestination: safeDestination,
+        flyToTarget,
+        nearbyDriverIds: nearbyDriverIdsKey,
+      }),
+    [routeFeature, safeUserOrigin, safeDestination, flyToTarget, nearbyDriverIdsKey]
+  )
+
+  const canShowRecenter =
+    userCameraLocked && hasMapAutoFrameContent(autoCameraKey) && variant !== 'authWall'
+
+  const markUserCameraControl = useCallback(() => {
+    setUserCameraLocked(true)
+  }, [])
+
   /** Une seule source de vérité caméra : évite flyTo + fitBounds concurrents (pins « qui sautent »). */
-  const syncMapCamera = useCallback(() => {
+  const syncMapCamera = useCallback((options?: { force?: boolean }) => {
     const map = mapRef.current?.getMap()
     if (!map || !map.isStyleLoaded()) return
+    if (!options?.force && userCameraLocked) return
 
     try {
       map.stop()
@@ -320,19 +352,23 @@ export default function HomeOsmMapBackground({
         essential: true,
       })
     }
-  }, [pitchForMode])
+  }, [pitchForMode, userCameraLocked])
 
   useEffect(() => {
-    syncMapCamera()
-  }, [
-    syncMapCamera,
-    routeFeature,
-    flyToTarget,
-    selectedDestination,
-    nearbyDrivers,
-    resolvedUserOrigin?.latitude,
-    resolvedUserOrigin?.longitude,
-  ])
+    const keyChanged = prevAutoCameraKeyRef.current !== autoCameraKey
+    prevAutoCameraKeyRef.current = autoCameraKey
+    if (keyChanged) {
+      setUserCameraLocked(false)
+      syncMapCamera({ force: true })
+      return
+    }
+    if (!userCameraLocked) syncMapCamera()
+  }, [autoCameraKey, userCameraLocked, syncMapCamera])
+
+  const handleRecenterRoute = useCallback(() => {
+    setUserCameraLocked(false)
+    syncMapCamera({ force: true })
+  }, [syncMapCamera])
 
   const handleMapLoad = useCallback(() => {
     const map = mapRef.current?.getMap()
@@ -398,6 +434,15 @@ export default function HomeOsmMapBackground({
           maxPitch={85}
           attributionControl={false}
           onLoad={handleMapLoad}
+          onMoveEnd={(e) => {
+            if (e.originalEvent) markUserCameraControl()
+          }}
+          onZoomEnd={(e) => {
+            if (e.originalEvent) markUserCameraControl()
+          }}
+          onDragEnd={(e) => {
+            if (e.originalEvent) markUserCameraControl()
+          }}
           onClick={
             variant === 'dashboardBackdrop' || variant === 'authWall'
               ? undefined
@@ -486,6 +531,17 @@ export default function HomeOsmMapBackground({
           )}
           <AttributionControl compact position="bottom-left" />
         </Map>
+        {canShowRecenter ? (
+          <button
+            type="button"
+            className="home-osm-map-recenter"
+            onClick={handleRecenterRoute}
+            aria-label={recenterRouteLabel}
+          >
+            <Route size={16} aria-hidden />
+            {recenterRouteLabel}
+          </button>
+        ) : null}
       </div>
     </div>
   )

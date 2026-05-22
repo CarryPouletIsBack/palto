@@ -3366,6 +3366,7 @@ const SingleProjectNew: FC<SingleProjectProps> = ({
                   routeFeature={paltoMapRouteFeature}
                   nearbyDrivers={chauffeursSearchOk ? pickupFilteredDrivers : []}
                   onMapDestinationPick={handlePaltoMainMapPick}
+                  recenterRouteLabel={t('clientAccount.mapRecenterRoute')}
                 />
               </div>
             </section>

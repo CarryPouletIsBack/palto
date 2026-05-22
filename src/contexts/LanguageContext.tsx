@@ -697,6 +697,7 @@ const TRANSLATIONS: Record<Language, Record<string, unknown>> = {
       rideTrackDriverMissingToast:
         'Signalement enregistré. Nous contactons le chauffeur et vous tenons informé.',
       rideTrackOpenMap: 'Voir sur la carte',
+      mapRecenterRoute: 'Voir le trajet',
       rideTrackSheetHandleAria: 'Ajuster la hauteur du panneau',
       rideTrackOrderRecap: 'Récap commande',
       rideTrackOrderRecapAria: 'Montant, distance, durée et paiement de la course',
@@ -1446,6 +1447,7 @@ const TRANSLATIONS: Record<Language, Record<string, unknown>> = {
       rideTrackDriverMissingToast:
         'Report received. We are contacting your driver and will update you shortly.',
       rideTrackOpenMap: 'View on map',
+      mapRecenterRoute: 'Show route',
       rideTrackSheetHandleAria: 'Adjust panel height',
       rideTrackOrderRecap: 'Order summary',
       rideTrackOrderRecapAria: 'Fare, distance, duration and payment for this ride',

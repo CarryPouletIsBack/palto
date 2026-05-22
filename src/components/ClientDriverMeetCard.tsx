@@ -16,6 +16,7 @@ export type ClientDriverMeetCardProps = ClientDriverDisplay & {
   /** Préfixe classes : suivi carte ou flux compte. */
   variant?: 'tracking' | 'compte';
   className?: string;
+  'data-driver-card-version'?: string;
 };
 
 export default function ClientDriverMeetCard({
@@ -28,6 +29,7 @@ export default function ClientDriverMeetCard({
   t,
   variant = 'compte',
   className = '',
+  'data-driver-card-version': dataDriverCardVersion,
 }: ClientDriverMeetCardProps) {
   const rootClass = [
     'client-driver-meet-card',
@@ -40,7 +42,11 @@ export default function ClientDriverMeetCard({
   const telHref = driverPhone ? `tel:${driverPhone.replace(/\s/g, '')}` : null;
 
   return (
-    <div className={rootClass} aria-label={t('clientAccount.rideMeetDriverCardAria')}>
+    <div
+      className={rootClass}
+      aria-label={t('clientAccount.rideMeetDriverCardAria')}
+      data-driver-card-version={dataDriverCardVersion}
+    >
       {driverProfilePhotoUrl ? (
         <img src={driverProfilePhotoUrl} alt="" className="client-driver-meet-card__avatar client-driver-meet-card__avatar--photo" />
       ) : (

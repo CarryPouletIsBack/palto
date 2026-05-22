@@ -138,3 +138,39 @@
     height: 100%;
   }
 }
+
+.home-osm-map-recenter {
+  position: absolute;
+  left: 50%;
+  bottom: max(72px, calc(12px + env(safe-area-inset-bottom, 0px)));
+  z-index: 6;
+  transform: translateX(-50%);
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 16px;
+  border-radius: 999px;
+  border: 1px solid rgba(15, 23, 42, 0.12);
+  background: rgba(255, 255, 255, 0.96);
+  color: #0f172a;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  box-shadow: 0 4px 16px rgba(15, 23, 42, 0.18);
+  cursor: pointer;
+  pointer-events: auto;
+}
+
+.home-osm-map-recenter:hover {
+  background: #fff;
+}
+
+.home-osm-map-bg--dashboard-backdrop .home-osm-map-recenter {
+  pointer-events: auto;
+}
+
+html[data-app-theme='dark'] .home-osm-map-recenter {
+  background: rgba(15, 23, 42, 0.92);
+  border-color: rgba(255, 255, 255, 0.15);
+  color: #f8fafc;
+}

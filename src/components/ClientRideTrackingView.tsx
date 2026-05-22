@@ -4,8 +4,7 @@ import {
   useMemo,
   useRef,
   useState,
-  type MouseEvent as ReactMouseEvent,
-  type TouchEvent as ReactTouchEvent,
+  type PointerEvent as ReactPointerEvent,
 } from 'react';
 import { ArrowLeft, Banknote, CircleHelp, Clock, CreditCard, MapPin, MapPinned } from 'lucide-react';
 import type { Feature, LineString } from 'geojson';
@@ -23,7 +22,13 @@ import {
   type RideGeoPayload,
 } from '../services/paltoRideLocationRealtime';
 import { fetchNearbyDriversAt } from '../services/clientRidesApi';
-import type { ClientLiveMeetRideModel } from '../constants/clientLiveMeetRide';
+import {
+  buildClientLiveMeetRideFromRideItem,
+  saveClientLiveMeetRideModel,
+  type ClientLiveMeetRideModel,
+} from '../constants/clientLiveMeetRide';
+import { clientRidesApiEnabled, fetchClientRides } from '../services/clientRidesApi';
+import { getCurrentClientUser, isClientAuthenticated } from '../services/authService';
 import { clientDriverDisplayFromMeetModel } from '../lib/clientDriverDisplay';
 import ClientDriverMeetCard from './ClientDriverMeetCard';
 import './ClientRideTrackingView.css';
@@ -95,28 +100,65 @@ export type ClientRideTrackingViewProps = ClientLiveMeetRideModel & {
   t: (key: string, params?: Record<string, string | number>) => string;
 };
 
-export default function ClientRideTrackingView({
-  courseId,
-  rideStatus,
-  pickupLabel,
-  driverName,
-  driverProfilePhotoUrl,
-  driverPhone,
-  vehicleLabel,
-  vehicleColor,
-  licensePlate,
-  route,
-  departTime,
-  meetPickupCoords,
-  meetDriverCoordsInitial,
-  dropoffCoords,
-  amountEur,
-  distanceKm,
-  durationMin: durationMinFromRide,
-  paymentMethod,
-  onBack,
-  t,
-}: ClientRideTrackingViewProps) {
+export default function ClientRideTrackingView(props: ClientRideTrackingViewProps) {
+  const { onBack, t } = props;
+  const [meet, setMeet] = useState<ClientLiveMeetRideModel>(() => ({ ...props }));
+
+  useEffect(() => {
+    setMeet((prev) => ({ ...prev, ...props }));
+  }, [
+    props.courseId,
+    props.driverName,
+    props.driverPhone,
+    props.driverProfilePhotoUrl,
+    props.vehicleLabel,
+    props.licensePlate,
+    props.vehicleColor,
+    props.rideStatus,
+    props.amountEur,
+    props.paymentMethod,
+  ]);
+
+  const {
+    courseId,
+    rideStatus,
+    pickupLabel,
+    driverName,
+    driverProfilePhotoUrl,
+    driverPhone,
+    vehicleLabel,
+    vehicleColor,
+    licensePlate,
+    route,
+    departTime,
+    meetPickupCoords,
+    meetDriverCoordsInitial,
+    dropoffCoords,
+    amountEur,
+    distanceKm,
+    durationMin: durationMinFromRide,
+    paymentMethod,
+  } = meet;
+
+  useEffect(() => {
+    if (!clientRidesApiEnabled() || !isClientAuthenticated() || !courseId) return;
+    const email = getCurrentClientUser()?.email?.trim();
+    if (!email) return;
+    let cancelled = false;
+    void fetchClientRides(email, 'all').then((items) => {
+      if (cancelled) return;
+      const row = items.find((r) => r.id === courseId);
+      if (!row) return;
+      const fresh = buildClientLiveMeetRideFromRideItem(row);
+      if (fresh) {
+        setMeet((prev) => ({ ...prev, ...fresh }));
+        saveClientLiveMeetRideModel(fresh);
+      }
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [courseId]);
   const sheetRef = useRef<HTMLDivElement>(null);
   const [sheetTopPx, setSheetTopPx] = useState(() =>
     typeof window !== 'undefined' ? Math.round(window.innerHeight * SHEET_TOP_DEFAULT_RATIO) : 360
@@ -183,6 +225,7 @@ export default function ClientRideTrackingView({
     ];
   }, [driverLngLat, driverName]);
 
+  /** Cadrage auto : prise en charge + arrivée uniquement (pas le chauffeur / GPS en direct). */
   const mapFlyTo = useMemo((): HomeMapFlyTo | null => {
     const lngs: number[] = [meetPickupCoords.lng];
     const lats: number[] = [meetPickupCoords.lat];
@@ -190,15 +233,7 @@ export default function ClientRideTrackingView({
       lngs.push(dropoffCoords.lng);
       lats.push(dropoffCoords.lat);
     }
-    if (driverLngLat) {
-      lngs.push(driverLngLat.lng);
-      lats.push(driverLngLat.lat);
-    }
-    if (clientLngLat) {
-      lngs.push(clientLngLat.lng);
-      lats.push(clientLngLat.lat);
-    }
-    if (lngs.length < 2) return null;
+    if (lngs.length < 2 && !dropoffCoords) return null;
     const minLng = Math.min(...lngs);
     const maxLng = Math.max(...lngs);
     const minLat = Math.min(...lats);
@@ -210,7 +245,7 @@ export default function ClientRideTrackingView({
       latitude: (minLat + maxLat) / 2,
       zoom,
     };
-  }, [meetPickupCoords, dropoffCoords, driverLngLat, clientLngLat]);
+  }, [meetPickupCoords, dropoffCoords]);
 
   useEffect(() => {
     if (!dropoffDest) {
@@ -342,64 +377,48 @@ export default function ClientRideTrackingView({
     return () => window.removeEventListener('resize', onResize);
   }, []);
 
-  const beginSheetDrag = useCallback(
-    (clientY: number) => {
-      sheetDragRef.current = { startY: clientY, startTop: sheetTopPx };
-      setIsSheetDragging(true);
-    },
-    [sheetTopPx]
+  const clampSheetTop = useCallback(
+    (top: number) => Math.min(sheetMaxTop, Math.max(sheetMinTop, top)),
+    [sheetMinTop, sheetMaxTop]
   );
 
-  const handleSheetBarMouseDown = (e: ReactMouseEvent) => {
+  const finishSheetDrag = useCallback(() => {
+    setSheetTopPx((prev) => snapSheetTop(prev, sheetMinTop, sheetDefaultTop, sheetMaxTop));
+    setIsSheetDragging(false);
+    sheetDragRef.current = null;
+  }, [sheetMinTop, sheetDefaultTop, sheetMaxTop]);
+
+  const handleSheetPointerDown = (e: ReactPointerEvent<HTMLDivElement>) => {
+    if (e.button !== 0) return;
     e.preventDefault();
     e.stopPropagation();
-    beginSheetDrag(e.clientY);
+    e.currentTarget.setPointerCapture(e.pointerId);
+    sheetDragRef.current = { startY: e.clientY, startTop: sheetTopPx };
+    setIsSheetDragging(true);
   };
 
-  const handleSheetBarTouchStart = (e: ReactTouchEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    beginSheetDrag(e.touches[0].clientY);
-  };
-
-  useEffect(() => {
+  const handleSheetPointerMove = (e: ReactPointerEvent<HTMLDivElement>) => {
     if (!isSheetDragging || !sheetDragRef.current) return;
+    e.preventDefault();
+    const start = sheetDragRef.current;
+    const next = start.startTop + (e.clientY - start.startY);
+    setSheetTopPx(clampSheetTop(next));
+  };
 
-    const onMove = (clientY: number) => {
-      const start = sheetDragRef.current;
-      if (!start) return;
-      const next = start.startTop + (clientY - start.startY);
-      setSheetTopPx(Math.min(sheetMaxTop, Math.max(sheetMinTop, next)));
-    };
+  const handleSheetPointerUp = (e: ReactPointerEvent<HTMLDivElement>) => {
+    if (!isSheetDragging) return;
+    if (e.currentTarget.hasPointerCapture(e.pointerId)) {
+      e.currentTarget.releasePointerCapture(e.pointerId);
+    }
+    finishSheetDrag();
+  };
 
-    const onMouseMove = (e: MouseEvent) => {
-      e.preventDefault();
-      onMove(e.clientY);
-    };
-
-    const onTouchMove = (e: TouchEvent) => {
-      e.preventDefault();
-      onMove(e.touches[0].clientY);
-    };
-
-    const onEnd = () => {
-      setSheetTopPx((prev) => snapSheetTop(prev, sheetMinTop, sheetDefaultTop, sheetMaxTop));
-      setIsSheetDragging(false);
-      sheetDragRef.current = null;
-    };
-
-    window.addEventListener('mousemove', onMouseMove, { passive: false });
-    window.addEventListener('mouseup', onEnd, { passive: false });
-    window.addEventListener('touchmove', onTouchMove, { passive: false });
-    window.addEventListener('touchend', onEnd, { passive: false });
-
-    return () => {
-      window.removeEventListener('mousemove', onMouseMove);
-      window.removeEventListener('mouseup', onEnd);
-      window.removeEventListener('touchmove', onTouchMove);
-      window.removeEventListener('touchend', onEnd);
-    };
-  }, [isSheetDragging, sheetMinTop, sheetDefaultTop, sheetMaxTop]);
+  const handleSheetPointerCancel = (e: ReactPointerEvent<HTMLDivElement>) => {
+    if (e.currentTarget.hasPointerCapture(e.pointerId)) {
+      e.currentTarget.releasePointerCapture(e.pointerId);
+    }
+    finishSheetDrag();
+  };
 
   const durationLabel = useMemo(() => {
     if (durationMinFromRide && durationMinFromRide > 0) {
@@ -478,6 +497,7 @@ export default function ClientRideTrackingView({
         <HomeOsmMapBackground
           variant="dashboardBackdrop"
           flyToTarget={mapFlyTo}
+          recenterRouteLabel={t('clientAccount.mapRecenterRoute')}
           userOrigin={pickupOrigin}
           selectedDestination={dropoffDest}
           routeFeature={routeFeature}
@@ -543,9 +563,11 @@ export default function ClientRideTrackingView({
           aria-valuemin={sheetMinTop}
           aria-valuemax={sheetMaxTop}
           aria-valuenow={sheetTopPx}
-          style={{ cursor: isSheetDragging ? 'grabbing' : 'grab' }}
-          onMouseDown={handleSheetBarMouseDown}
-          onTouchStart={handleSheetBarTouchStart}
+          style={{ cursor: isSheetDragging ? 'grabbing' : 'grab', touchAction: 'none' }}
+          onPointerDown={handleSheetPointerDown}
+          onPointerMove={handleSheetPointerMove}
+          onPointerUp={handleSheetPointerUp}
+          onPointerCancel={handleSheetPointerCancel}
         >
           <span className="client-ride-tracking-sheet__handle-bar" />
         </div>
@@ -600,7 +622,13 @@ export default function ClientRideTrackingView({
           </dl>
         </section>
 
-        <ClientDriverMeetCard {...driverDisplay} t={t} variant="tracking" />
+        <ClientDriverMeetCard
+          {...driverDisplay}
+          t={t}
+          variant="tracking"
+          className="client-driver-meet-card--tracking-v2"
+          data-driver-card-version="v2"
+        />
 
         {distanceM !== null ? (
           <p className="client-ride-tracking-distance" aria-live="polite">

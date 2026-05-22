@@ -46,7 +46,7 @@ const ProjectCoverCarousel: React.FC<ProjectCoverCarouselProps> = ({
   isFullscreenModalOpen = false,
   hideCloseOnScroll = false,
 }) => {
-  const { language } = useLanguage();
+  const { language, t } = useLanguage();
   const [fullscreenIndex, setFullscreenIndex] = useState(0);
   /** Premier clic carte cover = départ (comme le panneau Go), pas d’origine fictive Dachau. */
   const [mapCoverPickup, setMapCoverPickup] = useState<{ longitude: number; latitude: number } | null>(null);
@@ -322,6 +322,7 @@ const ProjectCoverCarousel: React.FC<ProjectCoverCarouselProps> = ({
               routeFeature={mapRouteFeature}
               nearbyDrivers={coverNearbyDrivers}
               onMapDestinationPick={handleMapDestinationPick}
+              recenterRouteLabel={t('clientAccount.mapRecenterRoute')}
             />
           </div>
         ) : (
