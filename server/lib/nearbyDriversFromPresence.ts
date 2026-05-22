@@ -1,5 +1,6 @@
 import type { SupabaseClient } from '@supabase/supabase-js'
 import { CHAUFFEUR_PRESENCE_VISIBILITY_MS } from './chauffeurPresence.js'
+import { sanitizeChauffeurProfileSnapshot } from './chauffeurProfileSanitize.js'
 import { haversineKm, type GeoPoint } from './haversineKm.js'
 import { vehicleTypeLabel } from './vehicleTypeLabel.js'
 
@@ -12,10 +13,17 @@ export type NearbyDriverApiItem = {
   longitude: number
   latitude: number
   distanceKm: number
+  profilePhotoUrl?: string
   petFriendly: boolean
   luggageAssistance: boolean
   insulatedBag: boolean
   deliveryEquipped: boolean
+}
+
+function profilePhotoFromSnapshot(raw: unknown): string | undefined {
+  const snap = sanitizeChauffeurProfileSnapshot(raw ?? {})
+  const url = snap.profilePhotoUrl?.trim()
+  return url || undefined
 }
 
 const PRESENCE_MAX_AGE_MS = CHAUFFEUR_PRESENCE_VISIBILITY_MS
@@ -63,6 +71,18 @@ export async function listNearbyDriversFromPresence(
 
   const accountById = new Map(accounts.map((a) => [String(a.id), a]))
 
+  const { data: profileRows } = await supabase
+    .from('chauffeur_profile_data')
+    .select('account_id, account_snapshot')
+    .in('account_id', accountIds)
+
+  const photoByAccountId = new Map<string, string>()
+  for (const row of profileRows ?? []) {
+    const id = String(row.account_id)
+    const photo = profilePhotoFromSnapshot(row.account_snapshot)
+    if (photo) photoByAccountId.set(id, photo)
+  }
+
   const ranked = presenceRows
     .map((row) => {
       const lng = Number(row.lng)
@@ -75,6 +95,7 @@ export async function listNearbyDriversFromPresence(
       if (!acc) return null
       const minutes = Math.max(2, Math.round((distanceKm / 22) * 60))
       const price = estimatePriceEur(distanceKm)
+      const profilePhotoUrl = photoByAccountId.get(String(acc.id))
       return {
         id: String(acc.id),
         name: displayName(acc.full_name as string | null, acc.email as string | null),
@@ -84,6 +105,7 @@ export async function listNearbyDriversFromPresence(
         longitude: lng,
         latitude: lat,
         distanceKm,
+        ...(profilePhotoUrl ? { profilePhotoUrl } : {}),
         petFriendly: acc.pet_friendly === true,
         luggageAssistance: acc.luggage_assistance === true,
         insulatedBag: acc.insulated_bag === true,

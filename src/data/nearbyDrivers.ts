@@ -14,6 +14,8 @@ export type NearbyDriver = {
   price: string
   longitude: number
   latitude: number
+  /** Photo de profil chauffeur (marqueur carte). */
+  profilePhotoUrl?: string
   /** Préférences compte chauffeur (API présence / nearby). */
   petFriendly?: boolean
   luggageAssistance?: boolean

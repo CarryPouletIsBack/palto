@@ -18,6 +18,10 @@ function normalizeNearbyDriver(raw: unknown): NearbyDriver {
     luggageAssistance: d.luggageAssistance === true || d.luggage_assistance === true,
     insulatedBag: d.insulatedBag === true || d.insulated_bag === true,
     deliveryEquipped: d.deliveryEquipped === true || d.delivery_equipped === true,
+    profilePhotoUrl:
+      typeof d.profilePhotoUrl === 'string' && d.profilePhotoUrl.trim()
+        ? d.profilePhotoUrl.trim()
+        : undefined,
   }
 }
 
