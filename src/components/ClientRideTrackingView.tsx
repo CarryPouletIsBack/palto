@@ -545,6 +545,7 @@ export default function ClientRideTrackingView(props: ClientRideTrackingViewProp
         <div className="client-ride-tracking-panel">
         <p className="client-ride-tracking-panel__lead">{t('clientAccount.rideMeetLead')}</p>
 
+        <div className="client-ride-tracking-panel-cards">
         <div className="client-ride-tracking-pickup">
           <MapPin size={18} className="client-ride-tracking-pickup-icon" aria-hidden />
           <div>
@@ -600,6 +601,7 @@ export default function ClientRideTrackingView(props: ClientRideTrackingViewProp
           className="client-driver-meet-card--tracking-v2"
           data-driver-card-version="v2"
         />
+        </div>
 
         {distanceM !== null ? (
           <p className="client-ride-tracking-distance" aria-live="polite">

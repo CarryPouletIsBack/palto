@@ -190,7 +190,7 @@
 }
 
 .client-ride-tracking-recap {
-  margin-bottom: 12px;
+  margin-bottom: 0;
   padding: 12px;
   border-radius: 12px;
   background: #ffffff;
@@ -245,11 +245,42 @@
   color: #374963;
 }
 
+.client-ride-tracking-panel-cards {
+  display: block;
+}
+
+@media (max-width: 639px) {
+  .client-ride-tracking-panel-cards {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: stretch;
+    gap: 12px;
+  }
+
+  .client-ride-tracking-panel-cards > .client-ride-tracking-pickup,
+  .client-ride-tracking-panel-cards > .client-ride-tracking-recap,
+  .client-ride-tracking-panel-cards > .client-driver-meet-card--tracking {
+    flex: 1 1 100%;
+    min-width: 0;
+    box-sizing: border-box;
+  }
+
+  .client-ride-tracking-recap__item dd {
+    white-space: normal;
+    overflow-wrap: anywhere;
+  }
+
+  .client-ride-tracking-pickup-text {
+    overflow-wrap: anywhere;
+    word-break: break-word;
+  }
+}
+
 .client-ride-tracking-pickup {
   display: flex;
   gap: 10px;
   align-items: flex-start;
-  margin-bottom: 12px;
+  margin-bottom: 0;
   padding: 12px;
   border-radius: 12px;
   background: #ffffff;
@@ -281,7 +312,10 @@
 .client-ride-tracking-pickup-meta {
   margin: 4px 0 0;
   font-size: 12px;
+  line-height: 1.45;
   color: #475569;
+  overflow-wrap: anywhere;
+  word-break: break-word;
 }
 
 .client-ride-tracking-driver-card {
