@@ -2,7 +2,10 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { ArrowLeft, CircleHelp, MapPin } from 'lucide-react';
 import type { Feature, LineString } from 'geojson';
 import { toast } from 'sonner';
-import HomeOsmMapBackground, { OPENSTREET_OUTDOORS_STYLE_URL } from './HomeOsmMapBackground';
+import HomeOsmMapBackground, {
+  OPENSTREET_OUTDOORS_STYLE_URL,
+  type HomeMapFlyTo,
+} from './HomeOsmMapBackground';
 import type { NearbyDriverMapPoint } from './HomeOsmMapBackground';
 import { trackEvent } from '../services/googleAnalyticsTracking';
 import { fetchDrivingRouteFeature } from '../services/osrmRouting';
@@ -11,6 +14,7 @@ import {
   joinRideGeoRoom,
   type RideGeoPayload,
 } from '../services/paltoRideLocationRealtime';
+import { fetchNearbyDriversAt } from '../services/clientRidesApi';
 import type { ClientLiveMeetRideModel } from '../constants/clientLiveMeetRide';
 import './ClientRideTrackingView.css';
 import './HomeOsmMapBackground.css';
@@ -29,11 +33,27 @@ function haversineMeters(a: LngLat, b: LngLat): number {
   return 2 * R * Math.asin(Math.min(1, Math.sqrt(s)));
 }
 
-function moveToward(cur: LngLat, target: LngLat, frac: number): LngLat {
-  return {
-    lng: cur.lng + (target.lng - cur.lng) * frac,
-    lat: cur.lat + (target.lat - cur.lat) * frac,
-  };
+function normalizeName(s: string): string {
+  return s
+    .trim()
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/\p{M}/gu, '')
+    .replace(/\s+/g, '');
+}
+
+function pickDriverFromPresence(
+  drivers: Awaited<ReturnType<typeof fetchNearbyDriversAt>>,
+  expectedName: string
+): LngLat | null {
+  if (!drivers.length) return null;
+  const want = normalizeName(expectedName);
+  const byName = drivers.find((d) => {
+    const n = normalizeName(d.name);
+    return n === want || n.includes(want) || want.includes(n);
+  });
+  const hit = byName ?? drivers[0];
+  return { lng: hit.longitude, lat: hit.latitude };
 }
 
 export type ClientRideTrackingViewProps = ClientLiveMeetRideModel & {
@@ -56,16 +76,19 @@ export default function ClientRideTrackingView({
   onBack,
   t,
 }: ClientRideTrackingViewProps) {
-  const [driverLngLat, setDriverLngLat] = useState<LngLat | null>(meetDriverCoordsInitial ?? null);
+  const [driverLngLat, setDriverLngLat] = useState<LngLat | null>(null);
+  const [clientLngLat, setClientLngLat] = useState<LngLat | null>(null);
   const [routeFeature, setRouteFeature] = useState<Feature<LineString> | null>(null);
   const [loadingRoute, setLoadingRoute] = useState(Boolean(dropoffCoords));
+  const [liveGeoActive, setLiveGeoActive] = useState(false);
   const geoRoomRef = useRef<{
     send: (role: 'client' | 'driver', lng: number, lat: number) => Promise<void>;
     leave: () => void;
   } | null>(null);
+  const lastDriverGeoAtRef = useRef(0);
+  const lastClientSendRef = useRef(0);
 
-  const useLiveBroadcast =
-    rideStatus === 'in_progress' && Boolean(courseId && isRideGeoBroadcastEnabled());
+  const useLiveGeo = Boolean(courseId && isRideGeoBroadcastEnabled());
 
   const pickupOrigin = useMemo(
     () => ({ longitude: meetPickupCoords.lng, latitude: meetPickupCoords.lat }),
@@ -80,6 +103,14 @@ export default function ClientRideTrackingView({
     [dropoffCoords?.lng, dropoffCoords?.lat]
   );
 
+  const liveClientPosition = useMemo(
+    () =>
+      clientLngLat
+        ? { longitude: clientLngLat.lng, latitude: clientLngLat.lat }
+        : null,
+    [clientLngLat]
+  );
+
   const driverOnMap: NearbyDriverMapPoint[] = useMemo(() => {
     if (!driverLngLat) return [];
     return [
@@ -92,9 +123,34 @@ export default function ClientRideTrackingView({
     ];
   }, [driverLngLat, driverName]);
 
-  useEffect(() => {
-    setDriverLngLat(meetDriverCoordsInitial ?? null);
-  }, [meetDriverCoordsInitial?.lng, meetDriverCoordsInitial?.lat]);
+  const mapFlyTo = useMemo((): HomeMapFlyTo | null => {
+    const lngs: number[] = [meetPickupCoords.lng];
+    const lats: number[] = [meetPickupCoords.lat];
+    if (dropoffCoords) {
+      lngs.push(dropoffCoords.lng);
+      lats.push(dropoffCoords.lat);
+    }
+    if (driverLngLat) {
+      lngs.push(driverLngLat.lng);
+      lats.push(driverLngLat.lat);
+    }
+    if (clientLngLat) {
+      lngs.push(clientLngLat.lng);
+      lats.push(clientLngLat.lat);
+    }
+    if (lngs.length < 2) return null;
+    const minLng = Math.min(...lngs);
+    const maxLng = Math.max(...lngs);
+    const minLat = Math.min(...lats);
+    const maxLat = Math.max(...lats);
+    const span = Math.max(maxLng - minLng, maxLat - minLat);
+    const zoom = span > 0.12 ? 11.2 : span > 0.04 ? 12.8 : span > 0.015 ? 14 : 15.2;
+    return {
+      longitude: (minLng + maxLng) / 2,
+      latitude: (minLat + maxLat) / 2,
+      zoom,
+    };
+  }, [meetPickupCoords, dropoffCoords, driverLngLat, clientLngLat]);
 
   useEffect(() => {
     if (!dropoffDest) {
@@ -118,34 +174,76 @@ export default function ClientRideTrackingView({
     return () => ac.abort();
   }, [pickupOrigin, dropoffDest]);
 
-  useEffect(() => {
-    if (useLiveBroadcast || !meetPickupCoords || !meetDriverCoordsInitial) return;
-    const id = window.setInterval(() => {
-      setDriverLngLat((prev) => {
-        if (!prev) return prev;
-        if (haversineMeters(prev, meetPickupCoords) < 28) return prev;
-        return moveToward(prev, meetPickupCoords, 0.11);
-      });
-    }, 3200);
-    return () => window.clearInterval(id);
-  }, [useLiveBroadcast, meetPickupCoords, meetDriverCoordsInitial]);
+  const pollDriverPresence = useCallback(async () => {
+    const pos = await fetchNearbyDriversAt(meetPickupCoords.lat, meetPickupCoords.lng, 40, 16);
+    const found = pickDriverFromPresence(pos, driverName);
+    if (found) {
+      setDriverLngLat(found);
+      lastDriverGeoAtRef.current = Date.now();
+    }
+  }, [meetPickupCoords.lat, meetPickupCoords.lng, driverName]);
 
   useEffect(() => {
-    if (!useLiveBroadcast || !courseId) return;
+    if (!useLiveGeo || !courseId) {
+      setLiveGeoActive(false);
+      return;
+    }
     let cancelled = false;
+
     void joinRideGeoRoom(courseId, (p: RideGeoPayload) => {
-      if (p.role !== 'driver') return;
-      setDriverLngLat({ lng: p.lng, lat: p.lat });
+      if (p.role === 'driver') {
+        setDriverLngLat({ lng: p.lng, lat: p.lat });
+        lastDriverGeoAtRef.current = Date.now();
+      }
+      if (p.role === 'client') {
+        setClientLngLat({ lng: p.lng, lat: p.lat });
+      }
     }).then((room) => {
-      if (cancelled || !room) return;
+      if (cancelled || !room) {
+        setLiveGeoActive(false);
+        return;
+      }
       geoRoomRef.current = room;
+      setLiveGeoActive(true);
     });
+
     return () => {
       cancelled = true;
       geoRoomRef.current?.leave();
       geoRoomRef.current = null;
+      setLiveGeoActive(false);
     };
-  }, [courseId, useLiveBroadcast]);
+  }, [courseId, useLiveGeo]);
+
+  useEffect(() => {
+    if (!useLiveGeo || typeof navigator === 'undefined' || !navigator.geolocation) return;
+
+    const watchId = navigator.geolocation.watchPosition(
+      (pos) => {
+        const lng = pos.coords.longitude;
+        const lat = pos.coords.latitude;
+        setClientLngLat({ lng, lat });
+        const now = Date.now();
+        if (now - lastClientSendRef.current < 3500) return;
+        lastClientSendRef.current = now;
+        void geoRoomRef.current?.send('client', lng, lat);
+      },
+      () => {},
+      { enableHighAccuracy: true, maximumAge: 4000, timeout: 20000 }
+    );
+
+    return () => navigator.geolocation.clearWatch(watchId);
+  }, [useLiveGeo]);
+
+  useEffect(() => {
+    if (rideStatus === 'in_progress' && useLiveGeo) return;
+    void pollDriverPresence();
+    const id = window.setInterval(() => {
+      if (useLiveGeo && Date.now() - lastDriverGeoAtRef.current < 12000) return;
+      void pollDriverPresence();
+    }, 8000);
+    return () => window.clearInterval(id);
+  }, [rideStatus, useLiveGeo, pollDriverPresence]);
 
   const distanceM =
     driverLngLat && meetPickupCoords
@@ -180,6 +278,15 @@ export default function ClientRideTrackingView({
           <h1>{driverName}</h1>
           <p title={route}>{route}</p>
         </div>
+        <button
+          type="button"
+          className="client-ride-tracking-help-btn"
+          onClick={handleHelp}
+          aria-label={t('clientAccount.rideTrackHelp')}
+          title={t('clientAccount.rideTrackHelp')}
+        >
+          <CircleHelp size={18} aria-hidden />
+        </button>
       </header>
 
       <div className="client-ride-tracking-map-wrap">
@@ -187,11 +294,13 @@ export default function ClientRideTrackingView({
           <div className="client-ride-tracking-map-status">{t('clientAccount.rideTrackLoadingRoute')}</div>
         ) : null}
         <HomeOsmMapBackground
-          variant="fullscreen"
+          variant="embedded"
+          flyToTarget={mapFlyTo}
           userOrigin={pickupOrigin}
           selectedDestination={dropoffDest}
           routeFeature={routeFeature}
           nearbyDrivers={driverOnMap}
+          liveClientPosition={liveClientPosition}
           view3D
           mapStyleUrl={OPENSTREET_OUTDOORS_STYLE_URL}
         />
@@ -234,15 +343,11 @@ export default function ClientRideTrackingView({
         {distanceM !== null ? (
           <p className="client-ride-tracking-distance" aria-live="polite">
             {t('clientAccount.rideMeetDistanceMeters', { m: String(distanceM) })}
-            {useLiveBroadcast ? ` · ${t('clientAccount.rideMeetLocationLive')}` : ''}
+            {liveGeoActive ? ` · ${t('clientAccount.rideMeetLocationLive')}` : ''}
           </p>
         ) : null}
 
         <div className="client-ride-tracking-actions">
-          <button type="button" className="client-ride-tracking-btn" onClick={handleHelp}>
-            <CircleHelp size={16} aria-hidden />
-            {t('clientAccount.rideTrackHelp')}
-          </button>
           <button
             type="button"
             className="client-ride-tracking-btn client-ride-tracking-btn--alert"

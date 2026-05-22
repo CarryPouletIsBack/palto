@@ -68,3 +68,53 @@ export async function cancelClientRide(courseId: string): Promise<void> {
 export function clientRidesApiEnabled(): boolean {
   return useClientRidesApi()
 }
+
+export type NearbyDriverMapItem = {
+  id: string
+  name: string
+  longitude: number
+  latitude: number
+  distanceKm: number
+}
+
+/** Chauffeurs GPS réels (`chauffeur_presence`) autour du point de prise en charge. */
+export async function fetchNearbyDriversAt(
+  lat: number,
+  lng: number,
+  radiusKm = 30,
+  limit = 12
+): Promise<NearbyDriverMapItem[]> {
+  const auth = getClientAuthorizationHeader()
+  if (!auth) return []
+  const url = new URL(`${API_BASE_URL}/client/rides`, window.location.origin)
+  url.searchParams.set('mode', 'nearby')
+  url.searchParams.set('lat', String(lat))
+  url.searchParams.set('lng', String(lng))
+  url.searchParams.set('radiusKm', String(radiusKm))
+  url.searchParams.set('limit', String(limit))
+  const res = await fetch(url.toString(), { headers: { Authorization: auth } })
+  const data = (await res.json().catch(() => ({}))) as {
+    drivers?: Array<{
+      id: string
+      name: string
+      longitude: number
+      latitude: number
+      distanceKm?: number
+    }>
+  }
+  if (!res.ok || !Array.isArray(data.drivers)) return []
+  return data.drivers
+    .filter(
+      (d) =>
+        d?.id &&
+        Number.isFinite(d.longitude) &&
+        Number.isFinite(d.latitude)
+    )
+    .map((d) => ({
+      id: d.id,
+      name: d.name,
+      longitude: d.longitude,
+      latitude: d.latitude,
+      distanceKm: Number(d.distanceKm) || 0,
+    }))
+}

@@ -96,7 +96,8 @@ export function buildClientLiveMeetRideFromRideItem(item: ClientRideItem): Clien
     vehicleColor: '',
     licensePlate: '',
     meetPickupCoords: { lng, lat },
-    meetDriverCoordsInitial: { lng: lng - 0.0035, lat: lat + 0.0022 },
+    /** Rempli par présence chauffeur ou broadcast `ride_geo` — pas de simulation. */
+    meetDriverCoordsInitial: { lng, lat },
     dropoffCoords,
   };
 }

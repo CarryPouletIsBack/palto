@@ -15,8 +15,8 @@
   flex-shrink: 0;
   display: flex;
   align-items: center;
-  gap: 12px;
-  padding: max(10px, env(safe-area-inset-top, 0px)) 12px 10px;
+  gap: 8px;
+  padding: max(10px, env(safe-area-inset-top, 0px)) 10px 10px;
   border-bottom: 1px solid rgba(148, 163, 184, 0.35);
   background: rgba(15, 23, 42, 0.96);
 }
@@ -43,6 +43,27 @@
 .client-ride-tracking-headlines {
   min-width: 0;
   flex: 1;
+  padding-right: 4px;
+}
+
+.client-ride-tracking-help-btn {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  border-radius: 8px;
+  border: 1px solid rgba(148, 163, 184, 0.45);
+  background: rgba(30, 41, 59, 0.9);
+  color: #e2e8f0;
+  cursor: pointer;
+}
+
+.client-ride-tracking-help-btn:hover {
+  background: rgba(51, 65, 85, 0.95);
+  color: #f8fafc;
 }
 
 .client-ride-tracking-headlines h1,
@@ -72,23 +93,37 @@
 }
 
 .client-ride-tracking-map-wrap {
-  flex: 1;
-  min-height: 0;
+  flex: 1 1 auto;
+  min-height: 180px;
   position: relative;
+  overflow: hidden;
   box-shadow: inset 0 0 0 1px rgba(42, 48, 56, 0.35);
 }
 
-.client-ride-tracking-map-wrap .home-osm-map-bg {
+.client-ride-tracking-map-wrap .home-osm-map-bg,
+.client-ride-tracking-map-wrap .home-osm-map-bg--embedded,
+.client-ride-tracking-map-wrap .home-osm-map-bg--dashboard-backdrop {
   position: absolute !important;
   inset: 0 !important;
   width: 100% !important;
   height: 100% !important;
-  min-height: 0 !important;
+  min-height: 100% !important;
+  max-height: none !important;
   z-index: 0;
+  pointer-events: auto;
 }
 
 .client-ride-tracking-map-wrap .home-osm-map-bg__map {
+  position: absolute;
+  inset: 0;
+  width: 100%;
   height: 100%;
+  pointer-events: auto;
+}
+
+.client-ride-tracking-map-wrap .home-osm-map-bg--embedded .home-osm-map-bg__map,
+.client-ride-tracking-map-wrap .home-osm-map-bg--dashboard-backdrop .home-osm-map-bg__map {
+  pointer-events: auto;
 }
 
 .client-ride-tracking-map-status {
@@ -106,8 +141,9 @@
 .client-ride-tracking-panel {
   position: relative;
   z-index: 2;
+  flex: 0 0 auto;
   flex-shrink: 0;
-  max-height: min(52vh, 420px);
+  max-height: min(46vh, 380px);
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
   padding: 12px 12px max(14px, env(safe-area-inset-bottom, 0px));

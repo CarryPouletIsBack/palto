@@ -118,6 +118,8 @@ type HomeMapBackgroundProps = {
   routeFeature?: Feature<LineString> | null
   /** Chauffeurs à afficher (pins distincts du départ / arrivée). */
   nearbyDrivers?: NearbyDriverMapPoint[]
+  /** Position GPS passager (temps réel), pin distinct du point de prise en charge. */
+  liveClientPosition?: GeoPoint | null
   /** Clic sur la carte : choix d’une destination (hors contrôles UI). */
   onMapDestinationPick?: (longitude: number, latitude: number) => void
   /** Vue oblique + relief terrain (tuile raster-dem). */
@@ -136,6 +138,7 @@ export default function HomeOsmMapBackground({
   selectedDestination = null,
   routeFeature = null,
   nearbyDrivers = [],
+  liveClientPosition = null,
   onMapDestinationPick,
   view3D = false,
   mapStyleUrl,
@@ -150,6 +153,7 @@ export default function HomeOsmMapBackground({
   )
   const safeUserOrigin = isValidMapLngLat(resolvedUserOrigin) ? resolvedUserOrigin : null
   const safeDestination = isValidMapLngLat(selectedDestination) ? selectedDestination : null
+  const safeLiveClient = isValidMapLngLat(liveClientPosition) ? liveClientPosition : null
 
   const mapRef = useRef<MapRef>(null)
   const containerRef = useRef<HTMLDivElement>(null)
@@ -445,6 +449,21 @@ export default function HomeOsmMapBackground({
               />
             </Marker>
           ))}
+
+          {safeLiveClient ? (
+            <Marker
+              longitude={safeLiveClient.longitude}
+              latitude={safeLiveClient.latitude}
+              anchor="bottom"
+              style={{ pointerEvents: 'none' }}
+            >
+              <div
+                className="home-osm-map-pin home-osm-map-pin--client-live"
+                title="Vous"
+                aria-label="Votre position"
+              />
+            </Marker>
+          ) : null}
 
           {routeFeature ? (
             <Source id="home-route" type="geojson" data={routeFeature}>
