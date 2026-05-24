@@ -1754,6 +1754,7 @@ export default function ClientCompteDashboard({ onBack, onOpenClientLiveMeet }: 
                 </div>
                 <div className="dashboard-topbar-right" ref={accountMenuRef}>
                   <div className="dashboard-home-topbar-right-cluster">
+                    {!isMobileViewport ? <LanguageSwitcher /> : null}
                     <div className="client-compte-topbar-menu-anchor">
                       <button
                         type="button"

@@ -139,6 +139,17 @@
     height: auto;
     -webkit-overflow-scrolling: touch;
   }
+
+  .dashboard-container--client-compte .dashboard-topbar.dashboard-topbar--home-client {
+    background: #ffffff;
+    border-bottom: 1px solid #dbe3ee;
+    box-shadow: 0 1px 0 rgba(15, 23, 42, 0.06);
+    padding-inline: 16px;
+  }
+
+  .dashboard-container--client-compte .dashboard-home-topbar-right-cluster {
+    gap: 14px;
+  }
 }
 
 html[data-app-theme='dark'] .dashboard-container--client-compte .dashboard-avatar {

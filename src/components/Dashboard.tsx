@@ -15,6 +15,7 @@ import {
   getCurrentUser,
   isAuthenticated,
   isChauffeurPrimaryAccountEmail,
+  getPaltoHomePath,
   logoutChauffeurToHome,
   PALTO_CHAUFFEUR_SESSION_CHANGED_EVENT,
   PALTO_CLIENT_SESSION_CHANGED_EVENT,
@@ -2626,11 +2627,11 @@ const Dashboard = ({
           >
             <header
               className={`dashboard-topbar${
-                topbarLaunchCourse || isMobileViewport ? '' : ' dashboard-topbar--with-main-subtitle'
-              }${
-                isMobileViewport && !topbarLaunchCourse
-                  ? ' dashboard-topbar--chauffeur-mobile-toolbar'
-                  : ''
+                topbarLaunchCourse
+                  ? ''
+                  : isMobileViewport
+                    ? ' dashboard-topbar--chauffeur-mobile-toolbar'
+                    : ' dashboard-topbar--home-client'
               }`}
             >
               {topbarLaunchCourse ? (
@@ -2664,66 +2665,131 @@ const Dashboard = ({
                     </button>
                   </div>
                 </div>
-              ) : isMobileViewport ? null : (
-                <div className="dashboard-topbar-title-stack">
-                  <h2 className="dashboard-chauffeur-main-title">{dashboardTopTitle}</h2>
-                  <p className="dashboard-chauffeur-main-subtitle">{dashboardTopSubtitle}</p>
-                </div>
-              )}
-              <div className="dashboard-topbar-right">
-                <div className="client-compte-topbar-menu-anchor" ref={topbarAccountMenuRef}>
-                  <button
-                    type="button"
-                    className="client-compte-topbar-user-btn"
-                    onClick={() => {
-                      setAlertsOpen(false);
-                      setMoreMenuOpen(false);
-                      setTopbarAccountMenuOpen((prev) => !prev);
-                    }}
-                    aria-label="Gerer le compte"
-                  >
-                    {paltoIdentity.photoUrl ? (
-                      <img
-                        src={paltoIdentity.photoUrl}
-                        alt={t('clientAccount.photoAlt')}
-                        className="client-compte-topbar-user-btn__avatar"
-                      />
-                    ) : (
-                      <User size={16} aria-hidden />
-                    )}
-                    <span>{paltoIdentity.fullName}</span>
-                  </button>
-                  {topbarAccountMenuOpen ? (
-                    <div className="client-compte-account-menu" role="menu" aria-label="Menu compte">
-                      <div className="client-compte-account-menu__head">
-                        <strong>{paltoIdentity.fullName}</strong>
-                        <span>{paltoIdentity.email}</span>
-                      </div>
-                      <div className="client-compte-account-menu__actions">
+              ) : !isMobileViewport ? (
+                <div className="dashboard-home-topbar-row">
+                  <div className="dashboard-home-topbar-start">
+                    <button
+                      type="button"
+                      className="dashboard-client-main-title"
+                      onClick={() => {
+                        trackEvent('click', 'chauffeur_dashboard', 'topbar_home');
+                        window.location.assign(getPaltoHomePath());
+                      }}
+                      aria-label={t('hero.homeTopbarTitleNavAria')}
+                    >
+                      {t('hero.homeTopbarTitle')}
+                    </button>
+                  </div>
+                  <div className="dashboard-topbar-right">
+                    <div className="dashboard-home-topbar-right-cluster">
+                      <LanguageSwitcher />
+                      <div className="client-compte-topbar-menu-anchor" ref={topbarAccountMenuRef}>
                         <button
                           type="button"
-                          className="client-compte-account-menu__item"
-                          onClick={() => openChauffeurPaltoAccount('personal')}
+                          className="client-compte-topbar-user-btn"
+                          onClick={() => {
+                            setAlertsOpen(false);
+                            setMoreMenuOpen(false);
+                            setTopbarAccountMenuOpen((prev) => !prev);
+                          }}
+                          aria-label="Gerer le compte"
                         >
-                          {language === 'en' ? 'Manage Palto account' : 'Gerer le compte Palto'}
+                          {paltoIdentity.photoUrl ? (
+                            <img
+                              src={paltoIdentity.photoUrl}
+                              alt={t('clientAccount.photoAlt')}
+                              className="client-compte-topbar-user-btn__avatar"
+                            />
+                          ) : (
+                            <User size={16} aria-hidden />
+                          )}
+                          <span>{paltoIdentity.fullName}</span>
                         </button>
-                        <button
-                          type="button"
-                          className="client-compte-account-menu__item client-compte-account-menu__item--danger"
-                          onClick={handleTopbarLogout}
-                        >
-                          {language === 'en' ? 'Sign out' : 'Se deconnecter'}
-                        </button>
+                        {topbarAccountMenuOpen ? (
+                          <div className="client-compte-account-menu" role="menu" aria-label="Menu compte">
+                            <div className="client-compte-account-menu__head">
+                              <strong>{paltoIdentity.fullName}</strong>
+                              <span>{paltoIdentity.email}</span>
+                            </div>
+                            <div className="client-compte-account-menu__actions">
+                              <button
+                                type="button"
+                                className="client-compte-account-menu__item"
+                                onClick={() => openChauffeurPaltoAccount('personal')}
+                              >
+                                {language === 'en' ? 'Manage Palto account' : 'Gerer le compte Palto'}
+                              </button>
+                              <button
+                                type="button"
+                                className="client-compte-account-menu__item client-compte-account-menu__item--danger"
+                                onClick={handleTopbarLogout}
+                              >
+                                {language === 'en' ? 'Sign out' : 'Se deconnecter'}
+                              </button>
+                            </div>
+                          </div>
+                        ) : null}
                       </div>
                     </div>
-                  ) : null}
+                  </div>
                 </div>
-              </div>
+              ) : null}
+              {isMobileViewport && !topbarLaunchCourse ? (
+                <div className="dashboard-topbar-right">
+                  <div className="client-compte-topbar-menu-anchor" ref={topbarAccountMenuRef}>
+                    <button
+                      type="button"
+                      className="client-compte-topbar-user-btn"
+                      onClick={() => {
+                        setAlertsOpen(false);
+                        setMoreMenuOpen(false);
+                        setTopbarAccountMenuOpen((prev) => !prev);
+                      }}
+                      aria-label="Gerer le compte"
+                    >
+                      {paltoIdentity.photoUrl ? (
+                        <img
+                          src={paltoIdentity.photoUrl}
+                          alt={t('clientAccount.photoAlt')}
+                          className="client-compte-topbar-user-btn__avatar"
+                        />
+                      ) : (
+                        <User size={16} aria-hidden />
+                      )}
+                      <span>{paltoIdentity.fullName}</span>
+                    </button>
+                    {topbarAccountMenuOpen ? (
+                      <div className="client-compte-account-menu" role="menu" aria-label="Menu compte">
+                        <div className="client-compte-account-menu__head">
+                          <strong>{paltoIdentity.fullName}</strong>
+                          <span>{paltoIdentity.email}</span>
+                        </div>
+                        <div className="client-compte-account-menu__actions">
+                          <button
+                            type="button"
+                            className="client-compte-account-menu__item"
+                            onClick={() => openChauffeurPaltoAccount('personal')}
+                          >
+                            {language === 'en' ? 'Manage Palto account' : 'Gerer le compte Palto'}
+                          </button>
+                          <button
+                            type="button"
+                            className="client-compte-account-menu__item client-compte-account-menu__item--danger"
+                            onClick={handleTopbarLogout}
+                          >
+                            {language === 'en' ? 'Sign out' : 'Se deconnecter'}
+                          </button>
+                        </div>
+                      </div>
+                    ) : null}
+                  </div>
+                </div>
+              ) : null}
             </header>
 
             {activeView === 'stats' ? (
               <div className="dashboard-content">
-                {isMobileViewport && !topbarLaunchCourse ? (
+                {!topbarLaunchCourse ? (
                   <div className="dashboard-topbar-title-stack dashboard-topbar-title-stack--in-content">
                     <h2 className="dashboard-chauffeur-main-title">{dashboardTopTitle}</h2>
                     <p className="dashboard-chauffeur-main-subtitle">{dashboardTopSubtitle}</p>
@@ -2739,7 +2805,7 @@ const Dashboard = ({
                     activeView === 'organization' ? ' dashboard-content--org-fullbleed' : ''
                   }`}
                 >
-                  {isMobileViewport && !topbarLaunchCourse ? (
+                  {!topbarLaunchCourse ? (
                     <div className="dashboard-topbar-title-stack dashboard-topbar-title-stack--in-content">
                       <h2 className="dashboard-chauffeur-main-title">{dashboardTopTitle}</h2>
                       <p className="dashboard-chauffeur-main-subtitle">{dashboardTopSubtitle}</p>

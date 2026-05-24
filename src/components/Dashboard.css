@@ -4561,6 +4561,29 @@ button.dashboard-org-sidebar-brand--home:focus-visible {
     /* border-radius: 14px; */
   }
 
+  .dashboard-container--chauffeur .dashboard-topbar.dashboard-topbar--home-client {
+    background: #ffffff;
+    border-bottom: 1px solid #dbe3ee;
+    padding: 6px 16px;
+    box-shadow: 0 1px 0 rgba(15, 23, 42, 0.06);
+  }
+
+  .dashboard-container--chauffeur .dashboard-topbar.dashboard-topbar--home-client .dashboard-home-topbar-row {
+    flex: 1 1 auto;
+    min-width: 0;
+  }
+
+  .dashboard-container--chauffeur .dashboard-topbar.dashboard-topbar--home-client .dashboard-topbar-right {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .dashboard-container--chauffeur .dashboard-topbar-title-stack--in-content {
+    padding-block: 12px 8px;
+    padding-inline: 16px;
+  }
+
   .dashboard-container--chauffeur .dashboard-content {
     flex: 1 1 auto;
     min-height: 0;
