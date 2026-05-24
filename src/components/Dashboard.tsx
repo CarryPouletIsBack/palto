@@ -2064,15 +2064,23 @@ const Dashboard = ({
           aria-haspopup="menu"
         >
           {!photoAside ? (
-            paltoIdentity.photoUrl ? (
-              <img
-                src={paltoIdentity.photoUrl}
-                alt=""
-                className="client-compte-topbar-user-btn__avatar"
-              />
-            ) : (
-              <User size={18} aria-hidden />
-            )
+            <span
+              className={
+                'client-compte-topbar-user-btn__photo-shell' +
+                (photoOnlyInButton ? ' client-compte-topbar-user-btn__photo-shell--fill' : '')
+              }
+              aria-hidden
+            >
+              {paltoIdentity.photoUrl ? (
+                <img
+                  src={paltoIdentity.photoUrl}
+                  alt=""
+                  className="client-compte-topbar-user-btn__avatar"
+                />
+              ) : (
+                <User size={photoOnlyInButton ? 20 : 16} aria-hidden />
+              )}
+            </span>
           ) : null}
           {showNameInButton ? <span>{paltoIdentity.fullName}</span> : null}
         </button>

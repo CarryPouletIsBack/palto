@@ -822,31 +822,66 @@ html[data-app-theme='dark'] .dashboard-home-topbar-upcoming-btn {
 }
 
 .client-compte-topbar-user-btn--photo-only {
+  position: relative;
+  display: block;
   width: 40px;
   height: 40px;
   min-width: 40px;
   min-height: 40px;
   max-width: 40px;
   max-height: 40px;
+  aspect-ratio: 1 / 1;
   padding: 0;
-  justify-content: center;
-  align-items: center;
   border-radius: 50%;
   overflow: hidden;
   box-sizing: border-box;
   line-height: 0;
   flex-shrink: 0;
+  background: #e2e8f0;
+  border: 1px solid #cbd5e1;
 }
 
-.client-compte-topbar-user-btn--photo-only .client-compte-topbar-user-btn__avatar {
+.client-compte-topbar-user-btn__photo-shell--fill {
+  position: absolute;
+  inset: 0;
+  display: block;
   width: 100%;
   height: 100%;
-  min-width: 100%;
-  min-height: 100%;
   border-radius: 50%;
-  object-fit: cover;
-  display: block;
+  overflow: hidden;
+  line-height: 0;
+}
+
+.client-compte-topbar-user-btn--photo-only .client-compte-topbar-user-btn__photo-shell--fill {
+  inset: 0;
+}
+
+.client-compte-topbar-user-btn__photo-shell--fill .client-compte-topbar-user-btn__avatar {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
   margin: 0;
+  padding: 0;
+  border: none;
+  border-radius: 0;
+  object-fit: cover;
+  object-position: center center;
+  display: block;
+}
+
+.client-compte-topbar-user-btn__photo-shell--fill svg {
+  position: absolute;
+  inset: 0;
+  margin: auto;
+  color: #64748b;
+}
+
+.client-compte-topbar-user-btn__photo-shell:not(.client-compte-topbar-user-btn__photo-shell--fill) {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
 }
 
 .dashboard-container--chauffeur .dashboard-topbar-right .dashboard-chauffeur-topbar-account-cluster {
@@ -4849,33 +4884,17 @@ button.dashboard-org-sidebar-brand--home:focus-visible {
     min-height: 40px;
     max-width: 40px;
     max-height: 40px;
+    aspect-ratio: 1 / 1;
     padding: 0;
+    display: block;
     border-radius: 50%;
     overflow: hidden;
     box-sizing: border-box;
     line-height: 0;
+    background: #e2e8f0;
+    border: 1px solid #cbd5e1 !important;
     box-shadow: 0 2px 12px rgba(15, 23, 42, 0.1);
     -webkit-tap-highlight-color: transparent;
-  }
-
-  .dashboard-container--chauffeur
-    .dashboard-topbar--chauffeur-account-user-only
-    .client-compte-topbar-user-btn--photo-only
-    .client-compte-topbar-user-btn__avatar {
-    width: 100%;
-    height: 100%;
-    min-width: 100%;
-    min-height: 100%;
-    border-radius: 50%;
-    object-fit: cover;
-    display: block;
-  }
-
-  .dashboard-container--chauffeur
-    .dashboard-topbar--chauffeur-account-user-only
-    .client-compte-topbar-user-btn--photo-only
-    svg {
-    flex-shrink: 0;
   }
 
   .dashboard-container--chauffeur .dashboard-main--chauffeur-mobile-floating-account {
@@ -5025,7 +5044,7 @@ button.dashboard-org-sidebar-brand--home:focus-visible {
 .dashboard-container--chauffeur-account input,
 .dashboard-container--chauffeur-account select,
 .dashboard-container--chauffeur-account textarea,
-.dashboard-container--chauffeur-account button {
+.dashboard-container--chauffeur-account button:not(.client-compte-topbar-user-btn--photo-only) {
   border: none;
 }
 
