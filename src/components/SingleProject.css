@@ -5705,7 +5705,7 @@
   max-width: 100%;
   min-width: 0;
   box-sizing: border-box;
-  overflow: hidden;
+  overflow: visible;
 }
 
 .palto-ride-input--datetime-local {
@@ -5818,7 +5818,27 @@
 }
 
 .palto-ride-timing-expand__schedule-inner.palto-ride-datetime-local-wrap {
-  overflow: hidden;
+  overflow: visible;
+}
+
+.palto-ride-timing-expand--scheduled .palto-ride-timing-expand__panel--schedule .palto-ride-timing-expand__panel-inner {
+  overflow: visible;
+}
+
+/* Mobile Go : date + heure séparés (jj/mm/aa visibles sur iOS ; datetime-local seul est rogné). */
+.palto-ride-datetime-split {
+  display: grid;
+  grid-template-columns: minmax(0, 1.15fr) minmax(0, 0.85fr);
+  gap: 8px;
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+}
+
+.palto-ride-datetime-split .palto-ride-timing-expand__datetime {
+  width: 100%;
+  min-width: 0;
+  -webkit-min-logical-width: min-content;
 }
 
 .palto-ride-timing-expand__datetime {
@@ -6939,7 +6959,7 @@ html[data-app-theme='dark'] .palto-ride-timing-expand__option:hover {
     width: 100%;
     max-width: 100%;
     min-width: 0;
-    overflow: hidden;
+    overflow: visible;
   }
 
   .single-project-page:has(.palto-ride-main) .palto-ride-mobile-floating-booking .palto-ride-timing-expand__datetime {
@@ -6949,6 +6969,25 @@ html[data-app-theme='dark'] .palto-ride-timing-expand__option:hover {
     padding: 10px 0 2px;
     font-size: 16px;
     border-radius: 0;
+    -webkit-min-logical-width: min-content;
+  }
+
+  .single-project-page:has(.palto-ride-main) .palto-ride-mobile-floating-booking .palto-ride-datetime-split {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    gap: 10px;
+  }
+
+  .single-project-page:has(.palto-ride-main) .palto-ride-timing-expand__datetime::-webkit-datetime-edit,
+  .single-project-page:has(.palto-ride-main) .palto-ride-timing-expand__datetime::-webkit-date-and-time-value {
+    overflow: visible;
+    text-overflow: clip;
+    min-width: min-content;
+  }
+
+  html[data-app-theme='dark'] .single-project-page:has(.palto-ride-main) .palto-ride-timing-expand__datetime::-webkit-datetime-edit,
+  html[data-app-theme='dark'] .single-project-page:has(.palto-ride-main) .palto-ride-timing-expand__datetime::-webkit-datetime-edit-fields-wrapper,
+  html[data-app-theme='dark'] .single-project-page:has(.palto-ride-main) .palto-ride-timing-expand__datetime::-webkit-datetime-edit-text {
+    color: var(--sp-text, #f1f5f9);
   }
 
   .single-project-page:has(.palto-ride-main) .palto-ride-floating-booking-spacer {
