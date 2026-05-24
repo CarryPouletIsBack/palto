@@ -805,6 +805,14 @@ body.accueil-page .dashboard-container--home-accueil .dashboard-main {
   overflow: hidden;
 }
 
+/* Portail body : au-dessus cover Go (1999–2001) et panneau projet (2000). */
+.client-compte-account-menu.client-compte-account-menu--portal {
+  position: fixed;
+  top: auto;
+  left: auto;
+  z-index: 25001;
+}
+
 .client-compte-account-menu--add {
   right: 0;
   left: auto;

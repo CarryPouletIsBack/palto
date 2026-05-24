@@ -1,4 +1,5 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
+import { createPortal } from 'react-dom'
 import { syncClientProfileWithServer } from '../services/clientProfileSync'
 import { User } from 'lucide-react'
 import { useLanguage } from '../contexts/LanguageContext'
@@ -16,6 +17,7 @@ import {
 import LanguageSwitcher from './LanguageSwitcher'
 import './Dashboard.css'
 import './Dashboard.app-theme.css'
+import './ClientCompteDashboard.css'
 
 export type ClientTopbarUpcomingRide = {
   departShort: string
@@ -31,6 +33,11 @@ export interface DashboardHomeTopbarProps {
   onNavigateHome?: () => void
 }
 
+type AccountMenuPosition = {
+  top: number
+  right: number
+}
+
 /** Barre d’accueil (Palto + langue + connexion) — réutilisée sur l’accueil et la page Go. */
 export function DashboardHomeTopbar({
   onOpenClientAccountAuth,
@@ -41,7 +48,10 @@ export function DashboardHomeTopbar({
   const [authTick, setAuthTick] = useState(0)
   const [profileSyncTick, setProfileSyncTick] = useState(0)
   const [accountModalOpen, setAccountModalOpen] = useState(false)
-  const accountMenuRef = useRef<HTMLDivElement | null>(null)
+  const [accountMenuPosition, setAccountMenuPosition] = useState<AccountMenuPosition | null>(null)
+  const accountMenuAnchorRef = useRef<HTMLDivElement | null>(null)
+  const accountUserBtnRef = useRef<HTMLButtonElement | null>(null)
+  const accountMenuPortalRef = useRef<HTMLDivElement | null>(null)
   const profileSyncedForEmailRef = useRef<string | null>(null)
 
   useEffect(() => {
@@ -115,15 +125,40 @@ export function DashboardHomeTopbar({
     return typeof photo === 'string' && photo.trim() ? photo : null
   }, [session.clientLogged, session.user, authTick, profileSyncTick])
 
+  useLayoutEffect(() => {
+    if (!accountModalOpen) {
+      setAccountMenuPosition(null)
+      return
+    }
+    const syncPosition = () => {
+      const btn = accountUserBtnRef.current
+      if (!btn) {
+        setAccountMenuPosition(null)
+        return
+      }
+      const rect = btn.getBoundingClientRect()
+      setAccountMenuPosition({
+        top: rect.bottom + 8,
+        right: Math.max(8, window.innerWidth - rect.right),
+      })
+    }
+    syncPosition()
+    window.addEventListener('resize', syncPosition)
+    window.addEventListener('scroll', syncPosition, true)
+    return () => {
+      window.removeEventListener('resize', syncPosition)
+      window.removeEventListener('scroll', syncPosition, true)
+    }
+  }, [accountModalOpen])
+
   useEffect(() => {
     if (!accountModalOpen) return
     const onPointerDown = (event: MouseEvent) => {
-      if (!accountMenuRef.current) return
-      if (!accountMenuRef.current.contains(event.target as Node)) {
-        setAccountModalOpen(false)
-      }
+      const target = event.target as Node
+      if (accountMenuAnchorRef.current?.contains(target)) return
+      if (accountMenuPortalRef.current?.contains(target)) return
+      setAccountModalOpen(false)
     }
-    // Après le clic d’ouverture (évite fermeture immédiate sur pages à overlays / drag).
     const timer = window.setTimeout(() => {
       document.addEventListener('mousedown', onPointerDown, true)
     }, 0)
@@ -160,78 +195,100 @@ export function DashboardHomeTopbar({
       <h2 className="dashboard-client-main-title">{t('hero.homeTopbarTitle')}</h2>
     )
 
+  const accountMenuPortal =
+    accountModalOpen && accountMenuPosition && typeof document !== 'undefined'
+      ? createPortal(
+          <div
+            ref={accountMenuPortalRef}
+            className="client-compte-account-menu client-compte-account-menu--portal"
+            role="menu"
+            aria-label="Menu compte"
+            style={{
+              top: accountMenuPosition.top,
+              right: accountMenuPosition.right,
+            }}
+          >
+            <div className="client-compte-account-menu__head">
+              <strong>{accountDisplayName}</strong>
+              <span>{session.user?.email ?? ''}</span>
+            </div>
+            <div className="client-compte-account-menu__actions">
+              <button type="button" className="client-compte-account-menu__item" onClick={handleClientAccount}>
+                {language === 'en' ? 'Manage Palto account' : 'Gerer le compte Palto'}
+              </button>
+              <button
+                type="button"
+                className="client-compte-account-menu__item client-compte-account-menu__item--danger"
+                onClick={handleLogout}
+              >
+                {language === 'en' ? 'Sign out' : 'Se deconnecter'}
+              </button>
+            </div>
+          </div>,
+          document.body,
+        )
+      : null
+
   return (
-    <header className="dashboard-topbar dashboard-topbar--home-client">
-      <div className="dashboard-home-topbar-row">
-        <div className="dashboard-home-topbar-start">{titleEl}</div>
-        <div className="dashboard-topbar-right">
-          <div className="dashboard-home-topbar-right-cluster">
-            <LanguageSwitcher />
-            {accountDisplayName && onOpenClientAccount ? (
-              <div className="client-compte-topbar-menu-anchor" ref={accountMenuRef}>
-                <button
-                  type="button"
-                  className="client-compte-topbar-user-btn"
-                  onClick={(e) => {
-                    e.stopPropagation()
-                    setAccountModalOpen((prev) => !prev)
-                  }}
-                  aria-label="Gerer le compte"
-                  aria-expanded={accountModalOpen}
-                  aria-haspopup="menu"
-                >
-                  {accountPhotoUrl ? (
-                    <img src={accountPhotoUrl} alt={t('clientAccount.photoAlt')} className="client-compte-topbar-user-btn__avatar" />
-                  ) : (
-                    <User size={16} aria-hidden />
-                  )}
-                  <span>{accountDisplayName}</span>
-                </button>
-                {accountModalOpen ? (
-                  <div className="client-compte-account-menu" role="menu" aria-label="Menu compte">
-                    <div className="client-compte-account-menu__head">
-                      <strong>{accountDisplayName}</strong>
-                      <span>{session.user?.email ?? ''}</span>
-                    </div>
-                    <div className="client-compte-account-menu__actions">
-                      <button type="button" className="client-compte-account-menu__item" onClick={handleClientAccount}>
-                        {language === 'en' ? 'Manage Palto account' : 'Gerer le compte Palto'}
-                      </button>
-                      <button
-                        type="button"
-                        className="client-compte-account-menu__item client-compte-account-menu__item--danger"
-                        onClick={handleLogout}
-                      >
-                        {language === 'en' ? 'Sign out' : 'Se deconnecter'}
-                      </button>
-                    </div>
-                  </div>
-                ) : null}
-              </div>
-            ) : onOpenClientAccountAuth ? (
-              <div className="hero-topbar-auth" role="group" aria-label={t('hero.topbarAuthAria')}>
-                <button
-                  type="button"
-                  className="hero-topbar-auth-link"
-                  onClick={() => onOpenClientAccountAuth('login')}
-                >
-                  {t('hero.topbarSignIn')}
-                </button>
-                <span className="hero-topbar-auth-sep" aria-hidden>
-                  |
-                </span>
-                <button
-                  type="button"
-                  className="hero-topbar-auth-link"
-                  onClick={() => onOpenClientAccountAuth('signup')}
-                >
-                  {t('hero.topbarSignUp')}
-                </button>
-              </div>
-            ) : null}
+    <>
+      <header className="dashboard-topbar dashboard-topbar--home-client">
+        <div className="dashboard-home-topbar-row">
+          <div className="dashboard-home-topbar-start">{titleEl}</div>
+          <div className="dashboard-topbar-right">
+            <div className="dashboard-home-topbar-right-cluster">
+              <LanguageSwitcher />
+              {accountDisplayName && onOpenClientAccount ? (
+                <div className="client-compte-topbar-menu-anchor" ref={accountMenuAnchorRef}>
+                  <button
+                    ref={accountUserBtnRef}
+                    type="button"
+                    className="client-compte-topbar-user-btn"
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      setAccountModalOpen((prev) => !prev)
+                    }}
+                    aria-label="Gerer le compte"
+                    aria-expanded={accountModalOpen}
+                    aria-haspopup="menu"
+                  >
+                    {accountPhotoUrl ? (
+                      <img
+                        src={accountPhotoUrl}
+                        alt={t('clientAccount.photoAlt')}
+                        className="client-compte-topbar-user-btn__avatar"
+                      />
+                    ) : (
+                      <User size={16} aria-hidden />
+                    )}
+                    <span>{accountDisplayName}</span>
+                  </button>
+                </div>
+              ) : onOpenClientAccountAuth ? (
+                <div className="hero-topbar-auth" role="group" aria-label={t('hero.topbarAuthAria')}>
+                  <button
+                    type="button"
+                    className="hero-topbar-auth-link"
+                    onClick={() => onOpenClientAccountAuth('login')}
+                  >
+                    {t('hero.topbarSignIn')}
+                  </button>
+                  <span className="hero-topbar-auth-sep" aria-hidden>
+                    |
+                  </span>
+                  <button
+                    type="button"
+                    className="hero-topbar-auth-link"
+                    onClick={() => onOpenClientAccountAuth('signup')}
+                  >
+                    {t('hero.topbarSignUp')}
+                  </button>
+                </div>
+              ) : null}
+            </div>
           </div>
         </div>
-      </div>
-    </header>
+      </header>
+      {accountMenuPortal}
+    </>
   )
 }
