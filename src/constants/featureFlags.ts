@@ -29,6 +29,28 @@ export function useChauffeurRidesPersist(): boolean {
   return true
 }
 
+/** Profil course + `app_accounts.vehicle_type` (découplé de la présence GPS). */
+export function useChauffeurRideProfileApi(): boolean {
+  const raw = import.meta.env.VITE_CHAUFFEUR_RIDE_PROFILE_API as string | undefined
+  if (typeof raw === 'string') {
+    const v = raw.trim().toLowerCase()
+    if (v === '0' || v === 'false' || v === 'no' || v === 'off') return false
+    return true
+  }
+  return useClientRidesApi()
+}
+
+/** Sync `chauffeur_profile_data` (découplé de la présence GPS). */
+export function useChauffeurProfileSyncApi(): boolean {
+  const raw = import.meta.env.VITE_CHAUFFEUR_PROFILE_SYNC_API as string | undefined
+  if (typeof raw === 'string') {
+    const v = raw.trim().toLowerCase()
+    if (v === '0' || v === 'false' || v === 'no' || v === 'off') return false
+    return true
+  }
+  return useClientRidesApi()
+}
+
 /** GPS chauffeur → page Go (indépendant de VITE_CHAUFFEUR_RIDES_PERSIST). */
 export function useChauffeurPresenceApi(): boolean {
   const raw = import.meta.env.VITE_CHAUFFEUR_PRESENCE_API as string | undefined

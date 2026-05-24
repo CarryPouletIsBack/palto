@@ -132,8 +132,7 @@ import {
   type ChauffeurComplianceSnapshot,
 } from '../constants/chauffeurComplianceStorage';
 import {
-  isChauffeurInSelfServiceRegistry,
-  loadChauffeurRegistry,
+  isChauffeurSubjectToCompliance,
   normalizeChauffeurEmail,
 } from '../constants/chauffeurRegistrationStorage';
 import {
@@ -793,12 +792,11 @@ const Dashboard = ({
     if (storedProfile) return storedProfile;
 
     const inferred = inferProfileFromEmail(emailNorm);
-    const registryPhone = loadChauffeurRegistry()[emailNorm]?.phoneInternational ?? '';
     return {
       nom: inferred.nom,
       prenom: inferred.prenom,
       email: currentUserEmail,
-      telephone: registryPhone,
+      telephone: '',
       ville: '',
       vehicule: '',
       plaque: '',
@@ -936,6 +934,64 @@ const Dashboard = ({
       setProfilePhotoName(profile.profilePhotoName ?? '');
       setOrganizationPhotoName(profile.organizationPhotoName ?? '');
       setVehiclePhotoName(profile.vehiclePhotoName ?? '');
+      if (profile.payment) {
+        const pay = {
+          ibanMasked: profile.payment.ibanMasked ?? '',
+          payoutFrequency: profile.payment.payoutFrequency ?? 'Hebdomadaire',
+          modePrincipal: profile.payment.modePrincipal ?? 'Carte + espèces',
+        };
+        setChauffeurPayment(pay);
+        if (options?.overwriteDraft !== false && !profileFormDirtyRef.current) {
+          setPaymentDraft(pay);
+        }
+      }
+      if (profile.ridePricing) {
+        const rp = profile.ridePricing;
+        setChauffeurRideSettings((prev) => {
+          const next = {
+            ...prev,
+            ...(rp.baseFareEur != null ? { baseFareEur: rp.baseFareEur } : {}),
+            ...(rp.pricePerKmEur != null ? { pricePerKmEur: rp.pricePerKmEur } : {}),
+            ...(rp.nightSurchargePercent != null ? { nightSurchargePercent: rp.nightSurchargePercent } : {}),
+            ...(rp.elevationSurchargeEurPer100m != null
+              ? { elevationSurchargeEurPer100m: rp.elevationSurchargeEurPer100m }
+              : {}),
+            ...(typeof rp.pricingMultiplierPercent === 'number'
+              ? { pricingMultiplierPercent: rp.pricingMultiplierPercent }
+              : {}),
+            ...(rp.maxPickupKm != null ? { maxPickupKm: rp.maxPickupKm } : {}),
+          };
+          if (!rideSettingsFormDirtyRef.current) {
+            saveChauffeurRideSettingsSnapshot(next);
+          }
+          return next;
+        });
+        if (!rideSettingsFormDirtyRef.current) {
+          setRideSettingsDraft((prev) => ({
+            ...prev,
+            ...(rp.baseFareEur != null ? { baseFareEur: rp.baseFareEur } : {}),
+            ...(rp.pricePerKmEur != null ? { pricePerKmEur: rp.pricePerKmEur } : {}),
+            ...(rp.nightSurchargePercent != null ? { nightSurchargePercent: rp.nightSurchargePercent } : {}),
+            ...(rp.elevationSurchargeEurPer100m != null
+              ? { elevationSurchargeEurPer100m: rp.elevationSurchargeEurPer100m }
+              : {}),
+            ...(typeof rp.pricingMultiplierPercent === 'number'
+              ? { pricingMultiplierPercent: rp.pricingMultiplierPercent }
+              : {}),
+            ...(rp.maxPickupKm != null ? { maxPickupKm: rp.maxPickupKm } : {}),
+          }));
+        }
+      }
+      if (profile.documents?.length) {
+        setChauffeurDocuments(
+          profile.documents.map((d) => ({
+            key: d.key as ChauffeurDocument['key'],
+            label: d.label,
+            expiry: d.expiry,
+            status: d.status,
+          }))
+        );
+      }
     },
     []
   );
@@ -971,39 +1027,69 @@ const Dashboard = ({
       }
 
       const inferred = inferProfileFromEmail(sessionEmail);
-      const registryPhone = loadChauffeurRegistry()[emailNorm]?.phoneInternational ?? '';
-      const parsedRegistryPhone = parseStoredPhone(registryPhone);
 
       setChauffeurProfile((prev) => ({
         ...prev,
         email: prev.email.trim() ? prev.email : sessionEmail,
         prenom: prev.prenom.trim() ? prev.prenom : inferred.prenom,
         nom: prev.nom.trim() ? prev.nom : inferred.nom,
-        telephone: prev.telephone.trim() ? prev.telephone : registryPhone,
       }));
       setUserProfileDraft((prev) => ({
         ...prev,
         email: prev.email.trim() ? prev.email : sessionEmail,
         prenom: prev.prenom.trim() ? prev.prenom : inferred.prenom,
         nom: prev.nom.trim() ? prev.nom : inferred.nom,
-        telephone: prev.telephone.trim() ? prev.telephone : registryPhone,
       }));
-      if (registryPhone.trim() && !storedProfile?.telephone.trim()) {
-        setPhoneCountryDraft(parsedRegistryPhone.country);
-        setPhoneNationalDraft(parsedRegistryPhone.nationalNumber);
-      }
 
-      void syncChauffeurProfileWithServer(sessionEmail).then(() => {
+      void (async () => {
+        const rideProfile = await fetchChauffeurRideProfileFromServer();
+        if (cancelled || profileFormDirtyRef.current) return;
+        if (rideProfile?.vehicleType) {
+          const vehicleSlug = normalizeVehicleSlugForSelect(rideProfile.vehicleType);
+          if (vehicleSlug) {
+            setChauffeurProfile((prev) => {
+              const next = { ...prev, vehicule: vehicleSlug };
+              persistStoredChauffeurProfile(next);
+              return next;
+            });
+            setUserProfileDraft((prev) => ({ ...prev, vehicule: vehicleSlug }));
+          }
+        }
+        await syncChauffeurProfileWithServer(sessionEmail);
         if (cancelled || profileFormDirtyRef.current) return;
         const merged = loadStoredChauffeurProfile(emailNorm);
-        if (merged) applyChauffeurProfileToUi(merged, { overwriteDraft: true });
-      });
+        if (merged) {
+          applyChauffeurProfileToUi(merged, { overwriteDraft: true });
+          const tel = merged.telephone?.trim();
+          if (tel) {
+            const parsed = parseStoredPhone(tel);
+            setPhoneCountryDraft(parsed.country);
+            setPhoneNationalDraft(parsed.nationalNumber);
+          }
+        }
+      })();
     }
 
     return () => {
       cancelled = true;
     };
   }, [applyChauffeurProfileToUi, authSessionTick]);
+
+  useEffect(() => {
+    if (activeView === 'ride-settings') {
+      setActiveView('user');
+      setUserSubView('ride-settings');
+    } else if (activeView === 'settings') {
+      setActiveView('user');
+      setUserSubView('preferences');
+    } else if (activeView === 'help') {
+      setActiveView('user');
+      setUserSubView('help');
+    } else if (activeView === 'organization') {
+      setActiveView('user');
+      setUserSubView('organization');
+    }
+  }, [activeView]);
 
   useEffect(() => {
     saveChauffeurOrg(chauffeurOrg);
@@ -1063,7 +1149,7 @@ const Dashboard = ({
     }
     const email = getChauffeurSessionEmail();
     const norm = normalizeChauffeurEmail(email);
-    if (!norm || !isChauffeurInSelfServiceRegistry(norm)) {
+    if (!norm || !isChauffeurSubjectToCompliance(norm, true)) {
       setComplianceApiSnapshot(null);
       return;
     }
@@ -1705,7 +1791,7 @@ const Dashboard = ({
     if (!email?.trim()) return false;
     if (isChauffeurPrimaryAccountEmail(email)) return false;
     const norm = normalizeChauffeurEmail(email);
-    if (!isChauffeurInSelfServiceRegistry(norm)) return false;
+    if (!isChauffeurSubjectToCompliance(norm, true)) return false;
     if (useComplianceApi && complianceApiSnapshot) {
       return !complianceFullySatisfied(complianceApiSnapshot);
     }
@@ -2061,6 +2147,7 @@ const Dashboard = ({
     const vehicleSlug = normalizeVehicleSlugForSelect(userProfileDraft.vehicule);
     const villeCommune = normalizeReunionCommuneForSelect(userProfileDraft.ville);
     const nextProfile: ChauffeurProfile = {
+      ...chauffeurProfile,
       ...userProfileDraft,
       ville: villeCommune,
       vehicule: vehicleSlug,
@@ -2072,6 +2159,9 @@ const Dashboard = ({
       profilePhotoName: profilePhotoDraftName,
       organizationPhotoName: organizationPhotoDraftName,
       vehiclePhotoName: vehiclePhotoDraftName,
+      payment: chauffeurProfile.payment,
+      ridePricing: chauffeurProfile.ridePricing,
+      documents: chauffeurProfile.documents,
     };
 
     setPlateError(null);
@@ -2133,7 +2223,21 @@ const Dashboard = ({
 
   const savePaymentEdit = useCallback(() => {
     setChauffeurPayment(paymentDraft);
-  }, [paymentDraft]);
+    const nextProfile: ChauffeurProfile = {
+      ...chauffeurProfile,
+      payment: {
+        ibanMasked: paymentDraft.ibanMasked,
+        payoutFrequency: paymentDraft.payoutFrequency,
+        modePrincipal: paymentDraft.modePrincipal,
+      },
+    };
+    setChauffeurProfile(nextProfile);
+    persistStoredChauffeurProfile(nextProfile);
+    void syncChauffeurProfileWithServer(nextProfile.email);
+    toast.success('Versements enregistrés', {
+      description: 'Synchronisation du profil chauffeur.',
+    });
+  }, [chauffeurProfile, paymentDraft]);
 
   const computeAppliedPrice = useCallback((raw: string, multiplierPercent: number): string => {
     const normalized = raw.replace(',', '.').trim();
@@ -2159,7 +2263,23 @@ const Dashboard = ({
     rideSettingsFormDirtyRef.current = false;
     setChauffeurRideSettings(rideSettingsDraft);
     saveChauffeurRideSettingsSnapshot(rideSettingsDraft);
-    const vehicleSlug = isChauffeurVehicleType(chauffeurProfile.vehicule) ? chauffeurProfile.vehicule : null;
+    const vehicleSlug =
+      normalizeVehicleSlugForSelect(userProfileDraft.vehicule) ||
+      (isChauffeurVehicleType(chauffeurProfile.vehicule) ? chauffeurProfile.vehicule : null);
+    const nextProfile: ChauffeurProfile = {
+      ...chauffeurProfile,
+      ridePricing: {
+        baseFareEur: rideSettingsDraft.baseFareEur,
+        pricePerKmEur: rideSettingsDraft.pricePerKmEur,
+        nightSurchargePercent: rideSettingsDraft.nightSurchargePercent,
+        elevationSurchargeEurPer100m: rideSettingsDraft.elevationSurchargeEurPer100m,
+        pricingMultiplierPercent: rideSettingsDraft.pricingMultiplierPercent,
+        maxPickupKm: rideSettingsDraft.maxPickupKm,
+      },
+    };
+    setChauffeurProfile(nextProfile);
+    persistStoredChauffeurProfile(nextProfile);
+    void syncChauffeurProfileWithServer(nextProfile.email);
     void syncChauffeurRideProfileToServer({
       petFriendly: rideSettingsDraft.petFriendly,
       luggageAssistance: rideSettingsDraft.luggageAssistance,
@@ -2167,9 +2287,9 @@ const Dashboard = ({
       vehicleType: vehicleSlug,
     });
     toast.success('Paramètres de course enregistrés', {
-      description: 'Tarifs locaux + préférences synchronisées.',
+      description: 'Tarifs et préférences synchronisés.',
     });
-  }, [chauffeurProfile.vehicule, rideSettingsDraft]);
+  }, [chauffeurProfile, userProfileDraft.vehicule, rideSettingsDraft]);
 
   /** Au chargement : lire Supabase (vérité pour la page Go), pas écraser la base avec le localStorage. */
   useEffect(() => {
@@ -2196,17 +2316,19 @@ const Dashboard = ({
           insulatedBag: profile.insulatedBag,
         }
       })
-      const vehicleSlug = normalizeVehicleSlugForSelect(profile.vehicleType) || (profile.vehicleType ?? '').trim();
-      setChauffeurProfile((prev) => {
-        if (profileFormDirtyRef.current || prev.vehicule.trim()) return prev;
-        const next = { ...prev, vehicule: vehicleSlug };
-        persistStoredChauffeurProfile(next);
-        return next;
-      });
-      setUserProfileDraft((prev) => {
-        if (profileFormDirtyRef.current || prev.vehicule.trim()) return prev;
-        return { ...prev, vehicule: vehicleSlug };
-      });
+      const vehicleSlug = normalizeVehicleSlugForSelect(profile.vehicleType);
+      if (vehicleSlug) {
+        setChauffeurProfile((prev) => {
+          if (profileFormDirtyRef.current) return prev;
+          const next = { ...prev, vehicule: vehicleSlug };
+          persistStoredChauffeurProfile(next);
+          return next;
+        });
+        setUserProfileDraft((prev) => {
+          if (profileFormDirtyRef.current) return prev;
+          return { ...prev, vehicule: vehicleSlug };
+        });
+      }
     })
   }, [])
 
@@ -2234,13 +2356,28 @@ const Dashboard = ({
 
     // Simulation de validation backend.
     window.setTimeout(() => {
-      setChauffeurDocuments((prev) =>
-        prev.map((doc) =>
+      setChauffeurDocuments((prev) => {
+        const next = prev.map((doc) =>
           doc.key === docKey
-            ? { ...doc, status: 'ok', expiry: 'Renouvelé · validé' }
+            ? { ...doc, status: 'ok' as const, expiry: 'Renouvelé · validé' }
             : doc
-        )
-      );
+        );
+        setChauffeurProfile((prof) => {
+          const nextProfile: ChauffeurProfile = {
+            ...prof,
+            documents: next.map((d) => ({
+              key: d.key,
+              label: d.label,
+              expiry: d.expiry,
+              status: d.status,
+            })),
+          };
+          persistStoredChauffeurProfile(nextProfile);
+          void syncChauffeurProfileWithServer(nextProfile.email);
+          return nextProfile;
+        });
+        return next;
+      });
     }, 1600);
   }, [documentUploadDraft]);
 
@@ -3701,6 +3838,34 @@ const Dashboard = ({
                                 saveUserProfileEdit();
                               }}
                             >
+                                <label className="dashboard-chauffeur-profile-photo">
+                                  Photo de profil
+                                  <div className="dashboard-chauffeur-profile-photo-row">
+                                    {profilePhotoDraftUrl ? (
+                                      <img
+                                        src={profilePhotoDraftUrl}
+                                        alt=""
+                                        className="dashboard-chauffeur-profile-photo-preview"
+                                      />
+                                    ) : (
+                                      <span className="dashboard-chauffeur-profile-photo-placeholder">
+                                        Aucune photo
+                                      </span>
+                                    )}
+                                    <input
+                                      type="file"
+                                      accept="image/*"
+                                      onChange={(e) => {
+                                        markProfileFormDirty();
+                                        void handleImageUpload(
+                                          e.target.files?.[0],
+                                          setProfilePhotoDraftUrl,
+                                          setProfilePhotoDraftName
+                                        );
+                                      }}
+                                    />
+                                  </div>
+                                </label>
                                 <label>
                                   Téléphone
                                   <div className="dashboard-phone-input-row">

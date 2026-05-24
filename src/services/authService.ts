@@ -1,6 +1,10 @@
 import { apiBaseUrl } from '../constants/featureFlags'
 import { saveClientAccountSnapshot } from '../constants/clientAccountStorage'
 import type { RegisterChauffeurPayload } from '../constants/chauffeurRegistrationStorage'
+import {
+  normalizeChauffeurProfileEmail,
+  persistStoredChauffeurProfile,
+} from '../constants/chauffeurProfileStorage'
 
 const CHAUFFEUR_AUTH_STORAGE_KEY = 'dashboard_auth'
 export const DASHBOARD_AUTH_TOKEN_KEY = 'dashboard_token'
@@ -163,6 +167,22 @@ export async function registerChauffeur(payload: RegisterChauffeurPayload): Prom
   )
   if (!result.success || !result.token || !result.user) return { success: false, error: result.error }
   persistChauffeurSession(result.token, result.user)
+  const emailNorm = normalizeChauffeurProfileEmail(payload.email)
+  persistStoredChauffeurProfile({
+    prenom: payload.prenom.trim(),
+    nom: payload.nom.trim(),
+    email: emailNorm,
+    telephone: payload.phone.trim(),
+    vehicule: payload.vehicleType,
+    ville: '',
+    plaque: '',
+    profilePhotoUrl: null,
+    organizationPhotoUrl: null,
+    vehiclePhotoUrl: null,
+    profilePhotoName: '',
+    organizationPhotoName: '',
+    vehiclePhotoName: '',
+  })
   notifyChauffeurSessionChanged()
   return { success: true }
 }

@@ -293,7 +293,9 @@ const TRANSLATIONS: Record<Language, Record<string, unknown>> = {
       titleSignup: 'Créer un compte chauffeur',
       subtitleLogin: 'Accédez à votre tableau de bord, courses et organisation.',
       subtitleSignup:
-        'Après inscription, vos courses restent bloquées tant que les pièces légales listées dans le tableau de bord ne sont pas fournies (cases à cocher sur cet appareil). Téléphone, type de véhicule et équipement livraison sont enregistrés sur cet appareil.',
+        'Après inscription, vos courses restent bloquées tant que les pièces légales listées dans le tableau de bord ne sont pas fournies. Téléphone, type de véhicule et équipement livraison sont enregistrés sur votre compte Palto.',
+      subtitleClientParallel:
+        'Session client active en parallèle. Connectez-vous ici avec le mot de passe du compte chauffeur (compte distinct).',
       signupPhoneLabel: 'Téléphone',
       signupPhoneDial: 'Indicatif pays',
       signupPhonePlaceholder: 'Ex. 692 12 34 56',
@@ -306,6 +308,7 @@ const TRANSLATIONS: Record<Language, Record<string, unknown>> = {
       deliveryEquippedHint: '(caisson isotherme, sangles, etc.)',
       errorPhoneInvalid: 'Numéro de téléphone invalide pour l’indicatif choisi.',
       errorPhoneRequired: 'Téléphone obligatoire.',
+      errorNameRequired: 'Prénom et nom sont requis.',
       tabLogin: 'Connexion',
       tabSignup: 'Créer un compte',
       email: 'E-mail',
@@ -1047,7 +1050,9 @@ const TRANSLATIONS: Record<Language, Record<string, unknown>> = {
       titleSignup: 'Create a driver account',
       subtitleLogin: 'Open your dashboard, rides and fleet tools.',
       subtitleSignup:
-        'After signup, rides stay blocked until the legal documents listed in the dashboard are provided (checkboxes on this device). Phone, vehicle type and delivery equipment are stored on this device.',
+        'After signup, rides stay blocked until the legal documents listed in the dashboard are provided. Phone, vehicle type and delivery equipment are saved to your Palto account.',
+      subtitleClientParallel:
+        'A client session is already active. Sign in here with your driver account password (separate account).',
       signupPhoneLabel: 'Phone',
       signupPhoneDial: 'Country code',
       signupPhonePlaceholder: 'e.g. 692 12 34 56',
@@ -1060,6 +1065,7 @@ const TRANSLATIONS: Record<Language, Record<string, unknown>> = {
       deliveryEquippedHint: '(insulated box, straps, etc.)',
       errorPhoneInvalid: 'Invalid phone number for the selected country code.',
       errorPhoneRequired: 'Phone number is required.',
+      errorNameRequired: 'First and last name are required.',
       tabLogin: 'Sign in',
       tabSignup: 'Create account',
       email: 'Email',

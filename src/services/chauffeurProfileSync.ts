@@ -1,19 +1,21 @@
-import { apiBaseUrl, useChauffeurPresenceApi } from '../constants/featureFlags'
+import { apiBaseUrl, useChauffeurProfileSyncApi } from '../constants/featureFlags'
 import {
   loadStoredChauffeurProfile,
   persistStoredChauffeurProfile,
   PALTO_CHAUFFEUR_PROFILE_SYNCED_EVENT,
   type ChauffeurProfileSnapshot,
 } from '../constants/chauffeurProfileStorage'
+import { isChauffeurVehicleType } from '../constants/chauffeurVehicleType'
 import { getDashboardAuthorizationHeader, isChauffeurSession } from './authService'
 import { mergeChauffeurProfileSnapshots } from './chauffeurProfileMerge'
+import { fetchChauffeurRideProfileFromServer } from './chauffeurRideProfileApi'
 
 const API_BASE_URL = apiBaseUrl()
 
 const syncInFlightByEmail = new Map<string, Promise<void>>()
 
 export function chauffeurProfileSyncEnabled(): boolean {
-  return useChauffeurPresenceApi()
+  return useChauffeurProfileSyncApi()
 }
 
 function profileHasContent(s: ChauffeurProfileSnapshot): boolean {
@@ -137,6 +139,12 @@ async function runSyncChauffeurProfileWithServer(email: string): Promise<void> {
 
   const merged = mergeChauffeurProfileSnapshots(local, remote.account ?? {})
   merged.email = key
+
+  const rideProfile = await fetchChauffeurRideProfileFromServer()
+  if (rideProfile?.vehicleType && isChauffeurVehicleType(rideProfile.vehicleType)) {
+    merged.vehicule = rideProfile.vehicleType
+  }
+
   persistStoredChauffeurProfile(merged)
 
   if (profileHasContent(merged)) {

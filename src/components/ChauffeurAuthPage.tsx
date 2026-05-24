@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState, type FormEvent } from 'react'
 import { Eye, EyeOff, X } from 'lucide-react'
+import { useLanguage } from '../contexts/LanguageContext'
 import AuthSignupIdentityFields from './AuthSignupIdentityFields'
 import {
   getCurrentClientUser,
@@ -22,6 +23,7 @@ type Props = {
 }
 
 export default function ChauffeurAuthPage({ onAuthSuccess, onClose }: Props) {
+  const { t } = useLanguage()
   const signupDefault = useMemo(
     () => new URLSearchParams(window.location.search).get('chauffeurSignup') === '1',
     []
@@ -51,16 +53,12 @@ export default function ChauffeurAuthPage({ onAuthSuccess, onClose }: Props) {
     const prenomTrim = prenom.trim()
     const nomTrim = nom.trim()
     if (!prenomTrim || !nomTrim) {
-      setError('Prénom et nom sont requis.')
+      setError(t('chauffeurAuth.errorNameRequired'))
       return
     }
     const normalizedNational = normalizeNationalPhone(phoneCountry, phoneNational)
     if (!isValidNationalPhone(phoneCountry, normalizedNational)) {
-      setError(
-        phoneCountry === 'FR'
-          ? 'Numéro invalide (France) : 9 chiffres attendus après +33.'
-          : 'Numéro invalide (Réunion) : format attendu type 692… ou 262… après +262.'
-      )
+      setError(t('chauffeurAuth.errorPhoneInvalid'))
       return
     }
     const phone = buildInternationalPhone(phoneCountry, normalizedNational)
@@ -114,11 +112,15 @@ export default function ChauffeurAuthPage({ onAuthSuccess, onClose }: Props) {
             <X size={18} aria-hidden />
           </button>
         ) : null}
-        <h1 className="auth-page-title">{mode === 'signup' ? 'Creer un compte chauffeur' : 'Connexion chauffeur'}</h1>
+        <h1 className="auth-page-title">
+          {mode === 'signup' ? t('chauffeurAuth.titleSignup') : t('chauffeurAuth.titleLogin')}
+        </h1>
         <p className="auth-page-subtitle">
           {clientAlreadyLogged
-            ? 'Session client active en parallèle. Connectez-vous ici avec le mot de passe du compte chauffeur (compte distinct).'
-            : 'Compte chauffeur Palto uniquement — indépendant du compte client.'}
+            ? t('chauffeurAuth.subtitleClientParallel')
+            : mode === 'signup'
+              ? t('chauffeurAuth.subtitleSignup')
+              : t('chauffeurAuth.subtitleLogin')}
         </p>
         <form className="auth-page-grid" onSubmit={handleSubmit}>
           {mode === 'signup' ? (
@@ -133,19 +135,22 @@ export default function ChauffeurAuthPage({ onAuthSuccess, onClose }: Props) {
                 onPhoneCountryChange={setPhoneCountry}
                 onPhoneNationalChange={setPhoneNational}
               />
-              <select
-                className="auth-page-select"
-                value={vehicleType}
-                onChange={(e) => setVehicleType(e.target.value as typeof vehicleType)}
-              >
-                <option value="berline">Berline</option>
-                <option value="utilitaire">Utilitaire</option>
-                <option value="moto">Moto</option>
-                <option value="scooter">Scooter</option>
-              </select>
+              <label className="auth-page-field-label">
+                {t('chauffeurAuth.vehicleTypeLabel')}
+                <select
+                  className="auth-page-select"
+                  value={vehicleType}
+                  onChange={(e) => setVehicleType(e.target.value as typeof vehicleType)}
+                >
+                  <option value="berline">{t('chauffeurAuth.vehicleBerline')}</option>
+                  <option value="utilitaire">{t('chauffeurAuth.vehicleUtilitaire')}</option>
+                  <option value="moto">{t('chauffeurAuth.vehicleMoto')}</option>
+                  <option value="scooter">{t('chauffeurAuth.vehicleScooter')}</option>
+                </select>
+              </label>
               <label className="auth-page-checkbox-row">
                 <input type="checkbox" checked={deliveryEquipped} onChange={(e) => setDeliveryEquipped(e.target.checked)} />
-                Equipe livraison
+                {t('chauffeurAuth.deliveryEquippedLabel')}
               </label>
             </>
           ) : null}
@@ -154,7 +159,7 @@ export default function ChauffeurAuthPage({ onAuthSuccess, onClose }: Props) {
             type="email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            placeholder="Email"
+            placeholder={t('chauffeurAuth.email')}
             autoComplete="email"
             required
           />
@@ -164,7 +169,7 @@ export default function ChauffeurAuthPage({ onAuthSuccess, onClose }: Props) {
               type={showPassword ? 'text' : 'password'}
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              placeholder="Mot de passe"
+              placeholder={t('chauffeurAuth.password')}
               autoComplete={mode === 'signup' ? 'new-password' : 'current-password'}
               required
               minLength={mode === 'signup' ? 6 : undefined}
@@ -198,7 +203,13 @@ export default function ChauffeurAuthPage({ onAuthSuccess, onClose }: Props) {
           {helpMessage ? <p className="auth-page-help">{helpMessage}</p> : null}
           <div className="auth-page-actions">
             <button className="auth-page-btn" type="submit" disabled={loading}>
-              {loading ? 'Chargement...' : mode === 'signup' ? "S'inscrire" : 'Se connecter'}
+              {loading
+                ? mode === 'signup'
+                  ? t('chauffeurAuth.submittingSignup')
+                  : t('chauffeurAuth.submittingLogin')
+                : mode === 'signup'
+                  ? t('chauffeurAuth.submitSignup')
+                  : t('chauffeurAuth.submitLogin')}
             </button>
             <button
               className="auth-page-btn auth-page-btn--ghost"
@@ -208,7 +219,7 @@ export default function ChauffeurAuthPage({ onAuthSuccess, onClose }: Props) {
                 setError(null)
               }}
             >
-              {mode === 'signup' ? "J'ai deja un compte" : 'Creer un compte'}
+              {mode === 'signup' ? t('chauffeurAuth.switchToLogin') : t('chauffeurAuth.switchToSignup')}
             </button>
           </div>
         </form>

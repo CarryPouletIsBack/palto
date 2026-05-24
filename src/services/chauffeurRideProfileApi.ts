@@ -1,6 +1,6 @@
 import type { ChauffeurVehicleType } from '../constants/chauffeurVehicleType'
 import { isChauffeurVehicleType } from '../constants/chauffeurVehicleType'
-import { apiBaseUrl, useChauffeurPresenceApi } from '../constants/featureFlags'
+import { apiBaseUrl, useChauffeurRideProfileApi } from '../constants/featureFlags'
 import { isChauffeurSession } from './authService'
 
 const API_BASE_URL = apiBaseUrl()
@@ -14,7 +14,7 @@ function authHeaders(): HeadersInit {
 }
 
 export function chauffeurRideProfileApiEnabled(): boolean {
-  return useChauffeurPresenceApi()
+  return useChauffeurRideProfileApi()
 }
 
 export type ChauffeurRideProfilePayload = {

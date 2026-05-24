@@ -1,3 +1,25 @@
+export type ChauffeurProfilePaymentFields = {
+  ibanMasked?: string
+  payoutFrequency?: string
+  modePrincipal?: string
+}
+
+export type ChauffeurProfileRidePricingFields = {
+  baseFareEur?: string
+  pricePerKmEur?: string
+  nightSurchargePercent?: string
+  elevationSurchargeEurPer100m?: string
+  pricingMultiplierPercent?: number
+  maxPickupKm?: string
+}
+
+export type ChauffeurProfileDocumentEntry = {
+  key: string
+  label: string
+  expiry: string
+  status: 'pending' | 'ok' | 'expired'
+}
+
 /** Profil chauffeur (local + sync serveur). */
 export type ChauffeurProfileSnapshot = {
   nom: string
@@ -13,6 +35,9 @@ export type ChauffeurProfileSnapshot = {
   profilePhotoName?: string
   organizationPhotoName?: string
   vehiclePhotoName?: string
+  payment?: ChauffeurProfilePaymentFields
+  ridePricing?: ChauffeurProfileRidePricingFields
+  documents?: ChauffeurProfileDocumentEntry[]
 }
 
 export const CHAUFFEUR_PROFILE_STORAGE_KEY = 'palto:chauffeur_profile_v1'

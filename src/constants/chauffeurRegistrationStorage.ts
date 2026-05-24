@@ -80,6 +80,12 @@ export function isChauffeurInSelfServiceRegistry(emailNorm: string): boolean {
   return !!loadChauffeurRegistry()[emailNorm]
 }
 
+/** Compte chauffeur soumis à la conformité documentaire (legacy local ou session API). */
+export function isChauffeurSubjectToCompliance(emailNorm: string, hasApiChauffeurSession: boolean): boolean {
+  if (!emailNorm) return false
+  return isChauffeurInSelfServiceRegistry(emailNorm) || hasApiChauffeurSession
+}
+
 export function verifyChauffeurRegistrationPassword(emailNorm: string, password: string): boolean {
   const rec = loadChauffeurRegistry()[emailNorm]
   if (!rec) return false

@@ -571,22 +571,46 @@ const ProfilePutBodySchema = z.object({
 
 async function handleProfileGet(res: VercelResponse, accountId: string) {
   const supabase = getSupabaseAdmin()
-  const { data, error } = await supabase
-    .from('chauffeur_profile_data')
-    .select('account_snapshot, updated_at')
-    .eq('account_id', accountId)
-    .maybeSingle()
+  const [{ data, error }, { data: accRow }] = await Promise.all([
+    supabase
+      .from('chauffeur_profile_data')
+      .select('account_snapshot, updated_at')
+      .eq('account_id', accountId)
+      .maybeSingle(),
+    supabase
+      .from('app_accounts')
+      .select('vehicle_type, phone')
+      .eq('id', accountId)
+      .eq('role', 'chauffeur')
+      .maybeSingle(),
+  ])
 
   if (error) {
     console.error('[chauffeur/profile GET]', error)
     return res.status(500).json({ error: 'Lecture profil impossible' })
   }
 
-  const account = sanitizeChauffeurProfileSnapshot(data?.account_snapshot ?? {})
+  const accountBase = sanitizeChauffeurProfileSnapshot(data?.account_snapshot ?? {})
+  const vehicleFromAccount = (accRow?.vehicle_type ?? '').trim().toLowerCase()
+  const phoneFromAccount = (accRow?.phone ?? '').trim()
+  const vehiculeSlug =
+    (accountBase.vehicule ?? '').trim() ||
+    (vehicleFromAccount && ChauffeurVehicleTypeSchema.safeParse(vehicleFromAccount).success
+      ? vehicleFromAccount
+      : '')
+  const account = {
+    ...accountBase,
+    vehicule: vehiculeSlug,
+    telephone: (accountBase.telephone ?? '').trim() || phoneFromAccount,
+  }
   return res.status(200).json({
     account,
     updatedAt: data?.updated_at ?? null,
     hasAccount: chauffeurProfileSnapshotHasContent(account),
+    vehicleTypeFromAccount:
+      vehicleFromAccount && ChauffeurVehicleTypeSchema.safeParse(vehicleFromAccount).success
+        ? vehicleFromAccount
+        : null,
   })
 }
 
@@ -638,14 +662,33 @@ async function handleProfilePut(req: VercelRequest, res: VercelResponse, account
     .filter(Boolean)
     .join(' ')
   const phone = (accountWithEmail.telephone && String(accountWithEmail.telephone).trim()) || null
-  const vehicleSlug = (accountWithEmail.vehicule && String(accountWithEmail.vehicule).trim().toLowerCase()) || ''
+  const { data: currentAcc } = await supabase
+    .from('app_accounts')
+    .select('vehicle_type')
+    .eq('id', accountId)
+    .eq('role', 'chauffeur')
+    .maybeSingle()
+
+  const currentVehicle = (currentAcc?.vehicle_type ?? '').trim().toLowerCase()
+  let vehicleSlug = (accountWithEmail.vehicule && String(accountWithEmail.vehicule).trim().toLowerCase()) || ''
+  if (
+    !vehicleSlug &&
+    currentVehicle &&
+    ChauffeurVehicleTypeSchema.safeParse(currentVehicle).success
+  ) {
+    vehicleSlug = currentVehicle
+    accountWithEmail.vehicule = currentVehicle
+  }
+
   const vehicleUpdate =
     vehicleSlug && ChauffeurVehicleTypeSchema.safeParse(vehicleSlug).success ? vehicleSlug : undefined
 
   const accountPatch: Record<string, unknown> = { updated_at: new Date().toISOString() }
   if (fullName) accountPatch.full_name = fullName
   if (phone) accountPatch.phone = phone
-  if (vehicleUpdate) accountPatch.vehicle_type = vehicleUpdate
+  if (vehicleUpdate) {
+    accountPatch.vehicle_type = vehicleUpdate
+  }
 
   const { error: accountErr } = await supabase
     .from('app_accounts')

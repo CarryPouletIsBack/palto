@@ -10,6 +10,7 @@ import {
 } from './accountRegistrationFields.js'
 import { getPaltoAppSessionByToken } from './paltoAppSession.js'
 import { signPaltoSupabaseRealtimeJwt } from './paltoRealtimeJwt.js'
+import { seedChauffeurProfileOnRegister } from './seedChauffeurProfileOnRegister.js'
 
 function parseJsonBody(req: VercelRequest): unknown {
   if (typeof req.body === 'string') {
@@ -235,6 +236,16 @@ export async function handleAuthChauffeurRegister(req: VercelRequest, res: Verce
       error: `Creation compte impossible${error?.code ? ` (${error.code})` : ''}`,
     })
   }
+
+  await seedChauffeurProfileOnRegister(supabase, {
+    accountId: String(data.id),
+    email,
+    prenom: parsed.data.prenom,
+    nom: parsed.data.nom,
+    phone,
+    vehicleType: parsed.data.vehicleType,
+    deliveryEquipped: parsed.data.deliveryEquipped,
+  })
 
   const token = await createAccountSession(supabase, { accountId: data.id, email: data.email, role: 'chauffeur' })
   return res.status(201).json({
