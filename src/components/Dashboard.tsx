@@ -2704,12 +2704,6 @@ const Dashboard = ({
 
             {activeView === 'stats' ? (
               <div className="dashboard-content">
-                <ChauffeurPresenceGeoBar
-                  onActivate={chauffeurPresence.startTracking}
-                  onRefresh={chauffeurPresence.refreshLocation}
-                  error={chauffeurPresence.geoError}
-                  tracking={chauffeurPresence.tracking}
-                />
                 {isMobileViewport && !topbarLaunchCourse ? (
                   <div className="dashboard-topbar-title-stack dashboard-topbar-title-stack--in-content">
                     <h2 className="dashboard-chauffeur-main-title">{dashboardTopTitle}</h2>
@@ -2726,12 +2720,6 @@ const Dashboard = ({
                     activeView === 'organization' ? ' dashboard-content--org-fullbleed' : ''
                   }`}
                 >
-                  <ChauffeurPresenceGeoBar
-                    onActivate={chauffeurPresence.startTracking}
-                    onRefresh={chauffeurPresence.refreshLocation}
-                    error={chauffeurPresence.geoError}
-                    tracking={chauffeurPresence.tracking}
-                  />
                   {isMobileViewport && !topbarLaunchCourse ? (
                     <div className="dashboard-topbar-title-stack dashboard-topbar-title-stack--in-content">
                       <h2 className="dashboard-chauffeur-main-title">{dashboardTopTitle}</h2>
@@ -4440,6 +4428,14 @@ const Dashboard = ({
                           <div className="dashboard-user-sections">
                             <section className="dashboard-user-subcard">
                               <h4>Préférences</h4>
+                              <div className="dashboard-preferences-geo">
+                                <ChauffeurPresenceGeoBar
+                                  onActivate={chauffeurPresence.startTracking}
+                                  onRefresh={chauffeurPresence.refreshLocation}
+                                  error={chauffeurPresence.geoError}
+                                  tracking={chauffeurPresence.tracking}
+                                />
+                              </div>
                               <h3 className="client-compte-section-title">{t('clientAccount.settingsLanguageTitle')}</h3>
                               <p className="dashboard-field-hint" style={{ margin: '0 0 12px' }}>
                                 {t('clientAccount.settingsLanguageHint')}

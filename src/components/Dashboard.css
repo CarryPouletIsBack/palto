@@ -2270,6 +2270,14 @@ button.dashboard-panel--overview-empty:focus-visible {
   color: #374151;
 }
 
+.dashboard-preferences-geo {
+  margin: 0 0 20px;
+}
+
+.dashboard-preferences-geo .chauffeur-presence-geo {
+  margin: 0;
+}
+
 .dashboard-ride-settings-toggles {
   display: flex;
   flex-direction: column;
