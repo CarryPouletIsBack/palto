@@ -579,7 +579,7 @@ async function handleProfileGet(res: VercelResponse, accountId: string) {
       .maybeSingle(),
     supabase
       .from('app_accounts')
-      .select('vehicle_type, phone')
+      .select('vehicle_type, phone, full_name')
       .eq('id', accountId)
       .eq('role', 'chauffeur')
       .maybeSingle(),
@@ -593,6 +593,10 @@ async function handleProfileGet(res: VercelResponse, accountId: string) {
   const accountBase = sanitizeChauffeurProfileSnapshot(data?.account_snapshot ?? {})
   const vehicleFromAccount = (accRow?.vehicle_type ?? '').trim().toLowerCase()
   const phoneFromAccount = (accRow?.phone ?? '').trim()
+  const fullName = (accRow?.full_name ?? '').trim()
+  const nameParts = fullName.split(/\s+/).filter(Boolean)
+  const prenomFromAccount = nameParts[0] ?? ''
+  const nomFromAccount = nameParts.length > 1 ? nameParts.slice(1).join(' ') : ''
   const vehiculeSlug =
     (accountBase.vehicule ?? '').trim() ||
     (vehicleFromAccount && ChauffeurVehicleTypeSchema.safeParse(vehicleFromAccount).success
@@ -600,6 +604,8 @@ async function handleProfileGet(res: VercelResponse, accountId: string) {
       : '')
   const account = {
     ...accountBase,
+    prenom: (accountBase.prenom ?? '').trim() || prenomFromAccount,
+    nom: (accountBase.nom ?? '').trim() || nomFromAccount,
     vehicule: vehiculeSlug,
     telephone: (accountBase.telephone ?? '').trim() || phoneFromAccount,
   }

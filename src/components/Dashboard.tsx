@@ -161,10 +161,12 @@ import {
 } from '../services/chauffeurRideProfileApi';
 import {
   loadStoredChauffeurProfile,
+  normalizeChauffeurProfileEmail,
   persistStoredChauffeurProfile,
   PALTO_CHAUFFEUR_PROFILE_SYNCED_EVENT,
   type ChauffeurProfileSnapshot,
 } from '../constants/chauffeurProfileStorage';
+import { loadClientAccountSnapshot, saveClientAccountSnapshot } from '../constants/clientAccountStorage';
 import { syncChauffeurProfileWithServer } from '../services/chauffeurProfileSync';
 import ChauffeurDocumentsChecklist from './ChauffeurDocumentsChecklist';
 
@@ -1065,6 +1067,19 @@ const Dashboard = ({
             const parsed = parseStoredPhone(tel);
             setPhoneCountryDraft(parsed.country);
             setPhoneNationalDraft(parsed.nationalNumber);
+          }
+          if (merged.prenom.trim() || merged.nom.trim()) {
+            const clientSnap = loadClientAccountSnapshot(emailNorm);
+            saveClientAccountSnapshot(
+              {
+                ...clientSnap,
+                prenom: merged.prenom.trim() || clientSnap.prenom,
+                nom: merged.nom.trim() || clientSnap.nom,
+                email: emailNorm,
+                telephone: merged.telephone.trim() || clientSnap.telephone,
+              },
+              emailNorm
+            );
           }
         }
       })();
@@ -2174,6 +2189,19 @@ const Dashboard = ({
       const merged = loadStoredChauffeurProfile(normalizeChauffeurEmail(nextProfile.email));
       if (merged) applyChauffeurProfileToUi(merged, { overwriteDraft: true });
     });
+    const emailNorm = normalizeChauffeurProfileEmail(nextProfile.email);
+    const clientSnap = loadClientAccountSnapshot(emailNorm);
+    saveClientAccountSnapshot(
+      {
+        ...clientSnap,
+        prenom: nextProfile.prenom,
+        nom: nextProfile.nom,
+        email: emailNorm,
+        telephone: nextProfile.telephone,
+        profilePhotoUrl: nextProfile.profilePhotoUrl ?? clientSnap.profilePhotoUrl,
+      },
+      emailNorm
+    );
     const vehicleSlugForApi = vehicleSlug || null;
     void syncChauffeurRideProfileToServer({
       petFriendly: chauffeurRideSettings.petFriendly,
@@ -3819,7 +3847,7 @@ const Dashboard = ({
                                   {paltoIdentity.fullName}
                                 </h4>
                                 <p className="dashboard-field-hint">
-                                  Profil chauffeur (véhicule, téléphone, plaque). Nom, email et photo Palto :{' '}
+                                  Identité, véhicule et coordonnées. Paiement Stripe :{' '}
                                   <button
                                     type="button"
                                     className="dashboard-inline-link-btn"
@@ -3838,6 +3866,40 @@ const Dashboard = ({
                                 saveUserProfileEdit();
                               }}
                             >
+                                <label>
+                                  Prénom
+                                  <input
+                                    type="text"
+                                    name="chauffeur-prenom"
+                                    autoComplete="given-name"
+                                    value={userProfileDraft.prenom}
+                                    onChange={(e) => {
+                                      markProfileFormDirty();
+                                      setUserProfileDraft((prev) => ({
+                                        ...prev,
+                                        prenom: readFormControlValue(e),
+                                      }));
+                                    }}
+                                    required
+                                  />
+                                </label>
+                                <label>
+                                  Nom
+                                  <input
+                                    type="text"
+                                    name="chauffeur-nom"
+                                    autoComplete="family-name"
+                                    value={userProfileDraft.nom}
+                                    onChange={(e) => {
+                                      markProfileFormDirty();
+                                      setUserProfileDraft((prev) => ({
+                                        ...prev,
+                                        nom: readFormControlValue(e),
+                                      }));
+                                    }}
+                                    required
+                                  />
+                                </label>
                                 <label className="dashboard-chauffeur-profile-photo">
                                   Photo de profil
                                   <div className="dashboard-chauffeur-profile-photo-row">

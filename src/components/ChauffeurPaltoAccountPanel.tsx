@@ -10,6 +10,10 @@ import {
   type ClientAccountSnapshot,
 } from '../constants/clientAccountStorage'
 import {
+  loadStoredChauffeurProfile,
+  normalizeChauffeurProfileEmail,
+} from '../constants/chauffeurProfileStorage'
+import {
   clientStripeApiEnabled,
   createClientSetupIntent,
   detachClientPaymentMethod,
@@ -86,7 +90,19 @@ export default function ChauffeurPaltoAccountPanel({
   }, [])
 
   useEffect(() => {
-    const snap = loadClientAccountSnapshot(emailKey)
+    let snap = loadClientAccountSnapshot(emailKey)
+    const chauffeurSnap = loadStoredChauffeurProfile(normalizeChauffeurProfileEmail(emailKey))
+    if (chauffeurSnap && (!snap.prenom.trim() || !snap.nom.trim())) {
+      snap = {
+        ...snap,
+        prenom: snap.prenom.trim() || chauffeurSnap.prenom.trim(),
+        nom: snap.nom.trim() || chauffeurSnap.nom.trim(),
+        email: snap.email || emailKey,
+        telephone: snap.telephone.trim() || chauffeurSnap.telephone.trim(),
+        profilePhotoUrl: snap.profilePhotoUrl ?? chauffeurSnap.profilePhotoUrl ?? null,
+      }
+      saveClientAccountSnapshot(snap, emailKey)
+    }
     setProfile(snap)
     setPrenomDraft(snap.prenom)
     setNomDraft(snap.nom)

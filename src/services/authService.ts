@@ -1,5 +1,5 @@
 import { apiBaseUrl } from '../constants/featureFlags'
-import { saveClientAccountSnapshot } from '../constants/clientAccountStorage'
+import { DEFAULT_CLIENT_ACCOUNT, saveClientAccountSnapshot } from '../constants/clientAccountStorage'
 import type { RegisterChauffeurPayload } from '../constants/chauffeurRegistrationStorage'
 import {
   normalizeChauffeurProfileEmail,
@@ -183,6 +183,16 @@ export async function registerChauffeur(payload: RegisterChauffeurPayload): Prom
     organizationPhotoName: '',
     vehiclePhotoName: '',
   })
+  saveClientAccountSnapshot(
+    {
+      ...DEFAULT_CLIENT_ACCOUNT,
+      prenom: payload.prenom.trim(),
+      nom: payload.nom.trim(),
+      email: emailNorm,
+      telephone: payload.phone.trim(),
+    },
+    emailNorm
+  )
   notifyChauffeurSessionChanged()
   return { success: true }
 }
