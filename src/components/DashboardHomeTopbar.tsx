@@ -123,8 +123,14 @@ export function DashboardHomeTopbar({
         setAccountModalOpen(false)
       }
     }
-    window.addEventListener('mousedown', onPointerDown)
-    return () => window.removeEventListener('mousedown', onPointerDown)
+    // Après le clic d’ouverture (évite fermeture immédiate sur pages à overlays / drag).
+    const timer = window.setTimeout(() => {
+      document.addEventListener('mousedown', onPointerDown, true)
+    }, 0)
+    return () => {
+      window.clearTimeout(timer)
+      document.removeEventListener('mousedown', onPointerDown, true)
+    }
   }, [accountModalOpen])
 
   const handleClientAccount = () => {
@@ -166,8 +172,13 @@ export function DashboardHomeTopbar({
                 <button
                   type="button"
                   className="client-compte-topbar-user-btn"
-                  onClick={() => setAccountModalOpen((prev) => !prev)}
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    setAccountModalOpen((prev) => !prev)
+                  }}
                   aria-label="Gerer le compte"
+                  aria-expanded={accountModalOpen}
+                  aria-haspopup="menu"
                 >
                   {accountPhotoUrl ? (
                     <img src={accountPhotoUrl} alt={t('clientAccount.photoAlt')} className="client-compte-topbar-user-btn__avatar" />

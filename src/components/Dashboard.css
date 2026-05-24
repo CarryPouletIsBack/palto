@@ -508,6 +508,8 @@
 
 /* Accueil / Go : topbar avec zone centrale (course à venir + chauffeur sur place) */
 .dashboard-topbar--home-client {
+  position: relative;
+  z-index: 10;
   height: auto;
   min-height: 52px;
   padding-top: 6px;

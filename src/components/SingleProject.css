@@ -6612,6 +6612,21 @@ html[data-app-theme='dark'] .palto-ride-timing-expand__option:hover {
     box-shadow: 0 1px 0 rgba(15, 23, 42, 0.06);
     padding-inline: 16px;
   }
+
+  /* Menu compte au-dessus de la grille carte / réservation (sinon invisible sous .palto-ride-main). */
+  .single-project-page:has(.palto-ride-main) .main-single-project > .single-project-go-topbar-wrap {
+    z-index: 40;
+    isolation: isolate;
+  }
+
+  .single-project-page:has(.palto-ride-main) .single-project-go-topbar-wrap .client-compte-topbar-menu-anchor {
+    position: relative;
+    z-index: 2;
+  }
+
+  .single-project-page:has(.palto-ride-main) .single-project-go-topbar-wrap .client-compte-account-menu {
+    z-index: 10000;
+  }
 }
 
 @media (min-width: 997px) {
