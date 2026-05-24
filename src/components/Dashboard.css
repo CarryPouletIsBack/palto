@@ -782,6 +782,49 @@ html[data-app-theme='dark'] .dashboard-home-topbar-upcoming-btn {
   overflow: visible;
 }
 
+.dashboard-chauffeur-topbar-account-cluster {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+  position: relative;
+}
+
+.dashboard-chauffeur-topbar-account__photo {
+  width: 32px;
+  height: 32px;
+  flex-shrink: 0;
+  border-radius: 999px;
+  overflow: hidden;
+  border: 1px solid #cbd5e1;
+  background: #f1f5f9;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.dashboard-chauffeur-topbar-account__photo img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.dashboard-chauffeur-topbar-account__photo-fallback {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: #64748b;
+}
+
+.client-compte-topbar-user-btn--chauffeur-topbar {
+  padding-left: 12px;
+}
+
+.dashboard-container--chauffeur .dashboard-topbar-right .dashboard-chauffeur-topbar-account-cluster {
+  overflow: visible;
+}
+
 .dashboard-avatar--topbar {
   width: 32px;
   min-width: 32px;
@@ -4709,6 +4752,28 @@ button.dashboard-org-sidebar-brand--home:focus-visible {
   .dashboard-container--chauffeur .dashboard-topbar--chauffeur-mobile-toolbar .client-compte-topbar-user-btn__avatar {
     width: 22px;
     height: 22px;
+  }
+
+  .dashboard-container--chauffeur .dashboard-topbar--chauffeur-mobile-toolbar .dashboard-chauffeur-topbar-account__photo {
+    width: 40px;
+    height: 40px;
+    border: 1px solid #cbd5e1;
+    background: #ffffff;
+    box-shadow: 0 2px 12px rgba(15, 23, 42, 0.1);
+  }
+
+  .dashboard-container--chauffeur .dashboard-topbar--chauffeur-mobile-toolbar .dashboard-chauffeur-topbar-account-cluster {
+    gap: 10px;
+  }
+
+  .dashboard-container--chauffeur .dashboard-topbar--chauffeur-mobile-toolbar .client-compte-topbar-user-btn--chauffeur-topbar {
+    height: 40px;
+    padding: 0 14px;
+    font-size: 16px;
+    font-weight: 600;
+    border: 1px solid #cbd5e1;
+    background: #ffffff;
+    box-shadow: 0 2px 12px rgba(15, 23, 42, 0.1);
   }
 
   .dashboard-container--chauffeur .dashboard-main--chauffeur-mobile-floating-account {
