@@ -2023,8 +2023,13 @@ const Dashboard = ({
   /** Compte chauffeur : avatar dans le pill, pas à côté. */
   const isChauffeurAccountUserOnly = activeView === 'user' && showChauffeurToolbarOnly;
 
-  const renderChauffeurTopbarAccountControl = (options?: { photoAside?: boolean }) => {
+  const renderChauffeurTopbarAccountControl = (options?: {
+    photoAside?: boolean;
+    showNameInButton?: boolean;
+  }) => {
     const photoAside = options?.photoAside ?? true;
+    const showNameInButton = options?.showNameInButton ?? true;
+    const photoOnlyInButton = !photoAside && !showNameInButton;
     return (
     <div
       className={`dashboard-chauffeur-topbar-account-cluster${photoAside ? '' : ' dashboard-chauffeur-topbar-account-cluster--user-btn-only'}`}
@@ -2044,7 +2049,11 @@ const Dashboard = ({
       <div className="client-compte-topbar-menu-anchor">
         <button
           type="button"
-          className={`client-compte-topbar-user-btn${photoAside ? ' client-compte-topbar-user-btn--chauffeur-topbar' : ''}`}
+          className={
+            'client-compte-topbar-user-btn' +
+            (photoAside ? ' client-compte-topbar-user-btn--chauffeur-topbar' : '') +
+            (photoOnlyInButton ? ' client-compte-topbar-user-btn--photo-only' : '')
+          }
           onClick={() => {
             setAlertsOpen(false);
             setMoreMenuOpen(false);
@@ -2058,14 +2067,14 @@ const Dashboard = ({
             paltoIdentity.photoUrl ? (
               <img
                 src={paltoIdentity.photoUrl}
-                alt={t('clientAccount.photoAlt')}
+                alt=""
                 className="client-compte-topbar-user-btn__avatar"
               />
             ) : (
-              <User size={16} aria-hidden />
+              <User size={18} aria-hidden />
             )
           ) : null}
-          <span>{paltoIdentity.fullName}</span>
+          {showNameInButton ? <span>{paltoIdentity.fullName}</span> : null}
         </button>
         {topbarAccountMenuOpen ? (
           <div className="client-compte-account-menu" role="menu" aria-label="Menu compte">
@@ -2747,7 +2756,9 @@ const Dashboard = ({
               ) : (
                 <div className="dashboard-topbar-right">
                   {renderChauffeurTopbarAccountControl(
-                    isChauffeurAccountUserOnly ? { photoAside: false } : undefined
+                    isChauffeurAccountUserOnly
+                      ? { photoAside: false, showNameInButton: false }
+                      : undefined
                   )}
                 </div>
               )}
