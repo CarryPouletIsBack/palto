@@ -3,6 +3,7 @@
  * La page Go utilise `getNearbyDrivers()` (`src/services/`) → API présence live uniquement.
  */
 import { DEFAULT_USER_ORIGIN } from '../constants/defaultUserOrigin'
+import type { ChauffeurProfileRidePricingFields } from '../constants/chauffeurProfileStorage'
 import type { GeoPoint } from '../services/distanceGeo'
 
 /** Chauffeur fictif pour l’overlay + marqueurs carte. */
@@ -21,6 +22,8 @@ export type NearbyDriver = {
   luggageAssistance?: boolean
   insulatedBag?: boolean
   deliveryEquipped?: boolean
+  /** Grille tarifaire (API profil chauffeur). */
+  ridePricing?: ChauffeurProfileRidePricingFields
 }
 
 export type NearbyDriversQuery = {

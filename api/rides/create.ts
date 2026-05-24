@@ -15,6 +15,7 @@ import {
   parseCoursePaymentMethod,
   type CoursePaymentMethod,
 } from '../../server/lib/coursePaymentMethod.js'
+import { validateChauffeurOrderAmount } from '../../server/lib/validateChauffeurOrderAmount.js'
 
 function readBearerToken(req: VercelRequest): string | null {
   const raw = req.headers.authorization
@@ -32,6 +33,8 @@ const BodySchema = z
     dropoffAddress: z.string().min(3).max(500),
     amountEur: z.number().finite().nonnegative(),
     distanceKm: z.number().finite().nonnegative().nullable().optional(),
+    /** Dénivelé estimé (m) — aligné sur le calcul tarifaire Go. */
+    routeElevationM: z.number().finite().nonnegative().optional(),
     clientFullName: z.string().max(200).nullable().optional(),
     clientEmail: z.string().email().max(320),
     clientPhone: z.string().max(40).nullable().optional(),
@@ -210,6 +213,30 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       requestedDriverKey = accRow.id
     } else {
       requestedDriverKey = resolveRequestedDriverKeyForInsert(b.bookingKind, b.requestedDriverExternalKey)
+    }
+  }
+
+  const chauffeurAccountIdForPricing = b.requestedChauffeurAccountId?.trim() || null
+  if (
+    chauffeurAccountIdForPricing &&
+    b.distanceKm != null &&
+    Number.isFinite(b.distanceKm) &&
+    b.distanceKm >= 0
+  ) {
+    const amountCheck = await validateChauffeurOrderAmount(supabase, {
+      chauffeurAccountId: chauffeurAccountIdForPricing,
+      amountEur: b.amountEur,
+      distanceKm: b.distanceKm,
+      routeElevationM: b.routeElevationM,
+      bookingKind: b.bookingKind,
+      scheduledDate: b.scheduledDate,
+      scheduledTime,
+    })
+    if (!amountCheck.ok) {
+      return res.status(amountCheck.status).json({
+        error: amountCheck.error,
+        ...(amountCheck.expectedEur != null ? { expectedEur: amountCheck.expectedEur } : {}),
+      })
     }
   }
 

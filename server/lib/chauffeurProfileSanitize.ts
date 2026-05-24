@@ -1,5 +1,16 @@
 import { z } from 'zod'
 
+const RidePricingFieldsSchema = z.object({
+  baseFareEur: z.string().max(32).optional(),
+  pricePerKmEur: z.string().max(32).optional(),
+  nightSurchargePercent: z.string().max(32).optional(),
+  elevationSurchargeEurPer100m: z.string().max(32).optional(),
+  maxPickupKm: z.string().max(32).optional(),
+  pricingMultiplierPercent: z.number().finite().min(90).max(110).optional(),
+})
+
+export type SanitizedRidePricingFields = z.infer<typeof RidePricingFieldsSchema>
+
 const ChauffeurProfileSnapshotSchema = z
   .object({
     prenom: z.string().max(120).optional(),
@@ -15,15 +26,48 @@ const ChauffeurProfileSnapshotSchema = z
     profilePhotoName: z.string().max(260).optional(),
     organizationPhotoName: z.string().max(260).optional(),
     vehiclePhotoName: z.string().max(260).optional(),
+    ridePricing: RidePricingFieldsSchema.optional(),
   })
   .passthrough()
 
 export type SanitizedChauffeurProfileSnapshot = z.infer<typeof ChauffeurProfileSnapshotSchema>
 
+function sanitizeRidePricing(raw: unknown): SanitizedRidePricingFields | undefined {
+  const parsed = RidePricingFieldsSchema.safeParse(raw)
+  if (!parsed.success) return undefined
+  const o = parsed.data
+  const has =
+    o.baseFareEur?.trim() ||
+    o.pricePerKmEur?.trim() ||
+    o.nightSurchargePercent?.trim() ||
+    o.elevationSurchargeEurPer100m?.trim() ||
+    o.maxPickupKm?.trim() ||
+    o.pricingMultiplierPercent != null
+  return has ? o : undefined
+}
+
 export function sanitizeChauffeurProfileSnapshot(raw: unknown): SanitizedChauffeurProfileSnapshot {
   const parsed = ChauffeurProfileSnapshotSchema.safeParse(raw ?? {})
   if (!parsed.success) return {}
-  return parsed.data
+  const base = parsed.data
+  const ridePricing = sanitizeRidePricing(
+    raw && typeof raw === 'object' && !Array.isArray(raw)
+      ? (raw as Record<string, unknown>).ridePricing
+      : undefined
+  )
+  return ridePricing ? { ...base, ridePricing } : base
+}
+
+function ridePricingHasContent(rp: SanitizedRidePricingFields | undefined): boolean {
+  if (!rp) return false
+  return Boolean(
+    rp.baseFareEur?.trim() ||
+      rp.pricePerKmEur?.trim() ||
+      rp.nightSurchargePercent?.trim() ||
+      rp.elevationSurchargeEurPer100m?.trim() ||
+      rp.maxPickupKm?.trim() ||
+      rp.pricingMultiplierPercent != null
+  )
 }
 
 export function chauffeurProfileSnapshotHasContent(s: SanitizedChauffeurProfileSnapshot): boolean {
@@ -34,6 +78,7 @@ export function chauffeurProfileSnapshotHasContent(s: SanitizedChauffeurProfileS
       (s.ville && s.ville.trim()) ||
       (s.plaque && s.plaque.trim()) ||
       (s.vehicule && s.vehicule.trim()) ||
-      (s.profilePhotoUrl && String(s.profilePhotoUrl).trim())
+      (s.profilePhotoUrl && String(s.profilePhotoUrl).trim()) ||
+      ridePricingHasContent(s.ridePricing)
   )
 }

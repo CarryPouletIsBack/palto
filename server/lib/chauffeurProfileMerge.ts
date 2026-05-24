@@ -1,4 +1,6 @@
 import type { SanitizedChauffeurProfileSnapshot } from './chauffeurProfileSanitize.js'
+import { mergeRidePricingFields } from './chauffeurProfileRidePricingMerge.js'
+import type { RidePricingFields } from './chauffeurFareEstimate.js'
 
 function pickNonEmptyString(remote: string | undefined, local: string | undefined): string {
   const r = (remote ?? '').trim()
@@ -35,5 +37,9 @@ export function mergeChauffeurProfileSnapshots(
     profilePhotoName: pickNonEmptyString(remote.profilePhotoName, local.profilePhotoName),
     organizationPhotoName: pickNonEmptyString(remote.organizationPhotoName, local.organizationPhotoName),
     vehiclePhotoName: pickNonEmptyString(remote.vehiclePhotoName, local.vehiclePhotoName),
+    ridePricing: mergeRidePricingFields(
+      (local as { ridePricing?: RidePricingFields }).ridePricing,
+      (remote as { ridePricing?: RidePricingFields }).ridePricing
+    ),
   }
 }

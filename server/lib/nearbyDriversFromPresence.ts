@@ -1,6 +1,12 @@
 import type { SupabaseClient } from '@supabase/supabase-js'
 import { CHAUFFEUR_PRESENCE_VISIBILITY_MS } from './chauffeurPresence.js'
 import { sanitizeChauffeurProfileSnapshot } from './chauffeurProfileSanitize.js'
+import {
+  estimateChauffeurFareTtc,
+  formatFareEurDisplay,
+  parseRidePricingFromSnapshot,
+  type RidePricingFields,
+} from './chauffeurFareEstimate.js'
 import { haversineKm, type GeoPoint } from './haversineKm.js'
 import { vehicleTypeLabel } from './vehicleTypeLabel.js'
 
@@ -18,6 +24,7 @@ export type NearbyDriverApiItem = {
   luggageAssistance: boolean
   insulatedBag: boolean
   deliveryEquipped: boolean
+  ridePricing?: RidePricingFields
 }
 
 function profilePhotoFromSnapshot(raw: unknown): string | undefined {
@@ -38,8 +45,20 @@ function displayName(fullName: string | null | undefined, email: string | null |
   return parts.map(pretty).join(' ')
 }
 
-function estimatePriceEur(distanceKm: number): number {
-  return Math.max(6, Math.round(8 + distanceKm * 1.15))
+function indicativePriceEur(
+  distanceToPickupKm: number,
+  motoLabel: string,
+  ridePricing: RidePricingFields | null
+): number {
+  const amount =
+    estimateChauffeurFareTtc({
+      ridePricing,
+      routeKm: distanceToPickupKm,
+      elevationM: 0,
+      isNight: false,
+      vehicleLabel: motoLabel,
+    }) ?? 0
+  return amount > 0 ? amount : Math.max(6, Math.round(8 + distanceToPickupKm * 1.15))
 }
 
 export async function listNearbyDriversFromPresence(
@@ -77,10 +96,14 @@ export async function listNearbyDriversFromPresence(
     .in('account_id', accountIds)
 
   const photoByAccountId = new Map<string, string>()
+  const ridePricingByAccountId = new Map<string, RidePricingFields>()
   for (const row of profileRows ?? []) {
     const id = String(row.account_id)
-    const photo = profilePhotoFromSnapshot(row.account_snapshot)
+    const snap = row.account_snapshot
+    const photo = profilePhotoFromSnapshot(snap)
     if (photo) photoByAccountId.set(id, photo)
+    const pricing = parseRidePricingFromSnapshot(snap)
+    if (pricing) ridePricingByAccountId.set(id, pricing)
   }
 
   const ranked = presenceRows
@@ -94,18 +117,21 @@ export async function listNearbyDriversFromPresence(
       const acc = accountById.get(String(row.account_id))
       if (!acc) return null
       const minutes = Math.max(2, Math.round((distanceKm / 22) * 60))
-      const price = estimatePriceEur(distanceKm)
+      const moto = vehicleTypeLabel(acc.vehicle_type as string | null)
+      const ridePricing = ridePricingByAccountId.get(String(acc.id)) ?? null
+      const priceEur = indicativePriceEur(distanceKm, moto, ridePricing)
       const profilePhotoUrl = photoByAccountId.get(String(acc.id))
       return {
         id: String(acc.id),
         name: displayName(acc.full_name as string | null, acc.email as string | null),
-        moto: vehicleTypeLabel(acc.vehicle_type as string | null),
+        moto,
         distance: `${distanceKm.toFixed(1).replace('.', ',')} km · ~${minutes} min`,
-        price: `${price} EUR`,
+        price: formatFareEurDisplay(priceEur),
         longitude: lng,
         latitude: lat,
         distanceKm,
         ...(profilePhotoUrl ? { profilePhotoUrl } : {}),
+        ...(ridePricing ? { ridePricing } : {}),
         petFriendly: acc.pet_friendly === true,
         luggageAssistance: acc.luggage_assistance === true,
         insulatedBag: acc.insulated_bag === true,

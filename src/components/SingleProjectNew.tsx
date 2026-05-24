@@ -83,20 +83,20 @@ import {
   isClientAuthenticated,
   PALTO_CLIENT_SESSION_CHANGED_EVENT,
 } from '../services/authService';
-import {
-  CHAUFFEUR_RIDE_SETTINGS_KEY,
-  loadChauffeurRideSettingsSnapshot,
-} from '../constants/chauffeurRideSettingsStorage';
 import { DashboardHomeRidesBanner } from './DashboardHomeRidesBanner';
 import { useClientHomeTopbarRides } from '../hooks/useClientHomeTopbarRides';
 import { simplifyAddressDisplay as simplifyRideAddress } from '../services/addressDisplay';
 import { getNearbyDrivers } from '../services/getNearbyDrivers';
+import type { NearbyDriver } from '../data/nearbyDrivers';
 import { formatDriverMetaLine } from '../lib/formatDriverMetaLine';
+import {
+  estimateChauffeurFareTtc,
+  normalizeRidePricing,
+  parsePriceEurFromDisplay,
+} from '../lib/chauffeurFareEstimate';
 
 /** Rayon d’affichage des chauffeurs autour du point de départ validé (page Go). */
 const PICKUP_DRIVER_SEARCH_RADIUS_KM = 20;
-const DEFAULT_BASE_FARE_EUR = 4;
-const DEFAULT_PRICE_PER_KM_EUR = 1.35;
 const PICKUP_AUTOCOMPLETE_DEBOUNCE_MS = 65;
 /** Limite les appels OSRM quand départ / arrivée changent vite (Chrome : ERR_INSUFFICIENT_RESOURCES). */
 const OSRM_ROUTE_DEBOUNCE_MS = 450;
@@ -373,41 +373,6 @@ const SingleProjectNew: FC<SingleProjectProps> = ({
   const [pickupAddressSuggestions, setPickupAddressSuggestions] = useState<GeocodeSuggestion[]>([]);
   const [pickupSuggestionLoading, setPickupSuggestionLoading] = useState(false);
   const pickupAutocompleteTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const [chauffeurRideSettings, setChauffeurRideSettings] = useState(() => loadChauffeurRideSettingsSnapshot());
-  useEffect(() => {
-    const onStorage = (event: StorageEvent) => {
-      if (event.key !== CHAUFFEUR_RIDE_SETTINGS_KEY) return;
-      setChauffeurRideSettings(loadChauffeurRideSettingsSnapshot());
-    };
-    window.addEventListener('storage', onStorage);
-    return () => window.removeEventListener('storage', onStorage);
-  }, []);
-  const effectiveBaseFareEur = useMemo(() => {
-    const parsed = Number.parseFloat(chauffeurRideSettings.baseFareEur.replace(',', '.'));
-    return Number.isFinite(parsed) && parsed > 0 ? parsed : DEFAULT_BASE_FARE_EUR;
-  }, [chauffeurRideSettings.baseFareEur]);
-  const effectivePricePerKmEur = useMemo(() => {
-    const parsed = Number.parseFloat(chauffeurRideSettings.pricePerKmEur.replace(',', '.'));
-    return Number.isFinite(parsed) && parsed > 0 ? parsed : DEFAULT_PRICE_PER_KM_EUR;
-  }, [chauffeurRideSettings.pricePerKmEur]);
-  const effectiveNightSurchargeRate = useMemo(() => {
-    const parsed = Number.parseFloat(chauffeurRideSettings.nightSurchargePercent.replace(',', '.'));
-    return Number.isFinite(parsed) && parsed > 0 ? parsed / 100 : 0;
-  }, [chauffeurRideSettings.nightSurchargePercent]);
-  const effectiveElevationEurPerM = useMemo(() => {
-    const parsed = Number.parseFloat(
-      chauffeurRideSettings.elevationSurchargeEurPer100m.replace(',', '.')
-    );
-    return Number.isFinite(parsed) && parsed > 0 ? parsed / 100 : 0.015;
-  }, [chauffeurRideSettings.elevationSurchargeEurPer100m]);
-  const effectiveDriverSearchRadiusKm = useMemo(() => {
-    const parsed = Number.parseFloat(chauffeurRideSettings.maxPickupKm.replace(',', '.'));
-    return Number.isFinite(parsed) && parsed > 0 ? parsed : PICKUP_DRIVER_SEARCH_RADIUS_KM;
-  }, [chauffeurRideSettings.maxPickupKm]);
-  const effectiveDriverPricingMultiplier = useMemo(() => {
-    const value = chauffeurRideSettings.pricingMultiplierPercent;
-    return Number.isFinite(value) && value > 0 ? value / 100 : 1;
-  }, [chauffeurRideSettings.pricingMultiplierPercent]);
   const isNightRide = useMemo(() => {
     let hour = new Date().getHours();
     if (paltoPickupTiming === 'later' && paltoPickupDateTime.trim()) {
@@ -441,7 +406,7 @@ const SingleProjectNew: FC<SingleProjectProps> = ({
       setNearbyDriversLoading(true);
       void getNearbyDrivers({
         origin: pickupResolvedPoint,
-        radiusKm: effectiveDriverSearchRadiusKm,
+        radiusKm: PICKUP_DRIVER_SEARCH_RADIUS_KM,
         limit: 9,
       })
         .then((drivers) => {
@@ -458,16 +423,19 @@ const SingleProjectNew: FC<SingleProjectProps> = ({
       cancelled = true;
       window.clearInterval(pollId);
     };
-  }, [chauffeursSearchOk, pickupResolvedPoint, effectiveDriverSearchRadiusKm]);
+  }, [chauffeursSearchOk, pickupResolvedPoint]);
 
   const pickupFilteredDrivers = useMemo(() => {
     if (!pickupResolvedPoint) return [];
-    return allNearbyDrivers.filter(
-      (d) =>
-        haversineDistanceKm(pickupResolvedPoint, { latitude: d.latitude, longitude: d.longitude }) <=
-        effectiveDriverSearchRadiusKm
-    );
-  }, [pickupResolvedPoint, allNearbyDrivers, effectiveDriverSearchRadiusKm]);
+    return allNearbyDrivers.filter((d) => {
+      const distKm = haversineDistanceKm(pickupResolvedPoint, {
+        latitude: d.latitude,
+        longitude: d.longitude,
+      });
+      const maxKm = normalizeRidePricing(d.ridePricing).maxPickupKm;
+      return distKm <= maxKm;
+    });
+  }, [pickupResolvedPoint, allNearbyDrivers]);
 
   const [lastConfirmedDestinationText, setLastConfirmedDestinationText] = useState<string | null>(null);
   const [destinationSearchError, setDestinationSearchError] = useState<string | null>(null);
@@ -515,37 +483,16 @@ const SingleProjectNew: FC<SingleProjectProps> = ({
     [pickupFilteredDrivers, paltoRideSelectedDriverId]
   );
   const computeDriverPriceTtc = useCallback(
-    (driver: { moto: string; price: string }) => {
-      const driverCoef = driver.moto.toLowerCase().includes('maxi')
-        ? 1.12
-        : driver.moto.toLowerCase().includes('scooter')
-          ? 1.05
-          : 1.0;
-      const numericPrice = Number.parseFloat(driver.price.replace(',', '.').replace(/[^\d.]/g, ''));
-      const fallbackTtc = Number.isFinite(numericPrice) ? numericPrice : 0;
-
-      const routeKm = paltoRouteDistanceKm ?? null;
-      const deniveleM = paltoRouteDeniveleEstimateM ?? 0;
-      const dynamicTtcRaw =
-        routeKm !== null
-          ? (effectiveBaseFareEur + routeKm * effectivePricePerKmEur + deniveleM * effectiveElevationEurPerM) *
-            driverCoef *
-            effectiveDriverPricingMultiplier *
-            (1 + (isNightRide ? effectiveNightSurchargeRate : 0))
-          : null;
-      const totalTtc = dynamicTtcRaw !== null ? Math.max(6, dynamicTtcRaw) : fallbackTtc;
-      return Number.isFinite(totalTtc) && totalTtc > 0 ? totalTtc : null;
-    },
-    [
-      paltoRouteDistanceKm,
-      paltoRouteDeniveleEstimateM,
-      effectiveBaseFareEur,
-      effectivePricePerKmEur,
-      effectiveDriverPricingMultiplier,
-      effectiveNightSurchargeRate,
-      effectiveElevationEurPerM,
-      isNightRide,
-    ]
+    (driver: Pick<NearbyDriver, 'moto' | 'price' | 'ridePricing'>) =>
+      estimateChauffeurFareTtc({
+        ridePricing: driver.ridePricing,
+        routeKm: paltoRouteDistanceKm ?? null,
+        elevationM: paltoRouteDeniveleEstimateM ?? 0,
+        isNight: isNightRide,
+        vehicleLabel: driver.moto,
+        fallbackPriceEur: parsePriceEurFromDisplay(driver.price),
+      }),
+    [paltoRouteDistanceKm, paltoRouteDeniveleEstimateM, isNightRide]
   );
   const paltoPricing = useMemo(() => {
     if (!paltoSelectedDriver) return null;
@@ -563,16 +510,9 @@ const SingleProjectNew: FC<SingleProjectProps> = ({
 
   const paltoRecapPriceBreakdown = useMemo(() => {
     let driverEur = paltoPricing ? Number.parseFloat(paltoPricing.ttc) : NaN;
-    if (!Number.isFinite(driverEur) || driverEur <= 0) {
-      const km = paltoRouteDistanceKm;
-      if (km != null && Number.isFinite(km)) {
-        driverEur = Math.max(
-          6,
-          (effectiveBaseFareEur + km * effectivePricePerKmEur) *
-            effectiveDriverPricingMultiplier *
-            (1 + (isNightRide ? effectiveNightSurchargeRate : 0))
-        );
-      }
+    if ((!Number.isFinite(driverEur) || driverEur <= 0) && paltoSelectedDriver) {
+      const ttc = computeDriverPriceTtc(paltoSelectedDriver);
+      if (ttc != null) driverEur = ttc;
     }
     if (!Number.isFinite(driverEur) || driverEur <= 0) return null;
     const fees = formatRideTotalWithPaltoFee(driverEur);
@@ -586,15 +526,7 @@ const SingleProjectNew: FC<SingleProjectProps> = ({
       paltoFeeEur: fees.paltoFeeEur.toFixed(2),
       totalAuthorizedEur: fees.totalEur.toFixed(2),
     };
-  }, [
-    paltoPricing,
-    paltoRouteDistanceKm,
-    effectiveBaseFareEur,
-    effectivePricePerKmEur,
-    effectiveDriverPricingMultiplier,
-    effectiveNightSurchargeRate,
-    isNightRide,
-  ]);
+  }, [paltoPricing, paltoSelectedDriver, computeDriverPriceTtc]);
 
   const mobileShowChooseRideStep = isMobileGoViewport && showDriversColumn;
 
@@ -1914,18 +1846,12 @@ const SingleProjectNew: FC<SingleProjectProps> = ({
       paltoPickupTiming === 'later' ? laterParts() ?? nowParts() : nowParts();
     const bookingKind = paltoPickupTiming === 'later' ? ('scheduled' as const) : ('instant' as const);
     let amountEur = paltoPricing ? Number.parseFloat(paltoPricing.ttc) : NaN;
+    if ((!Number.isFinite(amountEur) || amountEur <= 0) && paltoSelectedDriver) {
+      const ttc = computeDriverPriceTtc(paltoSelectedDriver);
+      if (ttc != null) amountEur = ttc;
+    }
     if (!Number.isFinite(amountEur) || amountEur <= 0) {
-      const km = paltoRouteDistanceKm;
-      if (km != null && Number.isFinite(km)) {
-        amountEur = Math.max(
-          6,
-          (effectiveBaseFareEur + km * effectivePricePerKmEur) *
-            effectiveDriverPricingMultiplier *
-            (1 + (isNightRide ? effectiveNightSurchargeRate : 0))
-        );
-      } else {
-        amountEur = 0;
-      }
+      amountEur = 0;
     }
     if (!Number.isFinite(amountEur) || amountEur <= 0) {
       setCheckoutError('Montant indisponible. Verifiez le trajet sur la carte.');
@@ -1951,6 +1877,7 @@ const SingleProjectNew: FC<SingleProjectProps> = ({
         dropoffAddress: simplifyRideAddress(lastConfirmedDestinationText),
         amountEur,
         distanceKm: paltoRouteDistanceKm,
+        routeElevationM: paltoRouteDeniveleEstimateM,
         clientFullName: customerName || null,
         clientEmail: email,
         clientComment: checkoutClientComment.trim() || null,
@@ -2022,11 +1949,9 @@ const SingleProjectNew: FC<SingleProjectProps> = ({
     paltoPickupTiming,
     paltoPricing,
     paltoRouteDistanceKm,
+    paltoRouteDeniveleEstimateM,
     paltoSelectedDriver,
-    effectiveBaseFareEur,
-    effectivePricePerKmEur,
-    effectiveDriverPricingMultiplier,
-    effectiveNightSurchargeRate,
+    computeDriverPriceTtc,
     isNightRide,
     onOpenClientAccount,
     projectData.title,
@@ -3347,7 +3272,7 @@ const SingleProjectNew: FC<SingleProjectProps> = ({
           <section className="palto-ride-card palto-ride-card--drivers">
             <h2 className="palto-ride-card__title">{t('search.chooseRideTitle')}</h2>
             <p className="palto-ride-card__lead">
-              {t('search.chooseRideRadiusLead', { km: effectiveDriverSearchRadiusKm })}
+              {t('search.chooseRideRadiusLead', { km: PICKUP_DRIVER_SEARCH_RADIUS_KM })}
             </p>
             {renderPaltoDriversList()}
           </section>
@@ -3612,16 +3537,9 @@ const SingleProjectNew: FC<SingleProjectProps> = ({
                       </p>
                       {(() => {
                         let driverEur = paltoPricing ? Number.parseFloat(paltoPricing.ttc) : NaN
-                        if (!Number.isFinite(driverEur) || driverEur <= 0) {
-                          const km = paltoRouteDistanceKm
-                          if (km != null && Number.isFinite(km)) {
-                            driverEur = Math.max(
-                              6,
-                              (effectiveBaseFareEur + km * effectivePricePerKmEur) *
-                                effectiveDriverPricingMultiplier *
-                                (1 + (isNightRide ? effectiveNightSurchargeRate : 0))
-                            )
-                          }
+                        if ((!Number.isFinite(driverEur) || driverEur <= 0) && paltoSelectedDriver) {
+                          const ttc = computeDriverPriceTtc(paltoSelectedDriver)
+                          if (ttc != null) driverEur = ttc
                         }
                         const breakdown =
                           Number.isFinite(driverEur) && driverEur > 0

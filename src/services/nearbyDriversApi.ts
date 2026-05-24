@@ -1,6 +1,24 @@
+import type { ChauffeurProfileRidePricingFields } from '../constants/chauffeurProfileStorage'
 import { apiBaseUrl, useClientRidesApi } from '../constants/featureFlags'
 import type { NearbyDriver } from '../data/nearbyDrivers'
 import type { GeoPoint } from './distanceGeo'
+
+function normalizeRidePricing(raw: unknown): ChauffeurProfileRidePricingFields | undefined {
+  if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return undefined
+  const o = raw as Record<string, unknown>
+  const out: ChauffeurProfileRidePricingFields = {}
+  if (typeof o.baseFareEur === 'string') out.baseFareEur = o.baseFareEur
+  if (typeof o.pricePerKmEur === 'string') out.pricePerKmEur = o.pricePerKmEur
+  if (typeof o.nightSurchargePercent === 'string') out.nightSurchargePercent = o.nightSurchargePercent
+  if (typeof o.elevationSurchargeEurPer100m === 'string') {
+    out.elevationSurchargeEurPer100m = o.elevationSurchargeEurPer100m
+  }
+  if (typeof o.maxPickupKm === 'string') out.maxPickupKm = o.maxPickupKm
+  if (typeof o.pricingMultiplierPercent === 'number' && Number.isFinite(o.pricingMultiplierPercent)) {
+    out.pricingMultiplierPercent = o.pricingMultiplierPercent
+  }
+  return Object.keys(out).length > 0 ? out : undefined
+}
 
 const API_BASE_URL = apiBaseUrl()
 
@@ -22,6 +40,7 @@ function normalizeNearbyDriver(raw: unknown): NearbyDriver {
       typeof d.profilePhotoUrl === 'string' && d.profilePhotoUrl.trim()
         ? d.profilePhotoUrl.trim()
         : undefined,
+    ridePricing: normalizeRidePricing(d.ridePricing),
   }
 }
 

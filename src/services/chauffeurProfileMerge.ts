@@ -1,4 +1,46 @@
-import type { ChauffeurProfileSnapshot } from '../constants/chauffeurProfileStorage'
+import type {
+  ChauffeurProfileRidePricingFields,
+  ChauffeurProfileSnapshot,
+} from '../constants/chauffeurProfileStorage'
+
+function pickPricingString(remote: string | undefined, local: string | undefined): string | undefined {
+  const r = (remote ?? '').trim()
+  if (r) return r
+  const l = (local ?? '').trim()
+  return l || undefined
+}
+
+function mergeRidePricing(
+  local?: ChauffeurProfileRidePricingFields,
+  remote?: ChauffeurProfileRidePricingFields
+): ChauffeurProfileRidePricingFields | undefined {
+  const l = local ?? {}
+  const r = remote ?? {}
+  const pricingMultiplierPercent =
+    r.pricingMultiplierPercent != null && Number.isFinite(r.pricingMultiplierPercent)
+      ? r.pricingMultiplierPercent
+      : l.pricingMultiplierPercent
+  const merged: ChauffeurProfileRidePricingFields = {
+    baseFareEur: pickPricingString(r.baseFareEur, l.baseFareEur),
+    pricePerKmEur: pickPricingString(r.pricePerKmEur, l.pricePerKmEur),
+    nightSurchargePercent: pickPricingString(r.nightSurchargePercent, l.nightSurchargePercent),
+    elevationSurchargeEurPer100m: pickPricingString(
+      r.elevationSurchargeEurPer100m,
+      l.elevationSurchargeEurPer100m
+    ),
+    maxPickupKm: pickPricingString(r.maxPickupKm, l.maxPickupKm),
+    ...(pricingMultiplierPercent != null ? { pricingMultiplierPercent } : {}),
+  }
+  const hasContent = Boolean(
+    merged.baseFareEur ||
+      merged.pricePerKmEur ||
+      merged.nightSurchargePercent ||
+      merged.elevationSurchargeEurPer100m ||
+      merged.maxPickupKm ||
+      merged.pricingMultiplierPercent != null
+  )
+  return hasContent ? merged : undefined
+}
 
 function pickNonEmptyString(remote: string | undefined, local: string | undefined): string {
   const r = (remote ?? '').trim()
@@ -35,5 +77,8 @@ export function mergeChauffeurProfileSnapshots(
     profilePhotoName: pickNonEmptyString(remote.profilePhotoName, local.profilePhotoName),
     organizationPhotoName: pickNonEmptyString(remote.organizationPhotoName, local.organizationPhotoName),
     vehiclePhotoName: pickNonEmptyString(remote.vehiclePhotoName, local.vehiclePhotoName),
+    payment: remote.payment ?? local.payment,
+    documents: remote.documents ?? local.documents,
+    ridePricing: mergeRidePricing(local.ridePricing, remote.ridePricing),
   }
 }

@@ -11,6 +11,7 @@ export type CreateRideOrderPayload = {
   dropoffAddress: string
   amountEur: number
   distanceKm?: number | null
+  routeElevationM?: number | null
   clientFullName?: string | null
   clientEmail: string
   clientPhone?: string | null
