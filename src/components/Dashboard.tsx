@@ -868,17 +868,23 @@ const Dashboard = ({
   const useStatsApi = statsApiEnabled();
   const paltoIdentity = useMemo(() => {
     const sessionEmail = getChauffeurSessionEmail().trim().toLowerCase();
+    const clientSnap = sessionEmail ? loadClientAccountSnapshot(sessionEmail) : null;
+    const clientName = `${clientSnap?.prenom?.trim() ?? ''} ${clientSnap?.nom?.trim() ?? ''}`.trim();
     const inferred = inferProfileFromEmail(sessionEmail);
     const inferredName = `${inferred.prenom} ${inferred.nom}`.trim();
     const driverName = `${chauffeurProfile.prenom} ${chauffeurProfile.nom}`.trim();
-    const photo =
+    const photoFromClient =
+      typeof clientSnap?.profilePhotoUrl === 'string' && clientSnap.profilePhotoUrl.trim()
+        ? clientSnap.profilePhotoUrl
+        : null;
+    const photoFromDriver =
       typeof chauffeurProfile.profilePhotoUrl === 'string' && chauffeurProfile.profilePhotoUrl.trim()
         ? chauffeurProfile.profilePhotoUrl
         : null;
     return {
       email: sessionEmail || chauffeurProfile.email,
-      fullName: driverName || inferredName || 'Compte Palto',
-      photoUrl: photo,
+      fullName: clientName || driverName || inferredName || 'Compte Palto',
+      photoUrl: photoFromClient || photoFromDriver,
     };
   }, [
     authSessionTick,
@@ -887,11 +893,37 @@ const Dashboard = ({
     chauffeurProfile.prenom,
     chauffeurProfile.profilePhotoUrl,
   ]);
+
+  useEffect(() => {
+    const email = getChauffeurSessionEmail().trim().toLowerCase();
+    if (!email || profileFormDirtyRef.current) return;
+    const clientSnap = loadClientAccountSnapshot(email);
+    const prenom = clientSnap.prenom.trim();
+    const nom = clientSnap.nom.trim();
+    const photo = clientSnap.profilePhotoUrl ?? null;
+    if (!prenom && !nom && !photo) return;
+    setChauffeurProfile((prev) => ({
+      ...prev,
+      prenom: prenom || prev.prenom,
+      nom: nom || prev.nom,
+      profilePhotoUrl: photo ?? prev.profilePhotoUrl,
+    }));
+    setProfilePhotoUrl((prev) => photo ?? prev);
+  }, [authSessionTick]);
+
   useEffect(() => {
     const bump = () => setAuthSessionTick((n) => n + 1);
     const onStorage = (e: StorageEvent) => {
       if (e.key == null) return;
-      if (e.key === 'dashboard_token' || e.key === 'dashboard_auth' || e.key === 'palto:client_token' || e.key === 'palto:client_auth') {
+      if (
+        e.key === 'dashboard_token' ||
+        e.key === 'dashboard_auth' ||
+        e.key === 'palto:client_token' ||
+        e.key === 'palto:client_auth' ||
+        e.key === 'palto_client_account_v1' ||
+        e.key === 'palto_client_account_by_email_v1' ||
+        e.key === 'palto:chauffeur_profile_v1'
+      ) {
         bump();
       }
     };
@@ -1507,6 +1539,7 @@ const Dashboard = ({
       return;
     }
     const name =
+      paltoIdentity.fullName.trim() ||
       `${chauffeurProfile.prenom} ${chauffeurProfile.nom}`.trim() ||
       (language === 'en' ? 'Palto driver' : 'Chauffeur Palto');
     const sentimentFr =
@@ -1551,9 +1584,8 @@ const Dashboard = ({
     bugMessage,
     bugSentiment,
     chauffeurProfile.email,
-    chauffeurProfile.nom,
-    chauffeurProfile.prenom,
     language,
+    paltoIdentity.fullName,
     t,
   ]);
 
@@ -2089,10 +2121,8 @@ const Dashboard = ({
       normalizeFrenchPlate(userProfileDraft.plaque) !== normalizeFrenchPlate(chauffeurProfile.plaque) ||
       phoneNationalDraft !== savedPhone.nationalNumber ||
       phoneCountryDraft !== savedPhone.country ||
-      (profilePhotoDraftUrl ?? '') !== (profilePhotoUrl ?? '') ||
       (organizationPhotoDraftUrl ?? '') !== (organizationPhotoUrl ?? '') ||
       (vehiclePhotoDraftUrl ?? '') !== (vehiclePhotoUrl ?? '') ||
-      (profilePhotoDraftName ?? '') !== (profilePhotoName ?? '') ||
       (organizationPhotoDraftName ?? '') !== (organizationPhotoName ?? '') ||
       (vehiclePhotoDraftName ?? '') !== (vehiclePhotoName ?? '')
     );
@@ -2107,10 +2137,6 @@ const Dashboard = ({
     organizationPhotoUrl,
     phoneCountryDraft,
     phoneNationalDraft,
-    profilePhotoDraftName,
-    profilePhotoDraftUrl,
-    profilePhotoName,
-    profilePhotoUrl,
     userProfileDraft.plaque,
     userProfileDraft.vehicule,
     userProfileDraft.ville,
@@ -2126,10 +2152,8 @@ const Dashboard = ({
     setUserProfileDraft(chauffeurProfile);
     setPhoneCountryDraft(parsedPhone.country);
     setPhoneNationalDraft(parsedPhone.nationalNumber);
-    setProfilePhotoDraftUrl(profilePhotoUrl);
     setOrganizationPhotoDraftUrl(organizationPhotoUrl);
     setVehiclePhotoDraftUrl(vehiclePhotoUrl);
-    setProfilePhotoDraftName(profilePhotoName);
     setOrganizationPhotoDraftName(organizationPhotoName);
     setVehiclePhotoDraftName(vehiclePhotoName);
     setPlateError(null);
@@ -2139,8 +2163,6 @@ const Dashboard = ({
     chauffeurProfile,
     organizationPhotoName,
     organizationPhotoUrl,
-    profilePhotoName,
-    profilePhotoUrl,
     vehiclePhotoName,
     vehiclePhotoUrl,
   ]);
@@ -2161,17 +2183,21 @@ const Dashboard = ({
 
     const vehicleSlug = normalizeVehicleSlugForSelect(userProfileDraft.vehicule);
     const villeCommune = normalizeReunionCommuneForSelect(userProfileDraft.ville);
+    const emailNorm = normalizeChauffeurProfileEmail(chauffeurProfile.email);
+    const clientSnap = loadClientAccountSnapshot(emailNorm);
     const nextProfile: ChauffeurProfile = {
       ...chauffeurProfile,
       ...userProfileDraft,
+      prenom: clientSnap.prenom.trim() || chauffeurProfile.prenom,
+      nom: clientSnap.nom.trim() || chauffeurProfile.nom,
       ville: villeCommune,
       vehicule: vehicleSlug,
       plaque: normalizedPlate,
       telephone: buildInternationalPhone(phoneCountryDraft, normalizedNationalPhone),
-      profilePhotoUrl: profilePhotoDraftUrl,
+      profilePhotoUrl: clientSnap.profilePhotoUrl ?? chauffeurProfile.profilePhotoUrl ?? null,
       organizationPhotoUrl: organizationPhotoDraftUrl,
       vehiclePhotoUrl: vehiclePhotoDraftUrl,
-      profilePhotoName: profilePhotoDraftName,
+      profilePhotoName: chauffeurProfile.profilePhotoName ?? '',
       organizationPhotoName: organizationPhotoDraftName,
       vehiclePhotoName: vehiclePhotoDraftName,
       payment: chauffeurProfile.payment,
@@ -2189,16 +2215,11 @@ const Dashboard = ({
       const merged = loadStoredChauffeurProfile(normalizeChauffeurEmail(nextProfile.email));
       if (merged) applyChauffeurProfileToUi(merged, { overwriteDraft: true });
     });
-    const emailNorm = normalizeChauffeurProfileEmail(nextProfile.email);
-    const clientSnap = loadClientAccountSnapshot(emailNorm);
     saveClientAccountSnapshot(
       {
         ...clientSnap,
-        prenom: nextProfile.prenom,
-        nom: nextProfile.nom,
         email: emailNorm,
         telephone: nextProfile.telephone,
-        profilePhotoUrl: nextProfile.profilePhotoUrl ?? clientSnap.profilePhotoUrl,
       },
       emailNorm
     );
@@ -2209,20 +2230,18 @@ const Dashboard = ({
       insulatedBag: chauffeurRideSettings.insulatedBag,
       vehicleType: vehicleSlugForApi,
     });
-    setProfilePhotoUrl(profilePhotoDraftUrl);
+    setProfilePhotoUrl(nextProfile.profilePhotoUrl ?? null);
     setOrganizationPhotoUrl(organizationPhotoDraftUrl);
     setVehiclePhotoUrl(vehiclePhotoDraftUrl);
-    setProfilePhotoName(profilePhotoDraftName);
     setOrganizationPhotoName(organizationPhotoDraftName);
     setVehiclePhotoName(vehiclePhotoDraftName);
-    toast.success('Profil chauffeur enregistré', {
+    toast.success('Véhicule enregistré', {
       description: 'Synchronisation multi-appareils en cours…',
     });
   }, [
     organizationPhotoDraftName,
     organizationPhotoDraftUrl,
-    profilePhotoDraftName,
-    profilePhotoDraftUrl,
+    chauffeurProfile,
     phoneCountryDraft,
     phoneNationalDraft,
     chauffeurRideSettings.insulatedBag,
@@ -3694,7 +3713,7 @@ const Dashboard = ({
                             onClick={() => setUserSubView('profile')}
                           >
                             <User size={16} aria-hidden />
-                            <span>Profil chauffeur</span>
+                            <span>Votre véhicule</span>
                           </button>
                           <button
                             type="button"
@@ -3823,11 +3842,9 @@ const Dashboard = ({
                           <>
                             <div className="dashboard-user-card-head">
                               <div>
-                                <h4>
-                                  {paltoIdentity.fullName}
-                                </h4>
+                                <h4>Votre véhicule</h4>
                                 <p className="dashboard-field-hint">
-                                  Identité, véhicule et coordonnées. Paiement Stripe :{' '}
+                                  Type, plaque et zone d’activité pour vos courses. Nom, email et photo :{' '}
                                   <button
                                     type="button"
                                     className="dashboard-inline-link-btn"
@@ -3846,68 +3863,6 @@ const Dashboard = ({
                                 saveUserProfileEdit();
                               }}
                             >
-                                <label>
-                                  Prénom
-                                  <input
-                                    type="text"
-                                    name="chauffeur-prenom"
-                                    autoComplete="given-name"
-                                    value={userProfileDraft.prenom}
-                                    onChange={(e) => {
-                                      markProfileFormDirty();
-                                      setUserProfileDraft((prev) => ({
-                                        ...prev,
-                                        prenom: readFormControlValue(e),
-                                      }));
-                                    }}
-                                    required
-                                  />
-                                </label>
-                                <label>
-                                  Nom
-                                  <input
-                                    type="text"
-                                    name="chauffeur-nom"
-                                    autoComplete="family-name"
-                                    value={userProfileDraft.nom}
-                                    onChange={(e) => {
-                                      markProfileFormDirty();
-                                      setUserProfileDraft((prev) => ({
-                                        ...prev,
-                                        nom: readFormControlValue(e),
-                                      }));
-                                    }}
-                                    required
-                                  />
-                                </label>
-                                <label className="dashboard-chauffeur-profile-photo">
-                                  Photo de profil
-                                  <div className="dashboard-chauffeur-profile-photo-row">
-                                    {profilePhotoDraftUrl ? (
-                                      <img
-                                        src={profilePhotoDraftUrl}
-                                        alt=""
-                                        className="dashboard-chauffeur-profile-photo-preview"
-                                      />
-                                    ) : (
-                                      <span className="dashboard-chauffeur-profile-photo-placeholder">
-                                        Aucune photo
-                                      </span>
-                                    )}
-                                    <input
-                                      type="file"
-                                      accept="image/*"
-                                      onChange={(e) => {
-                                        markProfileFormDirty();
-                                        void handleImageUpload(
-                                          e.target.files?.[0],
-                                          setProfilePhotoDraftUrl,
-                                          setProfilePhotoDraftName
-                                        );
-                                      }}
-                                    />
-                                  </div>
-                                </label>
                                 <label>
                                   Téléphone
                                   <div className="dashboard-phone-input-row">
@@ -4042,9 +3997,15 @@ const Dashboard = ({
                           </>
                         ) : null}
                         {userSubView === 'documents' ? (
-                          <div className="dashboard-user-sections">
-                            <section className="dashboard-user-subcard">
-                              <h4>Documents & conformité</h4>
+                          <>
+                            <div className="dashboard-user-card-head">
+                              <div>
+                                <h4>Documents & conformité</h4>
+                                <p className="dashboard-field-hint">
+                                  Pièces légales et statut de vérification pour accepter des courses.
+                                </p>
+                              </div>
+                            </div>
                               <div className="dashboard-doc-list">
                                 {chauffeurDocuments.map((doc) => (
                                   <div key={doc.key} className="dashboard-doc-row">
@@ -4091,15 +4052,15 @@ const Dashboard = ({
                                   </div>
                                 ))}
                               </div>
-                            </section>
-                          </div>
+                          </>
                         ) : null}
 
                         {userSubView === 'payment' ? (
-                          <div className="dashboard-user-sections">
-                            <section className="dashboard-user-subcard">
-                              <h4>{language === 'en' ? 'Payouts & collection' : 'Versements & encaissement'}</h4>
-                              <p className="dashboard-field-hint" style={{ margin: '0 0 12px' }}>
+                          <>
+                            <div className="dashboard-user-card-head">
+                              <div>
+                                <h4>{language === 'en' ? 'Payouts & collection' : 'Versements & encaissement'}</h4>
+                              <p className="dashboard-field-hint">
                                 {language === 'en' ? (
                                   <>
                                     Bank payouts for your driver activity. For Stripe test cards (Go as passenger), see{' '}
@@ -4126,6 +4087,8 @@ const Dashboard = ({
                                   </>
                                 )}
                               </p>
+                              </div>
+                            </div>
                               <form
                                 className="dashboard-payment-edit-grid"
                                 onSubmit={(e) => {
@@ -4185,16 +4148,19 @@ const Dashboard = ({
                                   </div>
                                 ) : null}
                               </form>
-                            </section>
-                            <section className="dashboard-user-subcard" style={{ marginTop: 16 }}>
-                              <h4>
-                                {language === 'en' ? 'Cancellations & card refunds' : 'Annulations & remboursements carte'}
-                              </h4>
-                              <p className="dashboard-field-hint" style={{ margin: '0 0 8px' }}>
+                            <div className="dashboard-user-pane-separator" role="separator" />
+                            <div className="dashboard-user-card-head">
+                              <div>
+                                <h4>
+                                  {language === 'en' ? 'Cancellations & card refunds' : 'Annulations & remboursements carte'}
+                                </h4>
+                              <p className="dashboard-field-hint">
                                 {language === 'en'
                                   ? 'Stripe status after a cancellation (full release or cancellation fee).'
                                   : 'Statut Stripe apres annulation (liberation de l’autorisation ou frais d’annulation).'}
                               </p>
+                              </div>
+                            </div>
                               {cancelledCoursesForRefundView.length === 0 ? (
                                 <p className="dashboard-field-hint" style={{ margin: 0 }}>
                                   {language === 'en' ? 'No cancelled rides.' : 'Aucune course annulee.'}
@@ -4215,15 +4181,20 @@ const Dashboard = ({
                                   ))}
                                 </div>
                               )}
-                            </section>
-                          </div>
+                          </>
                         ) : null}
                         {userSubView === 'ride-settings' ? (
-                          <div className="dashboard-user-sections">
-                            <section className="dashboard-user-subcard">
-                              <h4>Paramètres de course</h4>
+                          <>
+                            <div className="dashboard-user-card-head">
+                              <div>
+                                <h4>Tarifs & paramètres de course</h4>
+                                <p className="dashboard-field-hint">
+                                  Grille tarifaire, zone de prise en charge et options de service visibles sur Go.
+                                </p>
+                              </div>
+                            </div>
                               <form
-                                className="dashboard-ride-settings-edit-layout dashboard-ride-settings-form"
+                                className="dashboard-ride-settings-edit-layout dashboard-ride-settings-form dashboard-ride-settings-form--flat"
                                 onSubmit={(e) => {
                                   e.preventDefault();
                                   saveRideSettingsEdit();
@@ -4249,8 +4220,7 @@ const Dashboard = ({
                                   </button>
                                 </div>
                               </form>
-                            </section>
-                          </div>
+                          </>
                         ) : null}
                         {userSubView === 'organization' ? (
                           <div className="dashboard-user-sections">
@@ -4425,9 +4395,15 @@ const Dashboard = ({
                           </div>
                         ) : null}
                         {userSubView === 'preferences' ? (
-                          <div className="dashboard-user-sections">
-                            <section className="dashboard-user-subcard">
-                              <h4>Préférences</h4>
+                          <>
+                            <div className="dashboard-user-card-head">
+                              <div>
+                                <h4>Préférences</h4>
+                                <p className="dashboard-field-hint">
+                                  Langue, apparence, notifications et visibilité sur les courses (page Go).
+                                </p>
+                              </div>
+                            </div>
                               <div className="dashboard-preferences-geo">
                                 <ChauffeurPresenceGeoBar
                                   onActivate={chauffeurPresence.startTracking}
@@ -4524,13 +4500,18 @@ const Dashboard = ({
                                   onChange={() => toggleAppNotify('notifyPush')}
                                 />
                               </label>
-                            </section>
-                          </div>
+                          </>
                         ) : null}
                         {userSubView === 'help' ? (
-                          <div className="dashboard-user-sections">
-                            <section className="dashboard-user-subcard">
-                              <h4>{t('driverDashboard.navHelp')}</h4>
+                          <>
+                            <div className="dashboard-user-card-head">
+                              <div>
+                                <h4>{t('driverDashboard.navHelp')}</h4>
+                                <p className="dashboard-field-hint">
+                                  Questions fréquentes sur le compte chauffeur et les courses.
+                                </p>
+                              </div>
+                            </div>
                               <dl className="client-compte-help-faq">
                                 <dt>{t('clientAccount.helpFaq1Q')}</dt>
                                 <dd>{t('clientAccount.helpFaq1A')}</dd>
@@ -4539,8 +4520,7 @@ const Dashboard = ({
                                 <dt>{t('clientAccount.helpFaq3Q')}</dt>
                                 <dd>{t('clientAccount.helpFaq3A')}</dd>
                               </dl>
-                            </section>
-                          </div>
+                          </>
                         ) : null}
                       </article>
                     </section>

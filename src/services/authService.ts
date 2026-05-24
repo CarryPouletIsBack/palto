@@ -1,6 +1,10 @@
 import { apiBaseUrl } from '../constants/featureFlags'
 import { DEFAULT_CLIENT_ACCOUNT, saveClientAccountSnapshot } from '../constants/clientAccountStorage'
-import type { RegisterChauffeurPayload } from '../constants/chauffeurRegistrationStorage'
+import {
+  type RegisterChauffeurPayload,
+  verifyChauffeurRegistrationPassword,
+} from '../constants/chauffeurRegistrationStorage'
+import { purgeLocalPaltoAccountData } from './purgePaltoAccountLocal'
 import {
   normalizeChauffeurProfileEmail,
   persistStoredChauffeurProfile,
@@ -381,6 +385,63 @@ export const getCurrentClientUser = (): User | null => {
   if (typeof window === 'undefined') return null
   migrateLegacyUnifiedSessionOnce()
   return parseStoredUser(localStorage.getItem(CLIENT_AUTH_STORAGE_KEY))
+}
+
+/** Supprime le compte Palto (serveur si session API, sinon inscription chauffeur locale uniquement). */
+export async function deletePaltoAccount(
+  role: AccountRole,
+  password: string
+): Promise<{ success: boolean; error?: string }> {
+  const pwd = password.trim()
+  if (!pwd) return { success: false, error: 'PASSWORD_REQUIRED' }
+
+  const user = role === 'client' ? getCurrentClientUser() : getCurrentUser()
+  const email = user?.email?.trim()
+  if (!email) return { success: false, error: 'NOT_SIGNED_IN' }
+
+  const authHeader =
+    role === 'client' ? getClientAuthorizationHeader() : getDashboardAuthorizationHeader()
+
+  if (authHeader) {
+    try {
+      const response = await fetch(`${API_BASE_URL}/auth?role=${role}&action=delete`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: authHeader,
+        },
+        body: JSON.stringify({ password: pwd }),
+      })
+      const data = (await response.json().catch(() => null)) as { success?: boolean; error?: string } | null
+      if (!response.ok) {
+        return {
+          success: false,
+          error: data?.error || (response.status === 401 ? 'WRONG_PASSWORD' : 'DELETE_FAILED'),
+        }
+      }
+      if (!data?.success) {
+        return { success: false, error: data?.error || 'DELETE_FAILED' }
+      }
+    } catch (error) {
+      console.error('[authService] delete account', error)
+      return { success: false, error: 'NETWORK' }
+    }
+  } else if (role === 'chauffeur') {
+    const emailNorm = normalizeEmail(email)
+    if (!verifyChauffeurRegistrationPassword(emailNorm, pwd)) {
+      return { success: false, error: 'WRONG_PASSWORD' }
+    }
+  } else {
+    return { success: false, error: 'API_SESSION_REQUIRED' }
+  }
+
+  purgeLocalPaltoAccountData(email, role)
+  if (role === 'client') {
+    logoutClient()
+  } else {
+    logout()
+  }
+  return { success: true }
 }
 
 /** Rôle « actif » pour redirection après login (priorité chauffeur si les deux sessions existent). */

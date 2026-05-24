@@ -4,6 +4,7 @@ import {
   handleAuthChauffeurRegister,
   handleAuthClientLogin,
   handleAuthClientRegister,
+  handleAuthDeleteAccount,
   handleAuthRealtimeToken,
 } from '../../server/lib/authApiHandlers.js'
 
@@ -33,6 +34,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (role === 'client' && action === 'register') return handleAuthClientRegister(req, res)
   if (role === 'chauffeur' && action === 'login') return handleAuthChauffeurLogin(req, res)
   if (role === 'chauffeur' && action === 'register') return handleAuthChauffeurRegister(req, res)
+  if (role === 'client' && action === 'delete') return handleAuthDeleteAccount(req, res, 'client')
+  if (role === 'chauffeur' && action === 'delete') return handleAuthDeleteAccount(req, res, 'chauffeur')
 
   return res.status(400).json({ error: 'Parametres role et action invalides' })
 }

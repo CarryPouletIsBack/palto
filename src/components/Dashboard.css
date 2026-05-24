@@ -1740,6 +1740,12 @@ button.dashboard-panel--overview-empty:focus-visible {
   color: #111827;
 }
 
+.dashboard-user-pane-separator {
+  margin: 16px 0;
+  border: 0;
+  border-top: 1px solid #e5e7eb;
+}
+
 .dashboard-user-card-head p {
   margin: 3px 0 0;
   font-size: 12px;
@@ -3994,6 +4000,20 @@ button.dashboard-org-sidebar-brand--home:focus-visible {
   box-shadow: 0 1px 3px rgba(15, 23, 42, 0.06) !important;
   position: relative;
   z-index: 1;
+}
+
+/* Compte chauffeur : une seule carte (profil, tarifs, etc.) — pas de panneaux imbriqués */
+.dashboard-container--chauffeur.dashboard-container--chauffeur-account .dashboard-user-card .dashboard-ride-settings-form--flat .dashboard-panel {
+  border: none !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  padding: 0 !important;
+}
+
+.dashboard-container--chauffeur.dashboard-container--chauffeur-account .dashboard-user-card .dashboard-ride-settings-form--flat .dashboard-panel + .dashboard-panel {
+  margin-top: 16px;
+  padding-top: 16px !important;
+  border-top: 1px solid #e5e7eb !important;
 }
 
 .dashboard-chauffeur-refund-list {

@@ -8,6 +8,8 @@ import {
   normalizeRegistrationPhone,
   registrationDisplayName,
 } from './accountRegistrationFields.js'
+import { getVerifiedChauffeurSession } from './chauffeurAuth.js'
+import { getVerifiedClientSession } from './clientAuth.js'
 import { getPaltoAppSessionByToken } from './paltoAppSession.js'
 import { signPaltoSupabaseRealtimeJwt } from './paltoRealtimeJwt.js'
 import { seedChauffeurProfileOnRegister } from './seedChauffeurProfileOnRegister.js'
@@ -265,6 +267,63 @@ export async function handleAuthChauffeurRegister(req: VercelRequest, res: Verce
     token,
     user: { email: data.email, displayName },
   })
+}
+
+const DeleteAccountBodySchema = z.object({
+  password: z.string().min(1).max(128),
+})
+
+export async function handleAuthDeleteAccount(
+  req: VercelRequest,
+  res: VercelResponse,
+  role: 'client' | 'chauffeur'
+) {
+  const body = parseJsonBody(req)
+  if (body === null) return res.status(400).json({ success: false, error: 'Payload JSON invalide' })
+  const parsed = DeleteAccountBodySchema.safeParse(body)
+  if (!parsed.success) return res.status(400).json({ success: false, error: 'Mot de passe requis' })
+
+  const session =
+    role === 'client' ? await getVerifiedClientSession(req) : await getVerifiedChauffeurSession(req)
+  if (!session) {
+    return res.status(401).json({ success: false, error: 'Session invalide ou expiree' })
+  }
+
+  let supabase
+  try {
+    supabase = getSupabaseAdmin()
+  } catch {
+    return res.status(503).json({ success: false, error: 'Service indisponible' })
+  }
+
+  const { data: account, error: readErr } = await supabase
+    .from('app_accounts')
+    .select('id,password_hash')
+    .eq('id', session.accountId)
+    .eq('role', role)
+    .maybeSingle()
+
+  if (readErr) {
+    console.error(`[auth/${role}/delete]`, readErr)
+    return res.status(500).json({ success: false, error: 'Lecture compte impossible' })
+  }
+  if (!account) return res.status(404).json({ success: false, error: 'Compte introuvable' })
+  if (!verifyPassword(parsed.data.password, account.password_hash)) {
+    return res.status(401).json({ success: false, error: 'Mot de passe incorrect' })
+  }
+
+  if (role === 'client') {
+    const { error: clientDelErr } = await supabase.from('clients').delete().ilike('email', session.email)
+    if (clientDelErr) console.warn('[auth/client/delete] clients', clientDelErr)
+  }
+
+  const { error: delErr } = await supabase.from('app_accounts').delete().eq('id', account.id)
+  if (delErr) {
+    console.error(`[auth/${role}/delete]`, delErr)
+    return res.status(500).json({ success: false, error: 'Suppression compte impossible' })
+  }
+
+  return res.status(200).json({ success: true })
 }
 
 export async function handleAuthRealtimeToken(req: VercelRequest, res: VercelResponse) {

@@ -1,6 +1,6 @@
 /** Persistance locale du profil client (MVP sans backend dédié). */
 export const CLIENT_ACCOUNT_STORAGE_KEY = 'palto_client_account_v1';
-const CLIENT_ACCOUNT_BY_EMAIL_STORAGE_KEY = 'palto_client_account_by_email_v1';
+export const CLIENT_ACCOUNT_BY_EMAIL_STORAGE_KEY = 'palto_client_account_by_email_v1';
 
 export type ClientPreferredPayment = 'indifferent' | 'card' | 'cash';
 

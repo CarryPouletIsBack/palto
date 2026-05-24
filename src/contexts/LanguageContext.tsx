@@ -821,6 +821,22 @@ const TRANSLATIONS: Record<Language, Record<string, unknown>> = {
         'Non : il s’agit d’une simulation locale. Le bouton « Simuler une recharge » augmente uniquement le solde fictif sur cet appareil.',
       helpContactHint:
         'Pour nous contacter, utilisez la page Contact du site Palto (menu ou pied de page depuis l’accueil).',
+      deleteAccountTitle: 'Suppression du compte',
+      deleteAccountLead:
+        'Action définitive : votre compte Palto et les données associées sur nos serveurs seront supprimés. Les brouillons sur cet appareil seront effacés.',
+      deleteAccountBtn: 'Supprimer le compte',
+      deleteAccountModalTitle: 'Confirmer la suppression',
+      deleteAccountModalBody:
+        'Cette action est irréversible. Saisissez votre mot de passe pour confirmer la suppression de votre compte Palto.',
+      deleteAccountPasswordLabel: 'Mot de passe',
+      deleteAccountPasswordRequired: 'Indiquez votre mot de passe pour confirmer.',
+      deleteAccountConfirm: 'Supprimer définitivement',
+      deleteAccountSubmitting: 'Suppression…',
+      deleteAccountSuccess: 'Compte supprimé.',
+      deleteAccountWrongPassword: 'Mot de passe incorrect.',
+      deleteAccountFailed: 'Impossible de supprimer le compte. Réessayez plus tard.',
+      deleteAccountApiRequired:
+        'Connectez-vous avec un compte enregistré en ligne pour supprimer définitivement vos données.',
       placesLead:
         'Enregistrez vos adresses habituelles pour remplir plus vite le départ ou l’arrivée sur une course. Données stockées sur cet appareil.',
       placesHome: 'Domicile',
@@ -1600,6 +1616,22 @@ const TRANSLATIONS: Record<Language, Record<string, unknown>> = {
       helpFaq3A:
         'No — it is a local simulation only. “Simulate top-up” increases the fictional balance on this device.',
       helpContactHint: 'To reach us, use the Palto Contact page from the home menu or footer.',
+      deleteAccountTitle: 'Delete account',
+      deleteAccountLead:
+        'Permanent action: your Palto account and associated server data will be removed. Local drafts on this device will be cleared.',
+      deleteAccountBtn: 'Delete account',
+      deleteAccountModalTitle: 'Confirm deletion',
+      deleteAccountModalBody:
+        'This cannot be undone. Enter your password to confirm deletion of your Palto account.',
+      deleteAccountPasswordLabel: 'Password',
+      deleteAccountPasswordRequired: 'Enter your password to confirm.',
+      deleteAccountConfirm: 'Delete permanently',
+      deleteAccountSubmitting: 'Deleting…',
+      deleteAccountSuccess: 'Account deleted.',
+      deleteAccountWrongPassword: 'Incorrect password.',
+      deleteAccountFailed: 'Could not delete the account. Please try again later.',
+      deleteAccountApiRequired:
+        'Sign in with an online-registered account to permanently delete your data.',
       placesLead:
         'Save your usual addresses to fill pickup or drop-off faster. Data is stored on this device.',
       placesHome: 'Home',

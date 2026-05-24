@@ -102,6 +102,7 @@ import { stripeCheckoutEnabled, stripePublishableKey } from '../constants/featur
 import PaltoStripeSetupForm from './PaltoStripeSetupForm';
 import PaltoStripePaymentForm from './PaltoStripePaymentForm';
 import PaltoStripeTestCardHint from './PaltoStripeTestCardHint';
+import PaltoAccountDeleteBlock from './PaltoAccountDeleteBlock';
 import {
   clientStripeApiEnabled,
   confirmClientWalletTopUp,
@@ -564,7 +565,14 @@ export default function ClientCompteDashboard({ onBack, onOpenClientLiveMeet }: 
     const bump = () => setAuthSessionTick((n) => n + 1);
     const onStorage = (e: StorageEvent) => {
       if (e.key == null) return;
-      if (e.key === 'palto:client_token' || e.key === 'palto:client_auth' || e.key === 'dashboard_token' || e.key === 'dashboard_auth') {
+      if (
+        e.key === 'palto:client_token' ||
+        e.key === 'palto:client_auth' ||
+        e.key === 'dashboard_token' ||
+        e.key === 'dashboard_auth' ||
+        e.key === 'palto_client_account_v1' ||
+        e.key === 'palto_client_account_by_email_v1'
+      ) {
         bump();
       }
     };
@@ -2703,6 +2711,7 @@ export default function ClientCompteDashboard({ onBack, onOpenClientLiveMeet }: 
                     </article>
                   </section>
                   )}
+                  <PaltoAccountDeleteBlock role="client" />
                 </div>
               </section>
             </div>

@@ -12,6 +12,7 @@ import {
 import {
   loadStoredChauffeurProfile,
   normalizeChauffeurProfileEmail,
+  persistStoredChauffeurProfile,
 } from '../constants/chauffeurProfileStorage'
 import {
   clientStripeApiEnabled,
@@ -30,6 +31,7 @@ import { fileToCompressedProfilePhotoDataUrl } from '../utils/clientProfilePhoto
 import { formatStripeBillingLines, formatStripeCardBrand } from '../utils/stripeDisplay'
 import PaltoStripeSetupForm from './PaltoStripeSetupForm'
 import PaltoStripeTestCardHint from './PaltoStripeTestCardHint'
+import PaltoAccountDeleteBlock from './PaltoAccountDeleteBlock'
 import './ClientCompteDashboard.css'
 
 export type ChauffeurPaltoAccountSection = 'personal' | 'payment'
@@ -150,7 +152,23 @@ export default function ChauffeurPaltoAccountPanel({
       return
     }
     setProfile(next)
+    const chauffeurStored = loadStoredChauffeurProfile(emailKey)
+    persistStoredChauffeurProfile({
+      ...(chauffeurStored ?? {
+        email: emailKey,
+        telephone: '',
+        ville: '',
+        vehicule: '',
+        plaque: '',
+      }),
+      prenom: next.prenom,
+      nom: next.nom,
+      email: emailKey,
+      profilePhotoUrl: next.profilePhotoUrl ?? null,
+      telephone: chauffeurStored?.telephone?.trim() || profile.telephone?.trim() || '',
+    })
     window.dispatchEvent(new CustomEvent(PALTO_CLIENT_SESSION_CHANGED_EVENT))
+    window.dispatchEvent(new CustomEvent(PALTO_CHAUFFEUR_SESSION_CHANGED_EVENT))
     toast.success(isEn ? 'Palto account updated.' : 'Compte Palto enregistre.')
   }, [emailDraft, emailKey, isEn, photoDraftUrl, prenomDraft, nomDraft, profile])
 
@@ -459,6 +477,7 @@ export default function ChauffeurPaltoAccountPanel({
 
           </section>
         )}
+        <PaltoAccountDeleteBlock role="chauffeur" />
       </div>
 
       {mountAccountModal(
