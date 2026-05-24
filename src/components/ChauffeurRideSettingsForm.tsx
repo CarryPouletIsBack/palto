@@ -7,7 +7,6 @@ type Props = {
   language: Language
   rideSettingsDraft: ChauffeurRideSettingsSnapshot
   setRideSettingsDraft: Dispatch<SetStateAction<ChauffeurRideSettingsSnapshot>>
-  computeAppliedPrice: (raw: string, multiplierPercent: number) => string
 }
 
 type FareTextField = keyof Pick<
@@ -28,10 +27,8 @@ export default function ChauffeurRideSettingsForm({
   language,
   rideSettingsDraft,
   setRideSettingsDraft,
-  computeAppliedPrice,
 }: Props) {
   const isEn = language === 'en'
-  const mult = rideSettingsDraft.pricingMultiplierPercent
 
   const fareInputProps = (field: FareTextField) => ({
     type: 'text' as const,
@@ -52,8 +49,8 @@ export default function ChauffeurRideSettingsForm({
         </div>
         <p className="dashboard-field-hint" style={{ margin: '0 0 12px' }}>
           {isEn
-            ? 'Palto does not impose an Uber-style grid. These amounts are yours; passengers see them on Go (with the flexibility gauge below).'
-            : 'Palto n’impose pas de grille type Uber. Ce sont vos tarifs ; les passagers les voient sur Go (avec la jauge de flexibilité ci-dessous).'}
+            ? 'Palto does not impose an Uber-style grid. These amounts are yours; passengers see them on Go.'
+            : 'Palto n’impose pas de grille type Uber. Ce sont vos tarifs ; les passagers les voient sur Go.'}
         </p>
         <div className="dashboard-payment-edit-grid">
           <label>
@@ -104,15 +101,11 @@ export default function ChauffeurRideSettingsForm({
         <div className="dashboard-metric-list" style={{ marginTop: 14 }}>
           <div className="dashboard-metric-row">
             <span>{isEn ? 'Pickup shown to passengers' : 'Prise en charge affichée'}</span>
-            <strong>
-              {computeAppliedPrice(rideSettingsDraft.baseFareEur, mult)} EUR
-            </strong>
+            <strong>{rideSettingsDraft.baseFareEur} EUR</strong>
           </div>
           <div className="dashboard-metric-row">
             <span>{isEn ? 'Price/km shown' : 'Prix/km affiché'}</span>
-            <strong>
-              {computeAppliedPrice(rideSettingsDraft.pricePerKmEur, mult)} EUR / km
-            </strong>
+            <strong>{rideSettingsDraft.pricePerKmEur} EUR / km</strong>
           </div>
           <div className="dashboard-metric-row">
             <span>{isEn ? 'Night bonus' : 'Bonus nuit'}</span>
@@ -127,63 +120,10 @@ export default function ChauffeurRideSettingsForm({
 
       <article className="dashboard-panel">
         <div className="dashboard-section-title dashboard-section-title-inline">
-          <h3>{isEn ? 'Flexibility gauge' : 'Jauge de flexibilité'}</h3>
-          <span>90% – 110%</span>
-        </div>
-        <p className="dashboard-field-hint" style={{ margin: '0 0 10px' }}>
-          {isEn
-            ? 'Fine-tune how your fares appear on Go without changing your base amounts above.'
-            : 'Ajustez l’affichage sur Go sans modifier vos montants de base ci-dessus.'}
-        </p>
-        <div className="dashboard-payment-edit-grid">
-          <label>
-            {isEn ? 'Global multiplier' : 'Multiplicateur global'}
-            <input
-              type="number"
-              min="90"
-              max="110"
-              step="1"
-              value={rideSettingsDraft.pricingMultiplierPercent}
-              onChange={(e) =>
-                setRideSettingsDraft((prev) => ({
-                  ...prev,
-                  pricingMultiplierPercent: Number(readFormControlValue(e)),
-                }))
-              }
-              required
-            />
-          </label>
-          <label className="dashboard-ride-slider-field">
-            {isEn ? 'Fare adjustment' : 'Ajustement de tarif'}
-            <input
-              className="dashboard-ride-setting-range"
-              type="range"
-              min="90"
-              max="110"
-              step="1"
-              value={rideSettingsDraft.pricingMultiplierPercent}
-              onChange={(e) =>
-                setRideSettingsDraft((prev) => ({
-                  ...prev,
-                  pricingMultiplierPercent: Number(readFormControlValue(e)),
-                }))
-              }
-            />
-            <span className="dashboard-field-hint">
-              {isEn
-                ? '90%: more competitive · 100%: your fare · 110%: premium'
-                : '90 % : plus compétitif · 100 % : votre tarif · 110 % : premium'}
-            </span>
-          </label>
-        </div>
-      </article>
-
-      <article className="dashboard-panel">
-        <div className="dashboard-section-title dashboard-section-title-inline">
           <h3>{isEn ? 'Operations' : 'Exploitation'}</h3>
           <span>{isEn ? 'Area & service' : 'Zone et service'}</span>
         </div>
-        <div className="dashboard-payment-edit-grid">
+        <div className="dashboard-payment-edit-grid dashboard-ride-settings-ops-grid">
           <label>
             {isEn ? 'Pickup radius (km)' : 'Rayon prise en charge (km)'}
             <input
@@ -196,6 +136,8 @@ export default function ChauffeurRideSettingsForm({
               required
             />
           </label>
+        </div>
+        <div className="dashboard-ride-settings-toggles" role="group" aria-label={isEn ? 'Service options' : 'Options de service'}>
           <label className="dashboard-ride-setting-toggle-row">
             <span>{isEn ? 'Pets allowed' : 'Animaux acceptés'}</span>
             <input

@@ -2267,13 +2267,6 @@ const Dashboard = ({
     });
   }, [chauffeurProfile, paymentDraft]);
 
-  const computeAppliedPrice = useCallback((raw: string, multiplierPercent: number): string => {
-    const normalized = raw.replace(',', '.').trim();
-    const base = Number.parseFloat(normalized);
-    if (!Number.isFinite(base)) return '—';
-    return (base * (multiplierPercent / 100)).toFixed(2).replace('.', ',');
-  }, []);
-
   const patchRideSettingsDraft = useCallback(
     (patch: SetStateAction<ChauffeurRideSettings>) => {
       rideSettingsFormDirtyRef.current = true;
@@ -3087,7 +3080,6 @@ const Dashboard = ({
                           language={language}
                           rideSettingsDraft={rideSettingsDraft}
                           setRideSettingsDraft={patchRideSettingsDraft}
-                          computeAppliedPrice={computeAppliedPrice}
                         />
 
                         <div className="dashboard-payment-edit-actions">
@@ -4253,7 +4245,6 @@ const Dashboard = ({
                                   language={language}
                                   rideSettingsDraft={rideSettingsDraft}
                                   setRideSettingsDraft={patchRideSettingsDraft}
-                                  computeAppliedPrice={computeAppliedPrice}
                                 />
 
                                 <div className="dashboard-payment-edit-actions">

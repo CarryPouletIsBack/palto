@@ -462,10 +462,19 @@ html[data-app-theme='dark'] .dashboard-payment-edit-grid label {
 
 html[data-app-theme='dark'] .dashboard-user-edit-grid input,
 html[data-app-theme='dark'] .dashboard-user-edit-grid select,
-html[data-app-theme='dark'] .dashboard-payment-edit-grid input,
+html[data-app-theme='dark'] .dashboard-payment-edit-grid input:not(.dashboard-ride-setting-switch),
 html[data-app-theme='dark'] .dashboard-payment-edit-grid select {
   background: rgba(255, 255, 255, 0.06);
   border-color: var(--app-border-subtle);
+  color: var(--app-text-primary);
+}
+
+html[data-app-theme='dark'] .dashboard-ride-setting-toggle-row {
+  background: rgba(255, 255, 255, 0.05);
+  border-color: var(--app-border-subtle);
+}
+
+html[data-app-theme='dark'] .dashboard-ride-setting-toggle-row span {
   color: var(--app-text-primary);
 }
 

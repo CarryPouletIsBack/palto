@@ -2209,7 +2209,7 @@ button.dashboard-panel--overview-empty:focus-visible {
   color: #374151;
 }
 
-.dashboard-payment-edit-grid input,
+.dashboard-payment-edit-grid input:not(.dashboard-ride-setting-switch),
 .dashboard-payment-edit-grid select {
   height: 36px;
   border: 1px solid #d1d5db;
@@ -2270,18 +2270,31 @@ button.dashboard-panel--overview-empty:focus-visible {
   color: #374151;
 }
 
+.dashboard-ride-settings-toggles {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.dashboard-ride-settings-ops-grid {
+  margin-bottom: 0;
+}
+
 .dashboard-ride-setting-toggle-row {
   display: flex !important;
   flex-direction: row !important;
   align-items: center;
   justify-content: space-between;
   gap: 12px !important;
-  height: 40px;
+  min-height: 44px;
+  height: auto;
   border: 1px solid #e5e7eb;
   border-radius: 10px;
-  padding: 0 10px;
+  padding: 8px 12px;
   background: #ffffff;
   cursor: pointer;
+  box-sizing: border-box;
 }
 
 .dashboard-ride-setting-toggle-row span {
@@ -2295,7 +2308,8 @@ button.dashboard-panel--overview-empty:focus-visible {
   margin: 0;
 }
 
-.dashboard-ride-setting-switch {
+.dashboard-payment-edit-grid .dashboard-ride-setting-switch,
+.dashboard-ride-settings-toggles .dashboard-ride-setting-switch {
   appearance: none !important;
   -webkit-appearance: none !important;
   position: relative;
@@ -2303,6 +2317,8 @@ button.dashboard-panel--overview-empty:focus-visible {
   width: 40px !important;
   height: 22px !important;
   min-width: 40px;
+  min-height: 22px;
+  padding: 0 !important;
   border: 0 !important;
   border-radius: 999px !important;
   background-color: #d1d5db !important;
@@ -2310,9 +2326,11 @@ button.dashboard-panel--overview-empty:focus-visible {
   overflow: hidden;
   transition: background-color 0.2s ease;
   flex-shrink: 0;
+  box-sizing: border-box;
 }
 
-.dashboard-ride-setting-switch::after {
+.dashboard-payment-edit-grid .dashboard-ride-setting-switch::after,
+.dashboard-ride-settings-toggles .dashboard-ride-setting-switch::after {
   content: '';
   position: absolute;
   top: 2px;
@@ -2324,15 +2342,18 @@ button.dashboard-panel--overview-empty:focus-visible {
   transition: transform 0.2s ease;
 }
 
-.dashboard-ride-setting-switch:checked {
+.dashboard-payment-edit-grid .dashboard-ride-setting-switch:checked,
+.dashboard-ride-settings-toggles .dashboard-ride-setting-switch:checked {
   background-color: #111827 !important;
 }
 
-.dashboard-ride-setting-switch:checked::after {
+.dashboard-payment-edit-grid .dashboard-ride-setting-switch:checked::after,
+.dashboard-ride-settings-toggles .dashboard-ride-setting-switch:checked::after {
   transform: translateX(18px);
 }
 
-.dashboard-ride-setting-switch:focus-visible {
+.dashboard-payment-edit-grid .dashboard-ride-setting-switch:focus-visible,
+.dashboard-ride-settings-toggles .dashboard-ride-setting-switch:focus-visible {
   outline: 2px solid rgba(59, 130, 246, 0.45);
   outline-offset: 2px;
 }
