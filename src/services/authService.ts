@@ -173,9 +173,13 @@ export async function registerChauffeur(payload: RegisterChauffeurPayload): Prom
     nom: payload.nom.trim(),
     email: emailNorm,
     telephone: payload.phone.trim(),
+    adresse: payload.adresse.trim(),
+    ville: payload.ville.trim(),
     vehicule: payload.vehicleType,
-    ville: '',
-    plaque: '',
+    plaque: payload.plaque.trim(),
+    motorisation: payload.motorisation,
+    licenseYear: payload.licenseYear,
+    isVtc: payload.isVtc,
     profilePhotoUrl: null,
     organizationPhotoUrl: null,
     vehiclePhotoUrl: null,
@@ -190,6 +194,7 @@ export async function registerChauffeur(payload: RegisterChauffeurPayload): Prom
       nom: payload.nom.trim(),
       email: emailNorm,
       telephone: payload.phone.trim(),
+      ville: payload.ville.trim(),
     },
     emailNorm
   )

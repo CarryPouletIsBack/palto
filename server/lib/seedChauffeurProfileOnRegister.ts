@@ -7,7 +7,13 @@ export type SeedChauffeurProfileInput = {
   prenom: string
   nom: string
   phone: string
+  adresse: string
+  ville: string
   vehicleType: string
+  motorisation: string
+  plaque: string
+  licenseYear: number
+  isVtc: boolean
   deliveryEquipped: boolean
 }
 
@@ -22,9 +28,13 @@ export async function seedChauffeurProfileOnRegister(
     nom: input.nom.trim(),
     email: emailNorm,
     telephone: input.phone.trim(),
+    adresse: input.adresse.trim(),
+    ville: input.ville.trim(),
     vehicule: input.vehicleType.trim().toLowerCase(),
-    ville: '',
-    plaque: '',
+    plaque: input.plaque.trim(),
+    motorisation: input.motorisation,
+    licenseYear: input.licenseYear,
+    isVtc: input.isVtc,
     deliveryEquipped: input.deliveryEquipped,
   }
 

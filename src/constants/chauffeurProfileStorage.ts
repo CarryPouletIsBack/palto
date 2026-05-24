@@ -26,9 +26,13 @@ export type ChauffeurProfileSnapshot = {
   prenom: string
   email: string
   telephone: string
+  adresse?: string
   ville: string
   vehicule: string
   plaque: string
+  motorisation?: 'thermique_hydrogene_hybride' | 'electrique_100'
+  licenseYear?: number
+  isVtc?: boolean
   profilePhotoUrl?: string | null
   organizationPhotoUrl?: string | null
   vehiclePhotoUrl?: string | null

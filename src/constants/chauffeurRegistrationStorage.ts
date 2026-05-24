@@ -20,7 +20,13 @@ export type RegisterChauffeurPayload = {
   prenom: string
   nom: string
   phone: string
+  adresse: string
+  ville: string
   vehicleType: ChauffeurVehicleType
+  motorisation: 'thermique_hydrogene_hybride' | 'electrique_100'
+  plaque: string
+  licenseYear: number
+  isVtc: boolean
   deliveryEquipped: boolean
 }
 

@@ -36,7 +36,13 @@ const ClientRegisterBodySchema = AccountRegistrationIdentitySchema.extend({
 const ChauffeurRegisterBodySchema = AccountRegistrationIdentitySchema.extend({
   email: z.string().email().max(320),
   password: z.string().min(6).max(128),
+  adresse: z.string().trim().min(3).max(200),
+  ville: z.string().trim().min(1).max(120),
   vehicleType: z.enum(['berline', 'utilitaire', 'moto', 'scooter']),
+  motorisation: z.enum(['thermique_hydrogene_hybride', 'electrique_100']),
+  plaque: z.string().trim().min(5).max(20),
+  licenseYear: z.number().int().min(1970).max(new Date().getFullYear()),
+  isVtc: z.boolean(),
   deliveryEquipped: z.boolean(),
 })
 
@@ -243,7 +249,13 @@ export async function handleAuthChauffeurRegister(req: VercelRequest, res: Verce
     prenom: parsed.data.prenom,
     nom: parsed.data.nom,
     phone,
+    adresse: parsed.data.adresse,
+    ville: parsed.data.ville,
     vehicleType: parsed.data.vehicleType,
+    motorisation: parsed.data.motorisation,
+    plaque: parsed.data.plaque,
+    licenseYear: parsed.data.licenseYear,
+    isVtc: parsed.data.isVtc,
     deliveryEquipped: parsed.data.deliveryEquipped,
   })
 
