@@ -6605,6 +6605,15 @@ html[data-app-theme='dark'] .palto-ride-timing-expand__option:hover {
   margin-right: 0;
 }
 
+@media (min-width: 769px) {
+  .single-project-page:has(.palto-ride-main) .single-project-go-topbar-wrap .dashboard-topbar.dashboard-topbar--home-client {
+    background: #ffffff;
+    border-bottom: 1px solid #dbe3ee;
+    box-shadow: 0 1px 0 rgba(15, 23, 42, 0.06);
+    padding-inline: 16px;
+  }
+}
+
 @media (min-width: 997px) {
   /*
    * Ne pas mettre overflow:hidden sur le layout / booking : ça rogne la carte « Commandez une course »

@@ -83,6 +83,7 @@ import {
   isClientAuthenticated,
   PALTO_CLIENT_SESSION_CHANGED_EVENT,
 } from '../services/authService';
+import { DashboardHomeTopbar } from './DashboardHomeTopbar';
 import { DashboardHomeRidesBanner } from './DashboardHomeRidesBanner';
 import { useClientHomeTopbarRides } from '../hooks/useClientHomeTopbarRides';
 import { simplifyAddressDisplay as simplifyRideAddress } from '../services/addressDisplay';
@@ -2907,6 +2908,11 @@ const SingleProjectNew: FC<SingleProjectProps> = ({
         {isDesktopViewport ? (
         <div className="dashboard-container dashboard-container--home-accueil single-project-go-topbar-wrap">
           <div className="dashboard-main single-project-go-topbar-wrap__main">
+            <DashboardHomeTopbar
+              onOpenClientAccountAuth={onOpenClientAccountAuth}
+              onOpenClientAccount={onOpenClientAccount}
+              onNavigateHome={onNavigateHome}
+            />
             <DashboardHomeRidesBanner
               clientUpcomingRide={clientUpcomingRide}
               clientLiveMeetActive={clientLiveMeetActive}
