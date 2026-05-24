@@ -825,10 +825,9 @@ html[data-app-theme='dark'] .dashboard-home-topbar-upcoming-btn {
   overflow: visible;
 }
 
-/* Compte chauffeur : pas de bandeau Palto — bouton user + photo fixés en haut à droite (desktop). */
+/* Chauffeur desktop : pas de bandeau Palto — bouton user (+ photo) fixé en haut à droite. */
 @media (min-width: 769px) {
-  .dashboard-container--chauffeur.dashboard-container--chauffeur-account
-    .dashboard-topbar--chauffeur-account-user-only {
+  .dashboard-container--chauffeur .dashboard-topbar--chauffeur-mobile-toolbar {
     position: relative;
     z-index: 22100;
     height: 0;
@@ -841,9 +840,7 @@ html[data-app-theme='dark'] .dashboard-home-topbar-upcoming-btn {
     overflow: visible;
   }
 
-  .dashboard-container--chauffeur.dashboard-container--chauffeur-account
-    .dashboard-topbar--chauffeur-account-user-only
-    .dashboard-topbar-right {
+  .dashboard-container--chauffeur .dashboard-topbar--chauffeur-mobile-toolbar .dashboard-topbar-right {
     position: fixed;
     top: max(12px, env(safe-area-inset-top, 0px));
     right: max(20px, env(safe-area-inset-right, 0px));
@@ -854,8 +851,7 @@ html[data-app-theme='dark'] .dashboard-home-topbar-upcoming-btn {
     justify-content: flex-end;
   }
 
-  .dashboard-container--chauffeur.dashboard-container--chauffeur-account
-    .dashboard-main--chauffeur-mobile-floating-account {
+  .dashboard-container--chauffeur .dashboard-main--chauffeur-mobile-floating-account {
     padding-top: calc(12px + env(safe-area-inset-top, 0px) + 48px);
   }
 }

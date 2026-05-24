@@ -2018,8 +2018,10 @@ const Dashboard = ({
     return accepted[0] ?? null;
   }, [courseRows]);
 
-  /** Compte chauffeur : uniquement le bouton utilisateur (pas Palto / langue). */
-  const isChauffeurAccountUserOnly = activeView === 'user' && topbarLaunchCourse == null;
+  /** Chauffeur : pas de topbar type accueil (Palto / langue) — bouton user fixe sauf bandeau course. */
+  const showChauffeurToolbarOnly = topbarLaunchCourse == null;
+  /** Compte chauffeur : avatar dans le pill, pas à côté. */
+  const isChauffeurAccountUserOnly = activeView === 'user' && showChauffeurToolbarOnly;
 
   const renderChauffeurTopbarAccountControl = (options?: { photoAside?: boolean }) => {
     const photoAside = options?.photoAside ?? true;
@@ -2701,18 +2703,14 @@ const Dashboard = ({
             className={`dashboard-main${
               activeView === 'organization' || activeView === 'user' ? ' dashboard-main--org-flush' : ''
             }${
-              !topbarLaunchCourse && (isChauffeurAccountUserOnly || isMobileViewport)
-                ? ' dashboard-main--chauffeur-mobile-floating-account'
-                : ''
+              showChauffeurToolbarOnly ? ' dashboard-main--chauffeur-mobile-floating-account' : ''
             }`}
           >
             <header
               className={`dashboard-topbar${
                 topbarLaunchCourse
                   ? ''
-                  : isChauffeurAccountUserOnly || isMobileViewport
-                    ? ' dashboard-topbar--chauffeur-mobile-toolbar'
-                    : ' dashboard-topbar--home-client'
+                  : ' dashboard-topbar--chauffeur-mobile-toolbar'
               }${isChauffeurAccountUserOnly ? ' dashboard-topbar--chauffeur-account-user-only' : ''}`}
             >
               {topbarLaunchCourse ? (
@@ -2746,33 +2744,11 @@ const Dashboard = ({
                     </button>
                   </div>
                 </div>
-              ) : isChauffeurAccountUserOnly || isMobileViewport ? (
+              ) : (
                 <div className="dashboard-topbar-right">
                   {renderChauffeurTopbarAccountControl(
                     isChauffeurAccountUserOnly ? { photoAside: false } : undefined
                   )}
-                </div>
-              ) : (
-                <div className="dashboard-home-topbar-row">
-                  <div className="dashboard-home-topbar-start">
-                    <button
-                      type="button"
-                      className="dashboard-client-main-title"
-                      onClick={() => {
-                        trackEvent('click', 'chauffeur_dashboard', 'topbar_home');
-                        window.location.assign(getPaltoHomePath());
-                      }}
-                      aria-label={t('hero.homeTopbarTitleNavAria')}
-                    >
-                      {t('hero.homeTopbarTitle')}
-                    </button>
-                  </div>
-                  <div className="dashboard-topbar-right">
-                    <div className="dashboard-home-topbar-right-cluster">
-                      <LanguageSwitcher />
-                      {renderChauffeurTopbarAccountControl()}
-                    </div>
-                  </div>
                 </div>
               )}
             </header>
