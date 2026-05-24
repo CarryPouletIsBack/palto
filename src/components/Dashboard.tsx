@@ -2018,24 +2018,31 @@ const Dashboard = ({
     return accepted[0] ?? null;
   }, [courseRows]);
 
-  /** Compte chauffeur : pas de topbar type accueil (titre dans le contenu + sidebar org). */
-  const showChauffeurTopbar = topbarLaunchCourse != null || activeView !== 'user';
+  /** Compte chauffeur : uniquement le bouton utilisateur (pas Palto / langue). */
+  const isChauffeurAccountUserOnly = activeView === 'user' && topbarLaunchCourse == null;
 
-  const renderChauffeurTopbarAccountControl = () => (
-    <div className="dashboard-chauffeur-topbar-account-cluster" ref={topbarAccountMenuRef}>
-      <div className="dashboard-chauffeur-topbar-account__photo" aria-hidden>
-        {paltoIdentity.photoUrl ? (
-          <img src={paltoIdentity.photoUrl} alt="" />
-        ) : (
-          <span className="dashboard-chauffeur-topbar-account__photo-fallback">
-            <User size={18} strokeWidth={2} aria-hidden />
-          </span>
-        )}
-      </div>
+  const renderChauffeurTopbarAccountControl = (options?: { photoAside?: boolean }) => {
+    const photoAside = options?.photoAside ?? true;
+    return (
+    <div
+      className={`dashboard-chauffeur-topbar-account-cluster${photoAside ? '' : ' dashboard-chauffeur-topbar-account-cluster--user-btn-only'}`}
+      ref={topbarAccountMenuRef}
+    >
+      {photoAside ? (
+        <div className="dashboard-chauffeur-topbar-account__photo" aria-hidden>
+          {paltoIdentity.photoUrl ? (
+            <img src={paltoIdentity.photoUrl} alt="" />
+          ) : (
+            <span className="dashboard-chauffeur-topbar-account__photo-fallback">
+              <User size={18} strokeWidth={2} aria-hidden />
+            </span>
+          )}
+        </div>
+      ) : null}
       <div className="client-compte-topbar-menu-anchor">
         <button
           type="button"
-          className="client-compte-topbar-user-btn client-compte-topbar-user-btn--chauffeur-topbar"
+          className={`client-compte-topbar-user-btn${photoAside ? ' client-compte-topbar-user-btn--chauffeur-topbar' : ''}`}
           onClick={() => {
             setAlertsOpen(false);
             setMoreMenuOpen(false);
@@ -2045,6 +2052,17 @@ const Dashboard = ({
           aria-expanded={topbarAccountMenuOpen}
           aria-haspopup="menu"
         >
+          {!photoAside ? (
+            paltoIdentity.photoUrl ? (
+              <img
+                src={paltoIdentity.photoUrl}
+                alt={t('clientAccount.photoAlt')}
+                className="client-compte-topbar-user-btn__avatar"
+              />
+            ) : (
+              <User size={16} aria-hidden />
+            )
+          ) : null}
           <span>{paltoIdentity.fullName}</span>
         </button>
         {topbarAccountMenuOpen ? (
@@ -2073,7 +2091,8 @@ const Dashboard = ({
         ) : null}
       </div>
     </div>
-  );
+    );
+  };
 
   const handleSave = (_project: ProjectWithMeta) => {
     setEditingProject(null);
@@ -2682,20 +2701,19 @@ const Dashboard = ({
             className={`dashboard-main${
               activeView === 'organization' || activeView === 'user' ? ' dashboard-main--org-flush' : ''
             }${
-              isMobileViewport && !topbarLaunchCourse && activeView !== 'user'
+              !topbarLaunchCourse && (isChauffeurAccountUserOnly || isMobileViewport)
                 ? ' dashboard-main--chauffeur-mobile-floating-account'
                 : ''
             }`}
           >
-            {showChauffeurTopbar ? (
             <header
               className={`dashboard-topbar${
                 topbarLaunchCourse
                   ? ''
-                  : isMobileViewport
+                  : isChauffeurAccountUserOnly || isMobileViewport
                     ? ' dashboard-topbar--chauffeur-mobile-toolbar'
                     : ' dashboard-topbar--home-client'
-              }`}
+              }${isChauffeurAccountUserOnly ? ' dashboard-topbar--chauffeur-account-user-only' : ''}`}
             >
               {topbarLaunchCourse ? (
                 <div className="topbar-ride-wrap" aria-label="Prochaine course acceptee">
@@ -2728,7 +2746,13 @@ const Dashboard = ({
                     </button>
                   </div>
                 </div>
-              ) : !isMobileViewport ? (
+              ) : isChauffeurAccountUserOnly || isMobileViewport ? (
+                <div className="dashboard-topbar-right">
+                  {renderChauffeurTopbarAccountControl(
+                    isChauffeurAccountUserOnly ? { photoAside: false } : undefined
+                  )}
+                </div>
+              ) : (
                 <div className="dashboard-home-topbar-row">
                   <div className="dashboard-home-topbar-start">
                     <button
@@ -2750,12 +2774,8 @@ const Dashboard = ({
                     </div>
                   </div>
                 </div>
-              ) : null}
-              {isMobileViewport && !topbarLaunchCourse ? (
-                <div className="dashboard-topbar-right">{renderChauffeurTopbarAccountControl()}</div>
-              ) : null}
+              )}
             </header>
-            ) : null}
 
             {activeView === 'stats' ? (
               <div className="dashboard-content">
