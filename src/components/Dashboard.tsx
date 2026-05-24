@@ -2015,6 +2015,9 @@ const Dashboard = ({
     return accepted[0] ?? null;
   }, [courseRows]);
 
+  /** Compte chauffeur : pas de topbar type accueil (titre dans le contenu + sidebar org). */
+  const showChauffeurTopbar = topbarLaunchCourse != null || activeView !== 'user';
+
   const handleSave = (_project: ProjectWithMeta) => {
     setEditingProject(null);
     setIsCreating(false);
@@ -2620,11 +2623,14 @@ const Dashboard = ({
           {/* Main Content — gap supprimé sous la topbar en vue Organisation (2e sidebar alignée) */}
           <div
             className={`dashboard-main${
-              activeView === 'organization' ? ' dashboard-main--org-flush' : ''
+              activeView === 'organization' || activeView === 'user' ? ' dashboard-main--org-flush' : ''
             }${
-              isMobileViewport && !topbarLaunchCourse ? ' dashboard-main--chauffeur-mobile-floating-account' : ''
+              isMobileViewport && !topbarLaunchCourse && activeView !== 'user'
+                ? ' dashboard-main--chauffeur-mobile-floating-account'
+                : ''
             }`}
           >
+            {showChauffeurTopbar ? (
             <header
               className={`dashboard-topbar${
                 topbarLaunchCourse
@@ -2786,6 +2792,7 @@ const Dashboard = ({
                 </div>
               ) : null}
             </header>
+            ) : null}
 
             {activeView === 'stats' ? (
               <div className="dashboard-content">
