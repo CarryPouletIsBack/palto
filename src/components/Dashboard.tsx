@@ -551,6 +551,14 @@ function OrgProfileReviewsCarousel({
 
   const locale = language === 'en' ? 'en-US' : 'fr-FR';
 
+  if (reviews.length === 0) {
+    return (
+      <p className="dashboard-field-hint" role="status">
+        {t('driverDashboard.orgProfileReviewsEmpty')}
+      </p>
+    );
+  }
+
   return (
     <div className="dashboard-org-profile-reviews-carousel-wrap">
       <div className="dashboard-org-profile-reviews-carousel" ref={emblaRef}>
@@ -1244,31 +1252,8 @@ const Dashboard = ({
     );
   }, [chauffeurOrg, chauffeurProfile.email]);
 
-  /** Avis d’exemple sur la page « profil » flotte (à remplacer par des données API). */
   const orgProfileSampleReviews = useMemo((): OrgProfileSampleReview[] => {
-    return [
-      {
-        id: 'sample-review-1',
-        authorKey: 'driverDashboard.orgProfileReview1Author',
-        bodyKey: 'driverDashboard.orgProfileReview1Body',
-        rating: 5,
-        isoDate: '2026-04-18',
-      },
-      {
-        id: 'sample-review-2',
-        authorKey: 'driverDashboard.orgProfileReview2Author',
-        bodyKey: 'driverDashboard.orgProfileReview2Body',
-        rating: 5,
-        isoDate: '2026-04-02',
-      },
-      {
-        id: 'sample-review-3',
-        authorKey: 'driverDashboard.orgProfileReview3Author',
-        bodyKey: 'driverDashboard.orgProfileReview3Body',
-        rating: 4,
-        isoDate: '2026-03-20',
-      },
-    ];
+    return [];
   }, []);
 
   useEffect(() => {
@@ -2154,10 +2139,10 @@ const Dashboard = ({
       totalCourses: courseRows.length,
       acceptanceRate,
       cancellationRate,
-      rating: 0,
-      onlineHoursWeek: 0,
+      rating: null,
+      onlineHoursWeek: null,
       totalIncome,
-      lastPayout: '—',
+      lastPayout: null,
     };
   }, [courseRows]);
 
@@ -3371,7 +3356,7 @@ const Dashboard = ({
                                       className="dashboard-org-profile-logo"
                                       src={
                                         (chauffeurOrg.logoUrl && chauffeurOrg.logoUrl.trim()) ||
-                                        '/images/placeholder-app-icon.svg'
+                                        '/images/palto-app-icon.svg'
                                       }
                                       alt={t('driverDashboard.orgProfileLogoAlt')}
                                       width={88}
@@ -4294,7 +4279,7 @@ const Dashboard = ({
                                             className="dashboard-org-profile-logo"
                                             src={
                                               (chauffeurOrg.logoUrl && chauffeurOrg.logoUrl.trim()) ||
-                                              '/images/placeholder-app-icon.svg'
+                                              '/images/palto-app-icon.svg'
                                             }
                                             alt={t('driverDashboard.orgProfileLogoAlt')}
                                             width={88}

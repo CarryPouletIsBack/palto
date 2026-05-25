@@ -6,7 +6,7 @@ import { DEFAULT_USER_ORIGIN } from '../constants/defaultUserOrigin'
 import type { ChauffeurProfileRidePricingFields } from '../constants/chauffeurProfileStorage'
 import type { GeoPoint } from '../services/distanceGeo'
 
-/** Chauffeur fictif pour l’overlay + marqueurs carte. */
+/** Chauffeur généré pour les tests locaux de l’overlay + marqueurs carte. */
 export type NearbyDriver = {
   id: string
   name: string

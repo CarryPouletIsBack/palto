@@ -271,7 +271,7 @@ const TRANSLATIONS: Record<Language, Record<string, unknown>> = {
       checkoutTotalAuth: 'Total autorisé sur la carte :',
       checkoutTotalEstimate: 'Total estimé TTC :',
       checkoutTestCardAria: 'Carte bancaire de test Stripe',
-      checkoutTestCardTitle: 'Mode test — carte fictive',
+      checkoutTestCardTitle: 'Mode test Stripe',
       checkoutTestCardLead:
         'Aucun argent réel n’est débité. Utilisez cette carte dans le champ ci-dessous :',
       checkoutTestCardCopy: 'Copier le numéro',
@@ -367,8 +367,8 @@ const TRANSLATIONS: Record<Language, Record<string, unknown>> = {
     chauffeurCompliance: {
       bannerTitle: 'Documents légaux requis',
       bannerLead:
-        'En tant que chauffeur inscrit sur cet appareil, vous devez fournir les pièces ci-dessous avant d’accepter ou de lancer des courses. Cochez chaque ligne une fois le justificatif déposé (simulation locale).',
-      checklistLead: 'Cochez chaque document dès qu’il est fourni (contrôle réel à brancher côté serveur).',
+        'En tant que chauffeur Palto, vous devez fournir les pièces ci-dessous avant d’accepter ou de lancer des courses.',
+      checklistLead: 'Cochez chaque document dès qu’il est fourni.',
       checklistAria: 'Liste des documents obligatoires',
       allProvided: 'Tous les documents sont indiqués comme fournis — les courses sont débloquées.',
       complianceUploadHint:
@@ -536,9 +536,9 @@ const TRANSLATIONS: Record<Language, Record<string, unknown>> = {
       mainSubtitle: 'Vos courses, votre planning et votre activité au même endroit.',
       statsSubtitle: 'Vue rapide et lisible de ton activité chauffeur.',
       statsHeatmapPlaceholder:
-        'Heatmap annuelle et résumés (jour le plus actif, séries) seront affichés lorsque l’API statistiques sera connectée. Les indicateurs du haut restent calculés sur tes courses locales.',
+        'Les données annuelles détaillées s’afficheront dès que l’historique serveur sera disponible. Les indicateurs du haut restent calculés à partir des courses connues.',
       orgPageLead:
-        'Gérez votre flotte localement sur cet appareil. Les invitations sont simulées — branchement API à prévoir.',
+        'Gérez votre flotte, les invitations et les affectations depuis un même espace.',
       orgFleetCode: 'Code flotte',
       orgBase: 'Base',
       orgAdminEmail: 'Administrateur',
@@ -579,7 +579,8 @@ const TRANSLATIONS: Record<Language, Record<string, unknown>> = {
       orgProfileRatingLabel: 'Note moyenne',
       orgProfileRatingSuffix: 'avis',
       orgProfileReviewsTitle: 'Derniers avis',
-      orgProfileReviewsLead: 'Exemples illustratifs — branchement avis clients à prévoir.',
+      orgProfileReviewsLead: 'Les avis clients s’afficheront ici dès qu’ils seront disponibles.',
+      orgProfileReviewsEmpty: 'Aucun avis client disponible pour le moment.',
       orgProfileReview1Author: 'Marie L.',
       orgProfileReview1Body:
         'Chauffeur ponctuel, trajet impeccable. Je recommande cette flotte pour les courses en ville.',
@@ -616,7 +617,7 @@ const TRANSLATIONS: Record<Language, Record<string, unknown>> = {
         'Zone sensible : la suppression efface la flotte, les membres et les invitations enregistrés sur cet appareil.',
       fleetTitle: 'Gestion de flotte',
       fleetLead:
-        'Secteurs (Ouest, Sud, Est, Nord, Cilaos, etc.), véhicules et disponibilité — données locales sur cet appareil. À brancher sur votre outil métier ou API plus tard.',
+        'Secteurs (Ouest, Sud, Est, Nord, Cilaos, etc.), véhicules et disponibilité pour organiser votre flotte.',
       fleetFilterLabel: 'Filtrer par secteur',
       fleetFilterAll: 'Tous les secteurs',
       fleetSummaryTitle: 'Répartition (chauffeurs actifs)',
@@ -645,7 +646,7 @@ const TRANSLATIONS: Record<Language, Record<string, unknown>> = {
     },
     clientAccount: {
       title: 'Mon compte',
-      lead: 'Informations utilisées pour vos courses et votre contact avec les chauffeurs Palto. Données enregistrées sur cet appareil.',
+      lead: 'Informations utilisées pour vos courses et votre contact avec les chauffeurs Palto.',
       navOverview: "Vue d'ensemble",
       navPersonalInfo: 'Informations personnelles',
       navSecurity: 'Sécurité',
@@ -684,7 +685,7 @@ const TRANSLATIONS: Record<Language, Record<string, unknown>> = {
       save: 'Enregistrer',
       cancel: 'Annuler',
       recentTitle: 'Courses récentes',
-      recentRidesCaption: 'Historique local sur cet appareil.',
+      recentRidesCaption: 'Historique de vos courses Palto.',
       bookRide: 'Commander une course',
       rideDetailTitle: 'Récapitulatif de la course',
       rideDetailClose: 'Fermer',
@@ -749,7 +750,7 @@ const TRANSLATIONS: Record<Language, Record<string, unknown>> = {
         'Votre carte a été débitée de {amount}. Le chauffeur confirmera la réception du paiement dans son application — aucune action de votre part n’est requise.',
       rideEndReviewTitle: 'Votre avis',
       rideEndReviewHint:
-        'Note et commentaire sont une simulation : rien n’est envoyé au serveur pour le moment.',
+        'Votre note aide à suivre la qualité de la course.',
       rideEndStarsAria: 'Note sur 5',
       rideEndStarLabel: 'Noter {n} sur 5',
       rideEndCommentLabel: 'Commentaire (optionnel)',
@@ -765,14 +766,14 @@ const TRANSLATIONS: Record<Language, Record<string, unknown>> = {
       navPlaces: 'Lieux enregistrés',
       navWallet: 'Portefeuille',
       walletLead:
-        'Consultez votre solde et votre historique d’activité. Les montants sont stockés localement sur cet appareil (aucune transaction réelle).',
+        'Consultez votre solde et votre historique d’activité disponible.',
       walletBalanceTitle: 'Solde disponible',
       walletActivityNote:
-        'Les mouvements ci-dessous sont fictifs ; seul le solde peut être mis à jour via la simulation de recharge.',
+        'Les mouvements s’affichent dès qu’une activité de paiement est disponible.',
       walletMovementsTitle: 'Derniers mouvements',
-      walletSimulateTopup: 'Simuler une recharge (+5,00 €)',
+      walletSimulateTopup: 'Ajouter une recharge test (+5,00 €)',
       walletMov1: 'Course · Le Port → Saint-Denis',
-      walletMov2: 'Recharge portefeuille (simulation)',
+      walletMov2: 'Recharge portefeuille',
       walletMov3: 'Course · Saint-Pierre → Étang-Salé',
       walletOpen: 'Gérer le portefeuille',
       overviewWalletHint: 'Solde actuel : {balance}. Recharges et détail dans l’onglet Portefeuille.',
@@ -811,7 +812,7 @@ const TRANSLATIONS: Record<Language, Record<string, unknown>> = {
       settingsTextSizeValue: '{n} %',
       settingsNotificationsTitle: 'Notifications',
       settingsNotificationsHint:
-        'Canaux pour rappels et messages liés à vos courses (aucun envoi réel pour le moment ; préférences enregistrées sur cet appareil).',
+        'Canaux pour rappels et messages liés à vos courses.',
       settingsNotifyEmail: 'E-mail',
       settingsNotifySms: 'SMS',
       settingsNotifyPush: 'Notifications push',
@@ -819,13 +820,13 @@ const TRANSLATIONS: Record<Language, Record<string, unknown>> = {
       helpLead: 'Questions fréquentes et pistes pour obtenir de l’aide.',
       helpFaq1Q: 'Comment sont enregistrées mes données dans ce compte ?',
       helpFaq1A:
-        'Profil, sécurité et portefeuille sont stockés localement dans votre navigateur. Aucune synchronisation serveur pour ces écrans.',
+        'Les informations du compte sont enregistrées pour retrouver vos préférences et vos courses Palto.',
       helpFaq2Q: 'Comment consulter mes courses ?',
       helpFaq2A:
-        'Ouvrez l’onglet « Mes courses », puis touchez une ligne pour afficher le récapitulatif détaillé. Les courses affichées sont fictives.',
+        'Ouvrez l’onglet « Mes courses », puis touchez une ligne pour afficher le récapitulatif détaillé.',
       helpFaq3Q: 'Le solde du portefeuille est-il réel ?',
       helpFaq3A:
-        'Non : il s’agit d’une simulation locale. Le bouton « Simuler une recharge » augmente uniquement le solde fictif sur cet appareil.',
+        'Le solde reflète les informations actuellement disponibles dans votre compte.',
       helpContactHint:
         'Pour nous contacter, utilisez la page Contact du site Palto (menu ou pied de page depuis l’accueil).',
       deleteAccountTitle: 'Suppression du compte',
@@ -845,7 +846,7 @@ const TRANSLATIONS: Record<Language, Record<string, unknown>> = {
       deleteAccountApiRequired:
         'Connectez-vous avec un compte enregistré en ligne pour supprimer définitivement vos données.',
       placesLead:
-        'Enregistrez vos adresses habituelles pour remplir plus vite le départ ou l’arrivée sur une course. Données stockées sur cet appareil.',
+        'Enregistrez vos adresses habituelles pour remplir plus vite le départ ou l’arrivée sur une course.',
       placesHome: 'Domicile',
       placesWork: 'Travail',
       placesAddressLabel: 'Adresse',
@@ -1078,7 +1079,7 @@ const TRANSLATIONS: Record<Language, Record<string, unknown>> = {
       checkoutTotalAuth: 'Total authorized on card:',
       checkoutTotalEstimate: 'Estimated total:',
       checkoutTestCardAria: 'Stripe test card',
-      checkoutTestCardTitle: 'Test mode — fake card',
+      checkoutTestCardTitle: 'Stripe test mode',
       checkoutTestCardLead: 'No real money is charged. Use this card in the field below:',
       checkoutTestCardCopy: 'Copy number',
       checkoutTestCardCopied: 'Copied',
@@ -1173,8 +1174,8 @@ const TRANSLATIONS: Record<Language, Record<string, unknown>> = {
     chauffeurCompliance: {
       bannerTitle: 'Legal documents required',
       bannerLead:
-        'As a driver registered on this device, you must provide the items below before accepting or starting rides. Tick each line once the proof is submitted (local simulation).',
-      checklistLead: 'Tick each document once provided (real checks to be wired server-side).',
+        'As a Palto driver, you must provide the items below before accepting or starting rides.',
+      checklistLead: 'Tick each document once provided.',
       checklistAria: 'Mandatory documents list',
       allProvided: 'All documents are marked as provided — rides are unlocked.',
       complianceUploadHint:
@@ -1341,9 +1342,9 @@ const TRANSLATIONS: Record<Language, Record<string, unknown>> = {
       mainSubtitle: 'Your rides, schedule and operations in one place.',
       statsSubtitle: 'A quick, readable view of your driver activity.',
       statsHeatmapPlaceholder:
-        'The yearly heatmap and summaries (busiest day, streaks) will show when the statistics API is connected. The KPI cards above still reflect your local rides.',
+        'Detailed yearly data will appear when server history is available. The KPI cards above are calculated from known rides.',
       orgPageLead:
-        'Manage your fleet on this device. Invitations are simulated — API integration planned later.',
+        'Manage your fleet, invitations and assignments from one workspace.',
       orgFleetCode: 'Fleet code',
       orgBase: 'Base',
       orgAdminEmail: 'Administrator',
@@ -1384,7 +1385,8 @@ const TRANSLATIONS: Record<Language, Record<string, unknown>> = {
       orgProfileRatingLabel: 'Average rating',
       orgProfileRatingSuffix: 'reviews',
       orgProfileReviewsTitle: 'Latest reviews',
-      orgProfileReviewsLead: 'Illustrative samples — connect real customer reviews later.',
+      orgProfileReviewsLead: 'Customer reviews will appear here when available.',
+      orgProfileReviewsEmpty: 'No customer reviews available yet.',
       orgProfileReview1Author: 'Marie L.',
       orgProfileReview1Body:
         'Driver on time, smooth ride. I recommend this fleet for city trips.',
@@ -1420,7 +1422,7 @@ const TRANSLATIONS: Record<Language, Record<string, unknown>> = {
         'Sensitive area: deleting removes fleet data, members, and invitations stored on this device.',
       fleetTitle: 'Fleet management',
       fleetLead:
-        'Sectors (West, South, East, North, Cilaos, etc.), vehicles, and availability — local data on this device. Connect to your back office or API later.',
+        'Sectors (West, South, East, North, Cilaos, etc.), vehicles and availability to organize your fleet.',
       fleetFilterLabel: 'Filter by sector',
       fleetFilterAll: 'All sectors',
       fleetSummaryTitle: 'Active drivers by sector',
@@ -1449,7 +1451,7 @@ const TRANSLATIONS: Record<Language, Record<string, unknown>> = {
     },
     clientAccount: {
       title: 'My account',
-      lead: 'Information used for your rides and contact with Palto drivers. Data stored on this device.',
+      lead: 'Information used for your rides and contact with Palto drivers.',
       navOverview: 'Overview',
       navPersonalInfo: 'Personal information',
       navSecurity: 'Security',
@@ -1488,7 +1490,7 @@ const TRANSLATIONS: Record<Language, Record<string, unknown>> = {
       save: 'Save',
       cancel: 'Cancel',
       recentTitle: 'Recent rides',
-      recentRidesCaption: 'Local history on this device.',
+      recentRidesCaption: 'Your Palto ride history.',
       bookRide: 'Book a ride',
       rideDetailTitle: 'Ride summary',
       rideDetailClose: 'Close',
@@ -1552,7 +1554,7 @@ const TRANSLATIONS: Record<Language, Record<string, unknown>> = {
       rideEndCardHint:
         'Your card was charged {amount}. Your driver will confirm payment in their app — you do not need to do anything else.',
       rideEndReviewTitle: 'Your review',
-      rideEndReviewHint: 'Rating and comment are simulated; nothing is sent to a server yet.',
+      rideEndReviewHint: 'Your rating helps track ride quality.',
       rideEndStarsAria: 'Rating out of 5',
       rideEndStarLabel: 'Rate {n} out of 5',
       rideEndCommentLabel: 'Comment (optional)',
@@ -1568,14 +1570,14 @@ const TRANSLATIONS: Record<Language, Record<string, unknown>> = {
       navPlaces: 'Saved places',
       navWallet: 'Wallet',
       walletLead:
-        'View your balance and activity history. Amounts are stored locally on this device (no real payments).',
+        'View your available balance and activity history.',
       walletBalanceTitle: 'Available balance',
       walletActivityNote:
-        'The movements below are fictional; only the balance can change using the simulated top-up.',
+        'Movements appear when payment activity is available.',
       walletMovementsTitle: 'Recent activity',
-      walletSimulateTopup: 'Simulate top-up (+€5.00)',
+      walletSimulateTopup: 'Add test top-up (+€5.00)',
       walletMov1: 'Ride · Le Port → Saint-Denis',
-      walletMov2: 'Wallet top-up (simulation)',
+      walletMov2: 'Wallet top-up',
       walletMov3: 'Ride · Saint-Pierre → Étang-Salé',
       walletOpen: 'Manage wallet',
       overviewWalletHint: 'Current balance: {balance}. Top-ups and details in the Wallet tab.',
@@ -1614,7 +1616,7 @@ const TRANSLATIONS: Record<Language, Record<string, unknown>> = {
       settingsTextSizeValue: '{n}%',
       settingsNotificationsTitle: 'Notifications',
       settingsNotificationsHint:
-        'Channels for ride reminders and messages (nothing is sent yet; preferences stored on this device).',
+        'Channels for ride reminders and messages.',
       settingsNotifyEmail: 'Email',
       settingsNotifySms: 'SMS',
       settingsNotifyPush: 'Push notifications',
@@ -1622,13 +1624,13 @@ const TRANSLATIONS: Record<Language, Record<string, unknown>> = {
       helpLead: 'Frequently asked questions and where to get support.',
       helpFaq1Q: 'How is my account data stored?',
       helpFaq1A:
-        'Profile, security, and wallet data are stored locally in your browser. These screens are not synced to a server.',
+        'Account information is saved so you can find your Palto preferences and rides again.',
       helpFaq2Q: 'How do I view my rides?',
       helpFaq2A:
-        'Open the Rides tab, then tap a row for the full summary. Listed rides are fictional sample data.',
+        'Open the Rides tab, then tap a row for the full summary.',
       helpFaq3Q: 'Is the wallet balance real?',
       helpFaq3A:
-        'No — it is a local simulation only. “Simulate top-up” increases the fictional balance on this device.',
+        'The balance reflects the information currently available in your account.',
       helpContactHint: 'To reach us, use the Palto Contact page from the home menu or footer.',
       deleteAccountTitle: 'Delete account',
       deleteAccountLead:
@@ -1647,7 +1649,7 @@ const TRANSLATIONS: Record<Language, Record<string, unknown>> = {
       deleteAccountApiRequired:
         'Sign in with an online-registered account to permanently delete your data.',
       placesLead:
-        'Save your usual addresses to fill pickup or drop-off faster. Data is stored on this device.',
+        'Save your usual addresses to fill pickup or drop-off faster.',
       placesHome: 'Home',
       placesWork: 'Work',
       placesAddressLabel: 'Address',

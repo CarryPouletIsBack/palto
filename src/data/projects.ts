@@ -514,7 +514,7 @@ Grille 4 px : alignements pour boutons, champs et badges de statut sur le flux d
           'Go structures the flow into steps: locations → map & route → ride mode → drivers → recap → submit. Copy and states guide the user; enabling the API connects this flow to the driver schedule.',
 
         teamNote:
-          'Illustrative product copy: labels and metrics present the Palto positioning (moto-taxi, Réunion) without legacy client case studies.',
+          'Product note: labels and metrics present the Palto positioning (moto-taxi, Réunion) without legacy client case studies.',
 
         positionnementMatrix: {
           axisHorizontalPrefix: 'X Axis (Horizontal) ',

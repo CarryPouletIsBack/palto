@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 180 180" role="img" aria-label="Palto">
+  <rect width="180" height="180" rx="42" fill="#0f172a"/>
+  <circle cx="90" cy="90" r="58" fill="#f8fafc"/>
+  <path d="M68 124V56h30c16 0 27 10 27 25s-11 25-27 25H82v18H68zm14-31h15c9 0 14-5 14-12s-5-12-14-12H82v24z" fill="#0f172a"/>
+  <path d="M122 124l-18-24h16l19 24h-17z" fill="#f1582a"/>
+</svg>

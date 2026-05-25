@@ -55,6 +55,60 @@ html[data-app-theme='dark'] .palto-geo-prompt__body {
   justify-content: flex-end;
 }
 
+.palto-geo-prompt__actions .btn {
+  min-height: 40px;
+  padding: 10px 16px;
+  border-radius: 999px;
+  font-size: 0.9rem;
+  font-weight: 700;
+  line-height: 1.2;
+}
+
+.palto-geo-prompt__actions .btn-secondary {
+  background: #f8fafc;
+  border: 1px solid rgba(15, 23, 42, 0.18);
+  color: #0f172a;
+  backdrop-filter: none;
+}
+
+.palto-geo-prompt__actions .btn-secondary:hover {
+  background: #e2e8f0;
+  color: #0f172a;
+}
+
+.palto-geo-prompt__actions .btn-primary {
+  background: #0f172a;
+  border-color: #0f172a;
+  color: #ffffff;
+}
+
+.palto-geo-prompt__actions .btn-primary:hover {
+  background: #1e293b;
+  color: #ffffff;
+}
+
+html[data-app-theme='dark'] .palto-geo-prompt__actions .btn-secondary {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.2);
+  color: #f8fafc;
+}
+
+html[data-app-theme='dark'] .palto-geo-prompt__actions .btn-secondary:hover {
+  background: rgba(255, 255, 255, 0.14);
+  color: #ffffff;
+}
+
+html[data-app-theme='dark'] .palto-geo-prompt__actions .btn-primary {
+  background: #f8fafc;
+  border-color: #f8fafc;
+  color: #0f172a;
+}
+
+html[data-app-theme='dark'] .palto-geo-prompt__actions .btn-primary:hover {
+  background: #e2e8f0;
+  color: #0f172a;
+}
+
 @media (max-width: 480px) {
   .palto-geo-prompt__actions {
     flex-direction: column-reverse;

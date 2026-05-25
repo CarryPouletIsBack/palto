@@ -5,10 +5,10 @@ export function publicAssetPath(relativeFromPublic: string): string {
   return `${base}${path}`;
 }
 
-export const PLACEHOLDER_COVER = publicAssetPath('/images/placeholder-cover.svg');
-export const PLACEHOLDER_MEDIA = publicAssetPath('/images/placeholder-media.svg');
-export const PLACEHOLDER_ICON = publicAssetPath('/images/placeholder-icon.svg');
-export const PLACEHOLDER_LOGO = publicAssetPath('/images/placeholder-logo.svg');
+export const PLACEHOLDER_COVER = publicAssetPath('/images/palto-og.svg');
+export const PLACEHOLDER_MEDIA = publicAssetPath('/images/2948124.jpg');
+export const PLACEHOLDER_ICON = publicAssetPath('/images/palto-app-icon.svg');
+export const PLACEHOLDER_LOGO = publicAssetPath('/images/palto-app-icon.svg');
 export const PLACEHOLDER_PORTRAIT = publicAssetPath('/images/placeholder-portrait.svg');
 export const PLACEHOLDER_DECOR = publicAssetPath('/images/placeholder-decor.svg');
-export const PLACEHOLDER_APP_ICON = publicAssetPath('/images/placeholder-app-icon.svg');
+export const PLACEHOLDER_APP_ICON = publicAssetPath('/images/palto-app-icon.svg');

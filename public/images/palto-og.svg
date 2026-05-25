@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630" role="img" aria-label="Palto  courses à La Réunion">
+  <rect width="1200" height="630" fill="#0f172a"/>
+  <circle cx="1000" cy="88" r="220" fill="#f1582a" opacity="0.24"/>
+  <circle cx="150" cy="560" r="250" fill="#38bdf8" opacity="0.16"/>
+  <rect x="82" y="96" width="1036" height="438" rx="44" fill="#f8fafc"/>
+  <text x="142" y="230" fill="#0f172a" font-family="Inter, system-ui, sans-serif" font-size="88" font-weight="800">Palto</text>
+  <text x="146" y="314" fill="#334155" font-family="Inter, system-ui, sans-serif" font-size="40" font-weight="600">Courses et trajets clairs à La Réunion</text>
+  <path d="M154 410h660" stroke="#e2e8f0" stroke-width="8" stroke-linecap="round"/>
+  <circle cx="170" cy="410" r="18" fill="#0f172a"/>
+  <circle cx="500" cy="410" r="18" fill="#f1582a"/>
+  <circle cx="814" cy="410" r="18" fill="#0f172a"/>
+  <text x="146" y="482" fill="#64748b" font-family="Inter, system-ui, sans-serif" font-size="28">Réservation immédiate ou programmée</text>
+</svg>

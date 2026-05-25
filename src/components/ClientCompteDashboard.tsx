@@ -743,15 +743,6 @@ export default function ClientCompteDashboard({ onBack, onOpenClientLiveMeet }: 
     }
   }, [activeNav, activeClientEmail]);
 
-  const handleWalletSimulateTopup = useCallback(() => {
-    const email = activeClientEmail || undefined;
-    const current = loadClientWalletSnapshot(email);
-    const next = { balanceCents: current.balanceCents + 500 };
-    saveClientWalletSnapshot(next, email);
-    setWallet(next);
-    trackEvent('click', 'client_account', 'wallet_simulate_topup');
-  }, [activeClientEmail]);
-
   const refreshStripeWalletBalance = useCallback(async () => {
     if (!stripeOn || !isClientAuthenticated()) return;
     try {
@@ -3438,11 +3429,11 @@ export default function ClientCompteDashboard({ onBack, onOpenClientLiveMeet }: 
                       </button>
                     </div>
                   ) : (
-                    <div className="dashboard-payment-actions" style={{ marginTop: 8 }}>
-                      <button type="button" className="dashboard-user-edit-btn" onClick={handleWalletSimulateTopup}>
-                        {t('clientAccount.walletSimulateTopup')}
-                      </button>
-                    </div>
+                    <p className="dashboard-field-hint" style={{ marginTop: 8 }}>
+                      {isEn
+                        ? 'Online top-up will be available once card payments are enabled.'
+                        : 'La recharge en ligne sera disponible lorsque le paiement carte sera activé.'}
+                    </p>
                   )}
                   <p className="dashboard-field-hint" style={{ marginTop: 16 }}>
                     {stripeOn

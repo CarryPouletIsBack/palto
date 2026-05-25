@@ -5,7 +5,7 @@ Ce guide explique comment configurer le tracking Google Analytics avec `react-ga
 ## 📋 Prérequis
 
 - Un compte Google Analytics
-- Un ID de mesure (Measurement ID) : `G-MS120551E9`
+- Un ID de mesure (Measurement ID) : `G-XXXXXXXXXX`
 
 ## 🚀 Installation
 
@@ -18,7 +18,7 @@ La bibliothèque `react-ga4` est déjà installée dans le projet.
 Pour le développement local, ajoutez dans votre fichier `.env.local` :
 
 ```env
-VITE_GA_MEASUREMENT_ID=G-MS120551E9
+VITE_GA_MEASUREMENT_ID=G-XXXXXXXXXX
 ```
 
 ### 2. Variable d'environnement Vercel (Production)
@@ -37,7 +37,7 @@ VITE_GA_MEASUREMENT_ID=G-MS120551E9
 3. Allez dans **Settings** → **Environment Variables**
 4. Ajoutez une nouvelle variable :
    - **Nom** : `VITE_GA_MEASUREMENT_ID` ⚠️ **Avec le préfixe VITE_**
-   - **Valeur** : `G-MS120551E9`
+   - **Valeur** : `G-XXXXXXXXXX`
    - Cochez **Production**, **Preview** et **Development**
 5. Sauvegardez
 
@@ -91,7 +91,7 @@ Pour vérifier que Google Analytics fonctionne :
 1. Déployez votre application sur Vercel
 2. Visitez votre site
 3. Allez dans [Google Analytics](https://analytics.google.com/)
-4. Sélectionnez votre propriété (G-MS120551E9)
+4. Sélectionnez votre propriété (G-XXXXXXXXXX)
 5. Allez dans **Rapports** → **Temps réel**
 6. Vous devriez voir vos visites en temps réel
 

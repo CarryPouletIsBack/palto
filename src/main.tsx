@@ -7,7 +7,7 @@ import {
   applyUserFontScaleToDocument,
   loadClientAppPreferences,
 } from './constants/clientAppPreferencesStorage'
-import { initGA } from './services/googleAnalyticsTracking'
+import { initAnalytics } from './services/analytics'
 import './styles/globals.css'
 import './styles/app-theme.css'
 import './index.css'
@@ -38,7 +38,7 @@ async function unregisterStaleServiceWorkersInDev(): Promise<void> {
 void unregisterStaleServiceWorkersInDev()
 
 try {
-  initGA()
+  initAnalytics()
   const _initialPrefs = loadClientAppPreferences()
   applyAppThemeToDocument(_initialPrefs.theme)
   applyUserFontScaleToDocument(_initialPrefs.fontScalePercent)

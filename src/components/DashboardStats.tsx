@@ -13,18 +13,18 @@ export interface ChauffeurActivityStatsForView {
   acceptanceRate: number;
   cancellationRate: number;
   totalIncome: number;
-  rating: number;
-  onlineHoursWeek: number;
-  lastPayout: string;
+  rating: number | null;
+  onlineHoursWeek: number | null;
+  lastPayout: string | null;
 }
 
 export interface ChauffeurHeatmapStatsForView {
   totalWeeks: number;
   cells: number[][];
-  bestMonth: string;
-  bestDay: string;
-  longestStreak: string;
-  currentStreak: string;
+  bestMonth: string | null;
+  bestDay: string | null;
+  longestStreak: string | null;
+  currentStreak: string | null;
 }
 
 interface DashboardStatsProps {
@@ -44,6 +44,7 @@ function formatEur(value: number): string {
 const DashboardStats = ({ activity, heatmap }: DashboardStatsProps) => {
   const { t, language } = useLanguage();
   const isEn = language === 'en';
+  const unavailableLabel = isEn ? 'Not available' : 'Non disponible';
 
   const yearlyHeatmap = useMemo(() => {
     const monthLabels = ['J', 'F', 'M', 'A', 'M', 'J', 'J', 'A', 'S', 'O', 'N', 'D'];
@@ -71,10 +72,10 @@ const DashboardStats = ({ activity, heatmap }: DashboardStatsProps) => {
         weekdayLabels,
         cells: emptyCells,
         colorFor: colorForEmpty,
-        bestMonth: '—',
-        bestDay: '—',
-        longestStreak: '—',
-        currentStreak: '—',
+        bestMonth: unavailableLabel,
+        bestDay: unavailableLabel,
+        longestStreak: unavailableLabel,
+        currentStreak: unavailableLabel,
         heatmapEmpty: true as const,
       };
     }
@@ -100,13 +101,13 @@ const DashboardStats = ({ activity, heatmap }: DashboardStatsProps) => {
       weekdayLabels,
       cells,
       colorFor,
-      bestMonth: heatmap.bestMonth?.trim() || '—',
-      bestDay: heatmap.bestDay?.trim() || '—',
-      longestStreak: heatmap.longestStreak?.trim() || '—',
-      currentStreak: heatmap.currentStreak?.trim() || '—',
+      bestMonth: heatmap.bestMonth?.trim() || unavailableLabel,
+      bestDay: heatmap.bestDay?.trim() || unavailableLabel,
+      longestStreak: heatmap.longestStreak?.trim() || unavailableLabel,
+      currentStreak: heatmap.currentStreak?.trim() || unavailableLabel,
       heatmapEmpty: false as const,
     };
-  }, [heatmap]);
+  }, [heatmap, unavailableLabel]);
 
   const summary = [
     {
@@ -126,15 +127,27 @@ const DashboardStats = ({ activity, heatmap }: DashboardStatsProps) => {
     {
       key: 'online',
       label: 'En ligne',
-      value: `${activity.onlineHoursWeek} h`,
-      helper: 'sur 7 jours',
+      value:
+        typeof activity.onlineHoursWeek === 'number' && activity.onlineHoursWeek > 0
+          ? `${activity.onlineHoursWeek} h`
+          : unavailableLabel,
+      helper: isEn ? 'last 7 days' : 'sur 7 jours',
       icon: Clock3,
     },
     {
       key: 'rating',
       label: 'Note',
-      value: `${activity.rating.toFixed(2)} / 5`,
-      helper: `dernier versement : ${activity.lastPayout}`,
+      value:
+        typeof activity.rating === 'number' && activity.rating > 0
+          ? `${activity.rating.toFixed(2)} / 5`
+          : unavailableLabel,
+      helper: activity.lastPayout?.trim()
+        ? isEn
+          ? `Last payout: ${activity.lastPayout}`
+          : `Dernier versement : ${activity.lastPayout}`
+        : isEn
+          ? 'Payout data unavailable'
+          : 'Versement non disponible',
       icon: Star,
     },
   ] as const;
@@ -161,7 +174,7 @@ const DashboardStats = ({ activity, heatmap }: DashboardStatsProps) => {
         <div className="stats-chart-head">
           <h3>{isEn ? 'Annual activity' : 'Activité annuelle'}</h3>
           {yearlyHeatmap.heatmapEmpty ? (
-            <span className="stats-chart-head-badge">{isEn ? 'Not connected' : 'Non branché'}</span>
+            <span className="stats-chart-head-badge">{isEn ? 'Pending history' : 'Historique à venir'}</span>
           ) : null}
         </div>
         <div className="stats-heatmap-scroll">

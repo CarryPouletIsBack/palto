@@ -175,7 +175,7 @@ Si vous avez perdu le `CLIENT_SECRET`, vous ne pouvez pas le récupérer. Vous d
 
 - Vérifiez que le token est valide dans le localStorage
 - Vérifiez la console du navigateur pour les erreurs
-- Vérifiez que votre ID de propriété Google Analytics est correct (G-MS120551E9)
+- Vérifiez que votre ID de propriété Google Analytics est correct (G-XXXXXXXXXX)
 
 ## 📚 Ressources
 

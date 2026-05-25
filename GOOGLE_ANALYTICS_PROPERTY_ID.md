@@ -2,9 +2,9 @@
 
 ## ⚠️ Différence importante
 
-L'API Google Analytics Data API nécessite un **Property ID NUMÉRIQUE** (ex: `123456789`), **PAS** un Measurement ID (ex: `G-MS120551E9`).
+L'API Google Analytics Data API nécessite un **Property ID NUMÉRIQUE** (ex: `123456789`), **PAS** un Measurement ID (ex: `G-XXXXXXXXXX`).
 
-- ❌ **Measurement ID** : `G-MS120551E9` ou `MS120551E9` - Utilisé pour le tracking (react-ga4)
+- ❌ **Measurement ID** : `G-XXXXXXXXXX` ou `XXXXXXXXXX` - Utilisé pour le tracking (react-ga4)
 - ✅ **Property ID** : `123456789` (uniquement des chiffres) - Utilisé pour l'API Data
 
 ## 🔍 Comment trouver votre Property ID numérique
@@ -15,7 +15,7 @@ L'API Google Analytics Data API nécessite un **Property ID NUMÉRIQUE** (ex: `1
 2. **Allez dans Administration** (icône d'engrenage en bas à gauche)
 3. **Sélectionnez votre propriété** dans la colonne "Propriété"
 4. **Dans "Informations sur la propriété"**, vous verrez :
-   - **ID de mesure** : `G-MS120551E9` (c'est le Measurement ID, pas celui qu'on cherche)
+   - **ID de mesure** : `G-XXXXXXXXXX` (c'est le Measurement ID, pas celui qu'on cherche)
    - **ID de propriété** : `123456789` (c'est le Property ID numérique qu'il faut !)
 
 ### Méthode 2 : Via l'URL de Google Analytics
@@ -62,7 +62,7 @@ Puis redémarrez le dashboard.
 
 ## ⚠️ Erreurs courantes
 
-### Erreur : "valid property ID: MS120551E9. A numeric Property ID is required"
+### Erreur : "valid property ID: XXXXXXXXXX. A numeric Property ID is required"
 
 **Cause** : Vous utilisez un Measurement ID au lieu d'un Property ID numérique.
 

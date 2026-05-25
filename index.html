@@ -2,46 +2,33 @@
 <html lang="en" data-app-theme="light">
   <head>
     <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/images/placeholder-app-icon.svg" />
+    <link rel="icon" type="image/svg+xml" href="/images/palto-app-icon.svg" />
     <link rel="manifest" href="/manifest.json" />
-    <link rel="apple-touch-icon" href="/images/placeholder-app-icon.svg" />
+    <link rel="apple-touch-icon" href="/images/palto-app-icon.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-    <meta name="description" content="Palto — mobilité à La Réunion : carte, trajets, estimation de distance. Renseigner VITE_SITE_URL en production pour les métadonnées absolues (Open Graph)." />
-    <!-- Image de prévisualisation (Google, partage social) : placer le fichier dans public/og-image.png -->
-    <meta property="og:image" content="/images/placeholder-cover.svg" />
+    <meta name="description" content="Palto facilite les trajets à La Réunion : recherche de destination, estimation de course, réservation immédiate ou programmée." />
+    <meta property="og:image" content="/images/palto-og.svg" />
     <meta property="og:image:alt" content="Palto — mobilité à La Réunion" />
-    <meta property="og:title" content="Palto" />
-    <meta property="og:description" content="Carte, recherche de destination, itinéraires et outils d’estimation autour de la mobilité à La Réunion." />
+    <meta property="og:title" content="Palto — courses à La Réunion" />
+    <meta property="og:description" content="Recherche de destination, estimation et réservation de course à La Réunion." />
+    <meta property="og:type" content="website" />
     <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:image" content="/images/placeholder-cover.svg" />
+    <meta name="twitter:image" content="/images/palto-og.svg" />
     <meta name="twitter:image:alt" content="Palto — mobilité à La Réunion" />
     <title>Palto</title>
-    <!-- Contenu pour crawlers / IA (sans JS) : JSON relatif au domaine déployé -->
     <link rel="alternate" type="application/json" href="/projects-content.json" title="Projects content (crawlers & AI)" />
-    <!-- JSON-LD WebSite : remplacer l’URL par VITE_SITE_URL / domaine réel en prod si besoin -->
     <script type="application/ld+json">
     {
       "@context": "https://schema.org",
       "@type": "WebSite",
       "name": "Palto",
       "url": "/",
-      "description": "Mobilité à La Réunion — carte, trajets, estimation.",
+      "description": "Mobilité à La Réunion : recherche de destination, estimation et réservation de course.",
       "inLanguage": ["fr", "en"]
     }
     </script>
-    <!-- Google Tag Manager -->
-    <script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
-    new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
-    j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
-    'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
-    })(window,document,'script','dataLayer','GTM-MJ9VW6G4');</script>
-    <!-- End Google Tag Manager -->
   </head>
   <body>
-    <!-- Google Tag Manager (noscript) -->
-    <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-MJ9VW6G4"
-    height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
-    <!-- End Google Tag Manager (noscript) -->
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
   </body>

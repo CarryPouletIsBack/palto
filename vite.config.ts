@@ -19,7 +19,7 @@ export default defineConfig({
       registerType: 'autoUpdate',
       /** Manifest déjà servi depuis `public/manifest.json` (icônes, standalone). */
       manifest: false,
-      includeAssets: ['manifest.json', 'images/placeholder-app-icon.svg', 'images/placeholder-cover.svg'],
+      includeAssets: ['manifest.json', 'images/palto-app-icon.svg', 'images/palto-og.svg'],
       workbox: {
         skipWaiting: true,
         clientsClaim: true,

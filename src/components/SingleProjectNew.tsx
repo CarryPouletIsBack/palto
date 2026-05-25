@@ -2701,36 +2701,6 @@ const SingleProjectNew: FC<SingleProjectProps> = ({
     );
   }, [isGoProjectPage, chauffeursSearchOk, pickupFilteredDrivers]);
 
-  // JSON-LD CreativeWork pour que les IA et crawlers (avec JS) puissent lire le contenu du projet
-  useEffect(() => {
-    const baseUrl = (import.meta.env.VITE_SITE_URL as string) || (typeof window !== 'undefined' ? window.location.origin : '')
-    const slug = projectData.title.toLowerCase()
-    const urlFr = `${baseUrl.replace(/\/$/, '')}/fr/${slug}`
-    const urlEn = `${baseUrl.replace(/\/$/, '')}/en/${slug}`
-    const jsonLd = {
-      '@context': 'https://schema.org',
-      '@type': 'CreativeWork',
-      name: projectData.title,
-      description: projectData.summary,
-      author: { '@type': 'Organization', name: 'Palto' },
-      datePublished: projectData.year || undefined,
-      url: projectData.projectUrl || urlFr,
-      mainEntityOfPage: [{ '@id': urlFr }, { '@id': urlEn }],
-      inLanguage: ['fr', 'en'],
-    }
-    const script = document.createElement('script')
-    script.type = 'application/ld+json'
-    script.textContent = JSON.stringify(jsonLd)
-    script.id = 'project-json-ld'
-    document.head.appendChild(script)
-    return () => {
-      const el = document.getElementById('project-json-ld')
-      if (el) el.remove()
-    }
-  }, [projectData.title, projectData.summary, projectData.year, projectData.projectUrl])
-
-
-
   // Vérifier si on peut swiper (on peut toujours swiper depuis la barre)
   const canSwipe = useCallback(() => {
     if (isDesktopViewport) return false;

@@ -374,8 +374,8 @@
   display: block;
 }
 
-/* Style spécifique pour le logo SVG (fallback) */
-.logo img[src*="placeholder-logo.svg"] {
+/* Style spécifique pour le logo SVG Palto */
+.logo img[src*="palto-app-icon.svg"] {
   top: 4%;
   left: 9%;
   width: 50%;

@@ -411,8 +411,20 @@ async function handleStatsGet(res: VercelResponse, driverKey: string) {
     })
   )
   return res.status(200).json({
-    stats: { completed, cancelled, inProgress, pending, totalCourses: rows.length, acceptanceRate, cancellationRate, rating: 4.92, onlineHoursWeek: 36, totalIncome, lastPayout: '1 125 EUR · vendredi' },
-    heatmap: { totalWeeks: 52, cells, bestMonth: '—', bestDay: '—', longestStreak: '0j', currentStreak: '0j' },
+    stats: {
+      completed,
+      cancelled,
+      inProgress,
+      pending,
+      totalCourses: rows.length,
+      acceptanceRate,
+      cancellationRate,
+      rating: null,
+      onlineHoursWeek: null,
+      totalIncome,
+      lastPayout: null,
+    },
+    heatmap: { totalWeeks: 52, cells, bestMonth: null, bestDay: null, longestStreak: '0j', currentStreak: '0j' },
   })
 }
 

@@ -24,9 +24,10 @@ import {
   clampFontScalePercent,
   loadClientAppPreferences,
 } from './constants/clientAppPreferencesStorage'
-import { trackPageView, trackEvent } from './services/googleAnalyticsTracking'
+import { trackPageView, trackEvent } from './services/analytics'
 import { useLanguage } from './contexts/LanguageContext'
 import { purgeStaleLocalSnapshotsOnce } from './services/purgeStaleLocalSnapshots'
+import { absoluteUrl, getPageJsonLd, getPageSeo, getSeoPathForLang } from './seo/pageSeo'
 import './App.css'
 import { PLACEHOLDER_COVER } from './constants/imagePlaceholders'
 
@@ -283,31 +284,7 @@ function App() {
 
   /** Path pour une page et une langue donnée (pour hreflang SEO). */
   function getPathForLang(page: string, lang: 'fr' | 'en'): string {
-    const prefix = lang === 'en' ? '/en' : '/fr'
-    if (page === 'accueil' || page === '404') return prefix
-    if (page === 'accueil-chauffeur') return `${prefix}/chauffeur`
-    if (page === 'menu') return `${prefix}/menu`
-    if (page === 'contact') return `${prefix}/contact`
-    if (page === 'dashboard') return `${prefix}/dashboard`
-    if (page === 'client-meet-driver') return `${prefix}/compte/course`
-    if (page === 'client-compte') return `${prefix}/compte`
-    if (page === 'dashboard-navigation') {
-      return navigationCourseId
-        ? `${prefix}/dashboard/navigation/${encodeURIComponent(navigationCourseId)}`
-        : `${prefix}/dashboard`
-    }
-    if (page.startsWith('destination-')) {
-      const id = page.slice('destination-'.length)
-      if (!id) return prefix
-      return `${prefix}/lieu/${encodeURIComponent(id)}`
-    }
-    if (page.startsWith('project-')) {
-      const name = page.replace('project-', '')
-      const slug = name.toLowerCase()
-      if (slug === 'go') return `${prefix}/go`
-      return `${prefix}/project/${name}`
-    }
-    return prefix
+    return getSeoPathForLang(page, lang, navigationCourseId)
   }
 
   const openDriverNavigation = useCallback((courseId: string) => {
@@ -446,22 +423,47 @@ function App() {
     }
   }, [language, currentPage])
 
-  // SEO : canonical, hreflang + x-default (anglais par défaut pour public international / Linear)
+  // SEO : meta tags, canonical, hreflang et JSON-LD par page.
   const siteBaseUrl = (import.meta.env.VITE_SITE_URL as string) || (typeof window !== 'undefined' ? window.location.origin : '')
   useEffect(() => {
-    if (!siteBaseUrl || currentPage === 'dashboard' || currentPage === 'dashboard-navigation') return
+    if (!siteBaseUrl) return
     const base = siteBaseUrl.replace(/\/$/, '')
+    const seo = getPageSeo(currentPage, language, { navigationCourseId })
     const currentPath = getPathFromPage(currentPage)
     const canonicalUrl = `${base}${currentPath}`
 
-    // Canonical : URL propre de la page (évite duplicate content avec ?utm_* etc.)
-    let canonical = document.querySelector('link[rel="canonical"]') as HTMLLinkElement | null
-    if (!canonical) {
-      canonical = document.createElement('link')
-      canonical.rel = 'canonical'
-      document.head.appendChild(canonical)
+    const upsertMeta = (selector: string, attrs: Record<string, string>) => {
+      let el = document.querySelector(selector) as HTMLMetaElement | null
+      if (!el) {
+        el = document.createElement('meta')
+        document.head.appendChild(el)
+      }
+      Object.entries(attrs).forEach(([key, value]) => el?.setAttribute(key, value))
     }
-    canonical.href = canonicalUrl
+
+    const upsertLink = (selector: string, attrs: Record<string, string>) => {
+      let el = document.querySelector(selector) as HTMLLinkElement | null
+      if (!el) {
+        el = document.createElement('link')
+        document.head.appendChild(el)
+      }
+      Object.entries(attrs).forEach(([key, value]) => el?.setAttribute(key, value))
+    }
+
+    document.documentElement.lang = language
+    document.title = seo.title
+    upsertMeta('meta[name="description"]', { name: 'description', content: seo.description })
+    upsertMeta('meta[name="robots"]', { name: 'robots', content: seo.robots })
+    upsertMeta('meta[property="og:title"]', { property: 'og:title', content: seo.ogTitle || seo.title })
+    upsertMeta('meta[property="og:description"]', { property: 'og:description', content: seo.ogDescription || seo.description })
+    upsertMeta('meta[property="og:type"]', { property: 'og:type', content: seo.ogType || 'website' })
+    upsertMeta('meta[property="og:url"]', { property: 'og:url', content: canonicalUrl })
+    upsertMeta('meta[property="og:image"]', { property: 'og:image', content: absoluteUrl(base, seo.ogImage) })
+    upsertMeta('meta[name="twitter:card"]', { name: 'twitter:card', content: seo.twitterCard || 'summary_large_image' })
+    upsertMeta('meta[name="twitter:title"]', { name: 'twitter:title', content: seo.ogTitle || seo.title })
+    upsertMeta('meta[name="twitter:description"]', { name: 'twitter:description', content: seo.ogDescription || seo.description })
+    upsertMeta('meta[name="twitter:image"]', { name: 'twitter:image', content: absoluteUrl(base, seo.ogImage) })
+    upsertLink('link[rel="canonical"]', { rel: 'canonical', href: canonicalUrl })
 
     // hreflang
     const existing = document.querySelectorAll('link[rel="alternate"][hreflang]')
@@ -483,17 +485,24 @@ function App() {
     document.head.appendChild(linkFr)
     document.head.appendChild(linkEn)
     document.head.appendChild(linkDefault)
+
+    document.querySelectorAll('script[data-palto-json-ld="page"]').forEach((el) => el.remove())
+    getPageJsonLd(currentPage, language, base, { navigationCourseId }).forEach((entry, index) => {
+      const script = document.createElement('script')
+      script.type = 'application/ld+json'
+      script.dataset.paltoJsonLd = 'page'
+      script.id = `palto-page-json-ld-${index}`
+      script.textContent = JSON.stringify(entry)
+      document.head.appendChild(script)
+    })
+
     return () => {
       linkFr.remove()
       linkEn.remove()
       linkDefault.remove()
+      document.querySelectorAll('script[data-palto-json-ld="page"]').forEach((el) => el.remove())
     }
-  }, [currentPage, siteBaseUrl])
-
-  // Titre du document (onglet + SEO) à chaque changement de page
-  useEffect(() => {
-    document.title = getPageTitle(currentPage)
-  }, [currentPage, language])
+  }, [currentPage, language, navigationCourseId, siteBaseUrl])
 
   // Écouter le bouton Retour du navigateur
   useEffect(() => {
@@ -562,38 +571,7 @@ function App() {
 
   // Fonction helper pour obtenir le titre de la page
   const getPageTitle = (page: string): string => {
-    if (page === 'client-meet-driver') {
-      return language === 'en' ? 'Your driver — Palto' : 'Votre chauffeur — Palto'
-    }
-    const titles: Record<string, string> = {
-      accueil: 'Accueil — Palto',
-      'accueil-chauffeur': language === 'en' ? 'Drivers — Palto' : 'Chauffeurs — Palto',
-      menu: 'Menu — Palto',
-      contact: 'Contact — Palto',
-      dashboard: 'Dashboard — Palto',
-      'client-compte': 'Mon compte — Palto',
-      login: 'Connexion — Palto',
-    }
-
-    if (page === 'dashboard-navigation') {
-      return 'Navigation course — Palto'
-    }
-    
-    if (page.startsWith('project-')) {
-      const projectName = page.replace('project-', '')
-      return `${projectName} — Projet — Palto`
-    }
-
-    if (page.startsWith('destination-')) {
-      const id = page.replace('destination-', '')
-      const d = getDestinationById(id)
-      if (d) {
-        const label = language === 'en' ? d.titleEn : d.titleFr
-        return `${label} — Palto`
-      }
-    }
-
-    return titles[page] || 'Palto'
+    return getPageSeo(page, language, { navigationCourseId }).title
   }
 
   // Gestion des paramètres d'URL pour la navigation (sauf dashboard)
@@ -659,9 +637,8 @@ function App() {
       document.body.classList.remove('document-scroll-page')
     }
 
-    // Track page view avec Google Analytics
     const pageTitle = getPageTitle(currentPage)
-    trackPageView(`/${currentPage}`, pageTitle)
+    trackPageView(getPathFromPage(currentPage), pageTitle)
   }, [currentPage, previousPage, language])
 
   useEffect(() => {
