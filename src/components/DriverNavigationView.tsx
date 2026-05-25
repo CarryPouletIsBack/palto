@@ -470,9 +470,7 @@ export default function DriverNavigationView({ courseId, onClose }: Props) {
           return prev === next ? prev : next
         })
 
-        if (distRoute > 54) {
-          everDeviatedRef.current = true
-        }
+        if (distRoute > 54) everDeviatedRef.current = true
 
         const prev = lastTrackRef.current
         const moved = prev
@@ -482,7 +480,7 @@ export default function DriverNavigationView({ courseId, onClose }: Props) {
             )
           : 0
 
-        if (everDeviatedRef.current && moved > 11) {
+        if (moved > 11) {
           lastTrackRef.current = [lng, lat]
           setActualTrackCoords((c) => [...c, [lng, lat]])
         } else {

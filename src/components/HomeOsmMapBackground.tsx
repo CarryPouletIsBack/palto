@@ -148,6 +148,12 @@ type HomeMapBackgroundProps = {
   nearbyDrivers?: NearbyDriverMapPoint[]
   /** Position GPS passager (temps réel), pin distinct du point de prise en charge. */
   liveClientPosition?: GeoPoint | null
+  /** Position GPS chauffeur en navigation, distincte du pin départ. */
+  liveGpsPosition?: GeoPoint | null
+  /** Si vrai, la caméra suit la position GPS chauffeur. */
+  cameraFollowsLiveGps?: boolean
+  /** Tracé réellement suivi par le chauffeur, à comparer à l’itinéraire prévu. */
+  actualTrackFeature?: Feature<LineString> | null
   /** Clic sur la carte : choix d’une destination (hors contrôles UI). */
   onMapDestinationPick?: (longitude: number, latitude: number) => void
   /** Vue oblique + relief terrain (tuile raster-dem). */
@@ -171,6 +177,9 @@ export default function HomeOsmMapBackground({
   routeFeature = null,
   nearbyDrivers = [],
   liveClientPosition = null,
+  liveGpsPosition = null,
+  cameraFollowsLiveGps = false,
+  actualTrackFeature = null,
   onMapDestinationPick,
   view3D = false,
   enable3DEnvironment = false,
@@ -188,6 +197,9 @@ export default function HomeOsmMapBackground({
   const safeUserOrigin = isValidMapLngLat(resolvedUserOrigin) ? resolvedUserOrigin : null
   const safeDestination = isValidMapLngLat(selectedDestination) ? selectedDestination : null
   const safeLiveClient = isValidMapLngLat(liveClientPosition) ? liveClientPosition : null
+  const safeLiveGps = isValidMapLngLat(liveGpsPosition) ? liveGpsPosition : null
+  const safeLiveGpsLng = safeLiveGps?.longitude
+  const safeLiveGpsLat = safeLiveGps?.latitude
 
   const mapRef = useRef<MapRef>(null)
   const containerRef = useRef<HTMLDivElement>(null)
@@ -461,6 +473,18 @@ export default function HomeOsmMapBackground({
     if (!userCameraLocked) syncMapCamera()
   }, [autoCameraKey, userCameraLocked, syncMapCamera])
 
+  useEffect(() => {
+    const map = mapRef.current?.getMap()
+    if (!map || !cameraFollowsLiveGps || safeLiveGpsLng == null || safeLiveGpsLat == null) return
+    map.easeTo({
+      center: [safeLiveGpsLng, safeLiveGpsLat],
+      zoom: Math.max(map.getZoom(), 15.5),
+      pitch: pitchForMode(),
+      duration: 420,
+      essential: true,
+    })
+  }, [cameraFollowsLiveGps, pitchForMode, safeLiveGpsLng, safeLiveGpsLat])
+
   const handleRecenterRoute = useCallback(() => {
     setUserCameraLocked(false)
     syncMapCamera({ force: true })
@@ -614,6 +638,21 @@ export default function HomeOsmMapBackground({
             </Marker>
           ) : null}
 
+          {safeLiveGps ? (
+            <Marker
+              longitude={safeLiveGps.longitude}
+              latitude={safeLiveGps.latitude}
+              anchor="center"
+              style={{ pointerEvents: 'none' }}
+            >
+              <div
+                className="home-osm-map-gps-puck"
+                title="Position chauffeur"
+                aria-label="Position GPS chauffeur"
+              />
+            </Marker>
+          ) : null}
+
           {routeFeature ? (
             <Source id="home-route" type="geojson" data={routeFeature}>
               <Layer
@@ -625,6 +664,32 @@ export default function HomeOsmMapBackground({
                   'line-width': 5,
                   'line-opacity': 0.92,
                   'line-blur': 0.4,
+                }}
+              />
+            </Source>
+          ) : null}
+
+          {actualTrackFeature ? (
+            <Source id="home-actual-track" type="geojson" data={actualTrackFeature}>
+              <Layer
+                id="home-actual-track-casing"
+                type="line"
+                layout={{ 'line-join': 'round', 'line-cap': 'round' }}
+                paint={{
+                  'line-color': 'rgba(255, 255, 255, 0.92)',
+                  'line-width': 8,
+                  'line-opacity': 0.86,
+                }}
+              />
+              <Layer
+                id="home-actual-track-line"
+                type="line"
+                layout={{ 'line-join': 'round', 'line-cap': 'round' }}
+                paint={{
+                  'line-color': '#8b5cf6',
+                  'line-width': 5,
+                  'line-opacity': 0.94,
+                  'line-dasharray': [1.2, 0.8],
                 }}
               />
             </Source>

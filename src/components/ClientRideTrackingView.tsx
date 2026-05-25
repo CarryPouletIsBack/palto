@@ -170,6 +170,7 @@ export default function ClientRideTrackingView(props: ClientRideTrackingViewProp
 
   const [driverLngLat, setDriverLngLat] = useState<LngLat | null>(null);
   const [clientLngLat, setClientLngLat] = useState<LngLat | null>(null);
+  const [driverTrackCoords, setDriverTrackCoords] = useState<[number, number][]>([]);
   const [routeFeature, setRouteFeature] = useState<Feature<LineString> | null>(null);
   const [routeDurationMin, setRouteDurationMin] = useState<number | null>(null);
   const [loadingRoute, setLoadingRoute] = useState(Boolean(dropoffCoords));
@@ -182,6 +183,21 @@ export default function ClientRideTrackingView(props: ClientRideTrackingViewProp
   const lastClientSendRef = useRef(0);
 
   const useLiveGeo = Boolean(courseId && isRideGeoBroadcastEnabled());
+
+  useEffect(() => {
+    setDriverTrackCoords([]);
+  }, [courseId]);
+
+  const appendDriverTrackPoint = useCallback((point: LngLat) => {
+    setDriverTrackCoords((prev) => {
+      const next: [number, number] = [point.lng, point.lat];
+      const last = prev[prev.length - 1];
+      if (!last) return [next];
+      const moved = haversineMeters({ lng: last[0], lat: last[1] }, point);
+      if (moved < 11) return prev;
+      return [...prev, next];
+    });
+  }, []);
 
   const pickupOrigin = useMemo(
     () => ({ longitude: meetPickupCoords.lng, latitude: meetPickupCoords.lat }),
@@ -216,6 +232,15 @@ export default function ClientRideTrackingView(props: ClientRideTrackingViewProp
       },
     ];
   }, [driverLngLat, driverName, driverProfilePhotoUrl]);
+
+  const actualTrackFeature = useMemo((): Feature<LineString> | null => {
+    if (driverTrackCoords.length < 2) return null;
+    return {
+      type: 'Feature',
+      properties: {},
+      geometry: { type: 'LineString', coordinates: driverTrackCoords },
+    };
+  }, [driverTrackCoords]);
 
   /** Cadrage auto : prise en charge + arrivée uniquement (pas le chauffeur / GPS en direct). */
   const mapFlyTo = useMemo((): HomeMapFlyTo | null => {
@@ -276,9 +301,10 @@ export default function ClientRideTrackingView(props: ClientRideTrackingViewProp
     const found = pickDriverFromPresence(pos, driverName);
     if (found) {
       setDriverLngLat(found);
+      if (rideStatus === 'in_progress') appendDriverTrackPoint(found);
       lastDriverGeoAtRef.current = Date.now();
     }
-  }, [meetPickupCoords.lat, meetPickupCoords.lng, driverName]);
+  }, [appendDriverTrackPoint, meetPickupCoords.lat, meetPickupCoords.lng, driverName, rideStatus]);
 
   useEffect(() => {
     if (!useLiveGeo || !courseId) {
@@ -289,7 +315,9 @@ export default function ClientRideTrackingView(props: ClientRideTrackingViewProp
 
     void joinRideGeoRoom(courseId, (p: RideGeoPayload) => {
       if (p.role === 'driver') {
-        setDriverLngLat({ lng: p.lng, lat: p.lat });
+        const point = { lng: p.lng, lat: p.lat };
+        setDriverLngLat(point);
+        appendDriverTrackPoint(point);
         lastDriverGeoAtRef.current = Date.now();
       }
       if (p.role === 'client') {
@@ -310,7 +338,7 @@ export default function ClientRideTrackingView(props: ClientRideTrackingViewProp
       geoRoomRef.current = null;
       setLiveGeoActive(false);
     };
-  }, [courseId, useLiveGeo]);
+  }, [appendDriverTrackPoint, courseId, useLiveGeo]);
 
   useEffect(() => {
     if (!useLiveGeo || typeof navigator === 'undefined' || !navigator.geolocation) return;
@@ -493,11 +521,20 @@ export default function ClientRideTrackingView(props: ClientRideTrackingViewProp
           userOrigin={pickupOrigin}
           selectedDestination={dropoffDest}
           routeFeature={routeFeature}
+          actualTrackFeature={actualTrackFeature}
           nearbyDrivers={driverOnMap}
           liveClientPosition={liveClientPosition}
           view3D
           mapStyleUrl={OPENSTREET_OUTDOORS_STYLE_URL}
         />
+        {actualTrackFeature ? (
+          <div className="client-ride-tracking-map-legend" aria-live="polite">
+            <span className="client-ride-tracking-map-legend__planned" aria-hidden />
+            <span>Trajet prévu</span>
+            <span className="client-ride-tracking-map-legend__actual" aria-hidden />
+            <span>Trajet réel</span>
+          </div>
+        ) : null}
       </div>
 
       <header className="client-ride-tracking-header">

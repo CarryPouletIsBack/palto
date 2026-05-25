@@ -60,6 +60,45 @@
   pointer-events: none;
 }
 
+.client-ride-tracking-map-legend {
+  position: absolute;
+  left: 12px;
+  top: calc(max(10px, env(safe-area-inset-top, 0px)) + 48px);
+  z-index: 4;
+  display: grid;
+  grid-template-columns: auto auto;
+  align-items: center;
+  gap: 6px 8px;
+  padding: 9px 10px;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  border-radius: 12px;
+  background: rgba(15, 23, 42, 0.7);
+  color: #f8fafc;
+  font-size: 11px;
+  font-weight: 700;
+  backdrop-filter: blur(12px);
+  pointer-events: none;
+}
+
+.client-ride-tracking-map-legend__planned,
+.client-ride-tracking-map-legend__actual {
+  width: 24px;
+  height: 4px;
+  border-radius: 999px;
+}
+
+.client-ride-tracking-map-legend__planned {
+  background: #fb923c;
+}
+
+.client-ride-tracking-map-legend__actual {
+  background: repeating-linear-gradient(
+    90deg,
+    #8b5cf6 0 8px,
+    transparent 8px 12px
+  );
+}
+
 .client-ride-tracking-header {
   position: relative;
   z-index: 6;
