@@ -2171,7 +2171,7 @@ const Dashboard = ({
   const overviewNextCourse = useMemo(() => {
     const now = Date.now();
     return [...courseRows]
-      .filter((course) => course.statut !== 'Annulee' && course.statut !== 'Terminee')
+      .filter((course) => course.statut === 'Acceptee' || course.statut === 'En cours')
       .map((course) => ({
         course,
         ts: new Date(`${course.date}T${course.heure}:00`).getTime(),
