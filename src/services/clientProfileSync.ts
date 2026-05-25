@@ -103,10 +103,22 @@ export function scheduleClientProfilePush(email: string | undefined): void {
   if (pushTimer) clearTimeout(pushTimer)
   pushTimer = setTimeout(() => {
     pushTimer = null
-    const account = loadClientAccountSnapshot(key)
-    const savedPlaces = loadClientSavedPlaces(key)
-    void pushRemoteProfile(key, account, savedPlaces)
+    void pushClientProfileNow(key)
   }, 600)
+}
+
+/** Envoie immédiatement le snapshot local courant au serveur. */
+export async function pushClientProfileNow(email: string | undefined): Promise<boolean> {
+  if (!clientProfileSyncEnabled() || !isClientAuthenticated()) return false
+  const key = (email ?? '').trim().toLowerCase()
+  if (!key) return false
+  if (pushTimer) {
+    clearTimeout(pushTimer)
+    pushTimer = null
+  }
+  const account = loadClientAccountSnapshot(key)
+  const savedPlaces = loadClientSavedPlaces(key)
+  return pushRemoteProfile(key, account, savedPlaces)
 }
 
 async function runSyncClientProfileWithServer(email: string): Promise<void> {
@@ -122,10 +134,18 @@ async function runSyncClientProfileWithServer(email: string): Promise<void> {
   const remoteAccount = (remote.account ?? {}) as Partial<ClientAccountSnapshot>
   const remotePlaces = (remote.savedPlaces ?? {}) as Partial<ClientSavedPlacesSnapshot>
 
-  const mergedAccount = mergeClientAccountSnapshots(localAccount, remoteAccount)
+  // Le local est prioritaire pour les champs non vides : il contient les modifications
+  // utilisateur les plus récentes avant que le debounce/push réseau ait pu aboutir.
+  const mergedAccount = mergeClientAccountSnapshots(
+    remoteAccount as ClientAccountSnapshot,
+    localAccount
+  )
   mergedAccount.email = key
 
-  const mergedPlaces = mergeClientSavedPlacesSnapshots(localPlaces, remotePlaces)
+  const mergedPlaces = mergeClientSavedPlacesSnapshots(
+    remotePlaces as ClientSavedPlacesSnapshot,
+    localPlaces
+  )
 
   saveClientAccountSnapshot(mergedAccount, key)
   saveClientSavedPlaces(mergedPlaces, key)

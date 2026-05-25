@@ -127,7 +127,10 @@ import {
 } from '../constants/clientLiveMeetRide';
 import { clientDriverDisplayFromRideItem } from '../lib/clientDriverDisplay';
 import { cancelClientRide, clientRidesApiEnabled, fetchClientRides, type ClientRideItem } from '../services/clientRidesApi';
-import { scheduleClientProfilePush, syncClientProfileWithServer } from '../services/clientProfileSync';
+import {
+  pushClientProfileNow,
+  syncClientProfileWithServer,
+} from '../services/clientProfileSync';
 
 type ClientPlaceMapTarget =
   | { kind: 'domicile' }
@@ -1060,7 +1063,7 @@ export default function ClientCompteDashboard({ onBack, onOpenClientLiveMeet }: 
       }
       if (emailKey) {
         saveClientAccountSnapshot(nextProfile, emailKey);
-        scheduleClientProfilePush(emailKey);
+        void pushClientProfileNow(emailKey);
         if (typeof window !== 'undefined') {
           window.dispatchEvent(new CustomEvent(PALTO_CLIENT_SESSION_CHANGED_EVENT));
         }
@@ -1144,8 +1147,11 @@ export default function ClientCompteDashboard({ onBack, onOpenClientLiveMeet }: 
 
   const handleSetupCardSuccess = useCallback(() => {
     void refreshStripePaymentMethods().then(() => {
-      setProfile((p) => ({ ...p, preferredPayment: 'card' }));
-      setDraft((p) => ({ ...p, preferredPayment: 'card' }));
+      const nextProfile: ClientAccountSnapshot = { ...profile, preferredPayment: 'card' };
+      saveClientAccountSnapshot(nextProfile, activeClientEmail);
+      void pushClientProfileNow(activeClientEmail);
+      setProfile(nextProfile);
+      setDraft(nextProfile);
       setPaymentModalOpen(false);
       setSetupClientSecret(null);
       toast.success(
@@ -1157,7 +1163,7 @@ export default function ClientCompteDashboard({ onBack, onOpenClientLiveMeet }: 
         void startWalletTopUp();
       }
     });
-  }, [isEn, pendingWalletTopupEur, refreshStripePaymentMethods, startWalletTopUp]);
+  }, [activeClientEmail, isEn, pendingWalletTopupEur, profile, refreshStripePaymentMethods, startWalletTopUp]);
 
   const handleWalletTopUpSuccess = useCallback(() => {
     const piId = walletTopupPaymentIntentId;
@@ -1317,21 +1323,24 @@ export default function ClientCompteDashboard({ onBack, onOpenClientLiveMeet }: 
       },
     })
     setSavedPaymentMethods(next)
-    setProfile((p) => ({ ...p, preferredPayment: 'card' }))
-    setDraft((p) => ({ ...p, preferredPayment: 'card' }))
+    const nextProfile: ClientAccountSnapshot = { ...profile, preferredPayment: 'card' }
+    saveClientAccountSnapshot(nextProfile, activeClientEmail)
+    void pushClientProfileNow(activeClientEmail)
+    setProfile(nextProfile)
+    setDraft(nextProfile)
     setPaymentModalOpen(false)
     toast.success(
       isEn
         ? 'Card saved locally (preview). Online payment is completed on the Go page with Stripe.'
         : 'Carte enregistree localement (apercu). Le paiement en ligne se fait sur la page Go avec Stripe.'
     )
-  }, [activeClientEmail, isEn, paymentForm]);
+  }, [activeClientEmail, isEn, paymentForm, profile]);
 
   const savePlaces = useCallback(
     (e: FormEvent) => {
       e.preventDefault();
       saveClientSavedPlaces(placesDraft, activeClientEmail);
-      scheduleClientProfilePush(activeClientEmail);
+      void pushClientProfileNow(activeClientEmail);
       trackEvent('click', 'client_account', 'places_save');
       toast.success(isEn ? 'Saved places updated.' : 'Lieux enregistrés avec succès.');
       goNav('overview');
@@ -1398,7 +1407,7 @@ export default function ClientCompteDashboard({ onBack, onOpenClientLiveMeet }: 
         toast.error(t('clientAccount.photoStorageError'));
         return;
       }
-      scheduleClientProfilePush(activeClientEmail);
+      void pushClientProfileNow(activeClientEmail);
       setProfile(next);
       setIsEditing(false);
       if (typeof window !== 'undefined') {
@@ -1439,7 +1448,7 @@ export default function ClientCompteDashboard({ onBack, onOpenClientLiveMeet }: 
       toast.error(t('clientAccount.photoStorageError'));
       return;
     }
-    scheduleClientProfilePush(activeClientEmail);
+    void pushClientProfileNow(activeClientEmail);
     setProfile(next);
     setDraft(next);
     setPhotoDraftUrl(dataUrl);
