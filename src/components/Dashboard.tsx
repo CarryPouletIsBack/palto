@@ -670,15 +670,6 @@ const Dashboard = ({
   const paltoMenuRef = useRef<HTMLDivElement | null>(null);
   const topbarAccountMenuRef = useRef<HTMLDivElement | null>(null);
 
-  useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-    const requestedView = params.get('dashboardView');
-    if (requestedView === 'user') {
-      setActiveView('user');
-      setUserSubView('profile');
-    }
-  }, []);
-
   const [newCourseForm, setNewCourseForm] = useState({
     clientId: DASHBOARD_FALLBACK_CLIENT_ROW.id,
     date: new Date().toISOString().slice(0, 10),
@@ -3763,7 +3754,7 @@ const Dashboard = ({
                             className={`dashboard-org-nav-item${userSubView === 'profile' ? ' active' : ''}`}
                             onClick={() => setUserSubView('profile')}
                           >
-                            <User size={16} aria-hidden />
+                            <Car size={16} aria-hidden />
                             <span>Votre véhicule</span>
                           </button>
                           <button

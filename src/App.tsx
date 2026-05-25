@@ -362,7 +362,7 @@ function App() {
       const url =
         mode === 'signup'
           ? `${prefix}/dashboard?chauffeurSignup=1`
-          : `${prefix}/dashboard?dashboardView=user`
+          : `${prefix}/dashboard`
       window.history.pushState({}, '', url)
       setCurrentPage('dashboard')
     },
@@ -377,7 +377,7 @@ function App() {
       setClientAuthReturnPage(null)
       const openDashboard = role === 'chauffeur' || options?.preferDashboard === true
       if (openDashboard) {
-        window.history.pushState({}, '', `${prefix}/dashboard?dashboardView=user`)
+        window.history.pushState({}, '', `${prefix}/dashboard`)
         setCurrentPage('dashboard')
       } else {
         window.history.pushState({}, '', `${prefix}/compte`)
