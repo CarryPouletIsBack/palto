@@ -1694,9 +1694,9 @@ export default function ClientCompteDashboard({ onBack, onOpenClientLiveMeet }: 
               </button>
               <button
                 type="button"
-                className={`dashboard-nav-item${activeNav === 'privacy' ? ' active' : ''}`}
-                aria-current={activeNav === 'privacy' ? 'page' : undefined}
-                onClick={() => goNav('privacy')}
+                className="dashboard-nav-item dashboard-nav-item--disabled"
+                disabled
+                aria-disabled="true"
               >
                 <span className="nav-icon">
                   <FileLock size={18} />
@@ -2168,7 +2168,12 @@ export default function ClientCompteDashboard({ onBack, onOpenClientLiveMeet }: 
                       <span className="nav-icon" aria-hidden><Wallet size={16} /></span>
                       <span>{isEn ? 'Payment' : 'Paiement'}</span>
                     </button>
-                    <button type="button" className={`client-compte-account-nav-item${accountManageSection === 'privacy' ? ' is-active' : ''}`} onClick={() => openManageAccount('privacy')}>
+                    <button
+                      type="button"
+                      className="client-compte-account-nav-item client-compte-account-nav-item--disabled"
+                      disabled
+                      aria-disabled="true"
+                    >
                       <span className="nav-icon" aria-hidden><FileLock size={16} /></span>
                       <span>{isEn ? 'Data privacy' : 'Confidentialite de donnee'}</span>
                     </button>
@@ -2509,6 +2514,8 @@ export default function ClientCompteDashboard({ onBack, onOpenClientLiveMeet }: 
                         )}
                       </span>
                     </article>
+                    {accountManageSection !== 'security' ? (
+                      <>
                     <article
                       className="dashboard-user-card client-compte-bento-card client-compte-account-tile"
                       role="button"
@@ -2719,6 +2726,8 @@ export default function ClientCompteDashboard({ onBack, onOpenClientLiveMeet }: 
                         )}
                       </span>
                     </article>
+                      </>
+                    ) : null}
                   </section>
                   )}
                   <PaltoAccountDeleteBlock role="client" />

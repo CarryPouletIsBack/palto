@@ -1304,6 +1304,12 @@ html[data-app-theme='dark'] .client-compte-account-nav-item:hover {
   background: rgba(255, 255, 255, 0.06);
 }
 
+html[data-app-theme='dark'] .client-compte-account-nav-item--disabled,
+html[data-app-theme='dark'] .client-compte-account-nav-item--disabled:hover {
+  background: transparent;
+  color: var(--app-text-muted, #94a3b8);
+}
+
 html[data-app-theme='dark'] .client-compte-payment-card-head strong,
 html[data-app-theme='dark'] .client-compte-payment-delivery-title {
   color: var(--app-text-primary, #f1f5f9);
@@ -1476,6 +1482,17 @@ html[data-app-theme='dark'] .client-compte-account-edit-modal-input {
 
 .client-compte-account-nav-item:hover {
   background: rgba(15, 23, 42, 0.05);
+}
+
+.dashboard-container--client-compte .dashboard-nav-item--disabled,
+.client-compte-account-nav-item--disabled {
+  cursor: not-allowed;
+  opacity: 0.45;
+}
+
+.dashboard-container--client-compte .dashboard-nav-item--disabled:hover,
+.client-compte-account-nav-item--disabled:hover {
+  background: transparent;
 }
 
 .client-compte-account-nav-item:focus-visible {
@@ -1967,6 +1984,13 @@ html[data-app-theme='dark'] .palto-checkout-stripe--setup .palto-checkout-stripe
   html[data-app-theme='dark'] .client-compte-account-nav-item:hover {
     background: rgba(255, 255, 255, 0.06);
     color: var(--app-text-primary, #f1f5f9);
+  }
+
+  html[data-app-theme='dark'] .client-compte-account-nav-item--disabled,
+  html[data-app-theme='dark'] .client-compte-account-nav-item--disabled:hover {
+    background: transparent;
+    border-color: transparent;
+    color: var(--app-text-muted, #94a3b8);
   }
 }
 
