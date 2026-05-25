@@ -483,21 +483,39 @@ const SingleProjectNew: FC<SingleProjectProps> = ({
     () => pickupFilteredDrivers.find((d) => d.id === paltoRideSelectedDriverId) ?? null,
     [pickupFilteredDrivers, paltoRideSelectedDriverId]
   );
+  const estimatedRouteKmForPricing = useMemo(() => {
+    if (paltoRouteDistanceKm != null && Number.isFinite(paltoRouteDistanceKm) && paltoRouteDistanceKm > 0) {
+      return paltoRouteDistanceKm;
+    }
+    if (!pickupResolvedPoint || !paltoMapSelectedDestination) return null;
+    const directKm = haversineDistanceKm(pickupResolvedPoint, paltoMapSelectedDestination);
+    if (!Number.isFinite(directKm) || directKm <= 0) return null;
+    return directKm * 1.25;
+  }, [paltoRouteDistanceKm, pickupResolvedPoint, paltoMapSelectedDestination]);
   const computeDriverPriceTtc = useCallback(
     (driver: Pick<NearbyDriver, 'moto' | 'price' | 'ridePricing'>) =>
       estimateChauffeurFareTtc({
         ridePricing: driver.ridePricing,
-        routeKm: paltoRouteDistanceKm ?? null,
+        routeKm: estimatedRouteKmForPricing,
         elevationM: paltoRouteDeniveleEstimateM ?? 0,
         isNight: isNightRide,
         vehicleLabel: driver.moto,
         fallbackPriceEur: parsePriceEurFromDisplay(driver.price),
       }),
-    [paltoRouteDistanceKm, paltoRouteDeniveleEstimateM, isNightRide]
+    [estimatedRouteKmForPricing, paltoRouteDeniveleEstimateM, isNightRide]
+  );
+  const estimatedRideFareTtc = useMemo(
+    () =>
+      estimateChauffeurFareTtc({
+        routeKm: estimatedRouteKmForPricing,
+        elevationM: paltoRouteDeniveleEstimateM ?? 0,
+        isNight: isNightRide,
+        vehicleLabel: 'Moto',
+      }),
+    [estimatedRouteKmForPricing, paltoRouteDeniveleEstimateM, isNightRide]
   );
   const paltoPricing = useMemo(() => {
-    if (!paltoSelectedDriver) return null;
-    const totalTtc = computeDriverPriceTtc(paltoSelectedDriver);
+    const totalTtc = paltoSelectedDriver ? computeDriverPriceTtc(paltoSelectedDriver) : estimatedRideFareTtc;
     if (!Number.isFinite(totalTtc) || totalTtc <= 0) return null;
     const tvaRate = 0.2;
     const totalHt = totalTtc / (1 + tvaRate);
@@ -507,7 +525,7 @@ const SingleProjectNew: FC<SingleProjectProps> = ({
       tva: totalTva.toFixed(2),
       ttc: totalTtc.toFixed(2),
     };
-  }, [paltoSelectedDriver, computeDriverPriceTtc]);
+  }, [paltoSelectedDriver, computeDriverPriceTtc, estimatedRideFareTtc]);
 
   const paltoRecapPriceBreakdown = useMemo(() => {
     let driverEur = paltoPricing ? Number.parseFloat(paltoPricing.ttc) : NaN;
