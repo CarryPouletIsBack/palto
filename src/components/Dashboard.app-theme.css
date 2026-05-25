@@ -751,5 +751,49 @@ html[data-app-theme='dark'] .dashboard-container--chauffeur-account .dashboard-m
 
 html[data-app-theme='dark'] .dashboard-container--chauffeur-account .dashboard-user-card,
 html[data-app-theme='dark'] .dashboard-container--chauffeur-account .dashboard-user-subcard {
-  background: var(--app-surface-card);
+  background: var(--app-surface-card) !important;
+  border-color: var(--app-border-subtle) !important;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.35) !important;
+}
+
+html[data-app-theme='dark']
+  .dashboard-container--chauffeur.dashboard-container--chauffeur-account
+  .dashboard-ride-settings-edit-layout
+  .dashboard-panel {
+  background: var(--app-surface-card) !important;
+  border-color: var(--app-border-subtle) !important;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.35) !important;
+}
+
+html[data-app-theme='dark']
+  .dashboard-container--chauffeur.dashboard-container--chauffeur-account
+  .dashboard-user-card
+  .dashboard-ride-settings-form--flat
+  .dashboard-panel {
+  background: transparent !important;
+  border-color: transparent !important;
+  box-shadow: none !important;
+}
+
+html[data-app-theme='dark']
+  .dashboard-container--chauffeur.dashboard-container--chauffeur-account
+  .dashboard-user-card
+  .dashboard-ride-settings-form--flat
+  .dashboard-panel
+  + .dashboard-panel {
+  border-top-color: var(--app-border-subtle) !important;
+}
+
+html[data-app-theme='dark'] .dashboard-container--chauffeur .dashboard-chauffeur-profile-form input,
+html[data-app-theme='dark'] .dashboard-container--chauffeur .dashboard-chauffeur-profile-form select,
+html[data-app-theme='dark'] .dashboard-container--chauffeur .dashboard-ride-settings-form .dashboard-payment-edit-grid input,
+html[data-app-theme='dark'] .dashboard-container--chauffeur .dashboard-ride-settings-form .dashboard-payment-edit-grid select {
+  background: var(--app-surface-input) !important;
+  border-color: var(--app-border-subtle) !important;
+  color: var(--app-text-primary) !important;
+}
+
+html[data-app-theme='dark'] .dashboard-container--chauffeur .dashboard-chauffeur-profile-form input::placeholder,
+html[data-app-theme='dark'] .dashboard-container--chauffeur .dashboard-ride-settings-form .dashboard-payment-edit-grid input::placeholder {
+  color: var(--app-text-muted) !important;
 }

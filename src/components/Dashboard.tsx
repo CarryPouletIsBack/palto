@@ -2020,8 +2020,8 @@ const Dashboard = ({
 
   /** Chauffeur : pas de topbar type accueil (Palto / langue) — bouton user fixe sauf bandeau course. */
   const showChauffeurToolbarOnly = topbarLaunchCourse == null;
-  /** Compte chauffeur : avatar dans le pill, pas à côté. */
-  const isChauffeurAccountUserOnly = activeView === 'user' && showChauffeurToolbarOnly;
+  /** Compte chauffeur : bouton utilisateur photo seule sur toutes les vues du dashboard. */
+  const isChauffeurAccountUserOnly = showChauffeurToolbarOnly;
 
   const renderChauffeurTopbarAccountControl = (options?: {
     photoAside?: boolean;
