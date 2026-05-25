@@ -95,6 +95,12 @@ html[data-app-theme='dark'] .palto-checkout__payment--active {
   color: var(--sp-text);
 }
 
+html[data-app-theme='dark'] .palto-checkout__guest-btn--primary {
+  background: rgba(251, 146, 60, 0.12);
+  border-color: rgba(255, 140, 66, 0.55);
+  color: #fdba74;
+}
+
 /* Go mobile : fond du main — clair #fff dans SingleProject.css ; sombre = surface page. */
 @media (max-width: 768px) {
   html[data-app-theme='dark'] .single-project-page:has(.palto-ride-main) .main-single-project,

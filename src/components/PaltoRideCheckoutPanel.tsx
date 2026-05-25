@@ -19,6 +19,7 @@ export type PaltoRideCheckoutPanelProps = {
   onCustomerEmailChange: (value: string) => void
   onClientCommentChange: (value: string) => void
   clientLoggedInEmail?: string | null
+  onOpenClientAccountAuth?: (mode: 'login' | 'signup') => void
   stripeClientSecret: string | null
   stripeCustomerId?: string | null
   paymentMethod: RidePaymentMethod
@@ -40,6 +41,7 @@ export default function PaltoRideCheckoutPanel({
   onCustomerEmailChange,
   onClientCommentChange,
   clientLoggedInEmail,
+  onOpenClientAccountAuth,
   stripeClientSecret,
   stripeCustomerId: _stripeCustomerId,
   paymentMethod,
@@ -57,6 +59,11 @@ export default function PaltoRideCheckoutPanel({
   const showCardStep = Boolean(stripeClientSecret && stripePublishableKey())
   const pk = stripePublishableKey()
   const [savedCards, setSavedCards] = useState<ClientStripePaymentMethod[]>([])
+  const [guestModeSelected, setGuestModeSelected] = useState(false)
+
+  useEffect(() => {
+    if (clientLoggedInEmail) setGuestModeSelected(false)
+  }, [clientLoggedInEmail])
 
   useEffect(() => {
     if (!showCardStep || !clientStripeApiEnabled() || !clientLoggedInEmail) {
@@ -108,6 +115,33 @@ export default function PaltoRideCheckoutPanel({
       </div>
 
       <div className="palto-checkout__summary">{summary}</div>
+
+      {!showCardStep && !clientLoggedInEmail && !guestModeSelected ? (
+        <section className="palto-checkout__guest-choice" aria-label={t('search.checkoutGuestTitle')}>
+          <div>
+            <h3>{t('search.checkoutGuestTitle')}</h3>
+            <p>{t('search.checkoutGuestLead')}</p>
+          </div>
+          <div className="palto-checkout__guest-actions">
+            {onOpenClientAccountAuth ? (
+              <button
+                type="button"
+                className="palto-checkout__guest-btn palto-checkout__guest-btn--primary"
+                onClick={() => onOpenClientAccountAuth('login')}
+              >
+                {t('search.checkoutGuestLogin')}
+              </button>
+            ) : null}
+            <button
+              type="button"
+              className="palto-checkout__guest-btn"
+              onClick={() => setGuestModeSelected(true)}
+            >
+              {t('search.checkoutGuestContinue')}
+            </button>
+          </div>
+        </section>
+      ) : null}
 
       {!showCardStep && scheduledBooking ? (
         <div className="palto-checkout__field">

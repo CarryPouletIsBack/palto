@@ -3515,6 +3515,7 @@ const SingleProjectNew: FC<SingleProjectProps> = ({
                   clientLoggedInEmail={
                     isClientAuthenticated() ? getCurrentClientUser()?.email?.trim() || null : null
                   }
+                  onOpenClientAccountAuth={onOpenClientAccountAuth}
                   customerName={checkoutCustomerName}
                   customerEmail={checkoutCustomerEmail}
                   clientComment={checkoutClientComment}
