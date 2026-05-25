@@ -123,6 +123,7 @@ import {
 } from '../services/authService';
 import {
   buildClientLiveMeetRideFromRideItem,
+  getClientLiveMeetRideModel,
   saveClientLiveMeetRideModel,
 } from '../constants/clientLiveMeetRide';
 import { clientDriverDisplayFromRideItem } from '../lib/clientDriverDisplay';
@@ -847,8 +848,15 @@ export default function ClientCompteDashboard({ onBack, onOpenClientLiveMeet }: 
     [activeNav, isEditing, cancelEdit, isMobileViewport, language]
   );
 
-  const openClientRideTracking = useCallback(() => {
+  const openClientRideTracking = useCallback(async () => {
     if (!onOpenClientLiveMeet) return;
+    const storedModel = getClientLiveMeetRideModel();
+    if (storedModel) {
+      trackEvent('click', 'client_account', 'overview_ride_tracking');
+      onOpenClientLiveMeet();
+      return;
+    }
+
     const trackable = clientRides.find(
       (r) =>
         (r.status === 'accepted' || r.status === 'pending' || r.status === 'in_progress') &&
@@ -864,8 +872,31 @@ export default function ClientCompteDashboard({ onBack, onOpenClientLiveMeet }: 
         return;
       }
     }
+
+    if (activeClientEmail && clientRidesApiEnabled()) {
+      try {
+        const freshRides = await fetchClientRides(activeClientEmail, 'all');
+        const freshTrackable = freshRides.find(
+          (r) =>
+            (r.status === 'accepted' || r.status === 'pending' || r.status === 'in_progress') &&
+            typeof r.pickupLng === 'number' &&
+            typeof r.pickupLat === 'number'
+        );
+        const model = freshTrackable ? buildClientLiveMeetRideFromRideItem(freshTrackable) : null;
+        if (model) {
+          setClientRides(freshRides);
+          saveClientLiveMeetRideModel(model);
+          trackEvent('click', 'client_account', 'overview_ride_tracking');
+          onOpenClientLiveMeet();
+          return;
+        }
+      } catch (e) {
+        console.warn('[ClientCompteDashboard] ride tracking unavailable', e);
+      }
+    }
+
     goNav('courses');
-  }, [clientRides, onOpenClientLiveMeet, goNav]);
+  }, [activeClientEmail, clientRides, onOpenClientLiveMeet, goNav]);
 
   const openManageAccount = useCallback((section: AccountManageSectionId = 'personal') => {
     setAccountManageSection(section);
@@ -1906,7 +1937,7 @@ export default function ClientCompteDashboard({ onBack, onOpenClientLiveMeet }: 
                   tabIndex={0}
                   onClick={() => {
                     if (clientUpcomingRide || clientLiveMeetActive) {
-                      openClientRideTracking();
+                      void openClientRideTracking();
                       return;
                     }
                     goNav('courses');
@@ -1915,7 +1946,7 @@ export default function ClientCompteDashboard({ onBack, onOpenClientLiveMeet }: 
                     if (e.key !== 'Enter' && e.key !== ' ') return;
                     e.preventDefault();
                     if (clientUpcomingRide || clientLiveMeetActive) {
-                      openClientRideTracking();
+                      void openClientRideTracking();
                       return;
                     }
                     goNav('courses');
