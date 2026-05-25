@@ -46,6 +46,7 @@ import { POPULAR_DESTINATIONS, type PopularDestination } from '../data/popularDe
 import { clientRidesApiEnabled, fetchClientRides } from '../services/clientRidesApi';
 import PaltoGoPickupTimingSelect from './PaltoGoPickupTimingSelect';
 import ContactModal from './ContactModal';
+import ClientAuthPage from './ClientAuthPage';
 import { PaltoPaletteTable, PaltoTypescaleTable } from './PaltoDesignSystemTables';
 import CardSwap, { Card } from './CardSwap';
 import MagicBento from './MagicBento';
@@ -1742,6 +1743,7 @@ const SingleProjectNew: FC<SingleProjectProps> = ({
   );
   const [isRecapPopupOpen, setIsRecapPopupOpen] = useState(false);
   const [isCheckoutPopupOpen, setIsCheckoutPopupOpen] = useState(false);
+  const [isCheckoutAuthOpen, setIsCheckoutAuthOpen] = useState(false);
   const [checkoutCustomerName, setCheckoutCustomerName] = useState('');
   const [checkoutCustomerEmail, setCheckoutCustomerEmail] = useState('');
   const [checkoutClientComment, setCheckoutClientComment] = useState('');
@@ -1780,6 +1782,7 @@ const SingleProjectNew: FC<SingleProjectProps> = ({
   }, []);
   const closeCheckoutPopup = useCallback(() => {
     setIsCheckoutPopupOpen(false);
+    setIsCheckoutAuthOpen(false);
     setCheckoutError(null);
     setCheckoutStripeClientSecret(null);
     setCheckoutStripeCustomerId(null);
@@ -1787,16 +1790,16 @@ const SingleProjectNew: FC<SingleProjectProps> = ({
     setCheckoutPendingExternalCode(null);
   }, []);
 
-  useBodyScrollLock(isRecapPopupOpen || isCheckoutPopupOpen);
+  useBodyScrollLock(isRecapPopupOpen || isCheckoutPopupOpen || isCheckoutAuthOpen);
 
   /** Classe layout mobile Go quand modale récap/checkout ouverte. */
   useEffect(() => {
-    if (!isMobileGoViewport || (!isRecapPopupOpen && !isCheckoutPopupOpen)) return;
+    if (!isMobileGoViewport || (!isRecapPopupOpen && !isCheckoutPopupOpen && !isCheckoutAuthOpen)) return;
     document.body.classList.add('palto-go-ride-modal-open');
     return () => {
       document.body.classList.remove('palto-go-ride-modal-open');
     };
-  }, [isMobileGoViewport, isRecapPopupOpen, isCheckoutPopupOpen]);
+  }, [isMobileGoViewport, isRecapPopupOpen, isCheckoutPopupOpen, isCheckoutAuthOpen]);
 
   const mountGoRideOverlay = useCallback(
     (node: ReactNode) => {
@@ -3533,7 +3536,10 @@ const SingleProjectNew: FC<SingleProjectProps> = ({
                   clientLoggedInEmail={
                     isClientAuthenticated() ? getCurrentClientUser()?.email?.trim() || null : null
                   }
-                  onOpenClientAccountAuth={onOpenClientAccountAuth}
+                  onOpenClientAccountAuth={() => {
+                    setCheckoutError(null);
+                    setIsCheckoutAuthOpen(true);
+                  }}
                   customerName={checkoutCustomerName}
                   customerEmail={checkoutCustomerEmail}
                   clientComment={checkoutClientComment}
@@ -3640,6 +3646,37 @@ const SingleProjectNew: FC<SingleProjectProps> = ({
                 </div>
               </div>
             </div>
+            ) : null
+          )}
+          {mountGoRideOverlay(
+            isCheckoutAuthOpen ? (
+              <div
+                className={
+                  'palto-ride-recap-modal palto-ride-checkout-auth-modal' +
+                  (isMobileGoViewport ? ' palto-ride-recap-modal--mobile' : '')
+                }
+                role="dialog"
+                aria-modal="true"
+                aria-label="Connexion passager"
+              >
+                <div
+                  className="palto-ride-recap-modal__backdrop"
+                  onClick={() => setIsCheckoutAuthOpen(false)}
+                />
+                <div
+                  className="palto-ride-recap-modal__content palto-ride-checkout-auth-modal__content"
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  <ClientAuthPage
+                    onClose={() => setIsCheckoutAuthOpen(false)}
+                    onAuthSuccess={() => {
+                      setIsCheckoutAuthOpen(false);
+                      setClientSessionTick((n) => n + 1);
+                      setCheckoutError(null);
+                    }}
+                  />
+                </div>
+              </div>
             ) : null
           )}
         </div>

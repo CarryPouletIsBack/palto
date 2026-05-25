@@ -6228,6 +6228,31 @@ html[data-app-theme='dark'] .palto-ride-timing-expand__option:hover {
   width: 100%;
 }
 
+.palto-ride-checkout-auth-modal {
+  z-index: 12100;
+}
+
+.palto-ride-checkout-auth-modal__content {
+  width: min(520px, calc(100vw - 32px));
+  padding: 0;
+  overflow: visible;
+  background: transparent;
+  border: none;
+  box-shadow: none;
+}
+
+.palto-ride-checkout-auth-modal .auth-page-shell {
+  min-height: 0;
+  width: 100%;
+  padding: 0;
+  background: transparent;
+}
+
+.palto-ride-checkout-auth-modal .auth-page-card {
+  width: 100%;
+  max-height: min(760px, calc(100vh - 48px));
+}
+
 .palto-checkout {
   display: grid;
   gap: 12px;
@@ -7244,8 +7269,24 @@ html[data-app-theme='dark'] .palto-ride-timing-expand__option:hover {
       max(20px, env(safe-area-inset-bottom, 0px)) max(16px, env(safe-area-inset-left, 0px));
   }
 
+  .palto-ride-recap-modal--mobile .palto-ride-checkout-auth-modal__content {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: max(20px, env(safe-area-inset-top, 0px)) max(14px, env(safe-area-inset-right, 0px))
+      max(20px, env(safe-area-inset-bottom, 0px)) max(14px, env(safe-area-inset-left, 0px));
+  }
+
+  .palto-ride-recap-modal--mobile .palto-ride-checkout-auth-modal__content .auth-page-card {
+    max-height: calc(100vh - 40px - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px));
+  }
+
   html[data-app-theme='dark'] .palto-ride-recap-modal--mobile .palto-ride-recap-modal__content {
     background: var(--sp-card-surface, #1c1c1e);
+  }
+
+  html[data-app-theme='dark'] .palto-ride-recap-modal--mobile .palto-ride-checkout-auth-modal__content {
+    background: transparent;
   }
 
   .palto-ride-recap-modal--mobile .palto-ride-recap-modal__content .palto-ride-card__title {
