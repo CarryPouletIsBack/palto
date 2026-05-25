@@ -10,6 +10,7 @@ import Map, {
   type MapRef,
 } from 'react-map-gl/maplibre'
 import type { Feature, LineString } from 'geojson'
+import type { LayerSpecification, Map as MapLibreMap, SourceSpecification } from 'maplibre-gl'
 import 'maplibre-gl/dist/maplibre-gl.css'
 import './HomeOsmMapBackground.css'
 import { DEFAULT_USER_ORIGIN } from '../constants/defaultUserOrigin'
@@ -65,6 +66,8 @@ export type NearbyDriverMapPoint = {
 
 /** Source DEM relief — id dédié pour éviter les collisions avec le style. */
 const MAP_TERRAIN_SOURCE_ID = 'palto-terrain-dem'
+const MAP_HILLSHADE_LAYER_ID = 'palto-terrain-hillshade'
+const MAP_TERRAIN_EXAGGERATION = 1.45
 
 const MAP_PITCH_3D = 60
 
@@ -149,6 +152,8 @@ type HomeMapBackgroundProps = {
   onMapDestinationPick?: (longitude: number, latitude: number) => void
   /** Vue oblique + relief terrain (tuile raster-dem). */
   view3D?: boolean
+  /** Active le relief DEM + ciel. Utilisé aujourd’hui seulement par la navigation chauffeur. */
+  enable3DEnvironment?: boolean
   /** Style de carte optionnel (URL style JSON GL). */
   mapStyleUrl?: string
   /** Libellé du bouton « recadrer sur le trajet » après zoom manuel. */
@@ -168,6 +173,7 @@ export default function HomeOsmMapBackground({
   liveClientPosition = null,
   onMapDestinationPick,
   view3D = false,
+  enable3DEnvironment = false,
   mapStyleUrl,
   recenterRouteLabel = 'Voir le trajet',
 }: HomeMapBackgroundProps) {
@@ -203,6 +209,55 @@ export default function HomeOsmMapBackground({
 
   const pitchForMode = useCallback(() => (view3DRef.current ? MAP_PITCH_3D : HOME_MAP_INITIAL_VIEW.pitch), [])
 
+  const removeTerrainHillshade = useCallback((map: MapLibreMap) => {
+    try {
+      if (map.getLayer(MAP_HILLSHADE_LAYER_ID)) map.removeLayer(MAP_HILLSHADE_LAYER_ID)
+    } catch {
+      /* couche absente ou style en cours de changement */
+    }
+  }, [])
+
+  const applyDriver3DEnvironment = useCallback((map: MapLibreMap) => {
+    if (!map.getSource(MAP_TERRAIN_SOURCE_ID)) {
+      map.addSource(MAP_TERRAIN_SOURCE_ID, {
+        type: 'raster-dem',
+        tiles: ['https://s3.amazonaws.com/elevation-tiles-prod/terrarium/{z}/{x}/{y}.png'],
+        encoding: 'terrarium',
+        tileSize: 256,
+        maxzoom: 14,
+      } as SourceSpecification)
+    }
+
+    if (!map.getLayer(MAP_HILLSHADE_LAYER_ID)) {
+      map.addLayer({
+        id: MAP_HILLSHADE_LAYER_ID,
+        type: 'hillshade',
+        source: MAP_TERRAIN_SOURCE_ID,
+        paint: {
+          'hillshade-exaggeration': 0.24,
+          'hillshade-shadow-color': 'rgba(15, 23, 42, 0.34)',
+          'hillshade-highlight-color': 'rgba(255, 255, 255, 0.28)',
+          'hillshade-accent-color': 'rgba(148, 163, 184, 0.18)',
+        },
+      } as LayerSpecification)
+    }
+
+    map.setTerrain({
+      source: MAP_TERRAIN_SOURCE_ID,
+      exaggeration: MAP_TERRAIN_EXAGGERATION,
+    })
+
+    const skyApi = map as MapLibreMap & { setSky?: (sky: unknown) => void }
+    skyApi.setSky?.({
+      'sky-color': '#8cc9ff',
+      'sky-horizon-blend': 0.35,
+      'horizon-color': '#f8fafc',
+      'horizon-fog-blend': 0.45,
+      'fog-color': '#dbeafe',
+      'fog-ground-blend': 0.62,
+    })
+  }, [])
+
   const applyTerrainAndPitch = useCallback(() => {
     const map = mapRef.current?.getMap()
     if (!map || !map.isStyleLoaded()) return
@@ -212,6 +267,24 @@ export default function HomeOsmMapBackground({
       map.setTerrain(null)
     } catch {
       /* style ou source déjà présente côté carte */
+    }
+
+    if (!on || !enable3DEnvironment) {
+      removeTerrainHillshade(map)
+      const skyApi = map as MapLibreMap & { setSky?: (sky: unknown) => void }
+      try {
+        skyApi.setSky?.(null)
+      } catch {
+        /* API sky optionnelle selon la version MapLibre */
+      }
+    }
+
+    if (on && enable3DEnvironment) {
+      try {
+        applyDriver3DEnvironment(map)
+      } catch {
+        /* Le relief est une amélioration progressive : la carte reste utilisable sans DEM. */
+      }
     }
 
     try {
@@ -224,7 +297,7 @@ export default function HomeOsmMapBackground({
       duration: 520,
       essential: true,
     })
-  }, [])
+  }, [applyDriver3DEnvironment, enable3DEnvironment, removeTerrainHillshade])
 
   useEffect(() => {
     const map = mapRef.current?.getMap()

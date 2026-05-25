@@ -653,6 +653,7 @@ export default function DriverNavigationView({ courseId, onClose }: Props) {
             selectedDestination={destination}
             routeFeature={routeFeature}
             view3D={map3D}
+            enable3DEnvironment
             mapStyleUrl={OPENSTREET_OUTDOORS_STYLE_URL}
             skipCustomLandPaint
             showMapTint={false}
