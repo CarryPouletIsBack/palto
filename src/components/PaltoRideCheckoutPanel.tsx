@@ -24,6 +24,7 @@ export type PaltoRideCheckoutPanelProps = {
   paymentMethod: RidePaymentMethod
   onPaymentMethodChange: (value: RidePaymentMethod) => void
   cardPaymentAvailable?: boolean
+  scheduledBooking?: boolean
   checkoutError: string | null
   checkoutSuccessMessage: string | null
   onStripeSuccess: () => void
@@ -44,6 +45,7 @@ export default function PaltoRideCheckoutPanel({
   paymentMethod,
   onPaymentMethodChange,
   cardPaymentAvailable = true,
+  scheduledBooking = false,
   checkoutError,
   checkoutSuccessMessage,
   onStripeSuccess,
@@ -93,19 +95,28 @@ export default function PaltoRideCheckoutPanel({
         >
           1. {t('search.checkoutStepInfo')}
         </span>
-        <span
-          className={
-            'palto-checkout__step' +
-            (showCardStep ? ' palto-checkout__step--active' : ' palto-checkout__step--pending')
-          }
-        >
-          2. {t('search.checkoutStepCard')}
-        </span>
+        {!scheduledBooking ? (
+          <span
+            className={
+              'palto-checkout__step' +
+              (showCardStep ? ' palto-checkout__step--active' : ' palto-checkout__step--pending')
+            }
+          >
+            2. {t('search.checkoutStepCard')}
+          </span>
+        ) : null}
       </div>
 
       <div className="palto-checkout__summary">{summary}</div>
 
-      {!showCardStep ? (
+      {!showCardStep && scheduledBooking ? (
+        <div className="palto-checkout__field">
+          <span>{t('search.checkoutPaymentMethodLabel')}</span>
+          <p className="palto-checkout__lead palto-checkout__payment-hint">
+            {t('search.checkoutScheduledPaymentHint')}
+          </p>
+        </div>
+      ) : !showCardStep ? (
         <RidePaymentMethodPicker
           value={paymentMethod}
           onChange={onPaymentMethodChange}
@@ -113,7 +124,7 @@ export default function PaltoRideCheckoutPanel({
         />
       ) : null}
 
-      {!showCardStep && paymentMethod === 'card' ? (
+      {!showCardStep && !scheduledBooking && paymentMethod === 'card' ? (
         <p className="palto-checkout__lead">
           {stripeOn
             ? t('search.checkoutStripeLead', { fee: String(PALTO_PLATFORM_FEE_EUR) })

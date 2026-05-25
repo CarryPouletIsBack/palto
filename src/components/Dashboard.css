@@ -477,7 +477,7 @@
   max-width: none;
   margin: 0;
   min-height: 100vh;
-  background: #eef2f7;
+  background: var(--app-bg-page);
   position: relative;
   z-index: 1;
 }
@@ -490,9 +490,9 @@
 .dashboard-topbar {
   height: auto;
   min-height: 52px;
-  background: #ffffff;
+  background: var(--app-surface-card);
   border: none;
-  border-bottom: 1px solid #dbe3ee;
+  border-bottom: 1px solid var(--app-border-medium);
   border-radius: 0;
   display: flex;
   align-items: center;
@@ -837,8 +837,8 @@ html[data-app-theme='dark'] .dashboard-home-topbar-upcoming-btn {
   box-sizing: border-box;
   line-height: 0;
   flex-shrink: 0;
-  background: #e2e8f0;
-  border: 1px solid #cbd5e1;
+  background: var(--app-surface-muted);
+  border: 1px solid var(--app-border-medium);
 }
 
 .client-compte-topbar-user-btn__photo-shell--fill {
@@ -1590,8 +1590,8 @@ html[data-app-theme='dark'] .dashboard-home-topbar-upcoming-btn {
 }
 
 .dashboard-panel {
-  background: #ffffff;
-  border: 1px solid #e5e7eb;
+  background: var(--app-surface-card);
+  border: 1px solid var(--app-border-medium);
   border-radius: 12px;
   padding: 14px;
 }
@@ -1794,9 +1794,9 @@ button.dashboard-panel--overview-empty:focus-visible {
 }
 
 .dashboard-user-card {
-  border: 1px solid #e5e7eb;
+  border: 1px solid var(--app-border-medium);
   border-radius: 12px;
-  background: #ffffff;
+  background: var(--app-surface-card);
   padding: 14px;
 }
 
@@ -1876,7 +1876,7 @@ button.dashboard-panel--overview-empty:focus-visible {
 .dashboard-user-card-head h4 {
   margin: 0;
   font-size: 16px;
-  color: #111827;
+  color: var(--app-text-primary);
 }
 
 .dashboard-user-pane-separator {
@@ -1888,7 +1888,7 @@ button.dashboard-panel--overview-empty:focus-visible {
 .dashboard-user-card-head p {
   margin: 3px 0 0;
   font-size: 12px;
-  color: #6b7280;
+  color: var(--app-text-secondary);
 }
 
 .dashboard-user-grid {
@@ -1922,9 +1922,12 @@ button.dashboard-panel--overview-empty:focus-visible {
   gap: 6px;
   font-size: 12px;
   color: #374151;
+  min-width: 0;
 }
 
 .dashboard-user-edit-grid input {
+  width: 100%;
+  min-width: 0;
   height: 36px;
   border: 1px solid #d1d5db;
   border-radius: 8px;
@@ -1932,15 +1935,19 @@ button.dashboard-panel--overview-empty:focus-visible {
   font-size: 13px;
   color: #111827;
   background: #fff;
+  box-sizing: border-box;
 }
 
 .dashboard-phone-input-row {
   display: grid;
   grid-template-columns: minmax(0, 175px) minmax(0, 1fr);
   gap: 8px;
+  min-width: 0;
 }
 
 .dashboard-user-edit-grid select {
+  width: 100%;
+  min-width: 0;
   height: 36px;
   border: 1px solid #d1d5db;
   border-radius: 8px;
@@ -1948,6 +1955,7 @@ button.dashboard-panel--overview-empty:focus-visible {
   font-size: 13px;
   color: #111827;
   background: #fff;
+  box-sizing: border-box;
 }
 
 /* Formulaire profil chauffeur : champs utilisables sur iOS (Chrome/Safari) */
@@ -1981,6 +1989,14 @@ button.dashboard-panel--overview-empty:focus-visible {
   z-index: 2;
 }
 
+.dashboard-chauffeur-profile-form__phone {
+  grid-column: 1 / -1;
+}
+
+.dashboard-chauffeur-profile-form .dashboard-phone-input-row {
+  grid-template-columns: minmax(140px, 175px) minmax(160px, 1fr);
+}
+
 .dashboard-container--chauffeur .dashboard-chauffeur-profile-form input,
 .dashboard-container--chauffeur .dashboard-chauffeur-profile-form select {
   border: 1px solid #d1d5db !important;
@@ -2001,6 +2017,10 @@ button.dashboard-panel--overview-empty:focus-visible {
     font-size: 16px;
     min-height: 44px;
     line-height: 1.25;
+  }
+
+  .dashboard-chauffeur-profile-form .dashboard-phone-input-row {
+    grid-template-columns: 1fr;
   }
 }
 
@@ -5086,6 +5106,12 @@ button.dashboard-org-sidebar-brand--home:focus-visible {
 .dashboard-container--chauffeur select,
 .dashboard-container--chauffeur textarea {
   border: none;
+}
+
+.dashboard-container--chauffeur
+  .client-compte-topbar-user-btn--photo-only
+  .client-compte-topbar-user-btn__photo-shell--fill {
+  box-shadow: inset 0 0 0 1px var(--app-border-medium) !important;
 }
 
 /* Cartes overview chauffeur : sans bordure extérieure ; léger relief au survol */

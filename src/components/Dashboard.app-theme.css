@@ -728,3 +728,28 @@ html[data-app-theme='dark'] .planning-modal-head h3 {
     color: var(--app-text-primary);
   }
 }
+
+/* Chauffeur : bouton compte photo seule (cercle, sans bordure blanche parasite) */
+html[data-app-theme='dark'] .client-compte-topbar-user-btn--photo-only {
+  background: var(--app-surface-muted);
+  border-color: var(--app-border-medium);
+}
+
+html[data-app-theme='dark'] .client-compte-topbar-user-btn--photo-only .client-compte-topbar-user-btn__photo-shell--fill svg {
+  color: var(--app-text-muted);
+}
+
+html[data-app-theme='dark'] .dashboard-topbar--chauffeur-account-user-only {
+  background: transparent;
+  border-bottom-color: transparent;
+  box-shadow: none;
+}
+
+html[data-app-theme='dark'] .dashboard-container--chauffeur-account .dashboard-main {
+  background: var(--app-bg-page);
+}
+
+html[data-app-theme='dark'] .dashboard-container--chauffeur-account .dashboard-user-card,
+html[data-app-theme='dark'] .dashboard-container--chauffeur-account .dashboard-user-subcard {
+  background: var(--app-surface-card);
+}

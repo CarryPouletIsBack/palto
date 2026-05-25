@@ -244,7 +244,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   const driverAmountEur = b.amountEur
   const paltoFeeEur = PALTO_PLATFORM_FEE_EUR
   const totalEur = totalChargeEur(driverAmountEur, paltoFeeEur)
-  const paymentMethod: CoursePaymentMethod = parseCoursePaymentMethod(b.paymentMethod ?? 'cash')
+  const requestedPaymentMethod: CoursePaymentMethod = parseCoursePaymentMethod(b.paymentMethod ?? 'cash')
+  const paymentMethod: CoursePaymentMethod = b.bookingKind === 'scheduled' ? 'cash' : requestedPaymentMethod
   if (paymentMethod === 'card' && !isStripePaymentsEnabled()) {
     return res.status(400).json({
       error: 'Paiement par carte indisponible pour le moment. Choisissez le reglement en especes.',
@@ -315,6 +316,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       driver_amount_eur: driverAmountEur,
       palto_fee_eur: paltoFeeEur,
       total_charge_eur: totalEur,
+      payment_method: paymentMethod,
     },
   })
 

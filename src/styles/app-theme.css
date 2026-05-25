@@ -1,12 +1,13 @@
 /**
  * Thèmes Palto — source unique des couleurs « shell » (page, header, menu, recherche).
  *
- * Défaut : mode clair (`:root`).
- * Ancien rendu sombre : `<html data-app-theme="dark">` (toutes les variables ci-dessous redéfinies).
+ * Défaut : mode clair (`:root` / `data-app-theme="light"`).
+ * Sombre : `html[data-app-theme="dark"]`.
  *
- * Le dashboard / compte client (Dashboard.css) utilise encore beaucoup de couleurs en dur :
- * surcharges sous `html[data-app-theme='dark']` dans `src/components/Dashboard.app-theme.css`.
- * La page projet /go (SingleProject.css) : `src/components/SingleProject.app-theme.css`.
+ * Usage : `var(--app-surface-card)`, `var(--app-text-primary)`, etc.
+ * Ponts `html[data-app-theme='dark']` par fichier seulement si `--sp-*` ou cas Mapbox.
+ *
+ * Doc : docs/theme.md
  */
 
 :root,
@@ -19,6 +20,23 @@ html[data-app-theme='light'] {
   --app-text-muted: #475569;
   --app-text-hero: #0f172a;
   --app-border-subtle: rgba(15, 23, 42, 0.08);
+  --app-border-medium: rgba(15, 23, 42, 0.14);
+
+  /* Surfaces composants (cartes, champs, modales) */
+  --app-surface-card: #ffffff;
+  --app-surface-input: #ffffff;
+  --app-surface-elevated: #ffffff;
+  --app-surface-muted: #f1f5f9;
+  --app-surface-hover: #f8fafc;
+  --app-text-danger: #b42318;
+  --app-text-link: #2563eb;
+  --app-shadow-sm: 0 12px 30px rgba(2, 6, 23, 0.08);
+  --app-shadow-md: 0 14px 36px rgba(15, 23, 42, 0.12);
+  --app-overlay-scrim: rgba(15, 23, 42, 0.45);
+  --app-btn-primary-bg: #0f172a;
+  --app-btn-primary-text: #ffffff;
+  --app-btn-ghost-border: rgba(15, 23, 42, 0.2);
+  --app-btn-ghost-text: #0f172a;
 
   /* Menu actif (body) */
   --app-menu-active-bg: hsl(210, 18%, 96%);
@@ -83,6 +101,22 @@ html[data-app-theme='dark'] {
   --app-text-muted: rgba(255, 255, 255, 0.78);
   --app-text-hero: #ffffff;
   --app-border-subtle: rgba(255, 255, 255, 0.1);
+  --app-border-medium: rgba(255, 255, 255, 0.18);
+
+  --app-surface-card: #1c2433;
+  --app-surface-input: rgba(15, 20, 28, 0.85);
+  --app-surface-elevated: #232d3f;
+  --app-surface-muted: rgba(255, 255, 255, 0.06);
+  --app-surface-hover: rgba(255, 255, 255, 0.08);
+  --app-text-danger: #fca5a5;
+  --app-text-link: #93c5fd;
+  --app-shadow-sm: 0 12px 30px rgba(0, 0, 0, 0.35);
+  --app-shadow-md: 0 14px 36px rgba(0, 0, 0, 0.45);
+  --app-overlay-scrim: rgba(0, 0, 0, 0.55);
+  --app-btn-primary-bg: #f1f5f9;
+  --app-btn-primary-text: #0f1419;
+  --app-btn-ghost-border: rgba(255, 255, 255, 0.22);
+  --app-btn-ghost-text: #f1f5f9;
 
   --app-menu-active-bg: hsl(210, 10%, 5%);
 
@@ -154,4 +188,19 @@ html[data-app-theme='contrast'] {
 
   --app-menu-section-border: #000000;
   --app-menu-row-scrollbar: #000000;
+
+  --app-surface-card: #ffffff;
+  --app-surface-input: #ffffff;
+  --app-surface-elevated: #ffffff;
+  --app-surface-muted: #f3f4f6;
+  --app-surface-hover: #f3f4f6;
+  --app-text-danger: #b42318;
+  --app-text-link: #1d4ed8;
+  --app-shadow-sm: 0 4px 12px rgba(0, 0, 0, 0.12);
+  --app-shadow-md: 0 8px 24px rgba(0, 0, 0, 0.15);
+  --app-overlay-scrim: rgba(0, 0, 0, 0.5);
+  --app-btn-primary-bg: #000000;
+  --app-btn-primary-text: #ffffff;
+  --app-btn-ghost-border: #000000;
+  --app-btn-ghost-text: #000000;
 }

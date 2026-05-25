@@ -6627,9 +6627,9 @@ html[data-app-theme='dark'] .palto-ride-timing-expand__option:hover {
 
 @media (min-width: 769px) {
   .single-project-page:has(.palto-ride-main) .single-project-go-topbar-wrap .dashboard-topbar.dashboard-topbar--home-client {
-    background: #ffffff;
-    border-bottom: 1px solid #dbe3ee;
-    box-shadow: 0 1px 0 rgba(15, 23, 42, 0.06);
+    background: var(--app-surface-card);
+    border-bottom: 1px solid var(--app-border-medium);
+    box-shadow: var(--app-shadow-sm);
     padding-inline: 16px;
   }
 
@@ -6800,7 +6800,7 @@ html[data-app-theme='dark'] .palto-ride-timing-expand__option:hover {
 
   .single-project-page:has(.palto-ride-main) .main-single-project {
     gap: 0 !important;
-    background: #ffffff;
+    background: var(--sp-card-surface);
     flex: 1 1 auto;
     min-height: 0;
     height: auto;
@@ -6809,7 +6809,7 @@ html[data-app-theme='dark'] .palto-ride-timing-expand__option:hover {
   }
 
   .single-project-page:has(.palto-ride-main) .swipe-indicator-bar {
-    background: #ffffff;
+    background: var(--sp-card-surface);
   }
 
   /*
@@ -7418,15 +7418,11 @@ html[data-app-theme='dark'] .palto-ride-timing-expand__option:hover {
     flex-shrink: 0;
     margin: 0;
     padding-bottom: 10px;
-    background: #ffffff;
+    background: var(--sp-card-surface, #ffffff);
     pointer-events: none;
     isolation: isolate;
     overflow: visible;
-    box-shadow: 0 1px 0 rgba(15, 23, 42, 0.06);
-  }
-
-  html[data-app-theme='dark'] .single-project-page:has(.palto-ride-main) .palto-ride-mobile-floating-booking {
-    background: var(--sp-card-surface, #1c1c1e);
+    box-shadow: 0 1px 0 var(--sp-edge, rgba(15, 23, 42, 0.06));
   }
 
   .single-project-page:has(.palto-ride-main) .palto-ride-mobile-floating-booking .palto-ride-route-card {
@@ -7445,7 +7441,7 @@ html[data-app-theme='dark'] .palto-ride-timing-expand__option:hover {
     font-weight: 700;
     line-height: 1.12;
     letter-spacing: -0.02em;
-    color: #0f172a;
+    color: var(--sp-text, #0f172a);
     text-shadow: none;
   }
 
@@ -7483,11 +7479,7 @@ html[data-app-theme='dark'] .palto-ride-timing-expand__option:hover {
     font-size: 15px;
     line-height: 1.45;
     font-weight: 400;
-    color: #475569;
-  }
-
-  html[data-app-theme='dark'] .single-project-page:has(.palto-ride-main) .palto-ride-mobile-floating-booking__lead {
-    color: #94a3b8;
+    color: var(--sp-text-subtle, #475569);
   }
 
   .single-project-page:has(.palto-ride-main) .palto-ride-mobile-floating-booking--choose-ride {
@@ -7519,11 +7511,6 @@ html[data-app-theme='dark'] .palto-ride-timing-expand__option:hover {
 
   .palto-go-driver-confirm-bar__cta.btn {
     width: 100%;
-  }
-
-  html[data-app-theme='dark'] .single-project-page:has(.palto-ride-main) .palto-ride-mobile-floating-booking__title {
-    color: #0f172a;
-    text-shadow: none;
   }
 
   .single-project-page:has(.palto-ride-main) .palto-ride-mobile-floating-booking > * {

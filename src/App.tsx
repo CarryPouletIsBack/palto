@@ -17,7 +17,7 @@ import Menu from './components/Menu'
 import { DestinationSpotlight } from './components/DestinationSpotlight'
 import { GeolocationPromptBanner } from './components/GeolocationPromptBanner'
 import { getDestinationById, type PopularDestination } from './data/popularDestinations'
-import { Toaster } from 'sonner'
+import { AppToaster } from './components/AppToaster'
 import { isAuthenticated, isClientAuthenticated, type AccountRole } from './services/authService'
 import {
   FONT_SCALE_CHANGED_EVENT,
@@ -999,7 +999,7 @@ function App() {
     <div className={`container ${currentPage === 'menu' ? 'menu-active' : ''}`}>
       <AnalyticsGuard />
       <GeolocationPromptBanner />
-      <Toaster position="bottom-right" theme="light" />
+      <AppToaster />
       {currentPage !== 'dashboard' &&
         currentPage !== 'dashboard-navigation' &&
         currentPage !== 'client-compte' &&

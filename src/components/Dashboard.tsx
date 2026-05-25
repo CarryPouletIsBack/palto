@@ -3914,7 +3914,7 @@ const Dashboard = ({
                                 saveUserProfileEdit();
                               }}
                             >
-                                <label>
+                                <label className="dashboard-chauffeur-profile-form__phone">
                                   Téléphone
                                   <div className="dashboard-phone-input-row">
                                     <select

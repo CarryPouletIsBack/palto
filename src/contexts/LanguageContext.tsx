@@ -233,6 +233,8 @@ const TRANSLATIONS: Record<Language, Record<string, unknown>> = {
         'Autorisation sur votre carte en fin de commande (sans débit immédiat). Commission Palto incluse dans le total autorisé.',
       checkoutPaymentCashHint:
         'Vous réglez le tarif chauffeur en espèces à la fin de la course (pas de prélèvement carte).',
+      checkoutScheduledPaymentHint:
+        'Aucune autorisation carte au moment de la réservation programmée. Le paiement sera confirmé avec le chauffeur après acceptation.',
       checkoutLead: 'Vérifiez le récapitulatif, puis validez votre commande.',
       checkoutLoggedInAs: 'Compte passager : {email}',
       checkoutStepsAria: 'Étapes de commande',
@@ -1035,6 +1037,8 @@ const TRANSLATIONS: Record<Language, Record<string, unknown>> = {
         'Card authorization at checkout (no immediate charge). Palto fee is included in the authorized total.',
       checkoutPaymentCashHint:
         'Pay the driver fare in cash at the end of the ride (no card charge).',
+      checkoutScheduledPaymentHint:
+        'No card authorization is required when scheduling. Payment is confirmed with the driver after acceptance.',
       checkoutLead: 'Review your trip summary, then confirm your booking.',
       checkoutLoggedInAs: 'Passenger account: {email}',
       checkoutStepsAria: 'Booking steps',

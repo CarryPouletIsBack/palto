@@ -14,8 +14,8 @@
   justify-content: center;
   font-size: 14px;
   font-weight: 700;
-  background: #e2e8f0;
-  color: #334155;
+  background: var(--app-surface-muted);
+  color: var(--app-text-primary);
 }
 
 .client-driver-meet-card__avatar--photo {
@@ -32,19 +32,19 @@
   margin: 0;
   font-size: 15px;
   font-weight: 700;
-  color: #0f172a;
+  color: var(--app-text-primary);
 }
 
 .client-driver-meet-card__vehicle {
   margin: 4px 0 0;
   font-size: 13px;
-  color: #475569;
+  color: var(--app-text-secondary);
 }
 
 .client-driver-meet-card__meta {
   margin: 4px 0 0;
   font-size: 12px;
-  color: #64748b;
+  color: var(--app-text-muted);
 }
 
 .client-driver-meet-card__plate {
@@ -109,32 +109,17 @@
   margin-bottom: 0;
   padding: 12px;
   border-radius: 12px;
-  background: #ffffff;
-  border: 1px solid rgba(15, 23, 42, 0.1);
+  background: var(--app-surface-card);
+  border: 1px solid var(--app-border-subtle);
   align-items: center;
 }
 
 .client-driver-meet-card--compte {
   padding: 12px;
   border-radius: 12px;
-  background: var(--app-bg-subtle, #f8fafc);
-  border: 1px solid rgba(15, 23, 42, 0.08);
+  background: var(--app-surface-muted);
+  border: 1px solid var(--app-border-subtle);
   align-items: center;
-}
-
-html[data-app-theme='dark'] .client-driver-meet-card--tracking,
-html[data-app-theme='dark'] .client-driver-meet-card--compte {
-  background: rgba(30, 41, 59, 0.9);
-  border-color: rgba(255, 255, 255, 0.12);
-}
-
-html[data-app-theme='dark'] .client-driver-meet-card__name {
-  color: #f8fafc;
-}
-
-html[data-app-theme='dark'] .client-driver-meet-card__vehicle,
-html[data-app-theme='dark'] .client-driver-meet-card__phone {
-  color: #cbd5e1;
 }
 
 html[data-app-theme='dark'] .client-driver-meet-card__call {

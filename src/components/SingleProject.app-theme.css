@@ -101,4 +101,23 @@ html[data-app-theme='dark'] .palto-checkout__payment--active {
   html[data-app-theme='dark'] .single-project-page:has(.palto-ride-main) .swipe-indicator-bar {
     background: var(--sp-bg);
   }
+
+  html[data-app-theme='dark'] .single-project-page:has(.palto-ride-main) .palto-ride-column--map,
+  html[data-app-theme='dark'] .single-project-page:has(.palto-ride-main) .palto-ride-column--booking {
+    background: var(--sp-bg);
+  }
+
+  html[data-app-theme='dark'] .single-project-page:has(.palto-ride-main) .palto-checkout-modal__sheet,
+  html[data-app-theme='dark'] .single-project-page:has(.palto-ride-main) .palto-ride-recap-modal__sheet {
+    background: var(--sp-card-surface);
+    color: var(--sp-text);
+  }
+}
+
+html[data-app-theme='dark'] .destination-spotlight.single-project-page {
+  box-shadow: 0 -4px 28px rgba(0, 0, 0, 0.55);
+}
+
+html[data-app-theme='dark'] .destination-spotlight .destination-spotlight-cover {
+  border-bottom-color: var(--sp-edge);
 }

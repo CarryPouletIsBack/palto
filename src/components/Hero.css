@@ -155,7 +155,7 @@ body.document-scroll-page .page.active:not(.single-project-page):has(.dashboard-
 }
 
 .hero-topbar-auth-sep {
-  color: #94a3b8;
+  color: var(--app-text-muted);
   font-size: 12px;
   user-select: none;
 }
@@ -167,14 +167,14 @@ body.document-scroll-page .page.active:not(.single-project-page):has(.dashboard-
   font-family: 'Inter', sans-serif;
   font-size: 13px;
   font-weight: 600;
-  color: #0f172a;
+  color: var(--app-text-primary);
   cursor: pointer;
   border-radius: 6px;
 }
 
 .hero-topbar-auth-link:hover {
-  background: #f1f5f9;
-  color: #0f172a;
+  background: var(--app-surface-hover);
+  color: var(--app-text-primary);
 }
 
 .hero-main {

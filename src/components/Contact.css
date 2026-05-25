@@ -1,8 +1,8 @@
 .contact-page {
   min-height: 100vh;
   padding: 100px 48px 48px 48px;
-  background: var(--sp-bg, #09090b);
-  color: rgba(244, 244, 245, 1);
+  background: var(--app-bg);
+  color: var(--app-text-primary);
 }
 
 .contact-page-inner {
@@ -13,7 +13,7 @@
 .contact-back {
   background: none;
   border: none;
-  color: rgba(161, 161, 170, 1);
+  color: var(--app-text-secondary);
   font-size: 14px;
   cursor: pointer;
   margin-bottom: 24px;
@@ -21,17 +21,18 @@
 }
 
 .contact-back:hover {
-  color: rgba(244, 244, 245, 1);
+  color: var(--app-text-primary);
 }
 
 .contact-title {
   font-size: 28px;
   font-weight: 600;
   margin: 0 0 8px 0;
+  color: var(--app-text-primary);
 }
 
 .contact-subtitle {
   font-size: 15px;
-  color: rgba(161, 161, 170, 1);
+  color: var(--app-text-secondary);
   margin: 0 0 32px 0;
 }
