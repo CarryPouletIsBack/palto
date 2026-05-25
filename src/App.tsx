@@ -58,6 +58,7 @@ function App() {
   /** Id course pour `/dashboard/navigation/:id` */
   const [navigationCourseId, setNavigationCourseId] = useState<string | null>(null)
   const [previousPage, setPreviousPage] = useState('accueil')
+  const [clientAuthReturnPage, setClientAuthReturnPage] = useState<string | null>(null)
   const [currentProjectImage, setCurrentProjectImage] = useState<string | null>(null)
   const [currentProjectCategory, setCurrentProjectCategory] = useState<string | null>(null)
   const [projectSwipeY, setProjectSwipeY] = useState(0)
@@ -328,7 +329,10 @@ function App() {
       const prefix = language === 'en' ? '/en' : '/fr'
       const base = `${prefix}/compte`
       const url = mode === 'signup' ? `${base}?clientSignup=1` : base
-      setPreviousPage(currentPage)
+      setClientAuthReturnPage(currentPage)
+      if (!currentPage.startsWith('project-') && currentPage !== 'project') {
+        setPreviousPage(currentPage)
+      }
       trackEvent('click', 'hero_topbar_auth', mode)
       window.history.pushState({}, '', url)
       setCurrentPage('client-compte')
@@ -370,6 +374,7 @@ function App() {
     (role: AccountRole, options?: { preferDashboard?: boolean }) => {
       const prefix = language === 'en' ? '/en' : '/fr'
       setAuthUiTick((n) => n + 1)
+      setClientAuthReturnPage(null)
       const openDashboard = role === 'chauffeur' || options?.preferDashboard === true
       if (openDashboard) {
         window.history.pushState({}, '', `${prefix}/dashboard?dashboardView=user`)
@@ -822,8 +827,10 @@ function App() {
               ) : (
                 <ClientAuthPage
                   onClose={() => {
-                    setCurrentPage('accueil')
-                    window.history.pushState({}, '', getPathFromPage('accueil'))
+                    const returnPage = clientAuthReturnPage ?? previousPage ?? 'accueil'
+                    setClientAuthReturnPage(null)
+                    setCurrentPage(returnPage)
+                    window.history.pushState({}, '', getPathFromPage(returnPage))
                   }}
                   onAuthSuccess={redirectAfterAuth}
                 />
