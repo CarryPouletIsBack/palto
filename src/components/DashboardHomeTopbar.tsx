@@ -8,8 +8,6 @@ import { loadClientAccountSnapshot } from '../constants/clientAccountStorage'
 import { logoutClientToHome } from '../services/authService'
 import {
   getCurrentClientUser,
-  getCurrentUser,
-  isAuthenticated,
   isClientAuthenticated,
   PALTO_CLIENT_SESSION_CHANGED_EVENT,
   type User as AuthUser,
@@ -66,13 +64,10 @@ export function DashboardHomeTopbar({
 
   const session = useMemo(() => {
     const clientLogged = isClientAuthenticated()
-    const chauffeurLogged = isAuthenticated()
     const clientUser = clientLogged ? getCurrentClientUser() : null
-    const chauffeurUser = chauffeurLogged ? getCurrentUser() : null
     return {
       clientLogged,
-      chauffeurLogged,
-      user: clientUser ?? chauffeurUser,
+      user: clientUser,
     }
   }, [authTick])
 
