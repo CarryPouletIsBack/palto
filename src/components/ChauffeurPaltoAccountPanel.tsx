@@ -39,11 +39,13 @@ export type ChauffeurPaltoAccountSection = 'personal' | 'payment'
 type Props = {
   sessionEmail: string
   initialSection?: ChauffeurPaltoAccountSection
+  afterDeleteContent?: ReactNode
 }
 
 export default function ChauffeurPaltoAccountPanel({
   sessionEmail,
   initialSection = 'personal',
+  afterDeleteContent,
 }: Props) {
   const { language } = useLanguage()
   const isEn = language === 'en'
@@ -478,6 +480,7 @@ export default function ChauffeurPaltoAccountPanel({
           </section>
         )}
         <PaltoAccountDeleteBlock role="chauffeur" />
+        {section === 'personal' ? afterDeleteContent : null}
       </div>
 
       {mountAccountModal(

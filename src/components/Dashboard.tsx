@@ -3854,99 +3854,101 @@ const Dashboard = ({
                           <ChauffeurPaltoAccountPanel
                             sessionEmail={getChauffeurSessionEmail()}
                             initialSection={paltoAccountSection}
-                          />
-                          <article className="dashboard-user-card" style={{ marginTop: 20 }}>
-                            <div className="dashboard-user-card-head">
-                              <div>
-                                <h4>{language === 'en' ? 'Driver contact' : 'Contact chauffeur'}</h4>
-                                <p className="dashboard-field-hint">
-                                  {language === 'en'
-                                    ? 'Phone and Reunion commune used for Palto rides.'
-                                    : 'Téléphone et commune réunionnaise utilisés pour vos courses Palto.'}
-                                </p>
-                              </div>
-                            </div>
-                            <form
-                              className="dashboard-user-edit-grid dashboard-chauffeur-profile-form"
-                              onSubmit={(e) => {
-                                e.preventDefault();
-                                saveUserProfileEdit();
-                                if (isRideSettingsDirty) saveRideSettingsEdit();
-                              }}
-                            >
-                              <label className="dashboard-chauffeur-profile-form__phone">
-                                Téléphone
-                                <div className="dashboard-phone-input-row">
-                                  <select
-                                    value={phoneCountryDraft}
-                                    onChange={(e) => {
-                                      markProfileFormDirty();
-                                      setPhoneCountryDraft(readFormControlValue(e) as SupportedPhoneCountry);
-                                    }}
-                                  >
-                                    {PHONE_COUNTRIES.map((country) => (
-                                      <option key={country.code} value={country.code}>
-                                        {country.flag} {country.label} ({country.dialCode})
-                                      </option>
-                                    ))}
-                                  </select>
-                                  <input
-                                    type="text"
-                                    value={phoneNationalDraft}
-                                    onChange={(e) => {
-                                      markProfileFormDirty();
-                                      setPhoneNationalDraft(readFormControlValue(e));
-                                      if (phoneError) setPhoneError(null);
-                                    }}
-                                    placeholder={phoneCountryDraft === 'FR' ? '612345678' : '692123456'}
-                                    required
-                                  />
+                            afterDeleteContent={
+                              <article className="dashboard-user-card" style={{ marginTop: 20 }}>
+                                <div className="dashboard-user-card-head">
+                                  <div>
+                                    <h4>{language === 'en' ? 'Driver contact' : 'Contact chauffeur'}</h4>
+                                    <p className="dashboard-field-hint">
+                                      {language === 'en'
+                                        ? 'Phone and Reunion commune used for Palto rides.'
+                                        : 'Téléphone et commune réunionnaise utilisés pour vos courses Palto.'}
+                                    </p>
+                                  </div>
                                 </div>
-                                {phoneError ? (
-                                  <small className="dashboard-field-error">{phoneError}</small>
-                                ) : (
-                                  <small className="dashboard-field-hint">
-                                    Format: {phoneCountryDraft === 'FR' ? '+33 612345678' : '+262 692123456'}
-                                  </small>
-                                )}
-                              </label>
-                              <label>
-                                Commune (La Réunion)
-                                <select
-                                  name="chauffeur-ville"
-                                  autoComplete="address-level2"
-                                  value={normalizeReunionCommuneForSelect(userProfileDraft.ville)}
-                                  onChange={(e) => {
-                                    markProfileFormDirty();
-                                    const ville = normalizeReunionCommuneForSelect(readFormControlValue(e));
-                                    setUserProfileDraft((prev) => ({ ...prev, ville }));
+                                <form
+                                  className="dashboard-user-edit-grid dashboard-chauffeur-profile-form"
+                                  onSubmit={(e) => {
+                                    e.preventDefault();
+                                    saveUserProfileEdit();
+                                    if (isRideSettingsDirty) saveRideSettingsEdit();
                                   }}
-                                  required
                                 >
-                                  <option value="">Choisir une commune</option>
-                                  {REUNION_COMMUNES_SORTED.map((commune) => (
-                                    <option key={commune} value={commune}>
-                                      {commune}
-                                    </option>
-                                  ))}
-                                </select>
-                              </label>
-                              {isChauffeurProfileFormDirty ? (
-                                <div className="dashboard-user-edit-actions">
-                                  <button type="submit" className="dashboard-user-save-btn">
-                                    Enregistrer
-                                  </button>
-                                  <button
-                                    type="button"
-                                    className="dashboard-user-cancel-btn"
-                                    onClick={cancelUserProfileEdit}
-                                  >
-                                    Annuler
-                                  </button>
-                                </div>
-                              ) : null}
-                            </form>
-                          </article>
+                                  <label className="dashboard-chauffeur-profile-form__phone">
+                                    Téléphone
+                                    <div className="dashboard-phone-input-row">
+                                      <select
+                                        value={phoneCountryDraft}
+                                        onChange={(e) => {
+                                          markProfileFormDirty();
+                                          setPhoneCountryDraft(readFormControlValue(e) as SupportedPhoneCountry);
+                                        }}
+                                      >
+                                        {PHONE_COUNTRIES.map((country) => (
+                                          <option key={country.code} value={country.code}>
+                                            {country.flag} {country.label} ({country.dialCode})
+                                          </option>
+                                        ))}
+                                      </select>
+                                      <input
+                                        type="text"
+                                        value={phoneNationalDraft}
+                                        onChange={(e) => {
+                                          markProfileFormDirty();
+                                          setPhoneNationalDraft(readFormControlValue(e));
+                                          if (phoneError) setPhoneError(null);
+                                        }}
+                                        placeholder={phoneCountryDraft === 'FR' ? '612345678' : '692123456'}
+                                        required
+                                      />
+                                    </div>
+                                    {phoneError ? (
+                                      <small className="dashboard-field-error">{phoneError}</small>
+                                    ) : (
+                                      <small className="dashboard-field-hint">
+                                        Format: {phoneCountryDraft === 'FR' ? '+33 612345678' : '+262 692123456'}
+                                      </small>
+                                    )}
+                                  </label>
+                                  <label>
+                                    Commune (La Réunion)
+                                    <select
+                                      name="chauffeur-ville"
+                                      autoComplete="address-level2"
+                                      value={normalizeReunionCommuneForSelect(userProfileDraft.ville)}
+                                      onChange={(e) => {
+                                        markProfileFormDirty();
+                                        const ville = normalizeReunionCommuneForSelect(readFormControlValue(e));
+                                        setUserProfileDraft((prev) => ({ ...prev, ville }));
+                                      }}
+                                      required
+                                    >
+                                      <option value="">Choisir une commune</option>
+                                      {REUNION_COMMUNES_SORTED.map((commune) => (
+                                        <option key={commune} value={commune}>
+                                          {commune}
+                                        </option>
+                                      ))}
+                                    </select>
+                                  </label>
+                                  {isChauffeurProfileFormDirty ? (
+                                    <div className="dashboard-user-edit-actions">
+                                      <button type="submit" className="dashboard-user-save-btn">
+                                        Enregistrer
+                                      </button>
+                                      <button
+                                        type="button"
+                                        className="dashboard-user-cancel-btn"
+                                        onClick={cancelUserProfileEdit}
+                                      >
+                                        Annuler
+                                      </button>
+                                    </div>
+                                  ) : null}
+                                </form>
+                              </article>
+                            }
+                          />
                         </section>
                       ) : null}
                       {(userSubView === 'profile' ||
