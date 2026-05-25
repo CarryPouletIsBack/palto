@@ -7,6 +7,7 @@ type Props = {
   language: Language
   rideSettingsDraft: ChauffeurRideSettingsSnapshot
   setRideSettingsDraft: Dispatch<SetStateAction<ChauffeurRideSettingsSnapshot>>
+  showServiceOptions?: boolean
 }
 
 type FareTextField = keyof Pick<
@@ -27,6 +28,7 @@ export default function ChauffeurRideSettingsForm({
   language,
   rideSettingsDraft,
   setRideSettingsDraft,
+  showServiceOptions = true,
 }: Props) {
   const isEn = language === 'en'
 
@@ -137,41 +139,43 @@ export default function ChauffeurRideSettingsForm({
             />
           </label>
         </div>
-        <div className="dashboard-ride-settings-toggles" role="group" aria-label={isEn ? 'Service options' : 'Options de service'}>
-          <label className="dashboard-ride-setting-toggle-row">
-            <span>{isEn ? 'Pets allowed' : 'Animaux acceptés'}</span>
-            <input
-              className="dashboard-ride-setting-switch"
-              type="checkbox"
-              checked={rideSettingsDraft.petFriendly}
-              onChange={(e) =>
-                setRideSettingsDraft((prev) => ({ ...prev, petFriendly: e.target.checked }))
-              }
-            />
-          </label>
-          <label className="dashboard-ride-setting-toggle-row">
-            <span>{isEn ? 'Luggage help' : 'Aide bagages disponible'}</span>
-            <input
-              className="dashboard-ride-setting-switch"
-              type="checkbox"
-              checked={rideSettingsDraft.luggageAssistance}
-              onChange={(e) =>
-                setRideSettingsDraft((prev) => ({ ...prev, luggageAssistance: e.target.checked }))
-              }
-            />
-          </label>
-          <label className="dashboard-ride-setting-toggle-row">
-            <span>{isEn ? 'Insulated bag' : 'Sac isotherme'}</span>
-            <input
-              className="dashboard-ride-setting-switch"
-              type="checkbox"
-              checked={rideSettingsDraft.insulatedBag}
-              onChange={(e) =>
-                setRideSettingsDraft((prev) => ({ ...prev, insulatedBag: e.target.checked }))
-              }
-            />
-          </label>
-        </div>
+        {showServiceOptions ? (
+          <div className="dashboard-ride-settings-toggles" role="group" aria-label={isEn ? 'Service options' : 'Options de service'}>
+            <label className="dashboard-ride-setting-toggle-row">
+              <span>{isEn ? 'Pets allowed' : 'Animaux acceptés'}</span>
+              <input
+                className="dashboard-ride-setting-switch"
+                type="checkbox"
+                checked={rideSettingsDraft.petFriendly}
+                onChange={(e) =>
+                  setRideSettingsDraft((prev) => ({ ...prev, petFriendly: e.target.checked }))
+                }
+              />
+            </label>
+            <label className="dashboard-ride-setting-toggle-row">
+              <span>{isEn ? 'Luggage help' : 'Aide bagages disponible'}</span>
+              <input
+                className="dashboard-ride-setting-switch"
+                type="checkbox"
+                checked={rideSettingsDraft.luggageAssistance}
+                onChange={(e) =>
+                  setRideSettingsDraft((prev) => ({ ...prev, luggageAssistance: e.target.checked }))
+                }
+              />
+            </label>
+            <label className="dashboard-ride-setting-toggle-row">
+              <span>{isEn ? 'Insulated bag' : 'Sac isotherme'}</span>
+              <input
+                className="dashboard-ride-setting-switch"
+                type="checkbox"
+                checked={rideSettingsDraft.insulatedBag}
+                onChange={(e) =>
+                  setRideSettingsDraft((prev) => ({ ...prev, insulatedBag: e.target.checked }))
+                }
+              />
+            </label>
+          </div>
+        ) : null}
       </article>
     </>
   )
