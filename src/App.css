@@ -216,6 +216,7 @@
 }
 
 .beta-test-modal {
+  position: relative;
   width: min(680px, 100%);
   border-radius: 18px;
   background: var(--app-surface-card, #ffffff);
@@ -240,6 +241,21 @@
   background: var(--app-btn-primary-bg, #0f172a);
   color: var(--app-btn-primary-text, #fff);
   font-weight: 600;
+}
+
+.beta-test-modal__icon-close {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  width: 30px;
+  height: 30px;
+  border-radius: 999px;
+  border: 1px solid var(--app-border-medium, rgba(15, 23, 42, 0.22));
+  background: var(--app-surface-muted, rgba(15, 23, 42, 0.06));
+  color: var(--app-text-primary, #0f172a);
+  font-size: 1.1rem;
+  line-height: 1;
+  cursor: pointer;
 }
 
 .beta-test-feedback {

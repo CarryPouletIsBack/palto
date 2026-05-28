@@ -90,6 +90,14 @@ export default function BetaTestBanner() {
             aria-labelledby="beta-test-modal-title"
             onClick={(e) => e.stopPropagation()}
           >
+            <button
+              type="button"
+              className="beta-test-modal__icon-close"
+              aria-label="Fermer la fenêtre"
+              onClick={() => setModalOpen(false)}
+            >
+              ×
+            </button>
             <h2 id="beta-test-modal-title">Palto beta test v0.0.1</h2>
             <p>
               La Réunion vit aujourd'hui de gros bouchons, et Palto intervient pour faciliter l'accès au taxi moto,
@@ -167,9 +175,6 @@ export default function BetaTestBanner() {
                 {sending ? 'Envoi...' : 'Envoyer mon retour'}
               </button>
             </div>
-            <button type="button" className="beta-test-modal__close" onClick={() => setModalOpen(false)}>
-              Fermer
-            </button>
           </div>
         </div>
       ) : null}
