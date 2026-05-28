@@ -1004,6 +1004,8 @@ function App() {
         currentPage !== 'dashboard-navigation' &&
         currentPage !== 'client-compte' &&
         currentPage !== 'client-meet-driver' &&
+        currentPage !== 'accueil' &&
+        currentPage !== 'accueil-chauffeur' &&
         !currentPage.startsWith('destination-') ? (
         <Header onContactClick={handleContactClick} onLogoClick={handleLogoClick} />
       ) : null}
