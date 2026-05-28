@@ -190,7 +190,7 @@ html[data-app-theme='dark'] .dashboard-container--client-compte .dashboard-avata
 /* Accueil marketing : topbar fixe au viewport (sticky cassé par zoom #root / ancêtres flex). */
 body.accueil-page .dashboard-container--home-accueil .dashboard-topbar {
   position: fixed;
-  top: env(safe-area-inset-top, 0);
+  top: calc(env(safe-area-inset-top, 0px) + var(--beta-banner-height, 0px));
   left: 0;
   right: 0;
   width: 100%;
@@ -199,7 +199,7 @@ body.accueil-page .dashboard-container--home-accueil .dashboard-topbar {
 }
 
 body.accueil-page .dashboard-container--home-accueil .dashboard-main {
-  padding-top: 54px;
+  padding-top: calc(54px + var(--beta-banner-height, 0px));
 }
 
 .dashboard-container--home-accueil .dashboard-main {
