@@ -155,6 +155,7 @@ function emptyComplianceSnapshot(): Record<string, boolean> {
   }
 }
 
+/** Course visible dans la liste / actions (demandes à accepter + courses du chauffeur). */
 function visibleForDriver(row: CourseRow, driverKey: string): boolean {
   if (row.status === 'pending') {
     if (row.booking_kind === 'scheduled') return true
@@ -167,6 +168,12 @@ function visibleForDriver(row: CourseRow, driverKey: string): boolean {
     return sameDriverExternalKey(row.assigned_driver_external_key, driverKey)
   }
   return false
+}
+
+/** Agrégats km / revenus / heatmap : uniquement après engagement chauffeur (pas une demande client en attente). */
+function countsForDriverMetrics(row: CourseRow, driverKey: string): boolean {
+  if (row.status === 'pending') return false
+  return visibleForDriver(row, driverKey)
 }
 
 function toIsoDate(d: Date): string {
@@ -383,20 +390,25 @@ async function handleStatsGet(res: VercelResponse, driverKey: string) {
     .order('created_at', { ascending: false })
     .limit(500)
   if (error) return res.status(500).json({ error: 'Lecture impossible' })
-  const rows = ((data ?? []) as Array<Record<string, unknown>>).filter((r) => visibleForDriver(r as unknown as CourseRow, driverKey))
-  const completed = rows.filter((r) => r.status === 'completed').length
-  const cancelled = rows.filter((r) => r.status === 'cancelled').length
-  const inProgress = rows.filter((r) => r.status === 'in_progress').length
-  const pending = rows.filter((r) => r.status === 'pending').length
-  const acceptedOrInProgress = rows.filter((r) => r.status === 'accepted' || r.status === 'in_progress').length
-  const totalIncome = rows.filter((r) => r.status !== 'cancelled').reduce((acc, r) => acc + Number(r.amount_eur ?? 0), 0)
+  const allVisible = ((data ?? []) as Array<Record<string, unknown>>).filter((r) =>
+    visibleForDriver(r as unknown as CourseRow, driverKey)
+  )
+  const metricRows = allVisible.filter((r) => countsForDriverMetrics(r as unknown as CourseRow, driverKey))
+  const completed = metricRows.filter((r) => r.status === 'completed').length
+  const cancelled = metricRows.filter((r) => r.status === 'cancelled').length
+  const inProgress = metricRows.filter((r) => r.status === 'in_progress').length
+  const pending = allVisible.filter((r) => r.status === 'pending').length
+  const acceptedOrInProgress = metricRows.filter((r) => r.status === 'accepted' || r.status === 'in_progress').length
+  const totalIncome = metricRows
+    .filter((r) => r.status !== 'cancelled')
+    .reduce((acc, r) => acc + Number(r.amount_eur ?? 0), 0)
   const acceptanceRate = completed + acceptedOrInProgress > 0 ? Math.round((acceptedOrInProgress / (completed + acceptedOrInProgress)) * 100) : 0
-  const cancellationRate = rows.length > 0 ? Math.round((cancelled / rows.length) * 100) : 0
+  const cancellationRate = metricRows.length > 0 ? Math.round((cancelled / metricRows.length) * 100) : 0
   const today = new Date()
   const start = new Date(today)
   start.setDate(start.getDate() - 363)
   const dayCounts = new Map<string, number>()
-  for (const row of rows) {
+  for (const row of metricRows) {
     if (row.status === 'cancelled' || !row.scheduled_date) continue
     const d = new Date(`${String(row.scheduled_date)}T12:00:00`)
     if (Number.isNaN(d.getTime()) || d < start || d > today) continue
@@ -416,7 +428,7 @@ async function handleStatsGet(res: VercelResponse, driverKey: string) {
       cancelled,
       inProgress,
       pending,
-      totalCourses: rows.length,
+      totalCourses: metricRows.length,
       acceptanceRate,
       cancellationRate,
       rating: null,

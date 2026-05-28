@@ -999,7 +999,7 @@ function App() {
       <AnalyticsGuard />
       <GeolocationPromptBanner />
       <AppToaster />
-      <BetaTestBanner />
+      {currentPage !== 'dashboard' && currentPage !== 'dashboard-navigation' ? <BetaTestBanner /> : null}
       {currentPage !== 'dashboard' &&
         currentPage !== 'dashboard-navigation' &&
         currentPage !== 'client-compte' &&

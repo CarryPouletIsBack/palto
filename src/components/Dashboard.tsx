@@ -314,6 +314,11 @@ function persistSeenCancelCourseIds(ids: Set<string>): void {
   }
 }
 
+/** Km, revenus, heatmap, planning confirmé : pas les demandes client « En attente ». */
+function courseCountsInDriverMetrics(statut: CourseStatut): boolean {
+  return statut !== 'En attente';
+}
+
 function inferProfileFromEmail(emailRaw: string): Pick<ChauffeurProfile, 'prenom' | 'nom'> {
   const localPart = emailRaw.split('@')[0] ?? '';
   const chunks = localPart
@@ -1765,6 +1770,7 @@ const Dashboard = ({
       Array<{ id: string; heure: string; statut: string; bookingKind?: BookingKindUi }>
     > = {};
     for (const course of courseRows) {
+      if (!courseCountsInDriverMetrics(course.statut)) continue;
       if (!course.date.startsWith(planningMonthPrefix)) continue;
       if (planningStatusFilter !== 'all' && course.statut !== planningStatusFilter) continue;
       if (course.statut === 'Annulee') continue;
@@ -1812,7 +1818,8 @@ const Dashboard = ({
   const planningSlotsForModal = useMemo(() => {
     if (!planningModalDate) return [];
     return courseRows
-      .filter((course) => course.date === planningModalDate && course.statut !== 'Annulee')
+      .filter((course) => course.date === planningModalDate && courseCountsInDriverMetrics(course.statut))
+      .filter((course) => course.statut !== 'Annulee')
       .filter((course) => planningStatusFilter === 'all' || course.statut === planningStatusFilter)
       .sort((a, b) => a.heure.localeCompare(b.heure))
       .map((c) => ({ id: c.id, heure: c.heure, statut: c.statut, bookingKind: c.bookingKind }));
@@ -2104,6 +2111,7 @@ const Dashboard = ({
     const labels = ['Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam', 'Dim'];
     const counts = [0, 0, 0, 0, 0, 0, 0];
     for (const course of courseRows) {
+      if (!courseCountsInDriverMetrics(course.statut)) continue;
       if (course.statut === 'Annulee') continue;
       const date = new Date(`${course.date}T12:00:00`);
       const jsDay = date.getDay(); // 0=dimanche
@@ -2121,14 +2129,15 @@ const Dashboard = ({
   }, [courseRows]);
 
   const localChauffeurActivityStats = useMemo(() => {
-    const completed = courseRows.filter((c) => c.statut === 'Terminee').length;
-    const cancelled = courseRows.filter((c) => c.statut === 'Annulee').length;
-    const inProgress = courseRows.filter((c) => c.statut === 'En cours').length;
+    const metricCourses = courseRows.filter((c) => courseCountsInDriverMetrics(c.statut));
+    const completed = metricCourses.filter((c) => c.statut === 'Terminee').length;
+    const cancelled = metricCourses.filter((c) => c.statut === 'Annulee').length;
+    const inProgress = metricCourses.filter((c) => c.statut === 'En cours').length;
     const pending = courseRows.filter((c) => c.statut === 'En attente').length;
-    const acceptedOrInProgress = courseRows.filter(
+    const acceptedOrInProgress = metricCourses.filter(
       (c) => c.statut === 'Acceptee' || c.statut === 'En cours'
     ).length;
-    const totalIncome = courseRows
+    const totalIncome = metricCourses
       .filter((c) => c.statut !== 'Annulee')
       .reduce((acc, c) => acc + c.montant, 0);
     const acceptanceRate =
@@ -2136,13 +2145,13 @@ const Dashboard = ({
         ? Math.round((acceptedOrInProgress / (completed + acceptedOrInProgress)) * 100)
         : 0;
     const cancellationRate =
-      courseRows.length > 0 ? Math.round((cancelled / courseRows.length) * 100) : 0;
+      metricCourses.length > 0 ? Math.round((cancelled / metricCourses.length) * 100) : 0;
     return {
       completed,
       cancelled,
       inProgress,
       pending,
-      totalCourses: courseRows.length,
+      totalCourses: metricCourses.length,
       acceptanceRate,
       cancellationRate,
       rating: null,
@@ -2159,13 +2168,13 @@ const Dashboard = ({
 
   const totalDistanceKm = useMemo(() => {
     return courseRows
-      .filter((course) => course.statut !== 'Annulee')
+      .filter((course) => courseCountsInDriverMetrics(course.statut) && course.statut !== 'Annulee')
       .reduce((sum, course) => sum + Math.max(0, Number(course.km) || 0), 0);
   }, [courseRows]);
 
   const overviewFocusCourses = useMemo(() => {
     return [...courseRows]
-      .filter((c) => c.statut !== 'Annulee')
+      .filter((c) => courseCountsInDriverMetrics(c.statut) && c.statut !== 'Annulee')
       .sort((a, b) => {
         const ta = new Date(`${a.date}T${a.heure}:00`).getTime();
         const tb = new Date(`${b.date}T${b.heure}:00`).getTime();
