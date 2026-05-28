@@ -1,10 +1,16 @@
 import { useEffect, useState } from 'react'
+import { apiBaseUrl } from '../constants/featureFlags'
 
 const BETA_BANNER_DISMISSED_KEY = 'palto_beta_banner_dismissed_v1'
 
 export default function BetaTestBanner() {
+  const apiBase = apiBaseUrl()
   const [dismissed, setDismissed] = useState(false)
   const [modalOpen, setModalOpen] = useState(false)
+  const [rating, setRating] = useState(8)
+  const [feedback, setFeedback] = useState('')
+  const [sending, setSending] = useState(false)
+  const [feedbackStatus, setFeedbackStatus] = useState<string | null>(null)
 
   useEffect(() => {
     try {
@@ -13,6 +19,18 @@ export default function BetaTestBanner() {
       setDismissed(false)
     }
   }, [])
+
+  useEffect(() => {
+    if (typeof document === 'undefined') return
+    if (!dismissed) {
+      document.body.classList.add('has-beta-banner')
+    } else {
+      document.body.classList.remove('has-beta-banner')
+    }
+    return () => {
+      document.body.classList.remove('has-beta-banner')
+    }
+  }, [dismissed])
 
   if (dismissed) return null
 
@@ -73,6 +91,67 @@ export default function BetaTestBanner() {
             <p>
               Merci pour votre confiance et votre utilisation de Palto. <strong>Nou la fé</strong>.
             </p>
+            <div className="beta-test-feedback">
+              <h3>Votre retour</h3>
+              <label className="beta-test-feedback__label">
+                Note sur 10
+                <input
+                  type="number"
+                  min={0}
+                  max={10}
+                  value={rating}
+                  onChange={(e) => {
+                    const value = Number(e.target.value)
+                    if (Number.isNaN(value)) return
+                    setRating(Math.min(10, Math.max(0, Math.round(value))))
+                  }}
+                />
+              </label>
+              <label className="beta-test-feedback__label">
+                Votre message
+                <textarea
+                  value={feedback}
+                  onChange={(e) => setFeedback(e.target.value)}
+                  placeholder="Dites-nous ce qui marche bien et ce qu'on doit améliorer..."
+                  rows={4}
+                />
+              </label>
+              {feedbackStatus ? <p className="beta-test-feedback__status">{feedbackStatus}</p> : null}
+              <button
+                type="button"
+                className="beta-test-feedback__send"
+                disabled={sending || feedback.trim().length < 3}
+                onClick={async () => {
+                  setFeedbackStatus(null)
+                  setSending(true)
+                  try {
+                    const response = await fetch(`${apiBase}/feedback`, {
+                      method: 'POST',
+                      headers: { 'Content-Type': 'application/json' },
+                      body: JSON.stringify({
+                        rating,
+                        message: feedback.trim(),
+                        page: typeof window !== 'undefined' ? window.location.pathname : '',
+                      }),
+                    })
+                    const data = (await response.json().catch(() => null)) as { error?: string } | null
+                    if (!response.ok) {
+                      setFeedbackStatus(data?.error || 'Envoi impossible pour le moment.')
+                      return
+                    }
+                    setFeedback('')
+                    setRating(8)
+                    setFeedbackStatus('Merci, votre retour a bien été envoyé.')
+                  } catch {
+                    setFeedbackStatus("Envoi impossible pour le moment, réessayez s'il vous plaît.")
+                  } finally {
+                    setSending(false)
+                  }
+                }}
+              >
+                {sending ? 'Envoi...' : 'Envoyer mon retour'}
+              </button>
+            </div>
             <button type="button" className="beta-test-modal__close" onClick={() => setModalOpen(false)}>
               Fermer
             </button>
