@@ -29,6 +29,27 @@ Guide détaillé : **[docs/SUPABASE-CONNEXION.md](./docs/SUPABASE-CONNEXION.md)*
 
 **Dev API locale** : `npm run dev:api` (`vercel dev`) — `npm run dev` seul ne sert pas toutes les routes `/api/*` (proxy limité).
 
+## Beta publique & capacité (Vercel Hobby + Supabase Free)
+
+Prod de référence : **[palto-six.vercel.app](https://palto-six.vercel.app)**. Pour un **premier lien partagé** (testeurs à La Réunion), le tier gratuit suffit en général si tu restes dans cet ordre de grandeur :
+
+| Indicateur | Cible confortable (free) |
+|------------|---------------------------|
+| Utilisateurs inscrits / mois | ~20–80 |
+| Personnes **en ligne en même temps** | ~5–15 |
+| Chauffeurs avec app + GPS actifs | ~2–5 |
+| Pics au-delà de ~15 chauffeurs connectés | Surveiller Vercel + Supabase ; envisager Pro |
+
+**Goulot Palto** : le **heartbeat chauffeur** (~1 requête / 20 s par chauffeur connecté) et le **polling** dashboard / page Go — pas le nombre de comptes créés.
+
+**Recommandations beta**
+
+- Activer **`VITE_CASH_ONLY_PAYMENTS=true`** en prod pendant le test (espèces uniquement, moins de charge Stripe) — voir [docs/STRIPE-SETUP.md](./docs/STRIPE-SETUP.md).
+- Surveiller **Supabase → Egress** et **Vercel → Bandwidth** chaque semaine.
+- Éviter une diffusion massive du lien tant que les quotas ne sont pas suivis.
+
+**Guide complet** (checklist quotidienne, seuils d’alerte, quand passer Pro) : **[docs/MONITORING-BETA-FREE-TIER.md](./docs/MONITORING-BETA-FREE-TIER.md)**.
+
 ## Périmètre livré & évolutions (2026)
 
 Le cœur **Palto** (accueil carte, **Go**, comptes, dashboard chauffeur) est **maintenu dans ce dépôt** ; le build production cible `npm run build` (voir ci-dessous pour la **PWA**). Les détails d’implémentation vivent dans **Git**. Le parcours **Go** (`/go`) reste un **prototype** front (mock chauffeurs) ; les **courses persistées** passent par l’**API** + **Supabase** lorsque les flags / variables d’environnement sont activés. Pour le déploiement : **DEPLOY.md**, **.env.example** ; pour les chauffeurs sur la carte d’accueil : remplacer à terme `getNearbyDriversMock()` dans `src/data/nearbyDrivers.ts` par un appel API réel (contrat décrit dans `.cursorrules`).
@@ -142,7 +163,7 @@ Copier **`.env.example`** vers **`.env.local`**. Indispensables pour le parcours
 - **Stripe (Go + portefeuille)** : `STRIPE_SECRET_KEY`, `VITE_STRIPE_PUBLISHABLE_KEY` ; `STRIPE_WEBHOOK_SECRET` optionnel
 - **Dashboard chauffeur** : `VITE_DASHBOARD_*` (local) / `DASHBOARD_*` (Vercel)
 
-Flags front (défauts dans `src/constants/featureFlags.ts`) : `VITE_USE_CLIENT_RIDES_API`, `VITE_CHAUFFEUR_RIDES_PERSIST`, `VITE_CHAUFFEUR_PRESENCE_API`, `VITE_USE_ORG_API`, `VITE_USE_COMPLIANCE_API`, `VITE_USE_STATS_API`, `VITE_USE_PRICING_API`.
+Flags front (défauts dans `src/constants/featureFlags.ts`) : `VITE_USE_CLIENT_RIDES_API`, `VITE_CHAUFFEUR_RIDES_PERSIST`, `VITE_CHAUFFEUR_PRESENCE_API`, `VITE_USE_ORG_API`, `VITE_USE_COMPLIANCE_API`, `VITE_USE_STATS_API`, `VITE_USE_PRICING_API`, `VITE_CASH_ONLY_PAYMENTS` (beta : espèces uniquement sur Go / compte client).
 
 ## Scripts npm
 
@@ -202,6 +223,7 @@ Les fichiers ci-dessous décrivent des intégrations (SEO, OAuth, email, etc.) a
 | [DEPLOY.md](./DEPLOY.md) | Déploiement Vercel / GitHub Pages |
 | [docs/SUPABASE-CONNEXION.md](./docs/SUPABASE-CONNEXION.md) | Projet Supabase, clés, Realtime |
 | [docs/STRIPE-SETUP.md](./docs/STRIPE-SETUP.md) | Clés test/live, migrations 0008–0011, webhook |
+| [docs/MONITORING-BETA-FREE-TIER.md](./docs/MONITORING-BETA-FREE-TIER.md) | Capacité free Vercel/Supabase, checklist monitoring, passage Pro |
 | [SEO_INDEXATION.md](./SEO_INDEXATION.md) | SEO, `VITE_SITE_URL` |
 | [VERCEL_GOOGLE_OAUTH_SETUP.md](./VERCEL_GOOGLE_OAUTH_SETUP.md) | OAuth Google |
 | [GOOGLE_CLOUD_CONSOLE_CONFIG.md](./GOOGLE_CLOUD_CONSOLE_CONFIG.md) | URIs de redirection |
@@ -221,13 +243,12 @@ Référence arbres **user flow** : implémentation surtout sur la page **Go** (`
 
 ---
 
-### Dernière mise à jour README — **19 mai 2026**
+### Dernière mise à jour README — **28 mai 2026**
 
-- **Audit déploiement** : section [Vérification](#vérification-build-prod-bdd-stripe) ; prod **palto-six.vercel.app** (`200`, géocode `200`, Stripe `401` pas `503`).
-- **Routes API** : tableau des **9** fonctions serverless + rewrites / cron Vercel.
-- **Supabase** : checklist migrations **0008–0011** ; `npm run check:supabase`.
-- **Stripe** : parcours Go documenté ; lien **docs/STRIPE-SETUP.md** ; actions `/api/stripe`.
-- **Compte client** : mouvements portefeuille depuis les **courses API** (plus de liste mock vide).
-- **Stack** : React **18.3** (aligné `package.json`).
+- **Beta / capacité** : section [Beta publique & capacité](#beta-publique--capacité-vercel-hobby--supabase-free) + guide **[docs/MONITORING-BETA-FREE-TIER.md](./docs/MONITORING-BETA-FREE-TIER.md)** (seuils, checklist Vercel/Supabase, quand passer Pro).
+- **Flag** : `VITE_CASH_ONLY_PAYMENTS` documenté pour la phase test public.
+- **Audit déploiement** : section [Vérification](#vérification-build-prod-bdd-stripe) ; prod **palto-six.vercel.app**.
+- **Routes API** : **9** fonctions serverless + rewrites / cron Vercel.
+- **Supabase** : migrations **0008–0011** ; `npm run check:supabase`.
 
 *Palto — prod [palto-six.vercel.app](https://palto-six.vercel.app) · **OSM** + **`/api/geocode`** · **Go** `/go` · **compte** `/compte` · **dashboard** `/dashboard` · API + Supabase + Stripe selon `.env` / Vercel.*
