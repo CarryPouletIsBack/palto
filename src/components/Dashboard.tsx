@@ -3068,7 +3068,7 @@ const Dashboard = ({
                         </button>
                       </div>
                       <div className="dashboard-table-shell">
-                        <table className="dashboard-table">
+                        <table className="dashboard-table dashboard-table--courses">
                           <thead>
                             <tr>
                               <th>ID</th>
@@ -3164,7 +3164,7 @@ const Dashboard = ({
                         </button>
                       </div>
                       <div className="dashboard-table-shell">
-                        <table className="dashboard-table">
+                        <table className="dashboard-table dashboard-table--clients">
                           <thead>
                             <tr>
                               <th>ID</th>

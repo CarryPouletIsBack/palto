@@ -1791,6 +1791,8 @@ button.dashboard-panel--overview-empty:focus-visible {
   display: flex;
   flex-direction: column;
   gap: 10px;
+  min-width: 0;
+  max-width: 100%;
 }
 
 .dashboard-user-card {
@@ -2559,11 +2561,17 @@ button.dashboard-panel--overview-empty:focus-visible {
   border: 1px solid #e5e7eb;
   border-radius: 12px;
   background: #ffffff;
-  overflow: hidden;
+  max-width: 100%;
+  overflow-x: auto;
+  overflow-y: hidden;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior-x: contain;
+  scrollbar-width: thin;
 }
 
 .dashboard-table {
-  width: 100%;
+  width: max-content;
+  min-width: 100%;
   border-collapse: collapse;
 }
 
@@ -2574,6 +2582,7 @@ button.dashboard-panel--overview-empty:focus-visible {
   font-size: 12px;
   color: #374151;
   border-bottom: 1px solid #e5e7eb;
+  white-space: nowrap;
 }
 
 .dashboard-table tbody td {
@@ -2581,6 +2590,8 @@ button.dashboard-panel--overview-empty:focus-visible {
   font-size: 13px;
   color: #111827;
   border-bottom: 1px solid #f1f5f9;
+  white-space: nowrap;
+  vertical-align: top;
 }
 
 .dashboard-table tbody tr {
@@ -5123,17 +5134,38 @@ button.dashboard-org-sidebar-brand--home:focus-visible {
 
 /* Barre flottante mobile : exception au reset border:none / border-color:transparent chauffeur */
 .dashboard-container--chauffeur .dashboard-mobile-bottombar {
-  border: 2px solid #ffffff !important;
-  border-color: #cbd5e1 !important;
-  outline: 1px solid #94a3b8;
-  outline-offset: 0;
-  box-shadow: 0 10px 30px rgba(15, 23, 42, 0.16) !important;
+  border: 1px solid rgba(15, 23, 42, 0.1) !important;
+  outline: none;
+  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.1) !important;
 }
 
 html[data-app-theme='dark'] .dashboard-container--chauffeur .dashboard-mobile-bottombar {
-  border-color: var(--app-border-medium, rgba(255, 255, 255, 0.22)) !important;
-  outline-color: var(--app-border-subtle, rgba(255, 255, 255, 0.12));
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.45) !important;
+  border-color: rgba(255, 255, 255, 0.12) !important;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35) !important;
+}
+
+/* Tableaux : scroll horizontal (exception au reset overflow/border chauffeur) */
+.dashboard-container--chauffeur .dashboard-table-section {
+  min-width: 0;
+}
+
+.dashboard-container--chauffeur .dashboard-table-shell {
+  overflow-x: auto !important;
+  overflow-y: hidden;
+  max-width: 100%;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior-x: contain;
+  touch-action: pan-x pan-y;
+  border: 1px solid #e2e8f0 !important;
+  border-color: #e2e8f0 !important;
+}
+
+.dashboard-container--chauffeur .dashboard-table--clients {
+  min-width: max(100%, 40rem);
+}
+
+.dashboard-container--chauffeur .dashboard-table--courses {
+  min-width: max(100%, 56rem);
 }
 
 /* Cartes overview chauffeur : sans bordure extérieure ; léger relief au survol */
