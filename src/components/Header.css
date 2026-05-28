@@ -11,16 +11,6 @@
   pointer-events: none;
 }
 
-body.has-beta-banner .header {
-  top: 34px;
-}
-
-@media (max-width: 768px) {
-  body.has-beta-banner .header {
-    top: 32px;
-  }
-}
-
 .header-content {
   display: flex;
   align-items: center;

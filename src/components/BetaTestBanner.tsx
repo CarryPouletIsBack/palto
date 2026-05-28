@@ -20,18 +20,6 @@ export default function BetaTestBanner() {
     }
   }, [])
 
-  useEffect(() => {
-    if (typeof document === 'undefined') return
-    if (!dismissed) {
-      document.body.classList.add('has-beta-banner')
-    } else {
-      document.body.classList.remove('has-beta-banner')
-    }
-    return () => {
-      document.body.classList.remove('has-beta-banner')
-    }
-  }, [dismissed])
-
   if (dismissed) return null
 
   return (
