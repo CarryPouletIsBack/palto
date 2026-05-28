@@ -1040,6 +1040,7 @@ function App() {
           {renderCurrentPage()}
         </div>
       )}
+      {currentPage === 'accueil' ? <BetaTestBanner placement="bottom" /> : null}
     </div>
   )
 }

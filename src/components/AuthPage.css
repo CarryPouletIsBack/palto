@@ -12,6 +12,18 @@
   color: var(--app-text-primary);
 }
 
+.auth-page-shell--overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 90;
+  min-height: 100dvh;
+  align-items: flex-start;
+  justify-content: center;
+  padding-top: calc(env(safe-area-inset-top, 0px) + var(--beta-banner-height, 0px) + 64px);
+  background: rgba(2, 6, 23, 0.28);
+  backdrop-filter: blur(2px);
+}
+
 .auth-page-card {
   position: relative;
   width: min(100%, 440px);
@@ -371,5 +383,11 @@ html[data-app-theme='dark'] .auth-page-select:focus {
 
   .auth-page-btn {
     width: 100%;
+  }
+
+  .auth-page-shell--overlay {
+    padding-top: calc(env(safe-area-inset-top, 0px) + var(--beta-banner-height, 0px) + 56px);
+    padding-left: 10px;
+    padding-right: 10px;
   }
 }

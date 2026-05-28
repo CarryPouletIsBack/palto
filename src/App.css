@@ -162,6 +162,15 @@
   box-sizing: border-box;
 }
 
+.beta-test-banner--inline {
+  position: relative;
+  top: auto;
+  left: auto;
+  right: auto;
+  z-index: 20;
+  margin-top: 0;
+}
+
 .beta-test-banner__content {
   display: flex;
   align-items: center;

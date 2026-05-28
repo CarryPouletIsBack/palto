@@ -3,7 +3,11 @@ import { apiBaseUrl } from '../constants/featureFlags'
 
 const BETA_BANNER_DISMISSED_KEY = 'palto_beta_banner_dismissed_v1'
 
-export default function BetaTestBanner() {
+type BetaTestBannerProps = {
+  placement?: 'top' | 'bottom'
+}
+
+export default function BetaTestBanner({ placement = 'top' }: BetaTestBannerProps) {
   const apiBase = apiBaseUrl()
   const bannerRef = useRef<HTMLDivElement | null>(null)
   const [dismissed, setDismissed] = useState(false)
@@ -22,6 +26,7 @@ export default function BetaTestBanner() {
   }, [])
 
   useEffect(() => {
+    if (placement !== 'top') return
     if (typeof document === 'undefined') return
     const root = document.documentElement
     const applyHeight = () => {
@@ -45,13 +50,18 @@ export default function BetaTestBanner() {
       window.removeEventListener('resize', applyHeight)
       root.style.setProperty('--beta-banner-height', '0px')
     }
-  }, [dismissed])
+  }, [dismissed, placement])
 
   if (dismissed) return null
 
   return (
     <>
-      <div ref={bannerRef} className="beta-test-banner" role="region" aria-label="Information beta test Palto">
+      <div
+        ref={bannerRef}
+        className={`beta-test-banner${placement === 'bottom' ? ' beta-test-banner--inline' : ''}`}
+        role="region"
+        aria-label="Information beta test Palto"
+      >
         <div className="beta-test-banner__content">
           <p>
             Version bêta test v0.0.1 - Votre avis compte. <strong>Nou la fé</strong>.

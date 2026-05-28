@@ -62,7 +62,7 @@ export default function ChauffeurAuthPage({ onAuthSuccess, onClose }: Props) {
   }
 
   return (
-    <section className="auth-page-shell">
+    <section className={`auth-page-shell${onClose ? ' auth-page-shell--overlay' : ''}`}>
       <div className="auth-page-card">
         {onClose ? (
           <button type="button" className="auth-page-close" onClick={onClose} aria-label="Fermer">
