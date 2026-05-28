@@ -31,6 +31,51 @@ export interface LoginCredentials {
   password: string
 }
 
+export async function requestPasswordReset(role: AccountRole, email: string): Promise<{ success: boolean; error?: string }> {
+  const emailTrim = email.trim()
+  if (!emailTrim) return { success: false, error: 'Email requis' }
+  try {
+    const response = await fetch(`${API_BASE_URL}/auth?role=${role}&action=forgot-password`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email: emailTrim }),
+    })
+    const data = (await response.json().catch(() => null)) as { success?: boolean; error?: string } | null
+    if (!response.ok || !data?.success) {
+      return { success: false, error: data?.error || `Erreur serveur (${response.status})` }
+    }
+    return { success: true }
+  } catch (error) {
+    console.error('[authService] forgot password', error)
+    return { success: false, error: 'Impossible de joindre le serveur de reinitialisation' }
+  }
+}
+
+export async function resetPasswordWithToken(
+  role: AccountRole,
+  token: string,
+  password: string
+): Promise<{ success: boolean; error?: string }> {
+  const tokenTrim = token.trim()
+  if (!tokenTrim) return { success: false, error: 'Token manquant' }
+  if (!password.trim()) return { success: false, error: 'Mot de passe requis' }
+  try {
+    const response = await fetch(`${API_BASE_URL}/auth?role=${role}&action=reset-password`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ token: tokenTrim, password }),
+    })
+    const data = (await response.json().catch(() => null)) as { success?: boolean; error?: string } | null
+    if (!response.ok || !data?.success) {
+      return { success: false, error: data?.error || `Erreur serveur (${response.status})` }
+    }
+    return { success: true }
+  } catch (error) {
+    console.error('[authService] reset password', error)
+    return { success: false, error: 'Impossible de joindre le serveur de reinitialisation' }
+  }
+}
+
 export type RegisterClientPayload = LoginCredentials & {
   prenom: string
   nom: string

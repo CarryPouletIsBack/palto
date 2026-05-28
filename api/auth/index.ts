@@ -4,6 +4,8 @@ import {
   handleAuthChauffeurRegister,
   handleAuthClientLogin,
   handleAuthClientRegister,
+  handleAuthForgotPassword,
+  handleAuthResetPassword,
   handleAuthDeleteAccount,
   handleAuthRealtimeToken,
 } from '../../server/lib/authApiHandlers.js'
@@ -34,6 +36,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (role === 'client' && action === 'register') return handleAuthClientRegister(req, res)
   if (role === 'chauffeur' && action === 'login') return handleAuthChauffeurLogin(req, res)
   if (role === 'chauffeur' && action === 'register') return handleAuthChauffeurRegister(req, res)
+  if (role === 'client' && action === 'forgot-password') return handleAuthForgotPassword(req, res, 'client')
+  if (role === 'chauffeur' && action === 'forgot-password')
+    return handleAuthForgotPassword(req, res, 'chauffeur')
+  if (role === 'client' && action === 'reset-password') return handleAuthResetPassword(req, res, 'client')
+  if (role === 'chauffeur' && action === 'reset-password') return handleAuthResetPassword(req, res, 'chauffeur')
   if (role === 'client' && action === 'delete') return handleAuthDeleteAccount(req, res, 'client')
   if (role === 'chauffeur' && action === 'delete') return handleAuthDeleteAccount(req, res, 'chauffeur')
 

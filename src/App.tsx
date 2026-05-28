@@ -10,12 +10,14 @@ import ClientCompteDashboard from './components/ClientCompteDashboard'
 import ClientMeetDriverPage from './components/ClientMeetDriverPage'
 import ClientAuthPage from './components/ClientAuthPage'
 import ChauffeurAuthPage from './components/ChauffeurAuthPage'
+import ResetPasswordPage from './components/ResetPasswordPage'
 import DriverNavigationView from './components/DriverNavigationView'
 import ErrorPage from './components/ErrorPage'
 import Contact from './components/Contact'
 import Menu from './components/Menu'
 import { DestinationSpotlight } from './components/DestinationSpotlight'
 import { GeolocationPromptBanner } from './components/GeolocationPromptBanner'
+import BetaTestBanner from './components/BetaTestBanner'
 import { getDestinationById, type PopularDestination } from './data/popularDestinations'
 import { AppToaster } from './components/AppToaster'
 import { isAuthenticated, isClientAuthenticated, type AccountRole } from './services/authService'
@@ -41,6 +43,7 @@ const PROJECT_ORDER = ['Go'] as const
 const DOCUMENT_SCROLL_PAGE_IDS = new Set([
   'client-compte',
   'client-meet-driver',
+  'reset-password',
   'contact',
   '404',
   'dashboard',
@@ -193,6 +196,8 @@ function App() {
         targetPage = 'client-meet-driver'
       } else if (pathToMatch === '/compte' || pathToMatch.startsWith('/compte')) {
         targetPage = 'client-compte'
+      } else if (pathToMatch === '/reset-password') {
+        targetPage = 'reset-password'
       } else if (pathToMatch.startsWith('/lieu/')) {
         const raw = pathToMatch.replace(/^\/lieu\//, '').split('/')[0] ?? ''
         const destId = raw ? decodeURIComponent(raw) : ''
@@ -792,6 +797,16 @@ function App() {
                 }}
               />
             )}
+            {currentPage === 'reset-password' && (
+              <ResetPasswordPage
+                onDone={(role) => {
+                  const prefix = language === 'en' ? '/en' : '/fr'
+                  const path = role === 'chauffeur' ? `${prefix}/dashboard` : `${prefix}/compte`
+                  setCurrentPage(role === 'chauffeur' ? 'dashboard' : 'client-compte')
+                  window.history.pushState({}, '', path)
+                }}
+              />
+            )}
             {currentPage === 'client-compte' && (
               (authUiTick >= 0 && isClientAuthenticated()) ? (
                 <ClientCompteDashboard
@@ -990,9 +1005,12 @@ function App() {
         currentPage !== 'client-meet-driver' &&
         currentPage !== 'accueil' &&
         currentPage !== 'accueil-chauffeur' &&
-        !currentPage.startsWith('destination-') && (
-        <Header onContactClick={handleContactClick} onLogoClick={handleLogoClick} />
-      )}
+        !currentPage.startsWith('destination-') ? (
+        <>
+          <BetaTestBanner />
+          <Header onContactClick={handleContactClick} onLogoClick={handleLogoClick} />
+        </>
+      ) : null}
       {currentPage === 'client-meet-driver' ? (
         <ClientMeetDriverPage
           onBack={() => {

@@ -76,6 +76,13 @@ export default function ClientAuthPage({ onAuthSuccess, onClose }: Props) {
     onAuthSuccess(result.role)
   }
 
+  const handleForgotPassword = () => {
+    setError(null)
+    setHelpMessage(
+      'Reinitialisation temporairement indisponible pendant la beta. Contactez le support Palto.'
+    )
+  }
+
   const handleSubmit = (e: FormEvent) => {
     e.preventDefault()
     setHelpMessage(null)
@@ -150,9 +157,7 @@ export default function ClientAuthPage({ onAuthSuccess, onClose }: Props) {
             <button
               className="auth-page-forgot"
               type="button"
-              onClick={() =>
-                setHelpMessage("Lien de reinitialisation bientot disponible. Contacte le support pour le moment.")
-              }
+              onClick={handleForgotPassword}
             >
               Mot de passe oublie ?
             </button>

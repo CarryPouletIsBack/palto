@@ -1,5 +1,7 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node'
 import { z } from 'zod'
+import { randomBytes } from 'crypto'
+import { Resend } from 'resend'
 import { getSupabaseAdmin } from './supabaseAdmin.js'
 import { createAccountSession, hashPassword, normalizeEmail, verifyPassword } from './accountAuth.js'
 import {
@@ -30,6 +32,15 @@ const LoginBodySchema = z.object({
   password: z.string().min(1).max(128),
 })
 
+const ForgotPasswordBodySchema = z.object({
+  email: z.string().email().max(320),
+})
+
+const ResetPasswordBodySchema = z.object({
+  token: z.string().min(20).max(256),
+  password: z.string().min(6).max(128),
+})
+
 const ClientRegisterBodySchema = AccountRegistrationIdentitySchema.extend({
   email: z.string().email().max(320),
   password: z.string().min(6).max(128),
@@ -47,6 +58,68 @@ const ChauffeurRegisterBodySchema = AccountRegistrationIdentitySchema.extend({
   isVtc: z.boolean(),
   deliveryEquipped: z.boolean(),
 })
+
+function appBaseUrlFromRequest(req: VercelRequest): string {
+  const envBase =
+    process.env.APP_BASE_URL?.trim() ||
+    process.env.VERCEL_PROJECT_PRODUCTION_URL?.trim() ||
+    process.env.VERCEL_URL?.trim() ||
+    ''
+  if (envBase) {
+    if (/^https?:\/\//i.test(envBase)) return envBase.replace(/\/$/, '')
+    return `https://${envBase.replace(/\/$/, '')}`
+  }
+  const host = req.headers.host?.trim() || 'localhost:3000'
+  const proto = (req.headers['x-forwarded-proto'] as string | undefined)?.split(',')[0]?.trim() || 'https'
+  return `${proto}://${host}`
+}
+
+async function createPasswordResetToken(
+  supabase: Awaited<ReturnType<typeof getSupabaseAdmin>>,
+  account: { id: string; email: string },
+  role: 'client' | 'chauffeur'
+): Promise<string> {
+  const token = randomBytes(32).toString('hex')
+  const expiresAt = new Date(Date.now() + 30 * 60 * 1000).toISOString()
+  const { error } = await supabase.from('app_sessions').insert({
+    token,
+    account_id: account.id,
+    email: account.email,
+    role,
+    expires_at: expiresAt,
+  })
+  if (error) throw new Error(`Creation token reset impossible${error.code ? ` (${error.code})` : ''}`)
+  return token
+}
+
+async function sendForgotPasswordEmail(params: {
+  email: string
+  role: 'client' | 'chauffeur'
+  resetLink: string
+}): Promise<void> {
+  if (!process.env.RESEND_API_KEY) {
+    throw new Error('RESEND_API_KEY non configuree')
+  }
+  const resend = new Resend(process.env.RESEND_API_KEY)
+  const from = process.env.RESEND_FROM ?? 'Palto <onboarding@resend.dev>'
+  const appLabel = params.role === 'chauffeur' ? 'Palto Chauffeur' : 'Palto Client'
+  const roleLabel = params.role === 'chauffeur' ? 'chauffeur' : 'client'
+  await resend.emails.send({
+    from,
+    to: [params.email],
+    subject: `[Palto] Reinitialisation du mot de passe (${appLabel})`,
+    text: `Bonjour,
+
+Une demande de reinitialisation a ete faite pour votre compte ${roleLabel}.
+
+Lien de reinitialisation (valable 30 minutes) :
+${params.resetLink}
+
+Ouvrez ce lien pour choisir un nouveau mot de passe.
+Si vous n'etes pas a l'origine de cette demande, contactez le support Palto.
+`,
+  })
+}
 
 export async function handleAuthClientLogin(req: VercelRequest, res: VercelResponse) {
   const body = parseJsonBody(req)
@@ -267,6 +340,117 @@ export async function handleAuthChauffeurRegister(req: VercelRequest, res: Verce
     token,
     user: { email: data.email, displayName },
   })
+}
+
+export async function handleAuthForgotPassword(
+  req: VercelRequest,
+  res: VercelResponse,
+  role: 'client' | 'chauffeur'
+) {
+  const body = parseJsonBody(req)
+  if (body === null) return res.status(400).json({ success: false, error: 'Payload JSON invalide' })
+  const parsed = ForgotPasswordBodySchema.safeParse(body)
+  if (!parsed.success) return res.status(400).json({ success: false, error: 'Email invalide' })
+
+  let supabase
+  try {
+    supabase = getSupabaseAdmin()
+  } catch {
+    return res.status(503).json({ success: false, error: 'Service indisponible' })
+  }
+
+  const email = normalizeEmail(parsed.data.email)
+  const { data: account, error: readErr } = await supabase
+    .from('app_accounts')
+    .select('id,email')
+    .eq('email', email)
+    .eq('role', role)
+    .maybeSingle()
+
+  if (readErr) {
+    console.error(`[auth/${role}/forgot-password] read`, readErr)
+    return res.status(500).json({ success: false, error: 'Lecture compte impossible' })
+  }
+
+  // Reponse neutre pour eviter l'enumeration des comptes.
+  if (!account) return res.status(200).json({ success: true })
+
+  let resetToken: string
+  try {
+    resetToken = await createPasswordResetToken(supabase, { id: account.id, email: account.email }, role)
+  } catch (error) {
+    console.error(`[auth/${role}/forgot-password] token`, error)
+    return res.status(500).json({ success: false, error: 'Reinitialisation impossible' })
+  }
+  const baseUrl = appBaseUrlFromRequest(req)
+  const resetLink = `${baseUrl}/fr/reset-password?role=${role}&token=${encodeURIComponent(resetToken)}`
+
+  try {
+    await sendForgotPasswordEmail({
+      email: account.email,
+      role,
+      resetLink,
+    })
+  } catch (error) {
+    console.error(`[auth/${role}/forgot-password] email`, error)
+    return res.status(503).json({
+      success: false,
+      error: 'Email de reinitialisation indisponible. Contactez le support.',
+    })
+  }
+
+  return res.status(200).json({ success: true })
+}
+
+export async function handleAuthResetPassword(
+  req: VercelRequest,
+  res: VercelResponse,
+  role: 'client' | 'chauffeur'
+) {
+  const body = parseJsonBody(req)
+  if (body === null) return res.status(400).json({ success: false, error: 'Payload JSON invalide' })
+  const parsed = ResetPasswordBodySchema.safeParse(body)
+  if (!parsed.success) return res.status(400).json({ success: false, error: 'Payload invalide' })
+
+  let supabase
+  try {
+    supabase = getSupabaseAdmin()
+  } catch {
+    return res.status(503).json({ success: false, error: 'Service indisponible' })
+  }
+
+  const token = parsed.data.token.trim()
+  const { data: session, error: sessionErr } = await supabase
+    .from('app_sessions')
+    .select('token,account_id,email,role,expires_at')
+    .eq('token', token)
+    .maybeSingle()
+  if (sessionErr) {
+    console.error(`[auth/${role}/reset-password] session read`, sessionErr)
+    return res.status(500).json({ success: false, error: 'Verification token impossible' })
+  }
+  if (!session || session.role !== role) {
+    return res.status(401).json({ success: false, error: 'Token invalide ou expire' })
+  }
+  const expiresAtMs = Date.parse(session.expires_at)
+  if (Number.isNaN(expiresAtMs) || expiresAtMs <= Date.now()) {
+    await supabase.from('app_sessions').delete().eq('token', token)
+    return res.status(401).json({ success: false, error: 'Token invalide ou expire' })
+  }
+
+  const passwordHash = hashPassword(parsed.data.password)
+  const { error: updateErr } = await supabase
+    .from('app_accounts')
+    .update({ password_hash: passwordHash, updated_at: new Date().toISOString() })
+    .eq('id', session.account_id)
+    .eq('role', role)
+  if (updateErr) {
+    console.error(`[auth/${role}/reset-password] account update`, updateErr)
+    return res.status(500).json({ success: false, error: 'Reinitialisation impossible' })
+  }
+
+  await supabase.from('app_sessions').delete().eq('token', token)
+  return res.status(200).json({ success: true })
 }
 
 const DeleteAccountBodySchema = z.object({

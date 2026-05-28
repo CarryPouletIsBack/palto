@@ -54,6 +54,13 @@ export default function ChauffeurAuthPage({ onAuthSuccess, onClose }: Props) {
     void submitLogin()
   }
 
+  const handleForgotPassword = () => {
+    setError(null)
+    setHelpMessage(
+      'Reinitialisation temporairement indisponible pendant la beta. Contactez le support Palto.'
+    )
+  }
+
   return (
     <section className="auth-page-shell">
       <div className="auth-page-card">
@@ -116,11 +123,7 @@ export default function ChauffeurAuthPage({ onAuthSuccess, onClose }: Props) {
             <button
               className="auth-page-forgot"
               type="button"
-              onClick={() =>
-                setHelpMessage(
-                  "Lien de reinitialisation bientot disponible. Contacte le support pour le moment."
-                )
-              }
+              onClick={handleForgotPassword}
             >
               Mot de passe oublie ?
             </button>

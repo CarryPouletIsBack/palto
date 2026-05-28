@@ -55,6 +55,7 @@ export function getSeoPathForLang(page: string, lang: SeoLanguage, navigationCou
   if (page === 'accueil-chauffeur') return `${prefix}/chauffeur`
   if (page === 'menu') return `${prefix}/menu`
   if (page === 'contact') return `${prefix}/contact`
+  if (page === 'reset-password') return `${prefix}/reset-password`
   if (page === 'dashboard') return `${prefix}/dashboard`
   if (page === 'client-meet-driver') return `${prefix}/compte/course`
   if (page === 'client-compte') return `${prefix}/compte`
@@ -133,6 +134,17 @@ export function getPageSeo(page: string, language: SeoLanguage, options: PageSeo
     return {
       title: language === 'en' ? 'Meet your driver — Palto' : 'Retrouver votre chauffeur — Palto',
       description: language === 'en' ? 'Private ride tracking page.' : 'Page privée de suivi de course.',
+      robots: 'noindex,nofollow',
+      canonicalPath,
+      ogImage: DEFAULT_OG_IMAGE,
+      twitterCard: 'summary',
+    }
+  }
+
+  if (page === 'reset-password') {
+    return {
+      title: language === 'en' ? 'Reset password — Palto' : 'Reinitialiser le mot de passe — Palto',
+      description: language === 'en' ? 'Private password reset page.' : 'Page privee de reinitialisation de mot de passe.',
       robots: 'noindex,nofollow',
       canonicalPath,
       ogImage: DEFAULT_OG_IMAGE,
