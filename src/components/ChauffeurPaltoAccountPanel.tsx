@@ -479,8 +479,8 @@ export default function ChauffeurPaltoAccountPanel({
 
           </section>
         )}
-        <PaltoAccountDeleteBlock role="chauffeur" />
         {section === 'personal' ? afterDeleteContent : null}
+        <PaltoAccountDeleteBlock role="chauffeur" />
       </div>
 
       {mountAccountModal(

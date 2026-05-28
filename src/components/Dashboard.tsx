@@ -1142,6 +1142,12 @@ const Dashboard = ({
   }, [activeView]);
 
   useEffect(() => {
+    if (userSubView === 'payment') {
+      setUserSubView('preferences');
+    }
+  }, [userSubView]);
+
+  useEffect(() => {
     saveChauffeurOrg(chauffeurOrg);
   }, [chauffeurOrg]);
 
@@ -3753,14 +3759,6 @@ const Dashboard = ({
                           </button>
                           <button
                             type="button"
-                            className={`dashboard-org-nav-item${userSubView === 'payment' ? ' active' : ''}`}
-                            onClick={() => setUserSubView('payment')}
-                          >
-                            <Wallet size={16} aria-hidden />
-                            <span>{language === 'en' ? 'Payouts' : 'Versements'}</span>
-                          </button>
-                          <button
-                            type="button"
                             className={`dashboard-org-nav-item${userSubView === 'ride-settings' ? ' active' : ''}`}
                             onClick={() => setUserSubView('ride-settings')}
                           >
@@ -3849,6 +3847,16 @@ const Dashboard = ({
                         </nav>
                       </aside>
                       <div className="dashboard-org-main">
+                      {!chauffeurPresence.tracking && userSubView !== 'preferences' ? (
+                        <div className="dashboard-preferences-geo" style={{ marginBottom: 16 }}>
+                          <ChauffeurPresenceGeoBar
+                            onActivate={chauffeurPresence.startTracking}
+                            onRefresh={chauffeurPresence.refreshLocation}
+                            error={chauffeurPresence.geoError}
+                            tracking={chauffeurPresence.tracking}
+                          />
+                        </div>
+                      ) : null}
                       {userSubView === 'palto-account' ? (
                         <section className="dashboard-table-section dashboard-table-section--palto-account">
                           <ChauffeurPaltoAccountPanel
@@ -3953,7 +3961,6 @@ const Dashboard = ({
                       ) : null}
                       {(userSubView === 'profile' ||
                         userSubView === 'documents' ||
-                        userSubView === 'payment' ||
                         userSubView === 'ride-settings' ||
                         userSubView === 'organization' ||
                         userSubView === 'preferences' ||
@@ -4156,134 +4163,6 @@ const Dashboard = ({
                           </>
                         ) : null}
 
-                        {userSubView === 'payment' ? (
-                          <>
-                            <div className="dashboard-user-card-head">
-                              <div>
-                                <h4>{language === 'en' ? 'Payouts & collection' : 'Versements & encaissement'}</h4>
-                              <p className="dashboard-field-hint">
-                                {language === 'en' ? (
-                                  <>
-                                    Bank payouts for your driver activity. For Stripe test cards (Go as passenger), see{' '}
-                                    <button
-                                      type="button"
-                                      className="dashboard-inline-link-btn"
-                                      onClick={() => openChauffeurPaltoAccount('payment')}
-                                    >
-                                      Palto account → Payment
-                                    </button>
-                                    .
-                                  </>
-                                ) : (
-                                  <>
-                                    Versements bancaires pour votre activité chauffeur. Pour les cartes Stripe (mode test, courses Go en passager), voir{' '}
-                                    <button
-                                      type="button"
-                                      className="dashboard-inline-link-btn"
-                                      onClick={() => openChauffeurPaltoAccount('payment')}
-                                    >
-                                      Compte Palto → Paiement
-                                    </button>
-                                    .
-                                  </>
-                                )}
-                              </p>
-                              </div>
-                            </div>
-                              <form
-                                className="dashboard-payment-edit-grid"
-                                onSubmit={(e) => {
-                                  e.preventDefault();
-                                  savePaymentEdit();
-                                }}
-                              >
-                                <label>
-                                  IBAN (masqué)
-                                  <input
-                                    type="text"
-                                    value={paymentDraft.ibanMasked}
-                                    onChange={(e) =>
-                                      setPaymentDraft((prev) => ({ ...prev, ibanMasked: e.target.value }))
-                                    }
-                                    required
-                                  />
-                                </label>
-                                <label>
-                                  Fréquence de versement
-                                  <select
-                                    value={paymentDraft.payoutFrequency}
-                                    onChange={(e) =>
-                                      setPaymentDraft((prev) => ({
-                                        ...prev,
-                                        payoutFrequency: e.target.value as ChauffeurPayment['payoutFrequency'],
-                                      }))
-                                    }
-                                  >
-                                    <option value="Hebdomadaire">Hebdomadaire</option>
-                                    <option value="Quotidienne">Quotidienne</option>
-                                    <option value="Mensuelle">Mensuelle</option>
-                                  </select>
-                                </label>
-                                <label>
-                                  Mode principal
-                                  <select
-                                    value={paymentDraft.modePrincipal}
-                                    onChange={(e) =>
-                                      setPaymentDraft((prev) => ({
-                                        ...prev,
-                                        modePrincipal: e.target.value as ChauffeurPayment['modePrincipal'],
-                                      }))
-                                    }
-                                  >
-                                    <option value="Carte + espèces">Carte + espèces</option>
-                                    <option value="Carte uniquement">Carte uniquement</option>
-                                    <option value="Espèces uniquement">Espèces uniquement</option>
-                                  </select>
-                                </label>
-                                {JSON.stringify(paymentDraft) !== JSON.stringify(chauffeurPayment) ? (
-                                  <div className="dashboard-payment-edit-actions">
-                                    <button type="submit" className="dashboard-user-save-btn">Enregistrer</button>
-                                    <button type="button" className="dashboard-user-cancel-btn" onClick={cancelPaymentEdit}>
-                                      Annuler
-                                    </button>
-                                  </div>
-                                ) : null}
-                              </form>
-                            <div className="dashboard-user-pane-separator" role="separator" />
-                            <div className="dashboard-user-card-head">
-                              <div>
-                                <h4>
-                                  {language === 'en' ? 'Cancellations & card refunds' : 'Annulations & remboursements carte'}
-                                </h4>
-                              <p className="dashboard-field-hint">
-                                {language === 'en'
-                                  ? 'Stripe status after a cancellation (full release or cancellation fee).'
-                                  : 'Statut Stripe apres annulation (liberation de l’autorisation ou frais d’annulation).'}
-                              </p>
-                              </div>
-                            </div>
-                              {cancelledCoursesForRefundView.length === 0 ? (
-                                <p className="dashboard-field-hint" style={{ margin: 0 }}>
-                                  {language === 'en' ? 'No cancelled rides.' : 'Aucune course annulee.'}
-                                </p>
-                              ) : (
-                                <div className="dashboard-chauffeur-refund-list">
-                                  {cancelledCoursesForRefundView.map((course) => (
-                                    <div key={course.id} className="dashboard-chauffeur-refund-row">
-                                      <strong>
-                                        {course.date} {course.heure} — {course.client}
-                                      </strong>
-                                      <p>
-                                        {course.depart} → {course.arrivee}
-                                        {course.modePaiement === 'carte' ? ' · CB' : ' · especes'}
-                                      </p>
-                                      <p>{chauffeurCancelledPaymentLabel(course)}</p>
-                                    </div>
-                                  ))}
-                                </div>
-                              )}
-                          </>
-                        ) : null}
                         {userSubView === 'ride-settings' ? (
                           <>
                             <div className="dashboard-user-card-head">
@@ -4502,7 +4381,7 @@ const Dashboard = ({
                               <div>
                                 <h4>Préférences</h4>
                                 <p className="dashboard-field-hint">
-                                  Langue, apparence, notifications et visibilité sur les courses (page Go).
+                                  Langue, apparence et visibilité sur les courses (page Go).
                                 </p>
                               </div>
                             </div>
@@ -4538,70 +4417,6 @@ const Dashboard = ({
                                 </select>
                               </label>
 
-                              <h3 className="client-compte-section-title" style={{ marginTop: 16 }}>
-                                {t('clientAccount.settingsTextSizeTitle')}
-                              </h3>
-                              <p className="dashboard-field-hint" style={{ margin: '0 0 12px' }}>
-                                {t('clientAccount.settingsTextSizeHint')}
-                              </p>
-                              <div className="client-compte-font-scale-row">
-                                <span className="client-compte-font-scale-end" aria-hidden="true">
-                                  {FONT_SCALE_PERCENT_MIN} %
-                                </span>
-                                <input
-                                  type="range"
-                                  className="client-compte-font-scale-range"
-                                  min={FONT_SCALE_PERCENT_MIN}
-                                  max={FONT_SCALE_PERCENT_MAX}
-                                  step={1}
-                                  value={appPrefs.fontScalePercent}
-                                  onChange={(e) => setFontScalePercent(Number(e.target.value))}
-                                  aria-label={t('clientAccount.settingsTextSizeAria')}
-                                  aria-valuemin={FONT_SCALE_PERCENT_MIN}
-                                  aria-valuemax={FONT_SCALE_PERCENT_MAX}
-                                  aria-valuenow={appPrefs.fontScalePercent}
-                                  aria-valuetext={t('clientAccount.settingsTextSizeValue', {
-                                    n: String(appPrefs.fontScalePercent),
-                                  })}
-                                />
-                                <span className="client-compte-font-scale-end client-compte-font-scale-end--max" aria-hidden="true">
-                                  {FONT_SCALE_PERCENT_MAX} %
-                                </span>
-                              </div>
-                              <p className="client-compte-font-scale-value" aria-live="polite">
-                                {t('clientAccount.settingsTextSizeValue', { n: String(appPrefs.fontScalePercent) })}
-                              </p>
-
-                              <h3 className="client-compte-section-title" style={{ marginTop: 16 }}>
-                                {t('clientAccount.settingsNotificationsTitle')}
-                              </h3>
-                              <p className="dashboard-field-hint" style={{ margin: '0 0 8px' }}>
-                                {t('clientAccount.settingsNotificationsHint')}
-                              </p>
-                              <label className="client-compte-settings-toggle-row">
-                                <span>{t('clientAccount.settingsNotifyEmail')}</span>
-                                <input
-                                  type="checkbox"
-                                  checked={appPrefs.notifyEmail}
-                                  onChange={() => toggleAppNotify('notifyEmail')}
-                                />
-                              </label>
-                              <label className="client-compte-settings-toggle-row">
-                                <span>{t('clientAccount.settingsNotifySms')}</span>
-                                <input
-                                  type="checkbox"
-                                  checked={appPrefs.notifySms}
-                                  onChange={() => toggleAppNotify('notifySms')}
-                                />
-                              </label>
-                              <label className="client-compte-settings-toggle-row">
-                                <span>{t('clientAccount.settingsNotifyPush')}</span>
-                                <input
-                                  type="checkbox"
-                                  checked={appPrefs.notifyPush}
-                                  onChange={() => toggleAppNotify('notifyPush')}
-                                />
-                              </label>
                           </>
                         ) : null}
                         {userSubView === 'help' ? (
