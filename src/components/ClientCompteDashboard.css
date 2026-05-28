@@ -965,12 +965,6 @@ body.accueil-page .dashboard-container--home-accueil .dashboard-main {
     box-shadow: none;
   }
 
-  .dashboard-container--client-compte
-    .dashboard-home-topbar-right-cluster
-    > .client-compte-topbar-menu-anchor:first-child {
-    display: none;
-  }
-
   /* Alignement typescale / spacing compte chauffeur mobile (gouttières ~20px, sections ~32px, cartes ~16px, corps ~16–17px, KPI ~24px) */
   .dashboard-container--client-compte .dashboard-content {
     margin-inline: max(20px, env(safe-area-inset-left, 0px)) max(20px, env(safe-area-inset-right, 0px));

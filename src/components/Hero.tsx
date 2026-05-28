@@ -194,10 +194,9 @@ const Hero = ({
                         <select
                           id="hero-home-pickup-timing"
                           value={pickupTiming}
-                          onChange={(e) => setPickupTiming(e.target.value === 'later' ? 'later' : 'now')}
+                          onChange={() => setPickupTiming('now')}
                         >
                           <option value="now">{t('hero.homeTimingNow')}</option>
-                          <option value="later">{t('hero.homeTimingLater')}</option>
                         </select>
                       </label>
                       <label>

@@ -515,38 +515,26 @@ const SingleProjectNew: FC<SingleProjectProps> = ({
       }),
     [estimatedRouteKmForPricing, paltoRouteDeniveleEstimateM, isNightRide]
   );
-  const paltoPricing = useMemo(() => {
-    const totalTtc = paltoSelectedDriver ? computeDriverPriceTtc(paltoSelectedDriver) : estimatedRideFareTtc;
-    if (!Number.isFinite(totalTtc) || totalTtc <= 0) return null;
-    const tvaRate = 0.2;
-    const totalHt = totalTtc / (1 + tvaRate);
-    const totalTva = totalTtc - totalHt;
-    return {
-      ht: totalHt.toFixed(2),
-      tva: totalTva.toFixed(2),
-      ttc: totalTtc.toFixed(2),
-    };
+  const paltoFareEur = useMemo(() => {
+    const fare = paltoSelectedDriver ? computeDriverPriceTtc(paltoSelectedDriver) : estimatedRideFareTtc;
+    if (!Number.isFinite(fare) || fare <= 0) return null;
+    return fare;
   }, [paltoSelectedDriver, computeDriverPriceTtc, estimatedRideFareTtc]);
 
   const paltoRecapPriceBreakdown = useMemo(() => {
-    let driverEur = paltoPricing ? Number.parseFloat(paltoPricing.ttc) : NaN;
+    let driverEur = paltoFareEur ?? NaN;
     if ((!Number.isFinite(driverEur) || driverEur <= 0) && paltoSelectedDriver) {
-      const ttc = computeDriverPriceTtc(paltoSelectedDriver);
-      if (ttc != null) driverEur = ttc;
+      const fare = computeDriverPriceTtc(paltoSelectedDriver);
+      if (fare != null) driverEur = fare;
     }
     if (!Number.isFinite(driverEur) || driverEur <= 0) return null;
     const fees = formatRideTotalWithPaltoFee(driverEur);
-    const tvaRate = 0.2;
-    const ht = driverEur / (1 + tvaRate);
-    const tva = driverEur - ht;
     return {
-      ht: ht.toFixed(2),
-      tva: tva.toFixed(2),
-      driverTtc: fees.driverEur.toFixed(2),
+      driverEur: fees.driverEur.toFixed(2),
       paltoFeeEur: fees.paltoFeeEur.toFixed(2),
       totalAuthorizedEur: fees.totalEur.toFixed(2),
     };
-  }, [paltoPricing, paltoSelectedDriver, computeDriverPriceTtc]);
+  }, [paltoFareEur, paltoSelectedDriver, computeDriverPriceTtc]);
 
   const mobileShowChooseRideStep = isMobileGoViewport && showDriversColumn;
 
@@ -647,12 +635,8 @@ const SingleProjectNew: FC<SingleProjectProps> = ({
       setPickupGeocodeError(null);
       setDestinationSearchError(null);
 
-      if (prefill.timing === 'now' || prefill.timing === 'later') {
-        setPaltoPickupTiming(prefill.timing);
-      }
-      if (prefill.datetime?.trim()) {
-        setPaltoPickupDateTime(prefill.datetime.trim());
-      }
+      setPaltoPickupTiming('now');
+      setPaltoPickupDateTime('');
 
       let pickupReady = false;
       const prefillPickupLng = prefill.pickupLng;
@@ -862,13 +846,12 @@ const SingleProjectNew: FC<SingleProjectProps> = ({
   }, [paltoPickupLocation, paltoRideDestination, paltoPickupTiming, paltoPickupDateTime]);
 
   const handlePickupTimingChange = useCallback((next: 'now' | 'later') => {
-    setPaltoPickupTiming(next);
     if (next === 'later') {
-      setChauffeursSearchOk(false);
-      setPaltoRideSelectedDriverId(null);
-      setIsRecapPopupOpen(false);
-      setIsCheckoutPopupOpen(false);
+      setPaltoPickupTiming('now');
+      setPaltoPickupDateTime('');
+      return;
     }
+    setPaltoPickupTiming('now');
   }, []);
 
   const onPickupLocationInputChange = useCallback(
@@ -1871,7 +1854,7 @@ const SingleProjectNew: FC<SingleProjectProps> = ({
     const schedule =
       paltoPickupTiming === 'later' ? laterParts() ?? nowParts() : nowParts();
     const bookingKind = paltoPickupTiming === 'later' ? ('scheduled' as const) : ('instant' as const);
-    let amountEur = paltoPricing ? Number.parseFloat(paltoPricing.ttc) : NaN;
+    let amountEur = paltoFareEur ?? NaN;
     if ((!Number.isFinite(amountEur) || amountEur <= 0) && paltoSelectedDriver) {
       const ttc = computeDriverPriceTtc(paltoSelectedDriver);
       if (ttc != null) amountEur = ttc;
@@ -1974,7 +1957,7 @@ const SingleProjectNew: FC<SingleProjectProps> = ({
     pickupResolvedPoint?.longitude,
     paltoPickupDateTime,
     paltoPickupTiming,
-    paltoPricing,
+    paltoFareEur,
     paltoRouteDistanceKm,
     paltoRouteDeniveleEstimateM,
     paltoSelectedDriver,
@@ -3430,16 +3413,8 @@ const SingleProjectNew: FC<SingleProjectProps> = ({
                     {paltoRecapPriceBreakdown ? (
                       <>
                         <p className="palto-ride-recap-price-row">
-                          <span>Montant HT (course):</span>
-                          <strong>{paltoRecapPriceBreakdown.ht} EUR</strong>
-                        </p>
-                        <p className="palto-ride-recap-price-row">
-                          <span>TVA (20%):</span>
-                          <strong>{paltoRecapPriceBreakdown.tva} EUR</strong>
-                        </p>
-                        <p className="palto-ride-recap-price-row">
                           <span>{t('search.checkoutDriverFare')}</span>
-                          <strong>{paltoRecapPriceBreakdown.driverTtc} EUR</strong>
+                          <strong>{paltoRecapPriceBreakdown.driverEur} EUR</strong>
                         </p>
                         {effectiveCheckoutPaymentMethod === 'card' ? (
                           <>
@@ -3455,7 +3430,7 @@ const SingleProjectNew: FC<SingleProjectProps> = ({
                         ) : (
                           <p className="palto-ride-recap-price-row palto-ride-recap-price-row--total">
                             <span>{t('search.checkoutPaymentCash')}</span>
-                            <strong>{paltoRecapPriceBreakdown.driverTtc} EUR</strong>
+                            <strong>{paltoRecapPriceBreakdown.driverEur} EUR</strong>
                           </p>
                         )}
                       </>
@@ -3551,7 +3526,7 @@ const SingleProjectNew: FC<SingleProjectProps> = ({
                         </strong>
                       </p>
                       {(() => {
-                        let driverEur = paltoPricing ? Number.parseFloat(paltoPricing.ttc) : NaN
+                        let driverEur = paltoFareEur ?? NaN
                         if ((!Number.isFinite(driverEur) || driverEur <= 0) && paltoSelectedDriver) {
                           const ttc = computeDriverPriceTtc(paltoSelectedDriver)
                           if (ttc != null) driverEur = ttc

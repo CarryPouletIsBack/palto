@@ -2,7 +2,7 @@
  * Page « Compte » utilisateur : même shell UI que le Dashboard chauffeur
  * (sidebar, dashboard-main, dashboard-content, Dashboard.css), sans vues chauffeur.
  */
-import { useState, useEffect, useCallback, useMemo, useRef, type FormEvent } from 'react';
+import { useState, useEffect, useCallback, useMemo, useRef, type FormEvent, type KeyboardEvent } from 'react';
 import {
   User,
   Pencil,
@@ -98,7 +98,7 @@ import {
   type ClientSavedPaymentMethod,
 } from '../constants/clientPaymentMethodsStorage';
 import { DEFAULT_HERO_DEPARTMENT_ID } from '../data/heroDepartments';
-import { stripeCheckoutEnabled, stripePublishableKey } from '../constants/featureFlags';
+import { cashOnlyPaymentsEnabled, stripeCheckoutEnabled, stripePublishableKey } from '../constants/featureFlags';
 import PaltoStripeSetupForm from './PaltoStripeSetupForm';
 import PaltoStripePaymentForm from './PaltoStripePaymentForm';
 import PaltoStripeTestCardHint from './PaltoStripeTestCardHint';
@@ -261,6 +261,374 @@ type ClientAccountNavId =
   | 'help';
 
 type AccountManageSectionId = 'personal' | 'security' | 'payment' | 'privacy' | 'help';
+/** Sections affichées dans la grille compte (hors onglet paiement dédié). */
+type AccountManageSectionMain = Exclude<AccountManageSectionId, 'payment'>;
+/** Tuiles 2–4 : masquées pour l’onglet sécurité. */
+type AccountManageSectionGeneral = Exclude<AccountManageSectionMain, 'security'>;
+
+function AccountManageSectionIcon({
+  section,
+  size = 16,
+}: {
+  section: AccountManageSectionId;
+  size?: number;
+}) {
+  switch (section) {
+    case 'personal':
+      return <IdCard size={size} />;
+    case 'security':
+      return <Shield size={size} />;
+    case 'payment':
+      return <Wallet size={size} />;
+    case 'privacy':
+      return <FileLock size={size} />;
+    case 'help':
+      return <CircleHelp size={size} />;
+  }
+}
+
+function accountCard1Title(section: AccountManageSectionMain, isEn: boolean): string {
+  switch (section) {
+    case 'personal':
+      return 'Nom';
+    case 'security':
+      return isEn ? 'Password' : 'Mot de passe';
+    case 'privacy':
+      return isEn ? 'Privacy' : 'Confidentialite';
+    case 'help':
+      return isEn ? 'Help' : 'Aide';
+  }
+}
+
+function accountCard1Hint(
+  section: AccountManageSectionMain,
+  isEn: boolean,
+  profile: { prenom: string; nom: string },
+  passwordHint: string
+): string {
+  switch (section) {
+    case 'personal':
+      return `${profile.prenom} ${profile.nom}`;
+    case 'security':
+      return passwordHint;
+    case 'privacy':
+      return isEn ? 'Control your personal data.' : 'Controle de vos donnees personnelles.';
+    case 'help':
+      return isEn ? 'Browse frequent topics.' : 'Consultez les sujets les plus frequents.';
+  }
+}
+
+function accountCard1Value(
+  section: AccountManageSectionMain,
+  _isEn: boolean,
+  profile: { prenom: string; nom: string },
+  passwordHint: string
+): string {
+  switch (section) {
+    case 'personal':
+      return `${profile.prenom} ${profile.nom}`;
+    case 'security':
+      return passwordHint;
+    case 'privacy':
+      return 'Controle de vos donnees personnelles.';
+    case 'help':
+      return 'Consultez les sujets les plus frequents.';
+  }
+}
+
+function accountCard2Title(section: AccountManageSectionGeneral, _isEn: boolean): string {
+  switch (section) {
+    case 'personal':
+      return 'Telephone';
+    case 'privacy':
+      return 'Partage des donnees';
+    case 'help':
+      return 'Support';
+  }
+}
+
+function accountCard2Hint(
+  section: AccountManageSectionGeneral,
+  profile: { telephone: string },
+  t: (k: string) => string
+): string {
+  switch (section) {
+    case 'personal':
+      return profile.telephone;
+    case 'privacy':
+      return t('clientAccount.sectionPlaceholder');
+    case 'help':
+      return t('clientAccount.helpLead');
+  }
+}
+
+function accountCard2Value(
+  section: AccountManageSectionGeneral,
+  _isEn: boolean,
+  profile: { telephone: string },
+  t: (k: string) => string
+): string {
+  switch (section) {
+    case 'personal':
+      return profile.telephone;
+    case 'privacy':
+      return t('clientAccount.sectionPlaceholder');
+    case 'help':
+      return t('clientAccount.helpLead');
+  }
+}
+
+function accountCard3Title(section: AccountManageSectionGeneral, _isEn: boolean): string {
+  switch (section) {
+    case 'personal':
+      return 'Email';
+    case 'privacy':
+      return 'Export de donnees';
+    case 'help':
+      return 'FAQ';
+  }
+}
+
+function accountCard3Hint(
+  section: AccountManageSectionGeneral,
+  _isEn: boolean,
+  profile: { email: string },
+  t: (k: string) => string
+): string {
+  switch (section) {
+    case 'personal':
+      return profile.email;
+    case 'privacy':
+      return t('clientAccount.sectionPlaceholder');
+    case 'help':
+      return t('clientAccount.helpLead');
+  }
+}
+
+function accountCard3Value(
+  section: AccountManageSectionGeneral,
+  _isEn: boolean,
+  profile: { email: string },
+  t: (k: string) => string
+): string {
+  switch (section) {
+    case 'personal':
+      return profile.email;
+    case 'privacy':
+      return t('clientAccount.sectionPlaceholder');
+    case 'help':
+      return t('clientAccount.helpLead');
+  }
+}
+
+function accountCard4Title(section: AccountManageSectionGeneral, isEn: boolean): string {
+  switch (section) {
+    case 'personal':
+      return 'Langue';
+    case 'privacy':
+      return 'Suppression';
+    case 'help':
+      return 'Contact';
+  }
+}
+
+function accountCard4Hint(
+  section: AccountManageSectionGeneral,
+  isEn: boolean,
+  language: Language
+): string {
+  switch (section) {
+    case 'personal':
+      return language === 'en' ? 'English' : 'Francais';
+    case 'privacy':
+      return 'Gerer la conservation des informations.';
+    case 'help':
+      return isEn ? 'Contact the Palto team.' : 'Contacter l equipe Palto.';
+  }
+}
+
+function accountCard4Value(
+  section: AccountManageSectionGeneral,
+  isEn: boolean,
+  language: Language
+): string {
+  switch (section) {
+    case 'personal':
+      return language === 'en' ? 'English' : 'Francais';
+    case 'privacy':
+      return 'Gerer la conservation des informations.';
+    case 'help':
+      return isEn ? 'Contact the Palto team.' : 'Contacter l equipe Palto.';
+  }
+}
+
+function accountCard2Icon(section: AccountManageSectionGeneral) {
+  switch (section) {
+    case 'personal':
+      return <Phone size={16} />;
+    case 'privacy':
+      return <FileLock size={16} />;
+    case 'help':
+      return <CircleHelp size={16} />;
+  }
+}
+
+function accountCard3Icon(section: AccountManageSectionGeneral) {
+  switch (section) {
+    case 'personal':
+      return <Mail size={16} />;
+    case 'privacy':
+      return <FileLock size={16} />;
+    case 'help':
+      return <CircleHelp size={16} />;
+  }
+}
+
+function accountCard4Icon(section: AccountManageSectionGeneral) {
+  switch (section) {
+    case 'personal':
+      return <Settings size={16} />;
+    case 'privacy':
+      return <FileLock size={16} />;
+    case 'help':
+      return <CircleHelp size={16} />;
+  }
+}
+
+type ClientAccountManageGridProps = {
+  section: AccountManageSectionMain;
+  profile: { prenom: string; nom: string; telephone: string; email: string };
+  security: ClientSecuritySnapshot;
+  isEn: boolean;
+  language: Language;
+  t: (k: string) => string;
+  accountCardOverrides: Record<string, string>;
+  formatSecurityDate: (iso: string) => string;
+  openAccountEditModal: (key: string, title: string, initialValue: string) => void;
+};
+
+function ClientAccountManageGrid({
+  section,
+  profile,
+  security,
+  isEn,
+  language,
+  t,
+  accountCardOverrides,
+  formatSecurityDate,
+  openAccountEditModal,
+}: ClientAccountManageGridProps) {
+  const passwordHint = `${'•'.repeat(10)} · ${formatSecurityDate(security.passwordLastChangedAt)}`;
+
+  const openTile = (cardIndex: 1 | 2 | 3 | 4, value: string, modalTitle?: string) => {
+    const key = `${section}-card-${cardIndex}`;
+    openAccountEditModal(
+      key,
+      modalTitle ?? (isEn ? 'Edit' : 'Modifier'),
+      accountCardOverrides[key] ?? value
+    );
+  };
+
+  const handleTileKeyDown = (
+    e: KeyboardEvent,
+    cardIndex: 1 | 2 | 3 | 4,
+    value: string,
+    modalTitle?: string
+  ) => {
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault();
+      openTile(cardIndex, value, modalTitle);
+    }
+  };
+
+  const generalSection: AccountManageSectionGeneral | null =
+    section !== 'security' ? section : null;
+
+  return (
+    <section className="client-compte-manage-grid">
+      <article
+        className="dashboard-user-card client-compte-bento-card client-compte-account-tile"
+        role="button"
+        tabIndex={0}
+        onClick={() =>
+          openTile(
+            1,
+            accountCard1Value(section, isEn, profile, passwordHint),
+            section === 'security' ? (isEn ? 'Change password' : 'Modifier le mot de passe') : undefined
+          )
+        }
+        onKeyDown={(e) =>
+          handleTileKeyDown(
+            e,
+            1,
+            accountCard1Value(section, isEn, profile, passwordHint),
+            section === 'security' ? (isEn ? 'Change password' : 'Modifier le mot de passe') : undefined
+          )
+        }
+      >
+        <h4 className="client-compte-section-title">{accountCard1Title(section, isEn)}</h4>
+        <p className="dashboard-field-hint">
+          {accountCardOverrides[`${section}-card-1`] ??
+            accountCard1Hint(section, isEn, profile, passwordHint)}
+        </p>
+        <span className="client-compte-account-tile-icon" aria-hidden>
+          <AccountManageSectionIcon section={section} />
+        </span>
+      </article>
+      {generalSection ? (
+        <>
+          <article
+            className="dashboard-user-card client-compte-bento-card client-compte-account-tile"
+            role="button"
+            tabIndex={0}
+            onClick={() => openTile(2, accountCard2Value(generalSection, isEn, profile, t))}
+            onKeyDown={(e) => handleTileKeyDown(e, 2, accountCard2Value(generalSection, isEn, profile, t))}
+          >
+            <h4 className="client-compte-section-title">{accountCard2Title(generalSection, isEn)}</h4>
+            <p className="dashboard-field-hint">
+              {accountCardOverrides[`${section}-card-2`] ?? accountCard2Hint(generalSection, profile, t)}
+            </p>
+            <span className="client-compte-account-tile-icon" aria-hidden>
+              {accountCard2Icon(generalSection)}
+            </span>
+          </article>
+          <article
+            className="dashboard-user-card client-compte-bento-card client-compte-account-tile"
+            role="button"
+            tabIndex={0}
+            onClick={() => openTile(3, accountCard3Value(generalSection, isEn, profile, t))}
+            onKeyDown={(e) => handleTileKeyDown(e, 3, accountCard3Value(generalSection, isEn, profile, t))}
+          >
+            <h4 className="client-compte-section-title">{accountCard3Title(generalSection, isEn)}</h4>
+            <p className="dashboard-field-hint">
+              {accountCardOverrides[`${section}-card-3`] ?? accountCard3Hint(generalSection, isEn, profile, t)}
+            </p>
+            <span className="client-compte-account-tile-icon" aria-hidden>
+              {accountCard3Icon(generalSection)}
+            </span>
+          </article>
+          <article
+            className="dashboard-user-card client-compte-bento-card client-compte-account-tile"
+            role="button"
+            tabIndex={0}
+            onClick={() => openTile(4, accountCard4Value(generalSection, isEn, language))}
+            onKeyDown={(e) => handleTileKeyDown(e, 4, accountCard4Value(generalSection, isEn, language))}
+          >
+            <h4 className="client-compte-section-title">{accountCard4Title(generalSection, isEn)}</h4>
+            <p className="dashboard-field-hint">
+              {accountCardOverrides[`${section}-card-4`] ??
+                accountCard4Hint(generalSection, isEn, language)}
+            </p>
+            <span className="client-compte-account-tile-icon" aria-hidden>
+              {accountCard4Icon(generalSection)}
+            </span>
+          </article>
+        </>
+      ) : null}
+    </section>
+  );
+}
+
 type AccountEditModalState = {
   open: boolean;
   key: string;
@@ -370,6 +738,7 @@ export default function ClientCompteDashboard({ onBack, onOpenClientLiveMeet }: 
   const [paymentEditSaving, setPaymentEditSaving] = useState(false);
   const stripeOn = clientStripeApiEnabled();
   const stripePk = stripePublishableKey();
+  const paymentFeaturesEnabled = !cashOnlyPaymentsEnabled();
   const [placesDraft, setPlacesDraft] = useState<ClientSavedPlacesSnapshot>(() =>
     loadClientSavedPlaces(getCurrentClientUser()?.email)
   );
@@ -828,6 +1197,9 @@ export default function ClientCompteDashboard({ onBack, onOpenClientLiveMeet }: 
 
   const goNav = useCallback(
     (id: ClientAccountNavId) => {
+      if (!paymentFeaturesEnabled && id === 'wallet') {
+        id = 'overview';
+      }
       if (activeNav === 'personal' && id !== 'personal' && isEditing) {
         cancelEdit();
       }
@@ -845,7 +1217,7 @@ export default function ClientCompteDashboard({ onBack, onOpenClientLiveMeet }: 
       if (isMobileViewport) setMobileSidebarOpen(false);
       trackEvent('click', 'client_account', `nav_${id}`);
     },
-    [activeNav, isEditing, cancelEdit, isMobileViewport, language]
+    [activeNav, isEditing, cancelEdit, isMobileViewport, language, paymentFeaturesEnabled]
   );
 
   const openClientRideTracking = useCallback(async () => {
@@ -899,9 +1271,24 @@ export default function ClientCompteDashboard({ onBack, onOpenClientLiveMeet }: 
   }, [activeClientEmail, clientRides, onOpenClientLiveMeet, goNav]);
 
   const openManageAccount = useCallback((section: AccountManageSectionId = 'personal') => {
+    if (!paymentFeaturesEnabled && section === 'payment') {
+      section = 'personal';
+    }
     setAccountManageSection(section);
     setActiveNav('account');
-  }, []);
+  }, [paymentFeaturesEnabled]);
+
+  useEffect(() => {
+    if (!paymentFeaturesEnabled && activeNav === 'wallet') {
+      setActiveNav('overview');
+    }
+  }, [activeNav, paymentFeaturesEnabled]);
+
+  useEffect(() => {
+    if (!paymentFeaturesEnabled && accountManageSection === 'payment') {
+      setAccountManageSection('personal');
+    }
+  }, [accountManageSection, paymentFeaturesEnabled]);
 
   const openAccountEditModal = useCallback((key: string, title: string, value: string) => {
     const raw = value.trim();
@@ -1692,17 +2079,19 @@ export default function ClientCompteDashboard({ onBack, onOpenClientLiveMeet }: 
                 </span>
                 <span className="nav-label">{t('clientAccount.navPlaces')}</span>
               </button>
-              <button
-                type="button"
-                className={`dashboard-nav-item${activeNav === 'wallet' ? ' active' : ''}`}
-                aria-current={activeNav === 'wallet' ? 'page' : undefined}
-                onClick={() => goNav('wallet')}
-              >
-                <span className="nav-icon">
-                  <Wallet size={18} />
-                </span>
-                <span className="nav-label">{t('clientAccount.navWallet')}</span>
-              </button>
+              {paymentFeaturesEnabled ? (
+                <button
+                  type="button"
+                  className={`dashboard-nav-item${activeNav === 'wallet' ? ' active' : ''}`}
+                  aria-current={activeNav === 'wallet' ? 'page' : undefined}
+                  onClick={() => goNav('wallet')}
+                >
+                  <span className="nav-icon">
+                    <Wallet size={18} />
+                  </span>
+                  <span className="nav-label">{t('clientAccount.navWallet')}</span>
+                </button>
+              ) : null}
               <button
                 type="button"
                 className={`dashboard-nav-item${activeNav === 'security' ? ' active' : ''}`}
@@ -2032,50 +2421,52 @@ export default function ClientCompteDashboard({ onBack, onOpenClientLiveMeet }: 
                   )}
                 </article>
 
-                <article
-                  className="dashboard-user-card client-compte-bento-card client-compte-bento-card--clickable"
-                  role="button"
-                  tabIndex={0}
-                  onClick={() => goNav('wallet')}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter' || e.key === ' ') {
-                      e.preventDefault();
-                      goNav('wallet');
-                    }
-                  }}
-                >
-                  <h3 className="client-compte-section-title">
-                    <span className="client-compte-section-title__icon" aria-hidden>
-                      <Wallet size={16} />
-                    </span>
-                    <span>{t('clientAccount.navWallet')}</span>
-                  </h3>
-                  <p className="client-compte-wallet-balance" aria-live="polite">
-                    {formatWalletEUR(wallet.balanceCents, language)}
-                  </p>
-                  <ul className="client-compte-wallet-mini-list" aria-label={t('clientAccount.walletMovementsTitle')}>
-                    {recentRidePrices.map((ride) => (
-                      <li
-                        key={ride.id}
-                        className="client-compte-wallet-mini-list__item"
-                        role="button"
-                        tabIndex={0}
-                        onClick={() => goNav('wallet')}
-                        onKeyDown={(e) => {
-                          if (e.key === 'Enter' || e.key === ' ') {
-                            e.preventDefault();
-                            goNav('wallet');
-                          }
-                        }}
-                      >
-                        <span className="client-compte-wallet-mini-list__route">{ride.route}</span>
-                        <span className="client-compte-wallet-mini-list__amount">
-                          {t('clientAccount.ridePriceEur', { n: String(ride.priceEur) })}
-                        </span>
-                      </li>
-                    ))}
-                  </ul>
-                </article>
+                {paymentFeaturesEnabled ? (
+                  <article
+                    className="dashboard-user-card client-compte-bento-card client-compte-bento-card--clickable"
+                    role="button"
+                    tabIndex={0}
+                    onClick={() => goNav('wallet')}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault();
+                        goNav('wallet');
+                      }
+                    }}
+                  >
+                    <h3 className="client-compte-section-title">
+                      <span className="client-compte-section-title__icon" aria-hidden>
+                        <Wallet size={16} />
+                      </span>
+                      <span>{t('clientAccount.navWallet')}</span>
+                    </h3>
+                    <p className="client-compte-wallet-balance" aria-live="polite">
+                      {formatWalletEUR(wallet.balanceCents, language)}
+                    </p>
+                    <ul className="client-compte-wallet-mini-list" aria-label={t('clientAccount.walletMovementsTitle')}>
+                      {recentRidePrices.map((ride) => (
+                        <li
+                          key={ride.id}
+                          className="client-compte-wallet-mini-list__item"
+                          role="button"
+                          tabIndex={0}
+                          onClick={() => goNav('wallet')}
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter' || e.key === ' ') {
+                              e.preventDefault();
+                              goNav('wallet');
+                            }
+                          }}
+                        >
+                          <span className="client-compte-wallet-mini-list__route">{ride.route}</span>
+                          <span className="client-compte-wallet-mini-list__amount">
+                            {t('clientAccount.ridePriceEur', { n: String(ride.priceEur) })}
+                          </span>
+                        </li>
+                      ))}
+                    </ul>
+                  </article>
+                ) : null}
 
                 <article
                   className="dashboard-user-card client-compte-bento-card client-compte-bento-card--clickable"
@@ -2186,10 +2577,12 @@ export default function ClientCompteDashboard({ onBack, onOpenClientLiveMeet }: 
                       <span className="nav-icon" aria-hidden><Shield size={16} /></span>
                       <span>{isEn ? 'Security' : 'Securite'}</span>
                     </button>
-                    <button type="button" className={`client-compte-account-nav-item${accountManageSection === 'payment' ? ' is-active' : ''}`} onClick={() => openManageAccount('payment')}>
-                      <span className="nav-icon" aria-hidden><Wallet size={16} /></span>
-                      <span>{isEn ? 'Payment' : 'Paiement'}</span>
-                    </button>
+                    {paymentFeaturesEnabled ? (
+                      <button type="button" className={`client-compte-account-nav-item${accountManageSection === 'payment' ? ' is-active' : ''}`} onClick={() => openManageAccount('payment')}>
+                        <span className="nav-icon" aria-hidden><Wallet size={16} /></span>
+                        <span>{isEn ? 'Payment' : 'Paiement'}</span>
+                      </button>
+                    ) : null}
                     <button
                       type="button"
                       className="client-compte-account-nav-item client-compte-account-nav-item--disabled"
@@ -2455,302 +2848,17 @@ export default function ClientCompteDashboard({ onBack, onOpenClientLiveMeet }: 
                       ) : null}
                     </section>
                   ) : (
-                  <section className="client-compte-manage-grid">
-                    <article
-                      className="dashboard-user-card client-compte-bento-card client-compte-account-tile"
-                      role="button"
-                      tabIndex={0}
-                      onClick={() => {
-                        const value = accountManageSection === 'personal'
-                          ? `${profile.prenom} ${profile.nom}`
-                          : accountManageSection === 'security'
-                            ? `${'•'.repeat(10)} · ${formatSecurityDate(security.passwordLastChangedAt)}`
-                            : accountManageSection === 'payment'
-                              ? (isEn ? 'Default card' : 'Carte par defaut')
-                            : accountManageSection === 'privacy'
-                              ? 'Controle de vos donnees personnelles.'
-                              : 'Consultez les sujets les plus frequents.';
-                        const key = `${accountManageSection}-card-1`;
-                        openAccountEditModal(
-                          key,
-                          accountManageSection === 'security'
-                            ? (isEn ? 'Change password' : 'Modifier le mot de passe')
-                            : (isEn ? 'Edit' : 'Modifier'),
-                          accountCardOverrides[key] ?? value
-                        );
-                      }}
-                      onKeyDown={(e) => {
-                        if (e.key === 'Enter' || e.key === ' ') {
-                          e.preventDefault();
-                          const value = accountManageSection === 'personal'
-                            ? `${profile.prenom} ${profile.nom}`
-                            : accountManageSection === 'security'
-                              ? `${'•'.repeat(10)} · ${formatSecurityDate(security.passwordLastChangedAt)}`
-                              : accountManageSection === 'privacy'
-                                ? 'Controle de vos donnees personnelles.'
-                                : 'Consultez les sujets les plus frequents.';
-                          const key = `${accountManageSection}-card-1`;
-                          openAccountEditModal(
-                            key,
-                            accountManageSection === 'security'
-                              ? (isEn ? 'Change password' : 'Modifier le mot de passe')
-                              : (isEn ? 'Edit' : 'Modifier'),
-                            accountCardOverrides[key] ?? value
-                          );
-                        }
-                      }}
-                    >
-                      <h4 className="client-compte-section-title">
-                        {accountManageSection === 'personal'
-                          ? 'Nom'
-                          : accountManageSection === 'security'
-                            ? (isEn ? 'Password' : 'Mot de passe')
-                            : accountManageSection === 'payment'
-                              ? (isEn ? 'Default payment' : 'Paiement par defaut')
-                            : accountManageSection === 'privacy'
-                              ? (isEn ? 'Privacy' : 'Confidentialite')
-                              : (isEn ? 'Help' : 'Aide')}
-                      </h4>
-                      <p className="dashboard-field-hint">
-                        {accountCardOverrides[`${accountManageSection}-card-1`] ?? (accountManageSection === 'personal'
-                          ? `${profile.prenom} ${profile.nom}`
-                          : accountManageSection === 'security'
-                            ? `${'•'.repeat(10)} · ${formatSecurityDate(security.passwordLastChangedAt)}`
-                            : accountManageSection === 'payment'
-                              ? (isEn ? 'Visa •••• 4242' : 'Visa •••• 4242')
-                            : accountManageSection === 'privacy'
-                              ? (isEn ? 'Control your personal data.' : 'Controle de vos donnees personnelles.')
-                              : (isEn ? 'Browse frequent topics.' : 'Consultez les sujets les plus frequents.'))}
-                      </p>
-                      <span className="client-compte-account-tile-icon" aria-hidden>
-                        {accountManageSection === 'personal' ? (
-                          <IdCard size={16} />
-                        ) : accountManageSection === 'security' ? (
-                          <Shield size={16} />
-                        ) : accountManageSection === 'payment' ? (
-                          <Wallet size={16} />
-                        ) : accountManageSection === 'privacy' ? (
-                          <FileLock size={16} />
-                        ) : (
-                          <CircleHelp size={16} />
-                        )}
-                      </span>
-                    </article>
-                    {accountManageSection !== 'security' ? (
-                      <>
-                    <article
-                      className="dashboard-user-card client-compte-bento-card client-compte-account-tile"
-                      role="button"
-                      tabIndex={0}
-                      onClick={() => {
-                        const value = accountManageSection === 'personal'
-                          ? profile.telephone
-                          : accountManageSection === 'security'
-                            ? (isEn ? 'Two-step verification and sign-in alerts.' : 'Double verification et alertes de connexion.')
-                            : accountManageSection === 'payment'
-                              ? (isEn ? 'Edit your card details.' : 'Modifiez les informations de votre carte.')
-                            : accountManageSection === 'privacy'
-                              ? t('clientAccount.sectionPlaceholder')
-                              : t('clientAccount.helpLead');
-                        const key = `${accountManageSection}-card-2`;
-                        openAccountEditModal(key, isEn ? 'Edit' : 'Modifier', accountCardOverrides[key] ?? value);
-                      }}
-                      onKeyDown={(e) => {
-                        if (e.key === 'Enter' || e.key === ' ') {
-                          e.preventDefault();
-                          const value = accountManageSection === 'personal'
-                            ? profile.telephone
-                            : accountManageSection === 'security'
-                              ? (isEn ? 'Two-step verification and sign-in alerts.' : 'Double verification et alertes de connexion.')
-                              : accountManageSection === 'payment'
-                                ? (isEn ? 'Edit your card details.' : 'Modifiez les informations de votre carte.')
-                              : accountManageSection === 'privacy'
-                                ? t('clientAccount.sectionPlaceholder')
-                                : t('clientAccount.helpLead');
-                          const key = `${accountManageSection}-card-2`;
-                          openAccountEditModal(key, isEn ? 'Edit' : 'Modifier', accountCardOverrides[key] ?? value);
-                        }
-                      }}
-                    >
-                      <h4 className="client-compte-section-title">
-                        {accountManageSection === 'personal'
-                          ? 'Telephone'
-                          : accountManageSection === 'security'
-                            ? 'Mot de passe'
-                            : accountManageSection === 'payment'
-                              ? (isEn ? 'Card details' : 'Infos carte')
-                            : accountManageSection === 'privacy'
-                              ? 'Partage des donnees'
-                              : 'Support'}
-                      </h4>
-                      <p className="dashboard-field-hint">
-                        {accountCardOverrides[`${accountManageSection}-card-2`] ?? (accountManageSection === 'personal'
-                          ? profile.telephone
-                          : accountManageSection === 'security'
-                            ? (isEn ? 'Two-step verification and sign-in alerts.' : 'Double verification et alertes de connexion.')
-                            : accountManageSection === 'payment'
-                              ? (isEn ? 'Expires 07/29 · John Doe' : 'Expire 07/29 · John Doe')
-                            : accountManageSection === 'privacy'
-                              ? t('clientAccount.sectionPlaceholder')
-                              : t('clientAccount.helpLead'))}
-                      </p>
-                      <span className="client-compte-account-tile-icon" aria-hidden>
-                        {accountManageSection === 'personal' ? (
-                          <Phone size={16} />
-                        ) : accountManageSection === 'security' ? (
-                          <Shield size={16} />
-                        ) : accountManageSection === 'payment' ? (
-                          <Wallet size={16} />
-                        ) : accountManageSection === 'privacy' ? (
-                          <FileLock size={16} />
-                        ) : (
-                          <CircleHelp size={16} />
-                        )}
-                      </span>
-                    </article>
-                    <article
-                      className="dashboard-user-card client-compte-bento-card client-compte-account-tile"
-                      role="button"
-                      tabIndex={0}
-                      onClick={() => {
-                        const value = accountManageSection === 'personal'
-                          ? profile.email
-                          : accountManageSection === 'security'
-                            ? 'Sessions actives et appareils connectes.'
-                            : accountManageSection === 'payment'
-                              ? (isEn ? 'Billing history and invoices.' : 'Historique des paiements et factures.')
-                            : accountManageSection === 'privacy'
-                              ? t('clientAccount.sectionPlaceholder')
-                              : t('clientAccount.helpLead');
-                        const key = `${accountManageSection}-card-3`;
-                        openAccountEditModal(key, isEn ? 'Edit' : 'Modifier', accountCardOverrides[key] ?? value);
-                      }}
-                      onKeyDown={(e) => {
-                        if (e.key === 'Enter' || e.key === ' ') {
-                          e.preventDefault();
-                          const value = accountManageSection === 'personal'
-                            ? profile.email
-                            : accountManageSection === 'security'
-                              ? 'Sessions actives et appareils connectes.'
-                              : accountManageSection === 'payment'
-                                ? (isEn ? 'Billing history and invoices.' : 'Historique des paiements et factures.')
-                              : accountManageSection === 'privacy'
-                                ? t('clientAccount.sectionPlaceholder')
-                                : t('clientAccount.helpLead');
-                          const key = `${accountManageSection}-card-3`;
-                          openAccountEditModal(key, isEn ? 'Edit' : 'Modifier', accountCardOverrides[key] ?? value);
-                        }
-                      }}
-                    >
-                      <h4 className="client-compte-section-title">
-                        {accountManageSection === 'personal'
-                          ? 'Email'
-                          : accountManageSection === 'security'
-                            ? 'Appareils'
-                            : accountManageSection === 'payment'
-                              ? (isEn ? 'History' : 'Historique')
-                            : accountManageSection === 'privacy'
-                              ? 'Export de donnees'
-                              : 'FAQ'}
-                      </h4>
-                      <p className="dashboard-field-hint">
-                        {accountCardOverrides[`${accountManageSection}-card-3`] ?? (accountManageSection === 'personal'
-                          ? profile.email
-                          : accountManageSection === 'security'
-                            ? 'Sessions actives et appareils connectes.'
-                            : accountManageSection === 'payment'
-                              ? (isEn ? 'Last payment: €24.00 · 04/05/2026' : 'Dernier paiement : 24 € · 05/04/2026')
-                            : accountManageSection === 'privacy'
-                              ? t('clientAccount.sectionPlaceholder')
-                              : t('clientAccount.helpLead'))}
-                      </p>
-                      <span className="client-compte-account-tile-icon" aria-hidden>
-                        {accountManageSection === 'personal' ? (
-                          <Mail size={16} />
-                        ) : accountManageSection === 'security' ? (
-                          <Shield size={16} />
-                        ) : accountManageSection === 'payment' ? (
-                          <Wallet size={16} />
-                        ) : accountManageSection === 'privacy' ? (
-                          <FileLock size={16} />
-                        ) : (
-                          <CircleHelp size={16} />
-                        )}
-                      </span>
-                    </article>
-                    <article
-                      className="dashboard-user-card client-compte-bento-card client-compte-account-tile"
-                      role="button"
-                      tabIndex={0}
-                      onClick={() => {
-                        const value = accountManageSection === 'personal'
-                          ? (language === 'en' ? 'English' : 'Francais')
-                          : accountManageSection === 'security'
-                            ? 'Protection des connexions et alertes.'
-                            : accountManageSection === 'payment'
-                              ? (isEn ? 'Enable payment alerts.' : 'Activer les alertes de paiement.')
-                            : accountManageSection === 'privacy'
-                              ? 'Gerer la conservation des informations.'
-                              : (isEn ? 'Contact the Palto team.' : 'Contacter l equipe Palto.');
-                        const key = `${accountManageSection}-card-4`;
-                        openAccountEditModal(key, isEn ? 'Edit' : 'Modifier', accountCardOverrides[key] ?? value);
-                      }}
-                      onKeyDown={(e) => {
-                        if (e.key === 'Enter' || e.key === ' ') {
-                          e.preventDefault();
-                          const value = accountManageSection === 'personal'
-                            ? (language === 'en' ? 'English' : 'Francais')
-                            : accountManageSection === 'security'
-                              ? 'Protection des connexions et alertes.'
-                              : accountManageSection === 'payment'
-                                ? (isEn ? 'Enable payment alerts.' : 'Activer les alertes de paiement.')
-                              : accountManageSection === 'privacy'
-                                ? 'Gerer la conservation des informations.'
-                                : (isEn ? 'Contact the Palto team.' : 'Contacter l equipe Palto.');
-                          const key = `${accountManageSection}-card-4`;
-                          openAccountEditModal(key, isEn ? 'Edit' : 'Modifier', accountCardOverrides[key] ?? value);
-                        }
-                      }}
-                    >
-                      <h4 className="client-compte-section-title">
-                        {accountManageSection === 'personal'
-                          ? 'Langue'
-                          : accountManageSection === 'security'
-                            ? 'Verification'
-                            : accountManageSection === 'payment'
-                              ? (isEn ? 'Alerts' : 'Alertes')
-                            : accountManageSection === 'privacy'
-                              ? 'Suppression'
-                              : 'Contact'}
-                      </h4>
-                      <p className="dashboard-field-hint">
-                        {accountCardOverrides[`${accountManageSection}-card-4`] ?? (accountManageSection === 'personal'
-                          ? (language === 'en' ? 'English' : 'Francais')
-                          : accountManageSection === 'security'
-                            ? 'Protection des connexions et alertes.'
-                            : accountManageSection === 'payment'
-                              ? (isEn ? 'Email and push notifications enabled.' : 'Notifications email et push activees.')
-                            : accountManageSection === 'privacy'
-                              ? 'Gerer la conservation des informations.'
-                              : (isEn ? 'Contact the Palto team.' : 'Contacter l equipe Palto.'))}
-                      </p>
-                      <span className="client-compte-account-tile-icon" aria-hidden>
-                        {accountManageSection === 'personal' ? (
-                          <Settings size={16} />
-                        ) : accountManageSection === 'security' ? (
-                          <Shield size={16} />
-                        ) : accountManageSection === 'payment' ? (
-                          <Wallet size={16} />
-                        ) : accountManageSection === 'privacy' ? (
-                          <FileLock size={16} />
-                        ) : (
-                          <CircleHelp size={16} />
-                        )}
-                      </span>
-                    </article>
-                      </>
-                    ) : null}
-                  </section>
+                    <ClientAccountManageGrid
+                      section={accountManageSection}
+                      profile={profile}
+                      security={security}
+                      isEn={isEn}
+                      language={language}
+                      t={t}
+                      accountCardOverrides={accountCardOverrides}
+                      formatSecurityDate={formatSecurityDate}
+                      openAccountEditModal={openAccountEditModal}
+                    />
                   )}
                   <PaltoAccountDeleteBlock role="client" />
                 </div>
@@ -3492,10 +3600,10 @@ export default function ClientCompteDashboard({ onBack, onOpenClientLiveMeet }: 
                               {language === 'en' ? ride.dateEn : ride.date} ·{' '}
                               <span
                                 className={`ride-status-badge ride-status-badge--${rideStatusTone(
-                                  language === 'en' ? ride.statusEn : ride.status
+                                  rideRowStatusLabel(ride, language)
                                 )}`}
                               >
-                                {language === 'en' ? ride.statusEn : ride.status}
+                                {rideRowStatusLabel(ride, language)}
                               </span>
                             </p>
                           </div>
