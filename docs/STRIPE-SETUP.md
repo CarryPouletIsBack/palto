@@ -19,6 +19,21 @@ Optionnel (même clé côté API) :
 STRIPE_PUBLISHABLE_KEY=pk_test_...
 ```
 
+### Mode test public : espèces uniquement
+
+Pour une phase de test grand public sans paiement in-app, active :
+
+```env
+VITE_CASH_ONLY_PAYMENTS=true
+```
+
+Effets attendus :
+- Le checkout n'affiche plus l'option carte.
+- Les commandes partent avec `paymentMethod: cash`.
+- Le flux Stripe (PaymentIntent / Elements) ne se lance pas.
+
+Pour réactiver la carte ensuite (branche paiement ou go-live), repasse `VITE_CASH_ONLY_PAYMENTS=false` (ou supprime la variable) puis redeploy.
+
 ### Webhook : **pas obligatoire en dev**
 
 Ne mets **pas** `STRIPE_WEBHOOK_SECRET=whsec_...` dans `.env.local` : ce n’est pas une clé du Dashboard, c’est un **secret de signature** généré uniquement quand tu configures un endpoint webhook (CLI ou Dashboard).

@@ -93,7 +93,13 @@ export function stripePublishableKey(): string | null {
 }
 
 export function stripeCheckoutEnabled(): boolean {
+  if (cashOnlyPaymentsEnabled()) return false
   return Boolean(stripePublishableKey())
+}
+
+/** Phase test public: forcer le paiement espèces uniquement dans l'app. */
+export function cashOnlyPaymentsEnabled(): boolean {
+  return isEnabled(import.meta.env.VITE_CASH_ONLY_PAYMENTS as string | undefined)
 }
 
 export function supabaseRealtimeConfigured(): boolean {

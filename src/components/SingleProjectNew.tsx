@@ -17,7 +17,7 @@ import { useLanguage } from '../contexts/LanguageContext';
 import { trackEvent } from '../services/googleAnalyticsTracking';
 import { createRideOrder } from '../services/createRideOrder';
 import { confirmRidePaymentAuthorized } from '../services/stripeRidePayment';
-import { stripeCheckoutEnabled, stripePublishableKey } from '../constants/featureFlags';
+import { cashOnlyPaymentsEnabled, stripeCheckoutEnabled, stripePublishableKey } from '../constants/featureFlags';
 import { formatRideTotalWithPaltoFee } from '../constants/stripeFees';
 import PaltoRideCheckoutPanel from './PaltoRideCheckoutPanel';
 import RidePaymentMethodPicker, { type RidePaymentMethod } from './RidePaymentMethodPicker';
@@ -1755,11 +1755,13 @@ const SingleProjectNew: FC<SingleProjectProps> = ({
   const [checkoutPendingCourseId, setCheckoutPendingCourseId] = useState<string | null>(null);
   const [checkoutPendingExternalCode, setCheckoutPendingExternalCode] = useState<string | null>(null);
   const [checkoutPaymentMethod, setCheckoutPaymentMethod] = useState<RidePaymentMethod>(() =>
-    stripeCheckoutEnabled() ? 'card' : 'cash'
+    stripeCheckoutEnabled() && !cashOnlyPaymentsEnabled() ? 'card' : 'cash'
   );
   const isScheduledBooking = paltoPickupTiming === 'later';
-  const effectiveCheckoutPaymentMethod: RidePaymentMethod = isScheduledBooking ? 'cash' : checkoutPaymentMethod;
-  const cardPaymentAvailable = stripeCheckoutEnabled() && !isScheduledBooking;
+  const effectiveCheckoutPaymentMethod: RidePaymentMethod =
+    isScheduledBooking || cashOnlyPaymentsEnabled() ? 'cash' : checkoutPaymentMethod;
+  const cardPaymentAvailable =
+    stripeCheckoutEnabled() && !isScheduledBooking && !cashOnlyPaymentsEnabled();
   useEffect(() => {
     if (!cardPaymentAvailable && checkoutPaymentMethod === 'card') {
       setCheckoutPaymentMethod('cash');
@@ -1917,11 +1919,12 @@ const SingleProjectNew: FC<SingleProjectProps> = ({
         pickupLat: pickupResolvedPoint?.latitude ?? null,
         dropoffLng: paltoMapSelectedDestination?.longitude ?? null,
         dropoffLat: paltoMapSelectedDestination?.latitude ?? null,
-        paymentMethod: bookingKind === 'scheduled' ? 'cash' : checkoutPaymentMethod,
+        paymentMethod: 'cash',
       });
 
       const pk = stripePublishableKey() ?? result.stripePublishableKey ?? null
-      const wantsCard = bookingKind === 'instant' && checkoutPaymentMethod === 'card'
+      const wantsCard =
+        bookingKind === 'instant' && checkoutPaymentMethod === 'card' && !cashOnlyPaymentsEnabled()
       const needsStripe = Boolean(
         wantsCard &&
           result.stripeEnabled &&
@@ -1979,7 +1982,6 @@ const SingleProjectNew: FC<SingleProjectProps> = ({
     isNightRide,
     onOpenClientAccount,
     projectData.title,
-    stripeCheckoutEnabled,
     checkoutPaymentMethod,
   ]);
 

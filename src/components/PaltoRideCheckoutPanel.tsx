@@ -1,6 +1,6 @@
 import { useEffect, useState, type ReactNode } from 'react'
 import { useLanguage } from '../contexts/LanguageContext'
-import { stripeCheckoutEnabled, stripePublishableKey } from '../constants/featureFlags'
+import { cashOnlyPaymentsEnabled, stripeCheckoutEnabled, stripePublishableKey } from '../constants/featureFlags'
 import { PALTO_PLATFORM_FEE_EUR } from '../constants/stripeFees'
 import PaltoGoStripePayment from './PaltoGoStripePayment'
 import RidePaymentMethodPicker, { type RidePaymentMethod } from './RidePaymentMethodPicker'
@@ -55,8 +55,9 @@ export default function PaltoRideCheckoutPanel({
 }: PaltoRideCheckoutPanelProps) {
   const { t, language } = useLanguage()
   const isEn = language === 'en'
+  const cashOnlyPayments = cashOnlyPaymentsEnabled()
   const stripeOn = stripeCheckoutEnabled()
-  const showCardStep = Boolean(stripeClientSecret && stripePublishableKey())
+  const showCardStep = Boolean(!cashOnlyPayments && stripeClientSecret && stripePublishableKey())
   const pk = stripePublishableKey()
   const [savedCards, setSavedCards] = useState<ClientStripePaymentMethod[]>([])
   const [guestModeSelected, setGuestModeSelected] = useState(false)
@@ -102,7 +103,7 @@ export default function PaltoRideCheckoutPanel({
         >
           1. {t('search.checkoutStepInfo')}
         </span>
-        {!scheduledBooking ? (
+        {!scheduledBooking && !cashOnlyPayments ? (
           <span
             className={
               'palto-checkout__step' +
@@ -143,18 +144,18 @@ export default function PaltoRideCheckoutPanel({
         </section>
       ) : null}
 
-      {!showCardStep && scheduledBooking ? (
+      {!showCardStep && (scheduledBooking || cashOnlyPayments) ? (
         <div className="palto-checkout__field">
           <span>{t('search.checkoutPaymentMethodLabel')}</span>
           <p className="palto-checkout__lead palto-checkout__payment-hint">
-            {t('search.checkoutScheduledPaymentHint')}
+            {cashOnlyPayments ? t('search.checkoutPaymentCashHint') : t('search.checkoutScheduledPaymentHint')}
           </p>
         </div>
       ) : !showCardStep ? (
         <RidePaymentMethodPicker
           value={paymentMethod}
           onChange={onPaymentMethodChange}
-          cardAvailable={cardPaymentAvailable && stripeOn}
+          cardAvailable={!cashOnlyPayments && cardPaymentAvailable && stripeOn}
         />
       ) : null}
 

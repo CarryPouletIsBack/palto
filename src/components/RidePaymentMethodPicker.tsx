@@ -23,17 +23,18 @@ export default function RidePaymentMethodPicker({
         role="group"
         aria-label={t('search.checkoutPaymentMethodLabel')}
       >
-        <button
-          type="button"
-          className={
-            'palto-checkout__payment' + (value === 'card' ? ' palto-checkout__payment--active' : '')
-          }
-          disabled={!cardAvailable}
-          aria-pressed={value === 'card'}
-          onClick={() => onChange('card')}
-        >
-          {t('search.checkoutPaymentCard')}
-        </button>
+        {cardAvailable ? (
+          <button
+            type="button"
+            className={
+              'palto-checkout__payment' + (value === 'card' ? ' palto-checkout__payment--active' : '')
+            }
+            aria-pressed={value === 'card'}
+            onClick={() => onChange('card')}
+          >
+            {t('search.checkoutPaymentCard')}
+          </button>
+        ) : null}
         <button
           type="button"
           className={
@@ -45,17 +46,13 @@ export default function RidePaymentMethodPicker({
           {t('search.checkoutPaymentCash')}
         </button>
       </div>
-      {value === 'cash' ? (
+      {!cardAvailable || value === 'cash' ? (
         <p className="palto-checkout__lead palto-checkout__payment-hint">
           {t('search.checkoutPaymentCashHint')}
         </p>
-      ) : cardAvailable ? (
-        <p className="palto-checkout__lead palto-checkout__payment-hint">
-          {t('search.checkoutPaymentCardHint')}
-        </p>
       ) : (
         <p className="palto-checkout__lead palto-checkout__payment-hint">
-          {t('search.checkoutStripeOff')}
+          {t('search.checkoutPaymentCardHint')}
         </p>
       )}
     </div>
