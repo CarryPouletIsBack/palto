@@ -152,8 +152,9 @@
   justify-content: space-between;
   gap: 12px;
   padding: 10px 16px;
-  background: linear-gradient(90deg, #0f172a 0%, #1e293b 100%);
-  color: #fff;
+  background: var(--app-surface-inverse, #151515);
+  color: var(--app-text-inverse, #f5f5f5);
+  border-bottom: 1px solid var(--app-border-medium, rgba(255, 255, 255, 0.14));
 }
 
 .beta-test-banner__content {
@@ -180,18 +181,20 @@
   padding: 6px 12px;
   font-size: 0.82rem;
   font-weight: 600;
-  background: #22c55e;
-  color: #052e16;
+  background: var(--app-btn-primary-bg, #2f2f2f);
+  color: var(--app-btn-primary-text, #ffffff);
+  border: 1px solid var(--app-border-medium, rgba(255, 255, 255, 0.14));
 }
 
 .beta-test-banner__close {
   width: 30px;
   height: 30px;
   border-radius: 999px;
-  background: rgba(255, 255, 255, 0.16);
-  color: #fff;
+  background: var(--app-surface-muted, rgba(255, 255, 255, 0.08));
+  color: var(--app-text-inverse, #f5f5f5);
   font-size: 1.2rem;
   line-height: 1;
+  border: 1px solid var(--app-border-medium, rgba(255, 255, 255, 0.14));
 }
 
 .beta-test-modal-backdrop {
@@ -208,10 +211,11 @@
 .beta-test-modal {
   width: min(680px, 100%);
   border-radius: 18px;
-  background: #fff;
-  color: #0f172a;
+  background: var(--app-surface-card, #ffffff);
+  color: var(--app-text-primary, #0f172a);
   padding: 20px;
-  box-shadow: 0 28px 70px rgba(15, 23, 42, 0.28);
+  box-shadow: var(--app-shadow-md, 0 28px 70px rgba(15, 23, 42, 0.28));
+  border: 1px solid var(--app-border-medium, rgba(15, 23, 42, 0.1));
 }
 
 .beta-test-modal h2 {
@@ -226,7 +230,7 @@
 .beta-test-modal__close {
   border-radius: 10px;
   padding: 9px 14px;
-  background: #0f172a;
-  color: #fff;
+  background: var(--app-btn-primary-bg, #0f172a);
+  color: var(--app-btn-primary-text, #fff);
   font-weight: 600;
 }

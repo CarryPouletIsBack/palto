@@ -999,6 +999,7 @@ function App() {
       <AnalyticsGuard />
       <GeolocationPromptBanner />
       <AppToaster />
+      <BetaTestBanner />
       {currentPage !== 'dashboard' &&
         currentPage !== 'dashboard-navigation' &&
         currentPage !== 'client-compte' &&
@@ -1006,10 +1007,7 @@ function App() {
         currentPage !== 'accueil' &&
         currentPage !== 'accueil-chauffeur' &&
         !currentPage.startsWith('destination-') ? (
-        <>
-          <BetaTestBanner />
-          <Header onContactClick={handleContactClick} onLogoClick={handleLogoClick} />
-        </>
+        <Header onContactClick={handleContactClick} onLogoClick={handleLogoClick} />
       ) : null}
       {currentPage === 'client-meet-driver' ? (
         <ClientMeetDriverPage

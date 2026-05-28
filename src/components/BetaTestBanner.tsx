@@ -21,7 +21,7 @@ export default function BetaTestBanner() {
       <div className="beta-test-banner" role="region" aria-label="Information beta test Palto">
         <div className="beta-test-banner__content">
           <p>
-            Version beta test v0.0.1 - Votre avis compte. <strong>Nou la fé</strong>.
+            Version bêta test v0.0.1 - Votre avis compte. <strong>Nou la fé</strong>.
           </p>
           <button
             type="button"
@@ -59,16 +59,16 @@ export default function BetaTestBanner() {
           >
             <h2 id="beta-test-modal-title">Palto beta test v0.0.1</h2>
             <p>
-              La Reunion vit aujourd hui de gros bouchons, et Palto intervient pour faciliter l acces au taxi moto,
+              La Réunion vit aujourd'hui de gros bouchons, et Palto intervient pour faciliter l'accès au taxi moto,
               afin que vous puissiez arriver en temps et en heure.
             </p>
             <p>
-              Pendant cette phase beta, les paiements in-app arrivent bientot : pour le moment, le reglement se fait
-              uniquement en especes aupres des chauffeurs.
+              Pendant cette phase bêta, le paiement par carte arrive bientôt : pour le moment, le règlement se fait
+              uniquement en espèces auprès des chauffeurs.
             </p>
             <p>
-              Vous pouvez rencontrer certains dysfonctionnements pendant les tests. Vos retours nous aident directement
-              a ameliorer la future version de Palto.
+              Vous pouvez rencontrer certains dysfonctionnements pendant les tests. Vos retours nous aident
+              directement à améliorer la future version de Palto.
             </p>
             <p>
               Merci pour votre confiance et votre utilisation de Palto. <strong>Nou la fé</strong>.
