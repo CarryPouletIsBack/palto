@@ -2053,23 +2053,36 @@ const Dashboard = ({
           aria-haspopup="menu"
         >
           {!photoAside ? (
-            <span
-              className={
-                'client-compte-topbar-user-btn__photo-shell' +
-                (photoOnlyInButton ? ' client-compte-topbar-user-btn__photo-shell--fill' : '')
-              }
-              aria-hidden
-            >
-              {paltoIdentity.photoUrl ? (
-                <img
-                  src={paltoIdentity.photoUrl}
-                  alt=""
-                  className="client-compte-topbar-user-btn__avatar"
+            <>
+              <span
+                className={
+                  'client-compte-topbar-user-btn__photo-shell' +
+                  (photoOnlyInButton ? ' client-compte-topbar-user-btn__photo-shell--fill' : '')
+                }
+                aria-hidden
+              >
+                {paltoIdentity.photoUrl ? (
+                  <img
+                    src={paltoIdentity.photoUrl}
+                    alt=""
+                    className="client-compte-topbar-user-btn__avatar"
+                  />
+                ) : (
+                  <User size={photoOnlyInButton ? 20 : 16} aria-hidden />
+                )}
+              </span>
+              {photoOnlyInButton ? (
+                <ChevronDown
+                  size={16}
+                  strokeWidth={2.25}
+                  className={
+                    'client-compte-topbar-user-btn__chevron' +
+                    (topbarAccountMenuOpen ? ' client-compte-topbar-user-btn__chevron--open' : '')
+                  }
+                  aria-hidden
                 />
-              ) : (
-                <User size={photoOnlyInButton ? 20 : 16} aria-hidden />
-              )}
-            </span>
+              ) : null}
+            </>
           ) : null}
           {showNameInButton ? <span>{paltoIdentity.fullName}</span> : null}
         </button>
@@ -2677,6 +2690,7 @@ const Dashboard = ({
                     aria-label="Notifications"
                     onClick={() => {
                       setMoreMenuOpen(false);
+                      if (isMobileViewport) setMobileSidebarOpen(false);
                       setAlertsOpen((prev) => {
                         const next = !prev;
                         if (next) markCancelAlertsRead();
@@ -2695,6 +2709,7 @@ const Dashboard = ({
                     aria-expanded={moreMenuOpen}
                     onClick={() => {
                       setAlertsOpen(false);
+                      if (isMobileViewport) setMobileSidebarOpen(false);
                       setMoreMenuOpen((prev) => !prev);
                     }}
                   >
@@ -5060,6 +5075,7 @@ const Dashboard = ({
                     className="topbar-more-item"
                     onClick={() => {
                       setMoreMenuOpen(false);
+                      if (isMobileViewport) setMobileSidebarOpen(false);
                       setBugReportModalOpen(true);
                     }}
                   >

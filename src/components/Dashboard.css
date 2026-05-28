@@ -823,22 +823,45 @@ html[data-app-theme='dark'] .dashboard-home-topbar-upcoming-btn {
 
 .client-compte-topbar-user-btn--photo-only {
   position: relative;
-  display: block;
-  width: 40px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  width: auto;
+  min-width: 0;
+  max-width: none;
   height: 40px;
-  min-width: 40px;
   min-height: 40px;
-  max-width: 40px;
-  max-height: 40px;
-  aspect-ratio: 1 / 1;
-  padding: 0;
-  border-radius: 50%;
-  overflow: hidden;
+  padding: 2px 4px 2px 2px;
+  border-radius: 999px;
+  overflow: visible;
   box-sizing: border-box;
   line-height: 0;
   flex-shrink: 0;
   background: var(--app-surface-muted);
   border: 1px solid var(--app-border-medium);
+  cursor: pointer;
+}
+
+.client-compte-topbar-user-btn--photo-only .client-compte-topbar-user-btn__photo-shell--fill {
+  position: relative;
+  inset: auto;
+  width: 36px;
+  height: 36px;
+  min-width: 36px;
+  min-height: 36px;
+  flex-shrink: 0;
+}
+
+.client-compte-topbar-user-btn__chevron {
+  flex-shrink: 0;
+  margin-right: 2px;
+  color: #64748b;
+  transition: transform 0.2s ease;
+}
+
+.client-compte-topbar-user-btn__chevron--open {
+  transform: rotate(180deg);
 }
 
 .client-compte-topbar-user-btn__photo-shell--fill {
@@ -852,9 +875,6 @@ html[data-app-theme='dark'] .dashboard-home-topbar-upcoming-btn {
   line-height: 0;
 }
 
-.client-compte-topbar-user-btn--photo-only .client-compte-topbar-user-btn__photo-shell--fill {
-  inset: 0;
-}
 
 .client-compte-topbar-user-btn__photo-shell--fill .client-compte-topbar-user-btn__avatar {
   position: absolute;
@@ -2799,7 +2819,8 @@ html[data-app-theme='dark'] .ride-status-badge--cancelled {
   display: flex;
   align-items: center;
   justify-content: center;
-  z-index: 20000;
+  /* Au-dessus du menu mobile (21000) et de la bottombar (22000) */
+  z-index: 23000;
   overflow-x: hidden;
 }
 
@@ -2978,7 +2999,7 @@ html[data-app-theme='dark'] .ride-status-badge--cancelled {
   display: flex;
   align-items: center;
   justify-content: center;
-  z-index: 20000;
+  z-index: 23000;
 }
 
 .client-modal {
@@ -4907,17 +4928,17 @@ button.dashboard-org-sidebar-brand--home:focus-visible {
   .dashboard-container--chauffeur
     .dashboard-topbar--chauffeur-account-user-only
     .client-compte-topbar-user-btn--photo-only {
-    width: 40px;
+    display: inline-flex;
+    align-items: center;
+    gap: 2px;
+    width: auto;
+    min-width: 0;
+    max-width: none;
     height: 40px;
-    min-width: 40px;
     min-height: 40px;
-    max-width: 40px;
-    max-height: 40px;
-    aspect-ratio: 1 / 1;
-    padding: 0;
-    display: block;
-    border-radius: 50%;
-    overflow: hidden;
+    padding: 2px 4px 2px 2px;
+    border-radius: 999px;
+    overflow: visible;
     box-sizing: border-box;
     line-height: 0;
     background: #e2e8f0;
@@ -4932,7 +4953,19 @@ button.dashboard-org-sidebar-brand--home:focus-visible {
     .dashboard-topbar--chauffeur-account-user-only
     .client-compte-topbar-user-btn--photo-only
     .client-compte-topbar-user-btn__photo-shell--fill {
+    position: relative;
+    inset: auto;
+    width: 36px;
+    height: 36px;
+    min-width: 36px;
+    min-height: 36px;
     box-shadow: inset 0 0 0 1px rgba(15, 23, 42, 0.08);
+  }
+
+  .dashboard-container--chauffeur
+    .dashboard-topbar--chauffeur-account-user-only
+    .client-compte-topbar-user-btn__chevron {
+    color: #475569;
   }
 
   .dashboard-container--chauffeur .dashboard-main--chauffeur-mobile-floating-account {
@@ -5130,6 +5163,12 @@ button.dashboard-org-sidebar-brand--home:focus-visible {
   .client-compte-topbar-user-btn--photo-only
   .client-compte-topbar-user-btn__photo-shell--fill {
   box-shadow: inset 0 0 0 1px var(--app-border-medium) !important;
+}
+
+html[data-app-theme='dark']
+  .dashboard-container--chauffeur
+  .client-compte-topbar-user-btn__chevron {
+  color: var(--app-text-muted, #94a3b8);
 }
 
 /* Barre flottante mobile : exception au reset border:none / border-color:transparent chauffeur */
