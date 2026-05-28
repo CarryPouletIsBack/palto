@@ -100,19 +100,20 @@ export default function BetaTestBanner() {
             </button>
             <h2 id="beta-test-modal-title">Palto beta test v0.0.1</h2>
             <p>
-              La Réunion vit aujourd'hui de gros bouchons, et Palto intervient pour faciliter l'accès au taxi moto,
-              afin que vous puissiez arriver en temps et en heure.
+              Face aux embouteillages du quotidien à La Réunion, Palto se lance pour vous faire gagner du temps grâce
+              aux taxis-motos. Notre mission : vous garantir des trajets rapides pour arriver à l'heure, à chaque
+              course.
             </p>
             <p>
-              Pendant cette phase bêta, le paiement par carte arrive bientôt : pour le moment, le règlement se fait
-              uniquement en espèces auprès des chauffeurs.
+              Paiement durant la bêta : Le règlement par carte bancaire sera disponible très prochainement. Pour cette
+              phase de test, le paiement s'effectue uniquement en espèces, directement auprès de votre chauffeur.
             </p>
             <p>
-              Vous pouvez rencontrer certains dysfonctionnements pendant les tests. Vos retours nous aident
-              directement à améliorer la future version de Palto.
+              Évolution du service : L'application est en cours de finalisation. Si vous rencontrez des bugs, vos
+              retours sont précieux et nous aident à corriger le tir en direct.
             </p>
             <p>
-              Merci pour votre confiance et votre utilisation de Palto. <strong>Nou la fé</strong>.
+              Merci de faire partie des premiers à tester l'aventure Palto. <strong>Nou la fé</strong> !
             </p>
             <div className="beta-test-feedback">
               <h3>Votre retour</h3>
