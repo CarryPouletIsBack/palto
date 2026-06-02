@@ -8,10 +8,6 @@
     {
       "path": "/api/chauffeur?resource=cron-expire-instant",
       "schedule": "0 2 * * *"
-    },
-    {
-      "path": "/api/notifications/course-reminders",
-      "schedule": "*/5 * * * *"
     }
   ],
   "rewrites": [

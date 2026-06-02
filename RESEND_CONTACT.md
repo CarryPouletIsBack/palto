@@ -37,3 +37,19 @@ Puis ouvre le site et va sur la page Contact. Avec `npm run dev` seul, l’appel
 - Notification chauffeur à la création (course instantanée ciblée) : envoyée dans `POST /api/rides/create`.
 - Rappel client 30 min avant départ : endpoint cron `GET/POST /api/notifications/course-reminders`.
 - Anti-doublon : table `course_notifications_log` (unique par course + type + destinataire).
+
+### Cron Vercel et plan Hobby
+
+Sur le plan **Hobby**, Vercel n’accepte qu’**un cron par jour maximum** par projet ([doc officielle](https://vercel.com/docs/cron-jobs/usage-and-pricing)). Une expression du type `*/5 * * * *` **fait échouer le déploiement**.
+
+Dans `vercel.json`, seul le cron quotidien d’expiration (`0 2 * * *`) est déclaré. Pour les rappels ~30 min avant course :
+
+1. **Passer en Pro** puis remettre dans `vercel.json` :
+   ```json
+   { "path": "/api/notifications/course-reminders", "schedule": "*/5 * * * *" }
+   ```
+2. **Ou** déclencher l’endpoint depuis un cron externe (ex. [cron-job.org](https://cron-job.org)) toutes les 5–15 min :
+   ```http
+   GET https://palto.re/api/notifications/course-reminders
+   Authorization: Bearer <CRON_SECRET>
+   ```
