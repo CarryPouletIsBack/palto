@@ -17,8 +17,8 @@ import {
 } from '../../server/lib/coursePaymentMethod.js'
 import { validateChauffeurOrderAmount } from '../../server/lib/validateChauffeurOrderAmount.js'
 import {
-  emitScheduledRideCreatedEmails,
   notifyDriverNewRideRequest,
+  notifyDriversScheduledRideCreated,
 } from '../../server/lib/rideEmailNotifications.js'
 
 function readBearerToken(req: VercelRequest): string | null {
@@ -363,15 +363,21 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   }
 
   if (b.bookingKind === 'scheduled') {
-    emitScheduledRideCreatedEmails(supabase, {
-      courseId: courseRow.id,
-      externalCode: externalCodeForEmail,
-      clientName: fullName,
-      pickupAddress: insertPayload.pickup_address,
-      dropoffAddress: insertPayload.dropoff_address,
-      scheduledAtIso,
-      amountEur: driverAmountEur,
-    })
+    try {
+      const broadcast = await notifyDriversScheduledRideCreated({
+        supabase,
+        courseId: courseRow.id,
+        externalCode: externalCodeForEmail,
+        clientName: fullName,
+        pickupAddress: insertPayload.pickup_address,
+        dropoffAddress: insertPayload.dropoff_address,
+        scheduledAtIso,
+        amountEur: driverAmountEur,
+      })
+      console.info('[rides/create] scheduled driver emails', broadcast)
+    } catch (notificationError) {
+      console.error('[rides/create] scheduled driver email notification', notificationError)
+    }
   }
 
   let stripeClientSecret: string | null = null

@@ -32,7 +32,7 @@ import {
   isChauffeurProfileTableMissing,
 } from '../../server/lib/chauffeurProfileDb.js'
 import { sameDriverExternalKey } from '../../server/lib/driverIdentity.js'
-import { emitRideStatusChangeEmails } from '../../server/lib/rideEmailNotifications.js'
+import { notifyRideStatusChange } from '../../server/lib/rideEmailNotifications.js'
 import {
   applyCancelPaymentOutcome,
   applyRideCompletedPayment,
@@ -271,11 +271,11 @@ async function handleRidesActionPost(
       event_note: 'Course acceptee par chauffeur',
       payload: driverPayload,
     })
-    emitRideStatusChangeEmails(supabase, {
-      courseId,
-      newStatus: 'accepted',
-      actor: 'chauffeur',
-    })
+    try {
+      await notifyRideStatusChange({ supabase, courseId, newStatus: 'accepted', actor: 'chauffeur' })
+    } catch (e) {
+      console.error('[chauffeur/accept] status email', e)
+    }
     return res.status(200).json({ ok: true, status: updated.status })
   }
   if (action === 'start') {
@@ -290,11 +290,11 @@ async function handleRidesActionPost(
       .select('id, status')
       .maybeSingle()
     if (upErr || !updated) return res.status(409).json({ error: 'Impossible de demarrer' })
-    emitRideStatusChangeEmails(supabase, {
-      courseId,
-      newStatus: 'in_progress',
-      actor: 'chauffeur',
-    })
+    try {
+      await notifyRideStatusChange({ supabase, courseId, newStatus: 'in_progress', actor: 'chauffeur' })
+    } catch (e) {
+      console.error('[chauffeur/start] status email', e)
+    }
     return res.status(200).json({ ok: true, status: updated.status })
   }
   if (action === 'complete') {
@@ -315,11 +315,11 @@ async function handleRidesActionPost(
       console.error('[chauffeur/complete] stripe capture', payErr)
       return res.status(502).json({ error: 'Course terminee mais capture paiement en echec' })
     }
-    emitRideStatusChangeEmails(supabase, {
-      courseId,
-      newStatus: 'completed',
-      actor: 'chauffeur',
-    })
+    try {
+      await notifyRideStatusChange({ supabase, courseId, newStatus: 'completed', actor: 'chauffeur' })
+    } catch (e) {
+      console.error('[chauffeur/complete] status email', e)
+    }
     return res.status(200).json({ ok: true, status: updated.status })
   }
   if (action === 'no_show') {
@@ -366,12 +366,17 @@ async function handleRidesActionPost(
       console.error('[chauffeur/no_show] stripe', payErr)
       return res.status(502).json({ error: 'No-show enregistre mais paiement a verifier' })
     }
-    emitRideStatusChangeEmails(supabase, {
-      courseId,
-      newStatus: 'cancelled',
-      actor: 'chauffeur',
-      detailNote: 'Client absent (no-show)',
-    })
+    try {
+      await notifyRideStatusChange({
+        supabase,
+        courseId,
+        newStatus: 'cancelled',
+        actor: 'chauffeur',
+        detailNote: 'Client absent (no-show)',
+      })
+    } catch (e) {
+      console.error('[chauffeur/no_show] status email', e)
+    }
     return res.status(200).json({ ok: true, status: updated.status })
   }
 
@@ -396,12 +401,17 @@ async function handleRidesActionPost(
     console.error('[chauffeur/cancel] stripe', payErr)
     return res.status(502).json({ error: 'Course annulee mais paiement a verifier' })
   }
-  emitRideStatusChangeEmails(supabase, {
-    courseId,
-    newStatus: 'cancelled',
-    actor: 'chauffeur',
-    detailNote: 'Annule depuis le dashboard chauffeur',
-  })
+  try {
+    await notifyRideStatusChange({
+      supabase,
+      courseId,
+      newStatus: 'cancelled',
+      actor: 'chauffeur',
+      detailNote: 'Annule depuis le dashboard chauffeur',
+    })
+  } catch (e) {
+    console.error('[chauffeur/cancel] status email', e)
+  }
   return res.status(200).json({ ok: true, status: 'cancelled', paymentOutcome: payOutcome })
 }
 

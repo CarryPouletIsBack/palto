@@ -10,7 +10,7 @@ import {
 } from '../../server/lib/acceptedDriverPayload.js'
 import { getSupabaseAdmin } from '../../server/lib/supabaseAdmin.js'
 import { listNearbyDriversFromPresence } from '../../server/lib/nearbyDriversFromPresence.js'
-import { emitRideStatusChangeEmails } from '../../server/lib/rideEmailNotifications.js'
+import { notifyRideStatusChange } from '../../server/lib/rideEmailNotifications.js'
 import {
   applyCancelPaymentOutcome,
   resolveClientCancelPaymentOutcome,
@@ -163,12 +163,17 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       return
     }
 
-    emitRideStatusChangeEmails(supabase, {
-      courseId,
-      newStatus: 'cancelled',
-      actor: 'client',
-      detailNote: 'Annule par le client',
-    })
+    try {
+      await notifyRideStatusChange({
+        supabase,
+        courseId,
+        newStatus: 'cancelled',
+        actor: 'client',
+        detailNote: 'Annule par le client',
+      })
+    } catch (e) {
+      console.error('[client/rides cancel] status email', e)
+    }
 
     res.status(200).json({ ok: true, status: updated.status, paymentOutcome: payOutcome })
     return

@@ -304,18 +304,32 @@ async function resolveDriverEmail(
 ): Promise<{ email: string; name: string } | null> {
   const key = driverKey?.trim()
   if (!key) return null
-  const { data, error } = await supabase
+
+  const byId = await supabase
     .from('app_accounts')
     .select('email, full_name')
     .eq('id', key)
     .eq('role', 'chauffeur')
     .maybeSingle()
-  if (error) throw error
-  const email = String(data?.email ?? '').trim()
+  if (byId.error) throw byId.error
+
+  let row = byId.data
+  if (!row?.email && key.includes('@')) {
+    const byEmail = await supabase
+      .from('app_accounts')
+      .select('email, full_name')
+      .ilike('email', key)
+      .eq('role', 'chauffeur')
+      .maybeSingle()
+    if (byEmail.error) throw byEmail.error
+    row = byEmail.data
+  }
+
+  const email = String(row?.email ?? '').trim()
   if (!email) return null
   return {
     email,
-    name: String(data?.full_name ?? '').trim() || 'Chauffeur',
+    name: String(row?.full_name ?? '').trim() || 'Chauffeur',
   }
 }
 
@@ -414,25 +428,13 @@ export async function notifyRideStatusChange(params: {
     driverSent = result.sent
   }
 
+  console.info('[rideEmailNotifications] status change', {
+    courseId: params.courseId,
+    newStatus: params.newStatus,
+    actor: params.actor,
+    clientSent,
+    driverSent,
+    driverKey: driverKey ?? null,
+  })
   return { clientSent, driverSent }
-}
-
-/** Fire-and-forget : reservation programmée → tous les chauffeurs. */
-export function emitScheduledRideCreatedEmails(
-  supabase: SupabaseClient,
-  input: Parameters<typeof notifyDriversScheduledRideCreated>[0]
-): void {
-  void notifyDriversScheduledRideCreated(input).catch((error) => {
-    console.error('[rideEmailNotifications] scheduled create', error)
-  })
-}
-
-/** Fire-and-forget : changement de statut → client + chauffeur assigné. */
-export function emitRideStatusChangeEmails(
-  supabase: SupabaseClient,
-  input: Parameters<typeof notifyRideStatusChange>[0]
-): void {
-  void notifyRideStatusChange(input).catch((error) => {
-    console.error('[rideEmailNotifications] status change', error)
-  })
 }
