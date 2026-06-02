@@ -16,6 +16,7 @@ import {
   type CoursePaymentMethod,
 } from '../../server/lib/coursePaymentMethod.js'
 import { validateChauffeurOrderAmount } from '../../server/lib/validateChauffeurOrderAmount.js'
+import { notifyDriverNewRideRequest } from '../../server/lib/rideEmailNotifications.js'
 
 function readBearerToken(req: VercelRequest): string | null {
   const raw = req.headers.authorization
@@ -86,6 +87,11 @@ function normalizeTime(t: string): string {
 
 function externalCode(): string {
   return `TM-${randomBytes(4).toString('hex').toUpperCase()}`
+}
+
+function toReunionIso(scheduledDate: string, scheduledTime: string): string {
+  // Les courses sont planifiées en heure locale Réunion (UTC+04:00).
+  return `${scheduledDate}T${scheduledTime}+04:00`
 }
 
 function normalizeAddressForStorage(raw: string): string {
@@ -319,6 +325,36 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       payment_method: paymentMethod,
     },
   })
+
+  if (b.bookingKind === 'instant' && requestedDriverKey) {
+    try {
+      const { data: chauffeurAccount, error: chauffeurErr } = await supabase
+        .from('app_accounts')
+        .select('email, full_name')
+        .eq('id', requestedDriverKey)
+        .eq('role', 'chauffeur')
+        .maybeSingle()
+
+      if (chauffeurErr) {
+        console.warn('[rides/create] chauffeur lookup notification', chauffeurErr)
+      } else if (chauffeurAccount?.email) {
+        await notifyDriverNewRideRequest({
+          supabase,
+          courseId: courseRow.id,
+          externalCode: courseRow.external_code ?? code,
+          driverEmail: chauffeurAccount.email,
+          driverName: String(chauffeurAccount.full_name ?? '').trim() || 'Chauffeur',
+          clientName: fullName,
+          pickupAddress: insertPayload.pickup_address,
+          dropoffAddress: insertPayload.dropoff_address,
+          scheduledAtIso: toReunionIso(b.scheduledDate, scheduledTime),
+          amountEur: driverAmountEur,
+        })
+      }
+    } catch (notificationError) {
+      console.error('[rides/create] driver email notification', notificationError)
+    }
+  }
 
   let stripeClientSecret: string | null = null
   let stripePaymentIntentId: string | null = null

@@ -50,6 +50,7 @@ const Hero = ({
   const [pickupDraft, setPickupDraft] = useState('')
   const [destinationDraft, setDestinationDraft] = useState('')
   const [pickupTiming, setPickupTiming] = useState<'now' | 'later'>('now')
+  const [pickupDateTime, setPickupDateTime] = useState('')
   const [pickupSuggestions, setPickupSuggestions] = useState<GeocodeSuggestion[]>([])
   const [destinationSuggestions, setDestinationSuggestions] = useState<GeocodeSuggestion[]>([])
   const [pickupOpen, setPickupOpen] = useState(false)
@@ -60,12 +61,18 @@ const Hero = ({
   const [homeDepartmentId, setHomeDepartmentId] = useState<HeroDepartmentId>(DEFAULT_HERO_DEPARTMENT_ID)
   const homeDepartmentLabel = getHeroDepartmentLabel(homeDepartmentId, language)
 
+  const minPickupDateTimeLocal = useCallback(() => {
+    const now = new Date()
+    const tzOffsetMs = now.getTimezoneOffset() * 60000
+    return new Date(now.getTime() - tzOffsetMs).toISOString().slice(0, 16)
+  }, [])
+
   const handleVoirLesPrix = useCallback(() => {
     saveGoPrefill({
       pickup: pickupDraft.trim(),
       destination: destinationDraft.trim(),
       timing: pickupTiming,
-      datetime: '',
+      datetime: pickupTiming === 'later' ? pickupDateTime.trim() : '',
       homeDepartmentId,
     })
     trackEvent(
@@ -74,7 +81,7 @@ const Hero = ({
       `${destinationDraft.trim() ? 'with_dest' : 'empty_dest'}_${pickupTiming}`
     )
     onPageChange('project-Go', PLACEHOLDER_COVER, 'Application')
-  }, [destinationDraft, homeDepartmentId, onPageChange, pickupDraft, pickupTiming])
+  }, [destinationDraft, homeDepartmentId, onPageChange, pickupDateTime, pickupDraft, pickupTiming])
 
   const destTitle = (d: PopularDestination) => (language === 'en' ? d.titleEn : d.titleFr)
 
@@ -84,13 +91,13 @@ const Hero = ({
         pickup: pickupDraft.trim(),
         destination: d.geocodeQuery,
         timing: pickupTiming,
-        datetime: '',
+        datetime: pickupTiming === 'later' ? pickupDateTime.trim() : '',
         homeDepartmentId,
       })
       trackEvent('click', 'hero_home_suggestion_go', d.id)
       onPageChange('project-Go', PLACEHOLDER_COVER, 'Application')
     },
-    [homeDepartmentId, onPageChange, pickupDraft, pickupTiming]
+    [homeDepartmentId, onPageChange, pickupDateTime, pickupDraft, pickupTiming]
   )
 
   useEffect(() => {
@@ -194,11 +201,28 @@ const Hero = ({
                         <select
                           id="hero-home-pickup-timing"
                           value={pickupTiming}
-                          onChange={() => setPickupTiming('now')}
+                          onChange={(e) => {
+                            const next = e.target.value === 'later' ? 'later' : 'now'
+                            setPickupTiming(next)
+                            if (next === 'now') setPickupDateTime('')
+                          }}
                         >
                           <option value="now">{t('hero.homeTimingNow')}</option>
+                          <option value="later">{t('hero.homeTimingLater')}</option>
                         </select>
                       </label>
+                      {pickupTiming === 'later' ? (
+                        <label>
+                          {t('hero.homePickupDateTimeLabel')}
+                          <input
+                            id="hero-home-pickup-datetime"
+                            type="datetime-local"
+                            value={pickupDateTime}
+                            min={minPickupDateTimeLocal()}
+                            onChange={(e) => setPickupDateTime(e.target.value)}
+                          />
+                        </label>
+                      ) : null}
                       <label>
                         {t('hero.homePickupLabel')}
                         <input

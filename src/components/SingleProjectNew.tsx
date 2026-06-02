@@ -635,9 +635,6 @@ const SingleProjectNew: FC<SingleProjectProps> = ({
       setPickupGeocodeError(null);
       setDestinationSearchError(null);
 
-      setPaltoPickupTiming('now');
-      setPaltoPickupDateTime('');
-
       let pickupReady = false;
       const prefillPickupLng = prefill.pickupLng;
       const prefillPickupLat = prefill.pickupLat;
@@ -715,6 +712,15 @@ const SingleProjectNew: FC<SingleProjectProps> = ({
         } catch {
           /* réseau : laisser le champ texte, l’utilisateur peut lancer « Rechercher » */
         }
+      }
+
+      if (cancelled) return;
+      if (prefill.timing === 'later') {
+        setPaltoPickupTiming('later');
+        if (prefill.datetime?.trim()) setPaltoPickupDateTime(prefill.datetime.trim());
+      } else {
+        setPaltoPickupTiming('now');
+        setPaltoPickupDateTime('');
       }
     })();
 
@@ -846,12 +852,8 @@ const SingleProjectNew: FC<SingleProjectProps> = ({
   }, [paltoPickupLocation, paltoRideDestination, paltoPickupTiming, paltoPickupDateTime]);
 
   const handlePickupTimingChange = useCallback((next: 'now' | 'later') => {
-    if (next === 'later') {
-      setPaltoPickupTiming('now');
-      setPaltoPickupDateTime('');
-      return;
-    }
-    setPaltoPickupTiming('now');
+    setPaltoPickupTiming(next);
+    if (next === 'now') setPaltoPickupDateTime('');
   }, []);
 
   const onPickupLocationInputChange = useCallback(
