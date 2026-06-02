@@ -4,10 +4,38 @@ import { Resend } from 'resend'
 const REUNION_TIME_ZONE = 'Indian/Reunion'
 const FROM_FALLBACK = 'Palto <onboarding@resend.dev>'
 
-type NotificationType = 'driver_new_ride_request' | 'client_ride_starts_soon'
+type NotificationType =
+  | 'driver_new_ride_request'
+  | 'driver_scheduled_new_ride'
+  | 'client_ride_starts_soon'
+  | `status_${string}_client`
+  | `status_${string}_driver`
 
 type NotificationClaim = {
   id: string
+}
+
+type CourseEmailRow = {
+  id: string
+  external_code: string | null
+  status: string
+  booking_kind: string
+  scheduled_date: string
+  scheduled_time: string
+  pickup_address: string
+  dropoff_address: string
+  client_id: string | null
+  assigned_driver_external_key: string | null
+  requested_driver_external_key: string | null
+  cancelled_reason: string | null
+}
+
+const STATUS_LABEL_FR: Record<string, string> = {
+  pending: 'En attente',
+  accepted: 'Acceptee',
+  in_progress: 'En cours',
+  completed: 'Terminee',
+  cancelled: 'Annulee',
 }
 
 function getResendClient(): Resend | null {
@@ -16,7 +44,7 @@ function getResendClient(): Resend | null {
   return new Resend(apiKey)
 }
 
-function formatDateTimeReunion(dateIso: string): string {
+export function formatDateTimeReunion(dateIso: string): string {
   const date = new Date(dateIso)
   return new Intl.DateTimeFormat('fr-FR', {
     timeZone: REUNION_TIME_ZONE,
@@ -27,6 +55,10 @@ function formatDateTimeReunion(dateIso: string): string {
     hour: '2-digit',
     minute: '2-digit',
   }).format(date)
+}
+
+export function toReunionCourseIso(scheduledDate: string, scheduledTime: string): string {
+  return `${scheduledDate}T${String(scheduledTime).slice(0, 8)}+04:00`
 }
 
 async function claimNotification(
@@ -73,6 +105,58 @@ async function releaseNotificationClaim(supabase: SupabaseClient, claim: Notific
   await supabase.from('course_notifications_log').delete().eq('id', claim.id).eq('status', 'processing')
 }
 
+async function sendClaimedEmail(
+  supabase: SupabaseClient,
+  input: {
+    courseId: string
+    type: NotificationType
+    to: string
+    subject: string
+    lines: string[]
+    scheduledFor?: string | null
+    metadata?: Record<string, unknown>
+  }
+): Promise<{ sent: boolean; skipped: boolean; reason?: string }> {
+  const resend = getResendClient()
+  if (!resend) {
+    console.warn('[rideEmailNotifications] skip', input.type, 'RESEND_API_KEY manquante')
+    return { sent: false, skipped: true, reason: 'RESEND_API_KEY manquante' }
+  }
+
+  const to = input.to.trim().toLowerCase()
+  if (!to) {
+    console.warn('[rideEmailNotifications] skip', input.type, 'email destinataire manquant')
+    return { sent: false, skipped: true, reason: 'Email destinataire manquant' }
+  }
+
+  const fromEmail = process.env.RESEND_FROM?.trim() || FROM_FALLBACK
+  const claim = await claimNotification(supabase, {
+    courseId: input.courseId,
+    type: input.type,
+    recipientEmail: to,
+    scheduledFor: input.scheduledFor,
+    metadata: input.metadata,
+  })
+  if (!claim) {
+    console.info('[rideEmailNotifications] skip', input.type, to, 'deja envoye')
+    return { sent: false, skipped: true, reason: 'Deja envoye' }
+  }
+
+  try {
+    await resend.emails.send({
+      from: fromEmail,
+      to: [to],
+      subject: input.subject,
+      text: input.lines.join('\n'),
+    })
+    await markNotificationSent(supabase, claim)
+    return { sent: true, skipped: false }
+  } catch (error) {
+    await releaseNotificationClaim(supabase, claim)
+    throw error
+  }
+}
+
 export async function notifyDriverNewRideRequest(params: {
   supabase: SupabaseClient
   courseId: string
@@ -85,48 +169,82 @@ export async function notifyDriverNewRideRequest(params: {
   scheduledAtIso: string
   amountEur: number
 }): Promise<{ sent: boolean; skipped: boolean; reason?: string }> {
-  const resend = getResendClient()
-  if (!resend) return { sent: false, skipped: true, reason: 'RESEND_API_KEY manquante' }
-
-  const fromEmail = process.env.RESEND_FROM?.trim() || FROM_FALLBACK
-  const to = params.driverEmail.trim().toLowerCase()
-  if (!to) return { sent: false, skipped: true, reason: 'Email chauffeur manquant' }
-
-  const claim = await claimNotification(params.supabase, {
+  return sendClaimedEmail(params.supabase, {
     courseId: params.courseId,
     type: 'driver_new_ride_request',
-    recipientEmail: to,
-    metadata: {
-      external_code: params.externalCode,
-    },
+    to: params.driverEmail,
+    subject: `Nouvelle demande de course (${params.externalCode})`,
+    lines: [
+      `Bonjour ${params.driverName || 'chauffeur'},`,
+      '',
+      'Vous avez une nouvelle demande de course immediate.',
+      `Code: ${params.externalCode}`,
+      `Client: ${params.clientName || 'Client'}`,
+      `Depart: ${params.pickupAddress}`,
+      `Arrivee: ${params.dropoffAddress}`,
+      `Depart prevu: ${formatDateTimeReunion(params.scheduledAtIso)} (heure Reunion)`,
+      `Montant: ${params.amountEur.toFixed(2)} EUR`,
+      '',
+      'Ouvrez votre dashboard chauffeur pour accepter la course.',
+    ],
+    metadata: { external_code: params.externalCode },
   })
-  if (!claim) return { sent: false, skipped: true, reason: 'Deja envoye' }
+}
 
-  try {
-    await resend.emails.send({
-      from: fromEmail,
-      to: [to],
-      subject: `Nouvelle demande de course (${params.externalCode})`,
-      text: [
-        `Bonjour ${params.driverName || 'chauffeur'},`,
+export async function notifyDriversScheduledRideCreated(params: {
+  supabase: SupabaseClient
+  courseId: string
+  externalCode: string
+  clientName: string
+  pickupAddress: string
+  dropoffAddress: string
+  scheduledAtIso: string
+  amountEur: number
+}): Promise<{ sent: number; skipped: number }> {
+  const { data: drivers, error } = await params.supabase
+    .from('app_accounts')
+    .select('email, full_name')
+    .eq('role', 'chauffeur')
+
+  if (error) throw error
+
+  let sent = 0
+  let skipped = 0
+  for (const row of drivers ?? []) {
+    const email = String(row.email ?? '').trim()
+    if (!email) {
+      skipped += 1
+      continue
+    }
+    const result = await sendClaimedEmail(params.supabase, {
+      courseId: params.courseId,
+      type: 'driver_scheduled_new_ride',
+      to: email,
+      subject: `Nouvelle reservation programmee (${params.externalCode})`,
+      lines: [
+        `Bonjour ${String(row.full_name ?? '').trim() || 'chauffeur'},`,
         '',
-        `Vous avez une nouvelle demande de course.`,
+        'Un client a programme une course sur Palto.',
         `Code: ${params.externalCode}`,
         `Client: ${params.clientName || 'Client'}`,
         `Depart: ${params.pickupAddress}`,
         `Arrivee: ${params.dropoffAddress}`,
-        `Depart prevu: ${formatDateTimeReunion(params.scheduledAtIso)} (heure Reunion)`,
+        `Date et heure: ${formatDateTimeReunion(params.scheduledAtIso)} (heure Reunion)`,
         `Montant: ${params.amountEur.toFixed(2)} EUR`,
         '',
-        'Ouvrez votre dashboard chauffeur pour accepter la course.',
-      ].join('\n'),
+        'Connectez-vous au dashboard chauffeur pour accepter cette reservation.',
+      ],
+      scheduledFor: params.scheduledAtIso,
+      metadata: { external_code: params.externalCode },
     })
-    await markNotificationSent(params.supabase, claim)
-    return { sent: true, skipped: false }
-  } catch (error) {
-    await releaseNotificationClaim(params.supabase, claim)
-    throw error
+    if (result.sent) sent += 1
+    else {
+      skipped += 1
+      console.info('[rideEmailNotifications] scheduled broadcast skip', email, result.reason)
+    }
   }
+  console.info('[rideEmailNotifications] scheduled broadcast done', { sent, skipped })
+  return { sent, skipped }
 }
 
 export async function notifyClientRideStartsSoon(params: {
@@ -139,44 +257,182 @@ export async function notifyClientRideStartsSoon(params: {
   dropoffAddress: string
   scheduledAtIso: string
 }): Promise<{ sent: boolean; skipped: boolean; reason?: string }> {
-  const resend = getResendClient()
-  if (!resend) return { sent: false, skipped: true, reason: 'RESEND_API_KEY manquante' }
-
-  const fromEmail = process.env.RESEND_FROM?.trim() || FROM_FALLBACK
-  const to = params.clientEmail.trim().toLowerCase()
-  if (!to) return { sent: false, skipped: true, reason: 'Email client manquant' }
-
-  const claim = await claimNotification(params.supabase, {
+  return sendClaimedEmail(params.supabase, {
     courseId: params.courseId,
     type: 'client_ride_starts_soon',
-    recipientEmail: to,
+    to: params.clientEmail,
+    subject: `Rappel: votre course ${params.externalCode} commence bientot`,
     scheduledFor: params.scheduledAtIso,
-    metadata: {
-      external_code: params.externalCode,
-    },
+    metadata: { external_code: params.externalCode },
+    lines: [
+      `Bonjour ${params.clientName || 'client'},`,
+      '',
+      `Votre course ${params.externalCode} commence dans environ 30 minutes.`,
+      `Depart: ${params.pickupAddress}`,
+      `Arrivee: ${params.dropoffAddress}`,
+      `Heure prevue: ${formatDateTimeReunion(params.scheduledAtIso)} (heure Reunion)`,
+      '',
+      'Merci d etre pret quelques minutes avant le depart.',
+    ],
   })
-  if (!claim) return { sent: false, skipped: true, reason: 'Deja envoye' }
+}
 
-  try {
-    await resend.emails.send({
-      from: fromEmail,
-      to: [to],
-      subject: `Rappel: votre course ${params.externalCode} commence bientot`,
-      text: [
-        `Bonjour ${params.clientName || 'client'},`,
-        '',
-        `Votre course ${params.externalCode} commence dans environ 30 minutes.`,
-        `Depart: ${params.pickupAddress}`,
-        `Arrivee: ${params.dropoffAddress}`,
-        `Heure prevue: ${formatDateTimeReunion(params.scheduledAtIso)} (heure Reunion)`,
-        '',
-        'Merci d etre pret quelques minutes avant le depart.',
-      ].join('\n'),
-    })
-    await markNotificationSent(params.supabase, claim)
-    return { sent: true, skipped: false }
-  } catch (error) {
-    await releaseNotificationClaim(params.supabase, claim)
-    throw error
+function actorLabelFr(actor: 'client' | 'chauffeur' | 'system'): string {
+  if (actor === 'client') return 'Le client'
+  if (actor === 'chauffeur') return 'Le chauffeur'
+  return 'Palto'
+}
+
+async function loadCourseForEmail(
+  supabase: SupabaseClient,
+  courseId: string
+): Promise<CourseEmailRow | null> {
+  const { data, error } = await supabase
+    .from('courses')
+    .select(
+      'id, external_code, status, booking_kind, scheduled_date, scheduled_time, pickup_address, dropoff_address, client_id, assigned_driver_external_key, requested_driver_external_key, cancelled_reason'
+    )
+    .eq('id', courseId)
+    .maybeSingle()
+  if (error) throw error
+  return (data as CourseEmailRow | null) ?? null
+}
+
+async function resolveDriverEmail(
+  supabase: SupabaseClient,
+  driverKey: string | null
+): Promise<{ email: string; name: string } | null> {
+  const key = driverKey?.trim()
+  if (!key) return null
+  const { data, error } = await supabase
+    .from('app_accounts')
+    .select('email, full_name')
+    .eq('id', key)
+    .eq('role', 'chauffeur')
+    .maybeSingle()
+  if (error) throw error
+  const email = String(data?.email ?? '').trim()
+  if (!email) return null
+  return {
+    email,
+    name: String(data?.full_name ?? '').trim() || 'Chauffeur',
   }
+}
+
+async function resolveClientEmail(
+  supabase: SupabaseClient,
+  clientId: string | null
+): Promise<{ email: string; name: string } | null> {
+  if (!clientId) return null
+  const { data, error } = await supabase
+    .from('clients')
+    .select('email, full_name')
+    .eq('id', clientId)
+    .maybeSingle()
+  if (error) throw error
+  const email = String(data?.email ?? '').trim()
+  if (!email) return null
+  return {
+    email,
+    name: String(data?.full_name ?? '').trim() || 'Client',
+  }
+}
+
+export async function notifyRideStatusChange(params: {
+  supabase: SupabaseClient
+  courseId: string
+  newStatus: string
+  actor: 'client' | 'chauffeur' | 'system'
+  detailNote?: string
+}): Promise<{ clientSent: boolean; driverSent: boolean }> {
+  const course = await loadCourseForEmail(params.supabase, params.courseId)
+  if (!course) return { clientSent: false, driverSent: false }
+
+  const code = course.external_code ?? `COURSE-${course.id.slice(0, 8).toUpperCase()}`
+  const statusLabel = STATUS_LABEL_FR[params.newStatus] ?? params.newStatus
+  const whenIso = toReunionCourseIso(course.scheduled_date, course.scheduled_time)
+  const whenLabel = formatDateTimeReunion(whenIso)
+  const actor = actorLabelFr(params.actor)
+  const reasonLine = params.detailNote?.trim()
+    ? `Detail: ${params.detailNote.trim()}`
+    : course.cancelled_reason?.trim()
+      ? `Detail: ${course.cancelled_reason.trim()}`
+      : null
+
+  const client = await resolveClientEmail(params.supabase, course.client_id)
+  const driverKey = course.assigned_driver_external_key ?? course.requested_driver_external_key
+  const driver = await resolveDriverEmail(params.supabase, driverKey)
+
+  let clientSent = false
+  let driverSent = false
+
+  if (client) {
+    const result = await sendClaimedEmail(params.supabase, {
+      courseId: course.id,
+      type: `status_${params.newStatus}_client`,
+      to: client.email,
+      subject: `Course ${code} — ${statusLabel}`,
+      metadata: { external_code: code, new_status: params.newStatus, actor: params.actor },
+      lines: [
+        `Bonjour ${client.name},`,
+        '',
+        `Votre course ${code} a ete mise a jour.`,
+        `Nouveau statut: ${statusLabel}`,
+        `${actor} a modifie l etat de la course.`,
+        `Depart: ${course.pickup_address}`,
+        `Arrivee: ${course.dropoff_address}`,
+        `Horaire prevu: ${whenLabel} (heure Reunion)`,
+        ...(reasonLine ? ['', reasonLine] : []),
+        '',
+        'Consultez votre compte client Palto pour le suivi.',
+      ],
+    })
+    clientSent = result.sent
+  }
+
+  if (driver) {
+    const result = await sendClaimedEmail(params.supabase, {
+      courseId: course.id,
+      type: `status_${params.newStatus}_driver`,
+      to: driver.email,
+      subject: `Course ${code} — ${statusLabel}`,
+      metadata: { external_code: code, new_status: params.newStatus, actor: params.actor },
+      lines: [
+        `Bonjour ${driver.name},`,
+        '',
+        `La course ${code} a ete mise a jour.`,
+        `Nouveau statut: ${statusLabel}`,
+        `${actor} a modifie l etat de la course.`,
+        `Depart: ${course.pickup_address}`,
+        `Arrivee: ${course.dropoff_address}`,
+        `Horaire prevu: ${whenLabel} (heure Reunion)`,
+        ...(reasonLine ? ['', reasonLine] : []),
+        '',
+        'Ouvrez votre dashboard chauffeur pour les details.',
+      ],
+    })
+    driverSent = result.sent
+  }
+
+  return { clientSent, driverSent }
+}
+
+/** Fire-and-forget : reservation programmée → tous les chauffeurs. */
+export function emitScheduledRideCreatedEmails(
+  supabase: SupabaseClient,
+  input: Parameters<typeof notifyDriversScheduledRideCreated>[0]
+): void {
+  void notifyDriversScheduledRideCreated(input).catch((error) => {
+    console.error('[rideEmailNotifications] scheduled create', error)
+  })
+}
+
+/** Fire-and-forget : changement de statut → client + chauffeur assigné. */
+export function emitRideStatusChangeEmails(
+  supabase: SupabaseClient,
+  input: Parameters<typeof notifyRideStatusChange>[0]
+): void {
+  void notifyRideStatusChange(input).catch((error) => {
+    console.error('[rideEmailNotifications] status change', error)
+  })
 }

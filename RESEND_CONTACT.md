@@ -34,9 +34,35 @@ Puis ouvre le site et va sur la page Contact. Avec `npm run dev` seul, l’appel
 
 ## Notifications courses (chauffeur/client)
 
-- Notification chauffeur à la création (course instantanée ciblée) : envoyée dans `POST /api/rides/create`.
-- Rappel client 30 min avant départ : endpoint cron `GET/POST /api/notifications/course-reminders`.
+- **Course immédiate** : email au chauffeur choisi à la création (`POST /api/rides/create`).
+- **Course programmée** : email à **tous** les comptes chauffeur (avec email) à la création.
+- **Changement de statut** (`acceptée`, `en cours`, `terminée`, `annulée`, no-show) : email au **client** et au **chauffeur assigné** (si connu), selon qui a agi.
+- Rappel client 30 min avant départ : endpoint cron `GET/POST /api/notifications/course-reminders` (voir plan Hobby ci-dessous).
 - Anti-doublon : table `course_notifications_log` (unique par course + type + destinataire).
+
+### Depannage : je ne recois aucun mail course
+
+1. **Vercel** → Settings → Environment Variables (Production) :
+   - `RESEND_API_KEY`, `RESEND_FROM` (ex. `Palto <team@palto.re>`)
+   - `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`
+   - puis **Redeploy** (obligatoire apres changement d env).
+2. **Supabase** : migration `0012_course_notifications.sql` executee (table `course_notifications_log`).
+3. **Resend** → [Emails](https://resend.com/emails) : voir si les envois sont `delivered` ou `bounced`.
+4. **Test API** (apres deploy) :
+   ```bash
+   curl -s "https://palto.re/api/notifications/email-health" \
+     -H "Authorization: Bearer VOTRE_CRON_SECRET"
+   ```
+   Puis envoi test :
+   ```bash
+   curl -s -X POST "https://palto.re/api/notifications/email-health" \
+     -H "Authorization: Bearer VOTRE_CRON_SECRET" \
+     -H "Content-Type: application/json" \
+     -d '{"to":"votre@email.com"}'
+   ```
+5. **Vercel** → Logs → filtrer `rideEmailNotifications` ou `rides/create` apres une commande test.
+6. Verifier que l **email du compte chauffeur** (table `app_accounts`) = la boite que vous ouvrez.
+7. Pour une **annulation avant acceptation** : seul le client est notifie (pas de chauffeur assigne).
 
 ### Cron Vercel et plan Hobby
 

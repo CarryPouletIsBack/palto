@@ -10,6 +10,7 @@ import {
 } from '../../server/lib/acceptedDriverPayload.js'
 import { getSupabaseAdmin } from '../../server/lib/supabaseAdmin.js'
 import { listNearbyDriversFromPresence } from '../../server/lib/nearbyDriversFromPresence.js'
+import { emitRideStatusChangeEmails } from '../../server/lib/rideEmailNotifications.js'
 import {
   applyCancelPaymentOutcome,
   resolveClientCancelPaymentOutcome,
@@ -161,6 +162,13 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       res.status(502).json({ error: 'Course annulee mais paiement a verifier manuellement' })
       return
     }
+
+    emitRideStatusChangeEmails(supabase, {
+      courseId,
+      newStatus: 'cancelled',
+      actor: 'client',
+      detailNote: 'Annule par le client',
+    })
 
     res.status(200).json({ ok: true, status: updated.status, paymentOutcome: payOutcome })
     return

@@ -16,7 +16,10 @@ import {
   type CoursePaymentMethod,
 } from '../../server/lib/coursePaymentMethod.js'
 import { validateChauffeurOrderAmount } from '../../server/lib/validateChauffeurOrderAmount.js'
-import { notifyDriverNewRideRequest } from '../../server/lib/rideEmailNotifications.js'
+import {
+  emitScheduledRideCreatedEmails,
+  notifyDriverNewRideRequest,
+} from '../../server/lib/rideEmailNotifications.js'
 
 function readBearerToken(req: VercelRequest): string | null {
   const raw = req.headers.authorization
@@ -326,6 +329,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     },
   })
 
+  const scheduledAtIso = toReunionIso(b.scheduledDate, scheduledTime)
+  const externalCodeForEmail = courseRow.external_code ?? code
+
   if (b.bookingKind === 'instant' && requestedDriverKey) {
     try {
       const { data: chauffeurAccount, error: chauffeurErr } = await supabase
@@ -341,19 +347,31 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         await notifyDriverNewRideRequest({
           supabase,
           courseId: courseRow.id,
-          externalCode: courseRow.external_code ?? code,
+          externalCode: externalCodeForEmail,
           driverEmail: chauffeurAccount.email,
           driverName: String(chauffeurAccount.full_name ?? '').trim() || 'Chauffeur',
           clientName: fullName,
           pickupAddress: insertPayload.pickup_address,
           dropoffAddress: insertPayload.dropoff_address,
-          scheduledAtIso: toReunionIso(b.scheduledDate, scheduledTime),
+          scheduledAtIso,
           amountEur: driverAmountEur,
         })
       }
     } catch (notificationError) {
       console.error('[rides/create] driver email notification', notificationError)
     }
+  }
+
+  if (b.bookingKind === 'scheduled') {
+    emitScheduledRideCreatedEmails(supabase, {
+      courseId: courseRow.id,
+      externalCode: externalCodeForEmail,
+      clientName: fullName,
+      pickupAddress: insertPayload.pickup_address,
+      dropoffAddress: insertPayload.dropoff_address,
+      scheduledAtIso,
+      amountEur: driverAmountEur,
+    })
   }
 
   let stripeClientSecret: string | null = null
