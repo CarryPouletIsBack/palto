@@ -58,14 +58,26 @@
     text-align: center;
   }
 
+  .dashboard-mobile-pill-switch,
   .dashboard-mobile-stats-switch {
     flex-shrink: 0;
     display: flex;
     gap: 6px;
     padding: 0;
     margin: 0;
+    align-items: stretch;
   }
 
+  .dashboard-mobile-pill-switch--scroll {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    overflow-y: hidden;
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior-x: contain;
+    scrollbar-width: thin;
+  }
+
+  .dashboard-mobile-pill-switch__btn,
   .dashboard-mobile-stats-switch__btn {
     flex: 1 1 0;
     min-width: 0;
@@ -80,12 +92,26 @@
     cursor: pointer;
     touch-action: manipulation;
     -webkit-tap-highlight-color: transparent;
+    font: inherit;
+    line-height: 1.2;
+    box-sizing: border-box;
   }
 
+  .dashboard-mobile-pill-switch--scroll .dashboard-mobile-pill-switch__btn {
+    flex: 0 0 auto;
+    min-width: max-content;
+  }
+
+  .dashboard-mobile-pill-switch__btn.is-active,
   .dashboard-mobile-stats-switch__btn.is-active {
     border-color: #0ea5e9;
     background: rgba(14, 165, 233, 0.1);
     color: #0369a1;
+  }
+
+  .dashboard-mobile-pill-switch__btn.is-disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
   }
 
   .dashboard-mobile-launch-dock {
@@ -122,6 +148,7 @@
 
 @media (min-width: 769px) {
   .dashboard-mobile-tabbar,
+  .dashboard-mobile-pill-switch,
   .dashboard-mobile-stats-switch {
     display: none !important;
   }

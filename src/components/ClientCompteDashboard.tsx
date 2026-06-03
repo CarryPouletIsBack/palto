@@ -84,6 +84,7 @@ import {
   type ClientSavedPlacesSnapshot,
 } from '../constants/clientSavedPlacesStorage';
 import DashboardMobileTabBar from './DashboardMobileTabBar';
+import DashboardMobilePillSwitch from './DashboardMobilePillSwitch';
 import ClientComptePlaceAddressField from './ClientComptePlaceAddressField';
 import ClientComptePlaceMapModal, { type ClientCompteMapPickResult } from './ClientComptePlaceMapModal';
 import ClientCompteRideMeetDriver from './ClientCompteRideMeetDriver';
@@ -1999,6 +2000,38 @@ export default function ClientCompteDashboard({ onBack, onOpenClientLiveMeet }: 
     [goNav]
   );
 
+  const clientAccountPillItems = useMemo(() => {
+    const items = [
+      {
+        id: 'personal',
+        label: isEn ? 'Personal' : 'Infos perso',
+        active: accountManageSection === 'personal',
+        onClick: () => openManageAccount('personal'),
+      },
+      {
+        id: 'security',
+        label: isEn ? 'Security' : 'Securite',
+        active: accountManageSection === 'security',
+        onClick: () => openManageAccount('security'),
+      },
+    ];
+    if (paymentFeaturesEnabled) {
+      items.push({
+        id: 'payment',
+        label: isEn ? 'Payment' : 'Paiement',
+        active: accountManageSection === 'payment',
+        onClick: () => openManageAccount('payment'),
+      });
+    }
+    items.push({
+      id: 'help',
+      label: isEn ? 'Help' : 'Aides',
+      active: accountManageSection === 'help',
+      onClick: () => openManageAccount('help'),
+    });
+    return items;
+  }, [accountManageSection, isEn, openManageAccount, paymentFeaturesEnabled]);
+
   return (
     <div className="page active">
       <div className="main-accueil">
@@ -2534,6 +2567,13 @@ export default function ClientCompteDashboard({ onBack, onOpenClientLiveMeet }: 
 
             {activeNav === 'account' && (
             <div className="dashboard-content">
+              {isMobileViewport ? (
+                <DashboardMobilePillSwitch
+                  scroll
+                  ariaLabel={t('clientAccount.mobileAccountSectionsAria')}
+                  items={clientAccountPillItems}
+                />
+              ) : null}
               <section className="client-compte-account-layout">
                 <aside className="client-compte-account-sidebar">
                   <div className="client-compte-account-profile">
@@ -2567,6 +2607,7 @@ export default function ClientCompteDashboard({ onBack, onOpenClientLiveMeet }: 
                       <span>{profile.email}</span>
                     </div>
                   </div>
+                  {!isMobileViewport ? (
                   <nav className="client-compte-account-nav" aria-label={isEn ? 'Account sections' : 'Sections du compte'}>
                     <button type="button" className={`client-compte-account-nav-item${accountManageSection === 'personal' ? ' is-active' : ''}`} onClick={() => openManageAccount('personal')}>
                       <span className="nav-icon" aria-hidden><IdCard size={16} /></span>
@@ -2596,6 +2637,7 @@ export default function ClientCompteDashboard({ onBack, onOpenClientLiveMeet }: 
                       <span>{isEn ? 'Help' : 'Aides'}</span>
                     </button>
                   </nav>
+                  ) : null}
                 </aside>
                 <div className="client-compte-account-main">
                   <header className="client-compte-account-main-head">

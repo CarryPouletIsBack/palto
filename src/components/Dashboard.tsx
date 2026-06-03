@@ -26,6 +26,7 @@ import DashboardStats, {
   type ChauffeurHeatmapStatsForView,
 } from './DashboardStats';
 import DashboardMobileTabBar from './DashboardMobileTabBar';
+import DashboardMobilePillSwitch from './DashboardMobilePillSwitch';
 import './DashboardMobileTabBar.css';
 import {
   formatFrenchPlateInput,
@@ -1320,6 +1321,128 @@ const Dashboard = ({
     },
     [handleNavSelect]
   );
+
+  const chauffeurStatsPillItems = useMemo(
+    () => [
+      {
+        id: 'stats',
+        label: t('driverDashboard.mobileStatsTab'),
+        active: activeView === 'stats',
+        onClick: () => handleNavSelect('stats'),
+      },
+      {
+        id: 'courses',
+        label: t('driverDashboard.mobileCoursesTab'),
+        active: activeView === 'courses',
+        onClick: () => handleNavSelect('courses'),
+      },
+      {
+        id: 'clients',
+        label: t('driverDashboard.mobileClientsTab'),
+        active: activeView === 'clients',
+        onClick: () => handleNavSelect('clients'),
+      },
+    ],
+    [activeView, handleNavSelect, t]
+  );
+
+  const chauffeurUserPillItems = useMemo(
+    () => [
+      {
+        id: 'palto-account',
+        label: language === 'en' ? 'Palto account' : 'Compte Palto',
+        active: userSubView === 'palto-account',
+        onClick: () => openChauffeurPaltoAccount('personal'),
+      },
+      {
+        id: 'profile',
+        label: language === 'en' ? 'Vehicle' : 'Vehicule',
+        active: userSubView === 'profile',
+        onClick: () => setUserSubView('profile'),
+      },
+      {
+        id: 'documents',
+        label: language === 'en' ? 'Documents' : 'Documents',
+        active: userSubView === 'documents',
+        onClick: () => setUserSubView('documents'),
+      },
+      {
+        id: 'ride-settings',
+        label: language === 'en' ? 'Pricing' : 'Tarifs',
+        active: userSubView === 'ride-settings',
+        onClick: () => setUserSubView('ride-settings'),
+      },
+      {
+        id: 'organization',
+        label: t('driverDashboard.orgSectionTitle'),
+        active: userSubView === 'organization',
+        onClick: () => {
+          setUserSubView('organization');
+          setOrgSubView('profile');
+        },
+      },
+      {
+        id: 'preferences',
+        label: language === 'en' ? 'Preferences' : 'Preferences',
+        active: userSubView === 'preferences',
+        onClick: () => setUserSubView('preferences'),
+      },
+      {
+        id: 'help',
+        label: t('driverDashboard.navHelp'),
+        active: userSubView === 'help',
+        onClick: () => setUserSubView('help'),
+      },
+    ],
+    [language, openChauffeurPaltoAccount, t, userSubView]
+  );
+
+  const chauffeurOrgSubPillItems = useMemo(() => {
+    if (!chauffeurOrg) return [];
+    const items = [
+      {
+        id: 'team',
+        label: t('driverDashboard.orgNavTeam'),
+        active: orgSubView === 'team',
+        onClick: () => {
+          setUserSubView('organization');
+          setOrgSubView('team');
+        },
+      },
+    ];
+    if (isChauffeurOrgAdmin) {
+      items.push(
+        {
+          id: 'fleet',
+          label: t('driverDashboard.orgNavFleet'),
+          active: orgSubView === 'fleet',
+          onClick: () => {
+            setUserSubView('organization');
+            setOrgSubView('fleet');
+          },
+        },
+        {
+          id: 'invites',
+          label: t('driverDashboard.orgNavInvites'),
+          active: orgSubView === 'invites',
+          onClick: () => {
+            setUserSubView('organization');
+            setOrgSubView('invites');
+          },
+        },
+        {
+          id: 'settings',
+          label: t('driverDashboard.orgNavSettings'),
+          active: orgSubView === 'settings',
+          onClick: () => {
+            setUserSubView('organization');
+            setOrgSubView('settings');
+          },
+        }
+      );
+    }
+    return items;
+  }, [chauffeurOrg, isChauffeurOrgAdmin, orgSubView, t]);
 
   const handleTopbarLogout = useCallback(() => {
     setTopbarAccountMenuOpen(false);
@@ -2795,39 +2918,27 @@ const Dashboard = ({
             </header>
 
             {isMobileViewport && chauffeurMobileStatsGroupActive ? (
-              <div
-                className="dashboard-mobile-stats-switch"
-                role="tablist"
-                aria-label={t('driverDashboard.mobileStatsSwitchAria')}
-              >
-                <button
-                  type="button"
-                  role="tab"
-                  aria-selected={activeView === 'stats'}
-                  className={`dashboard-mobile-stats-switch__btn${activeView === 'stats' ? ' is-active' : ''}`}
-                  onClick={() => handleNavSelect('stats')}
-                >
-                  {t('driverDashboard.mobileStatsTab')}
-                </button>
-                <button
-                  type="button"
-                  role="tab"
-                  aria-selected={activeView === 'courses'}
-                  className={`dashboard-mobile-stats-switch__btn${activeView === 'courses' ? ' is-active' : ''}`}
-                  onClick={() => handleNavSelect('courses')}
-                >
-                  {t('driverDashboard.mobileCoursesTab')}
-                </button>
-                <button
-                  type="button"
-                  role="tab"
-                  aria-selected={activeView === 'clients'}
-                  className={`dashboard-mobile-stats-switch__btn${activeView === 'clients' ? ' is-active' : ''}`}
-                  onClick={() => handleNavSelect('clients')}
-                >
-                  {t('driverDashboard.mobileClientsTab')}
-                </button>
-              </div>
+              <DashboardMobilePillSwitch
+                ariaLabel={t('driverDashboard.mobileStatsSwitchAria')}
+                items={chauffeurStatsPillItems}
+              />
+            ) : null}
+
+            {isMobileViewport && activeView === 'user' ? (
+              <>
+                <DashboardMobilePillSwitch
+                  scroll
+                  ariaLabel={t('driverDashboard.mobileAccountSectionsAria')}
+                  items={chauffeurUserPillItems}
+                />
+                {userSubView === 'organization' && chauffeurOrgSubPillItems.length > 0 ? (
+                  <DashboardMobilePillSwitch
+                    scroll
+                    ariaLabel={t('driverDashboard.mobileOrgSectionsAria')}
+                    items={chauffeurOrgSubPillItems}
+                  />
+                ) : null}
+              </>
             ) : null}
 
             {activeView === 'stats' ? (
@@ -3807,7 +3918,11 @@ const Dashboard = ({
 
                   {activeView === 'user' && (
                     <div className="dashboard-org-layout">
-                      <aside className="dashboard-org-sidebar" aria-label={t('driverDashboard.titleUser')}>
+                      <aside
+                        className={`dashboard-org-sidebar${isMobileViewport ? ' dashboard-org-sidebar--mobile-pills-only' : ''}`}
+                        aria-label={t('driverDashboard.titleUser')}
+                      >
+                        {!isMobileViewport ? (
                         <nav className="dashboard-org-nav">
                           <button
                             type="button"
@@ -3921,6 +4036,7 @@ const Dashboard = ({
                             </div>
                           ) : null}
                         </nav>
+                        ) : null}
                       </aside>
                       <div className="dashboard-org-main">
                       {!chauffeurPresence.tracking && userSubView !== 'preferences' ? (

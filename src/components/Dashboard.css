@@ -4016,6 +4016,7 @@ html[data-app-theme='dark'] .ride-status-badge--cancelled {
 @media (min-width: 769px) {
   .dashboard-mobile-bottombar,
   .dashboard-mobile-tabbar,
+  .dashboard-mobile-pill-switch,
   .dashboard-mobile-stats-switch,
   .dashboard-mobile-launch-dock,
   .dashboard-mobile-backdrop {
@@ -5058,6 +5059,7 @@ button.dashboard-org-sidebar-brand--home:focus-visible {
     padding-top: 0;
   }
 
+  .dashboard-container--chauffeur .dashboard-mobile-pill-switch,
   .dashboard-container--chauffeur .dashboard-mobile-stats-switch {
     flex-shrink: 0;
     position: relative;
@@ -5068,12 +5070,27 @@ button.dashboard-org-sidebar-brand--home:focus-visible {
     margin: 0;
   }
 
+  .dashboard-container--chauffeur .dashboard-mobile-pill-switch + .dashboard-mobile-pill-switch {
+    padding-top: 0;
+  }
+
+  .dashboard-container--chauffeur .dashboard-mobile-pill-switch__btn,
   .dashboard-container--chauffeur .dashboard-mobile-stats-switch__btn {
     min-height: 44px;
     touch-action: manipulation;
     -webkit-tap-highlight-color: transparent;
     border: 1px solid #dbe3ee !important;
     cursor: pointer;
+  }
+
+  .dashboard-container--chauffeur-account .dashboard-org-sidebar--mobile-pills-only {
+    display: none;
+  }
+
+  .dashboard-container--chauffeur-account .dashboard-org-layout {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
   }
 
   .dashboard-container--chauffeur .dashboard-content {

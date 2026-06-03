@@ -337,6 +337,19 @@ body.accueil-page .dashboard-container--home-accueil .dashboard-main {
     margin-bottom: 0;
     padding-bottom: calc(28px + 12px);
   }
+
+  .dashboard-container--client-compte .dashboard-content > .dashboard-mobile-pill-switch {
+    margin-bottom: 12px;
+    padding-inline: 0;
+  }
+
+  .dashboard-container--client-compte .client-compte-account-nav {
+    display: none !important;
+  }
+
+  .dashboard-container--client-compte .client-compte-account-sidebar {
+    padding-bottom: 0;
+  }
 }
 
 .client-compte-topbar-user-btn {
