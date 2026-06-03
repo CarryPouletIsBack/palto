@@ -67,7 +67,7 @@ export async function fetchNearbyDriversFromApi(params: {
     const res = await fetch(url.toString())
     const data = (await res.json().catch(() => ({}))) as { drivers?: NearbyDriver[]; error?: string }
     if (!res.ok) {
-      console.warn('[nearbyDriversApi]', data.error ?? res.status)
+      console.warn('[nearbyDriversApi]', res.status, data.error ?? data)
       return []
     }
     if (!Array.isArray(data.drivers)) return []

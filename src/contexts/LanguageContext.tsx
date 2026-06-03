@@ -293,9 +293,9 @@ const TRANSLATIONS: Record<Language, Record<string, unknown>> = {
       goPreviousStep: 'Précédent',
       chooseDriverCta: 'Choisir ce chauffeur',
       chooseDriverHint: 'Sélectionnez un chauffeur pour continuer',
-      driversLoading: 'Recherche de chauffeurs en ligne…',
+      driversLoading: 'Chargement des chauffeurs inscrits…',
       driversEmpty:
-        'Aucun chauffeur disponible dans ce rayon. La position d’un chauffeur reste visible environ 2 h après sa dernière mise à jour (dashboard ou bouton « Actualiser ma localisation »).',
+        'Aucun chauffeur inscrit sur Palto pour le moment. Un compte chauffeur doit être créé avec le rôle chauffeur dans l’application.',
     },
     chauffeurAuth: {
       titleLogin: 'Connexion chauffeur',
@@ -1102,9 +1102,9 @@ const TRANSLATIONS: Record<Language, Record<string, unknown>> = {
       goPreviousStep: 'Back',
       chooseDriverCta: 'Choose this driver',
       chooseDriverHint: 'Select a driver to continue',
-      driversLoading: 'Searching for online drivers…',
+      driversLoading: 'Loading registered drivers…',
       driversEmpty:
-        'No drivers available in this radius. A driver’s position stays visible for about 2 hours after their last update (dashboard or “Refresh my location”).',
+        'No registered Palto drivers yet. A driver account must exist with the chauffeur role in the app.',
     },
     chauffeurAuth: {
       titleLogin: 'Driver sign in',

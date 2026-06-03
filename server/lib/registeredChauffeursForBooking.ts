@@ -51,7 +51,6 @@ const NO_POSITION_DISTANCE_KM = 999_999
 export async function listRegisteredChauffeursForBooking(
   supabase: SupabaseClient,
   origin: GeoPoint,
-  radiusKm: number,
   limit: number
 ): Promise<NearbyDriverApiItem[]> {
   const { data: accounts, error: accErr } = await supabase
@@ -99,7 +98,6 @@ export async function listRegisteredChauffeursForBooking(
       const hasPosition = Boolean(presence)
       const point = presence ?? origin
       const distanceKm = hasPosition ? haversineKm(origin, point) : NO_POSITION_DISTANCE_KM
-      if (hasPosition && distanceKm > radiusKm) return null
 
       const moto = vehicleTypeLabel(acc.vehicle_type as string | null)
       const ridePricing = ridePricingByAccountId.get(id) ?? null

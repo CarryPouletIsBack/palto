@@ -427,17 +427,10 @@ const SingleProjectNew: FC<SingleProjectProps> = ({
     };
   }, [chauffeursSearchOk, pickupResolvedPoint]);
 
+  /** MVP : tous les chauffeurs inscrits renvoyés par l’API (déjà triés par distance côté serveur). */
   const pickupFilteredDrivers = useMemo(() => {
     if (!pickupResolvedPoint) return [];
-    return allNearbyDrivers.filter((d) => {
-      if (d.positionKnown === false) return true;
-      const distKm = haversineDistanceKm(pickupResolvedPoint, {
-        latitude: d.latitude,
-        longitude: d.longitude,
-      });
-      const maxKm = normalizeRidePricing(d.ridePricing).maxPickupKm;
-      return distKm <= maxKm;
-    });
+    return allNearbyDrivers;
   }, [pickupResolvedPoint, allNearbyDrivers]);
 
   const [lastConfirmedDestinationText, setLastConfirmedDestinationText] = useState<string | null>(null);

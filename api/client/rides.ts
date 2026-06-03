@@ -28,7 +28,7 @@ const NearbyQuerySchema = z.object({
   lat: z.coerce.number().finite(),
   lng: z.coerce.number().finite(),
   radiusKm: z.coerce.number().finite().min(1).max(50).optional(),
-  limit: z.coerce.number().int().min(1).max(20).optional(),
+  limit: z.coerce.number().int().min(1).max(50).optional(),
 })
 
 const CancelBodySchema = z.object({
@@ -189,8 +189,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       res.status(503).json({ error: 'Service indisponible' })
       return
     }
-    const { lat, lng, radiusKm = 20, limit = 9 } = nearbyParsed.data
-    const drivers = await listRegisteredChauffeursForBooking(supabase, { lng, lat }, radiusKm, limit)
+    const { lat, lng, limit = 40 } = nearbyParsed.data
+    const drivers = await listRegisteredChauffeursForBooking(supabase, { lng, lat }, limit)
     res.status(200).json({ drivers })
     return
   }
