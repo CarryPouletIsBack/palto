@@ -1,0 +1,32 @@
+.btn-loading-content {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-width: 0;
+  vertical-align: middle;
+}
+
+.btn-loading-spinner {
+  width: 14px;
+  height: 14px;
+  flex-shrink: 0;
+  border: 2px solid currentColor;
+  border-right-color: transparent;
+  border-radius: 50%;
+  animation: btn-loading-spin 0.65s linear infinite;
+  opacity: 0.85;
+}
+
+.btn-loading-spinner--inverse {
+  border-color: rgba(255, 255, 255, 0.35);
+  border-top-color: #ffffff;
+  border-right-color: transparent;
+  opacity: 1;
+}
+
+@keyframes btn-loading-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}

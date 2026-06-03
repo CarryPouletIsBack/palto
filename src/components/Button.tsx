@@ -2,7 +2,10 @@ import { type ReactNode, type ButtonHTMLAttributes } from 'react'
 import './Button.css'
 
 interface ButtonProps
-  extends Pick<ButtonHTMLAttributes<HTMLButtonElement>, 'aria-label' | 'tabIndex' | 'aria-hidden'> {
+  extends Pick<
+    ButtonHTMLAttributes<HTMLButtonElement>,
+    'aria-label' | 'tabIndex' | 'aria-hidden' | 'disabled' | 'aria-busy'
+  > {
   children: ReactNode
   variant?: 'primary' | 'secondary'
   onClick?: () => void
@@ -20,6 +23,8 @@ const Button = ({
   type = 'button',
   icon = false,
   iconSize = 'medium',
+  disabled,
+  'aria-busy': ariaBusy,
   'aria-label': ariaLabel,
   tabIndex,
   'aria-hidden': ariaHidden,
@@ -32,6 +37,8 @@ const Button = ({
       aria-label={ariaLabel}
       tabIndex={tabIndex}
       aria-hidden={ariaHidden}
+      disabled={disabled}
+      aria-busy={ariaBusy}
     >
       {children}
     </button>

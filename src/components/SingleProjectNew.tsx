@@ -37,6 +37,7 @@ import UserFlowChart from './UserFlowChart';
 import { TreeNode } from './flow/FlowTree';
 import type { FlowNodeData } from '../data/flowData';
 import Button from './Button';
+import { ButtonLoadingLabel } from './ButtonLoadingLabel';
 import { ChevronLeft } from 'lucide-react';
 import PaltoGoMobileRouteCard from './PaltoGoMobileRouteCard';
 import PaltoGoMobileSuggestionsPanel, {
@@ -3236,17 +3237,24 @@ const SingleProjectNew: FC<SingleProjectProps> = ({
               <Button
                 variant="primary"
                 type="button"
-                className="palto-ride-search-btn"
+                className={`palto-ride-search-btn${pickupGeocodeLoading ? ' is-pending' : ''}`}
                 onClick={onPrimaryBookingAction}
                 disabled={pickupGeocodeLoading}
+                aria-busy={pickupGeocodeLoading}
               >
-                {pickupGeocodeLoading
-                  ? paltoPickupTiming === 'later'
-                    ? t('search.bookingReserveLoading')
-                    : t('search.bookingSearchLoading')
-                  : paltoPickupTiming === 'later'
+                <ButtonLoadingLabel
+                  pending={pickupGeocodeLoading}
+                  pendingLabel={
+                    paltoPickupTiming === 'later'
+                      ? t('search.bookingReserveLoading')
+                      : t('search.bookingSearchLoading')
+                  }
+                  spinnerVariant="inverse"
+                >
+                  {paltoPickupTiming === 'later'
                     ? t('search.bookingReserve')
                     : t('search.bookingSearch')}
+                </ButtonLoadingLabel>
               </Button>
             ) : null}
           </section>
@@ -3550,19 +3558,24 @@ const SingleProjectNew: FC<SingleProjectProps> = ({
                     <Button
                       variant="primary"
                       type="button"
-                      className="palto-ride-search-btn palto-ride-recap-modal__cta"
+                      className={`palto-ride-search-btn palto-ride-recap-modal__cta${checkoutSubmitting ? ' is-pending' : ''}`}
                       disabled={
                         checkoutSubmitting || Boolean(checkoutSuccessMessage) || !paltoSelectedDriver
                       }
+                      aria-busy={checkoutSubmitting}
                       onClick={() => void handleCheckoutConfirm()}
                     >
-                      {checkoutSubmitting
-                        ? t('search.checkoutPreparing')
-                        : effectiveCheckoutPaymentMethod === 'card' && cardPaymentAvailable
+                      <ButtonLoadingLabel
+                        pending={checkoutSubmitting}
+                        pendingLabel={t('search.checkoutPreparing')}
+                        spinnerVariant="inverse"
+                      >
+                        {effectiveCheckoutPaymentMethod === 'card' && cardPaymentAvailable
                           ? t('search.checkoutContinuePayment')
                           : paltoPickupTiming === 'later'
                             ? t('search.bookingRecapConfirmScheduled')
                             : t('search.checkoutConfirmOrder')}
+                      </ButtonLoadingLabel>
                     </Button>
                   ) : null}
                 </div>

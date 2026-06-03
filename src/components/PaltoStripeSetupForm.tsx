@@ -10,6 +10,7 @@ import { loadStripe, type StripeAddressElementOptions, type StripeElementsOption
 import { paltoStripeElementsAppearance } from '../utils/stripeElementsAppearance'
 import { PALTO_PAYMENT_ELEMENT_CARD_ONLY_OPTIONS } from '../utils/stripePaymentElementOptions'
 import Button from './Button'
+import { ButtonLoadingLabel } from './ButtonLoadingLabel'
 
 type InnerProps = {
   customerEmail: string
@@ -113,11 +114,14 @@ function SetupFormInner({ customerEmail, onSuccess, onError, submitLabel }: Inne
       <Button
         variant="primary"
         type="button"
-        className="palto-ride-search-btn palto-checkout-stripe__pay"
+        className={`palto-ride-search-btn palto-checkout-stripe__pay${busy ? ' is-pending' : ''}`}
         disabled={!stripe || !elements || busy}
+        aria-busy={busy}
         onClick={() => void handleSave()}
       >
-        {busy ? 'Enregistrement…' : submitLabel}
+        <ButtonLoadingLabel pending={busy} pendingLabel="Enregistrement…" spinnerVariant="inverse">
+          {submitLabel}
+        </ButtonLoadingLabel>
       </Button>
     </div>
   )

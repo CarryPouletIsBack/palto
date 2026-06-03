@@ -170,6 +170,26 @@ import {
 import { loadClientAccountSnapshot, saveClientAccountSnapshot } from '../constants/clientAccountStorage';
 import { syncChauffeurProfileWithServer } from '../services/chauffeurProfileSync';
 import ChauffeurDocumentsChecklist from './ChauffeurDocumentsChecklist';
+import { ButtonLoadingLabel } from './ButtonLoadingLabel';
+
+type ChauffeurRideActionKind = 'accept' | 'decline' | 'cancel' | 'start' | 'complete';
+
+function chauffeurRideActionPendingLabel(kind: ChauffeurRideActionKind): string {
+  switch (kind) {
+    case 'accept':
+      return 'Acceptation…';
+    case 'decline':
+      return 'Refus…';
+    case 'cancel':
+      return 'Annulation…';
+    case 'start':
+      return 'Démarrage…';
+    case 'complete':
+      return 'Clôture…';
+    default:
+      return 'En cours…';
+  }
+}
 
 interface DashboardProps {
   /** Ouvre la route `/dashboard/navigation/:id` avec carte + itineraire. */
@@ -697,6 +717,43 @@ const Dashboard = ({
   const [courseRows, setCourseRows] = useState<CourseRowState[]>(() => {
     return [];
   });
+  const rideActionLockRef = useRef(false);
+  const [rideActionPending, setRideActionPending] = useState<{
+    courseId: string;
+    kind: ChauffeurRideActionKind;
+  } | null>(null);
+
+  const isRideActionPending = useCallback(
+    (courseId: string, kind?: ChauffeurRideActionKind) => {
+      if (!rideActionPending) return false;
+      if (rideActionPending.courseId !== courseId) return false;
+      if (kind != null && rideActionPending.kind !== kind) return false;
+      return true;
+    },
+    [rideActionPending]
+  );
+
+  const rideActionBusy = rideActionPending != null;
+
+  const runChauffeurRideAction = useCallback(
+    async (courseId: string, kind: ChauffeurRideActionKind, fn: () => Promise<void>) => {
+      if (rideActionLockRef.current) return;
+      rideActionLockRef.current = true;
+      setRideActionPending({ courseId, kind });
+      try {
+        await fn();
+      } catch (err) {
+        console.error(`[Dashboard] ride action ${kind}`, err);
+        toast.error('Action impossible', {
+          description: 'Réessayez dans un instant.',
+        });
+      } finally {
+        rideActionLockRef.current = false;
+        setRideActionPending(null);
+      }
+    },
+    []
+  );
   const seenCancelIdsRef = useRef<Set<string>>(loadSeenCancelCourseIds());
   const [seenCancelIds, setSeenCancelIds] = useState<Set<string>>(() => loadSeenCancelCourseIds());
   const cancelNotifyInitializedRef = useRef(false);
@@ -1844,30 +1901,29 @@ const Dashboard = ({
       const target = courseRows.find((c) => c.id === courseId);
       if (!target || target.statut !== 'En attente') return;
 
-      if (persistRides) {
-        try {
+      const kind: ChauffeurRideActionKind = action === 'accept' ? 'accept' : 'decline';
+      await runChauffeurRideAction(courseId, kind, async () => {
+        if (persistRides) {
           await postChauffeurRideAction(courseId, action === 'accept' ? 'accept' : 'cancel');
           await refreshRides();
-        } catch (err) {
-          console.error(err);
+          return;
         }
-        return;
-      }
 
-      setCourseRows((prev) =>
-        prev.map((course) =>
-          course.id === courseId ? { ...course, statut: action === 'accept' ? 'Acceptee' : 'Annulee' } : course
-        )
-      );
+        setCourseRows((prev) =>
+          prev.map((course) =>
+            course.id === courseId ? { ...course, statut: action === 'accept' ? 'Acceptee' : 'Annulee' } : course
+          )
+        );
+      });
     },
-    [courseRows, coursesBlockedByCompliance, persistRides, refreshRides]
+    [courseRows, coursesBlockedByCompliance, persistRides, refreshRides, runChauffeurRideAction]
   );
 
   const launchCourseById = useCallback(
     async (courseId: string) => {
       if (coursesBlockedByCompliance) return;
+      await runChauffeurRideAction(courseId, 'start', async () => {
       if (persistRides) {
-        try {
           await postChauffeurRideAction(courseId, 'start');
           const rows = await fetchChauffeurRidesFromApi();
           const routeSnapDeviationKm = Math.round((0.06 + Math.random() * 0.38) * 100) / 100;
@@ -1902,9 +1958,6 @@ const Dashboard = ({
           queueMicrotask(() => {
             onOpenActiveCourseNavigation?.(courseId);
           });
-        } catch (e) {
-          console.error('[Dashboard] launch course', e);
-        }
         return;
       }
       const startedAt = Date.now();
@@ -1944,8 +1997,9 @@ const Dashboard = ({
         });
         return prev.map((course) => (course.id === courseId ? updated : course));
       });
+      });
     },
-    [onOpenActiveCourseNavigation, persistRides, coursesBlockedByCompliance]
+    [coursesBlockedByCompliance, onOpenActiveCourseNavigation, persistRides, runChauffeurRideAction]
   );
 
   const resumeCourseById = useCallback(
@@ -1985,20 +2039,18 @@ const Dashboard = ({
     async (courseId: string) => {
       const current = courseRows.find((c) => c.id === courseId);
       if (!current || current.statut !== 'En cours') return;
-      if (persistRides) {
-        try {
+      await runChauffeurRideAction(courseId, 'complete', async () => {
+        if (persistRides) {
           await postChauffeurRideAction(courseId, 'complete');
           await refreshRides();
-        } catch (err) {
-          console.error(err);
+          return;
         }
-        return;
-      }
-      setCourseRows((prev) =>
-        prev.map((course) => (course.id === courseId ? { ...course, statut: 'Terminee' } : course))
-      );
+        setCourseRows((prev) =>
+          prev.map((course) => (course.id === courseId ? { ...course, statut: 'Terminee' } : course))
+        );
+      });
     },
-    [courseRows, persistRides, refreshRides]
+    [courseRows, persistRides, refreshRides, runChauffeurRideAction]
   );
 
   const topbarLaunchCourse = useMemo(() => {
@@ -2754,8 +2806,13 @@ const Dashboard = ({
                     </TopbarRideStripAutoScroll>
                     <button
                       type="button"
-                      className="topbar-launch-ride-btn"
-                      disabled={coursesBlockedByCompliance}
+                      className={`topbar-launch-ride-btn${isRideActionPending(topbarLaunchCourse.id, 'start') ? ' is-pending' : ''}`}
+                      disabled={
+                        coursesBlockedByCompliance ||
+                        rideActionBusy ||
+                        isRideActionPending(topbarLaunchCourse.id, 'start')
+                      }
+                      aria-busy={isRideActionPending(topbarLaunchCourse.id, 'start')}
                       title={
                         coursesBlockedByCompliance
                           ? t('chauffeurCompliance.bannerTitle')
@@ -2763,7 +2820,13 @@ const Dashboard = ({
                       }
                       onClick={() => void launchCourseById(topbarLaunchCourse.id)}
                     >
-                      Lancer la course
+                      <ButtonLoadingLabel
+                        pending={isRideActionPending(topbarLaunchCourse.id, 'start')}
+                        pendingLabel={chauffeurRideActionPendingLabel('start')}
+                        spinnerVariant="inverse"
+                      >
+                        {isMobileViewport ? 'Lancer' : 'Lancer la course'}
+                      </ButtonLoadingLabel>
                     </button>
                   </div>
                 </div>
@@ -4681,35 +4744,45 @@ const Dashboard = ({
                         <div className="planning-modal-actions">
                           <button
                             type="button"
-                            className="accept"
-                            disabled={coursesBlockedByCompliance || slot.statut !== 'En attente'}
+                            className={`accept${isRideActionPending(slot.id, 'accept') ? ' is-pending' : ''}`}
+                            disabled={
+                              coursesBlockedByCompliance ||
+                              slot.statut !== 'En attente' ||
+                              rideActionBusy
+                            }
+                            aria-busy={isRideActionPending(slot.id, 'accept')}
                             onClick={() => {
-                              if (coursesBlockedByCompliance) return;
-                              if (slot.statut !== 'En attente') return;
-                              if (persistRides) {
-                                void (async () => {
-                                  try {
-                                    await postChauffeurRideAction(slot.id, 'accept');
-                                    await refreshRides();
-                                  } catch (err) {
-                                    console.error(err);
-                                  }
-                                })();
-                                return;
-                              }
-                              setCourseRows((prev) =>
-                                prev.map((course) =>
-                                  course.id === slot.id ? { ...course, statut: 'Acceptee' } : course
-                                )
-                              );
+                              if (coursesBlockedByCompliance || slot.statut !== 'En attente') return;
+                              void runChauffeurRideAction(slot.id, 'accept', async () => {
+                                if (persistRides) {
+                                  await postChauffeurRideAction(slot.id, 'accept');
+                                  await refreshRides();
+                                  return;
+                                }
+                                setCourseRows((prev) =>
+                                  prev.map((course) =>
+                                    course.id === slot.id ? { ...course, statut: 'Acceptee' } : course
+                                  )
+                                );
+                              });
                             }}
                           >
-                            Accepter
+                            <ButtonLoadingLabel
+                              pending={isRideActionPending(slot.id, 'accept')}
+                              pendingLabel={chauffeurRideActionPendingLabel('accept')}
+                            >
+                              Accepter
+                            </ButtonLoadingLabel>
                           </button>
                           <button
                             type="button"
-                            className="start-ride"
-                            disabled={coursesBlockedByCompliance || (slot.statut !== 'Acceptee' && slot.statut !== 'En cours')}
+                            className={`start-ride${isRideActionPending(slot.id, 'start') ? ' is-pending' : ''}`}
+                            disabled={
+                              coursesBlockedByCompliance ||
+                              (slot.statut !== 'Acceptee' && slot.statut !== 'En cours') ||
+                              rideActionBusy
+                            }
+                            aria-busy={isRideActionPending(slot.id, 'start')}
                             title={
                               slot.statut === 'En cours'
                                 ? 'Rouvrir la navigation de la course en cours.'
@@ -4726,52 +4799,72 @@ const Dashboard = ({
                               }
                             }}
                           >
-                            {slot.statut === 'En cours' ? 'Reprendre' : 'Lancer la course'}
+                            <ButtonLoadingLabel
+                              pending={isRideActionPending(slot.id, 'start')}
+                              pendingLabel={chauffeurRideActionPendingLabel('start')}
+                              spinnerVariant="inverse"
+                            >
+                              {slot.statut === 'En cours' ? 'Reprendre' : 'Lancer la course'}
+                            </ButtonLoadingLabel>
                           </button>
                           <button
                             type="button"
-                            className="accept"
-                            disabled={coursesBlockedByCompliance || slot.statut !== 'En cours'}
+                            className={`accept${isRideActionPending(slot.id, 'complete') ? ' is-pending' : ''}`}
+                            disabled={
+                              coursesBlockedByCompliance || slot.statut !== 'En cours' || rideActionBusy
+                            }
+                            aria-busy={isRideActionPending(slot.id, 'complete')}
                             title="Terminer la course en cours."
                             onClick={() => {
-                              if (coursesBlockedByCompliance) return;
-                              if (slot.statut !== 'En cours') return;
+                              if (coursesBlockedByCompliance || slot.statut !== 'En cours') return;
                               void completeCourseById(slot.id);
                             }}
                           >
-                            Terminer
+                            <ButtonLoadingLabel
+                              pending={isRideActionPending(slot.id, 'complete')}
+                              pendingLabel={chauffeurRideActionPendingLabel('complete')}
+                            >
+                              Terminer
+                            </ButtonLoadingLabel>
                           </button>
                           <button
                             type="button"
-                            className="decline"
+                            className={`decline${isRideActionPending(slot.id, 'cancel') ? ' is-pending' : ''}`}
                             disabled={
                               slot.statut === 'Terminee' ||
                               slot.statut === 'En cours' ||
                               slot.statut === 'Annulee' ||
-                              (persistRides && slot.statut === 'En attente' && slot.bookingKind === 'scheduled')
+                              (persistRides && slot.statut === 'En attente' && slot.bookingKind === 'scheduled') ||
+                              rideActionBusy
                             }
+                            aria-busy={isRideActionPending(slot.id, 'cancel')}
                             onClick={() => {
-                              if (slot.statut === 'Terminee' || slot.statut === 'En cours' || slot.statut === 'Annulee') return;
-                              if (persistRides && slot.statut === 'En attente' && slot.bookingKind === 'scheduled') return;
-                              if (persistRides) {
-                                void (async () => {
-                                  try {
-                                    await postChauffeurRideAction(slot.id, 'cancel');
-                                    await refreshRides();
-                                  } catch (err) {
-                                    console.error(err);
-                                  }
-                                })();
+                              if (slot.statut === 'Terminee' || slot.statut === 'En cours' || slot.statut === 'Annulee') {
                                 return;
                               }
-                              setCourseRows((prev) =>
-                                prev.map((course) =>
-                                  course.id === slot.id ? { ...course, statut: 'Annulee' } : course
-                                )
-                              );
+                              if (persistRides && slot.statut === 'En attente' && slot.bookingKind === 'scheduled') {
+                                return;
+                              }
+                              void runChauffeurRideAction(slot.id, 'cancel', async () => {
+                                if (persistRides) {
+                                  await postChauffeurRideAction(slot.id, 'cancel');
+                                  await refreshRides();
+                                  return;
+                                }
+                                setCourseRows((prev) =>
+                                  prev.map((course) =>
+                                    course.id === slot.id ? { ...course, statut: 'Annulee' } : course
+                                  )
+                                );
+                              });
                             }}
                           >
-                            Decommander
+                            <ButtonLoadingLabel
+                              pending={isRideActionPending(slot.id, 'cancel')}
+                              pendingLabel={chauffeurRideActionPendingLabel('cancel')}
+                            >
+                              Decommander
+                            </ButtonLoadingLabel>
                           </button>
                         </div>
                       </article>
@@ -5025,23 +5118,35 @@ const Dashboard = ({
                         <div className="planning-modal-actions" style={{ marginTop: 10 }}>
                           <button
                             type="button"
-                            className="accept"
-                            disabled={coursesBlockedByCompliance}
+                            className={`accept${isRideActionPending(alert.courseId, 'accept') ? ' is-pending' : ''}`}
+                            disabled={coursesBlockedByCompliance || rideActionBusy}
+                            aria-busy={isRideActionPending(alert.courseId, 'accept')}
                             onClick={() => {
                               void handleDemandAlertAction(alert.courseId, 'accept');
                             }}
                           >
-                            Accepter
+                            <ButtonLoadingLabel
+                              pending={isRideActionPending(alert.courseId, 'accept')}
+                              pendingLabel={chauffeurRideActionPendingLabel('accept')}
+                            >
+                              Accepter
+                            </ButtonLoadingLabel>
                           </button>
                           <button
                             type="button"
-                            className="decline"
-                            disabled={coursesBlockedByCompliance}
+                            className={`decline${isRideActionPending(alert.courseId, 'decline') ? ' is-pending' : ''}`}
+                            disabled={coursesBlockedByCompliance || rideActionBusy}
+                            aria-busy={isRideActionPending(alert.courseId, 'decline')}
                             onClick={() => {
                               void handleDemandAlertAction(alert.courseId, 'decline');
                             }}
                           >
-                            Refuser
+                            <ButtonLoadingLabel
+                              pending={isRideActionPending(alert.courseId, 'decline')}
+                              pendingLabel={chauffeurRideActionPendingLabel('decline')}
+                            >
+                              Refuser
+                            </ButtonLoadingLabel>
                           </button>
                         </div>
                       ) : null}

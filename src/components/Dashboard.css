@@ -1015,11 +1015,13 @@ html[data-app-theme='dark'] .dashboard-home-topbar-upcoming-btn {
   overflow: hidden;
 }
 
-.dashboard-container--chauffeur .topbar-ride-strip-scroll {
-  flex: 0 1 auto;
-  min-width: 0;
-  max-width: calc(100% - 110px);
-  overflow: hidden;
+@media (min-width: 769px) {
+  .dashboard-container--chauffeur .topbar-ride-strip-scroll {
+    flex: 0 1 auto;
+    min-width: 0;
+    max-width: calc(100% - 110px);
+    overflow: hidden;
+  }
 }
 
 .dashboard-container--chauffeur .topbar-launch-ride-btn {
@@ -1121,15 +1123,18 @@ html[data-app-theme='dark'] .dashboard-home-topbar-upcoming-btn {
   background: #1e293b;
 }
 
-/* Mobile : une seule ligne — texte défilant, bouton fixe à droite du strip. */
+/* Mobile : trajet sur une ligne défilante, bouton « Lancer » en dessous (lisible sur petit écran). */
 @media (max-width: 768px) {
   .dashboard-container--chauffeur .dashboard-topbar--with-launch-ride {
     flex-wrap: nowrap;
+    align-items: flex-start;
     gap: 8px;
     padding-inline: max(8px, env(safe-area-inset-left, 0px))
       max(8px, env(safe-area-inset-right, 0px));
     padding-block: max(8px, env(safe-area-inset-top, 0px)) 8px;
     box-sizing: border-box;
+    min-height: 0;
+    height: auto;
   }
 
   .dashboard-container--chauffeur .dashboard-topbar--with-launch-ride .topbar-ride-wrap {
@@ -1137,12 +1142,40 @@ html[data-app-theme='dark'] .dashboard-home-topbar-upcoming-btn {
     flex: 1 1 0%;
     min-width: 0;
     max-width: calc(100% - 44px - 8px);
+    align-self: stretch;
+    overflow: visible;
   }
 
   .dashboard-container--chauffeur .dashboard-topbar--with-launch-ride .dashboard-topbar-right {
     flex: 0 0 auto;
     min-width: 0;
     width: auto;
+    padding-top: 2px;
+  }
+
+  .dashboard-container--chauffeur .dashboard-topbar--with-launch-ride .topbar-ride-strip {
+    flex-direction: column;
+    align-items: stretch;
+    width: 100%;
+    gap: 6px;
+    overflow: visible;
+  }
+
+  .dashboard-container--chauffeur .dashboard-topbar--with-launch-ride .topbar-ride-strip-scroll {
+    display: flex;
+    align-items: center;
+    flex: 0 0 auto;
+    flex-wrap: nowrap;
+    gap: 6px 10px;
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+    min-height: 28px;
+    overflow-x: auto;
+    overflow-y: hidden;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: thin;
+    box-sizing: border-box;
   }
 
   .topbar-ride-wrap {
@@ -1159,7 +1192,6 @@ html[data-app-theme='dark'] .dashboard-home-topbar-upcoming-btn {
     gap: 8px;
   }
 
-  /* flex-basis 0 + min-width 0 : la zone prend seulement l’espace restant → scrollWidth > clientWidth quand le texte dépasse */
   .topbar-ride-strip-scroll {
     display: flex;
     align-items: center;
@@ -1167,7 +1199,6 @@ html[data-app-theme='dark'] .dashboard-home-topbar-upcoming-btn {
     flex-wrap: nowrap;
     gap: 6px 10px;
     min-width: 0;
-    width: 0;
     max-width: 100%;
     overflow-x: auto;
     overflow-y: hidden;
@@ -1190,10 +1221,20 @@ html[data-app-theme='dark'] .dashboard-home-topbar-upcoming-btn {
     flex-shrink: 0;
     overflow: visible;
     text-overflow: clip;
+    white-space: nowrap;
   }
 
   .topbar-ride-meta {
     flex-shrink: 0;
+    white-space: nowrap;
+  }
+
+  .dashboard-container--chauffeur .dashboard-topbar--with-launch-ride .topbar-launch-ride-btn {
+    flex-shrink: 0;
+    width: 100%;
+    margin-left: 0;
+    height: 34px;
+    font-size: 12px;
   }
 
   .topbar-launch-ride-btn {
@@ -3182,6 +3223,20 @@ html[data-app-theme='dark'] .ride-status-badge--cancelled {
 .planning-modal-actions button:disabled {
   opacity: 0.45;
   cursor: not-allowed;
+}
+
+.planning-modal-actions button.is-pending,
+.topbar-launch-ride-btn.is-pending,
+.palto-ride-search-btn.is-pending {
+  cursor: wait;
+  opacity: 0.92;
+}
+
+.planning-modal-actions button.is-pending:disabled,
+.topbar-launch-ride-btn.is-pending:disabled,
+.palto-ride-search-btn.is-pending:disabled {
+  opacity: 0.92;
+  cursor: wait;
 }
 
 .planning-modal-actions .accept {

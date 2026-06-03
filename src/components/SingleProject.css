@@ -5979,6 +5979,12 @@ html[data-app-theme='dark'] .palto-ride-timing-expand__option:hover {
   color: #fff;
 }
 
+.palto-ride-search-btn.btn.is-pending,
+.palto-ride-search-btn.btn.is-pending:disabled {
+  cursor: wait;
+  opacity: 0.92;
+}
+
 .palto-ride-search-btn.btn.btn-primary:focus-visible {
   outline: 2px solid #f1582a;
   outline-offset: 2px;

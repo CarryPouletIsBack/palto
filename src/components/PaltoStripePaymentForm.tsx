@@ -4,6 +4,7 @@ import { loadStripe, type StripeElementsOptions } from '@stripe/stripe-js'
 import { paltoStripeElementsAppearance } from '../utils/stripeElementsAppearance'
 import { PALTO_PAYMENT_ELEMENT_OPTIONS } from '../utils/stripePaymentElementOptions'
 import Button from './Button'
+import { ButtonLoadingLabel } from './ButtonLoadingLabel'
 
 type InnerProps = {
   onSuccess: () => void
@@ -47,11 +48,14 @@ function PaymentFormInner({ onSuccess, onError, submitLabel }: InnerProps) {
       <Button
         variant="primary"
         type="button"
-        className="palto-ride-search-btn palto-checkout-stripe__pay"
+        className={`palto-ride-search-btn palto-checkout-stripe__pay${busy ? ' is-pending' : ''}`}
         disabled={!stripe || !elements || busy}
+        aria-busy={busy}
         onClick={() => void handlePay()}
       >
-        {busy ? 'Autorisation en cours…' : submitLabel}
+        <ButtonLoadingLabel pending={busy} pendingLabel="Autorisation en cours…" spinnerVariant="inverse">
+          {submitLabel}
+        </ButtonLoadingLabel>
       </Button>
     </div>
   )
