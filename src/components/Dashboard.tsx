@@ -2009,8 +2009,8 @@ const Dashboard = ({
 
   /** Chauffeur : pas de topbar type accueil (Palto / langue) — bouton user fixe sauf bandeau course. */
   const showChauffeurToolbarOnly = topbarLaunchCourse == null;
-  /** Compte chauffeur : bouton utilisateur photo seule sur toutes les vues du dashboard. */
-  const isChauffeurAccountUserOnly = showChauffeurToolbarOnly;
+  /** Compte chauffeur : bouton utilisateur photo seule sur toutes les vues (y compris bandeau course). */
+  const isChauffeurAccountUserOnly = true;
 
   const renderChauffeurTopbarAccountControl = (options?: {
     photoAside?: boolean;
@@ -2731,10 +2731,10 @@ const Dashboard = ({
           >
             <header
               className={`dashboard-topbar${
-                topbarLaunchCourse
-                  ? ''
-                  : ' dashboard-topbar--chauffeur-mobile-toolbar'
-              }${isChauffeurAccountUserOnly ? ' dashboard-topbar--chauffeur-account-user-only' : ''}`}
+                showChauffeurToolbarOnly ? ' dashboard-topbar--chauffeur-mobile-toolbar' : ''
+              }${topbarLaunchCourse ? ' dashboard-topbar--with-launch-ride' : ''}${
+                isChauffeurAccountUserOnly ? ' dashboard-topbar--chauffeur-account-user-only' : ''
+              }`}
             >
               {topbarLaunchCourse ? (
                 <div className="topbar-ride-wrap" aria-label="Prochaine course acceptee">
@@ -2767,15 +2767,13 @@ const Dashboard = ({
                     </button>
                   </div>
                 </div>
-              ) : (
-                <div className="dashboard-topbar-right">
-                  {renderChauffeurTopbarAccountControl(
-                    isChauffeurAccountUserOnly
-                      ? { photoAside: false, showNameInButton: false }
-                      : undefined
-                  )}
-                </div>
-              )}
+              ) : null}
+              <div className="dashboard-topbar-right">
+                {renderChauffeurTopbarAccountControl({
+                  photoAside: false,
+                  showNameInButton: false,
+                })}
+              </div>
             </header>
 
             {activeView === 'stats' ? (
