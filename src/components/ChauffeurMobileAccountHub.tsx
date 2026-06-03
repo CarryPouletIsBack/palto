@@ -12,6 +12,7 @@ import {
   Accessibility,
   Building2,
   IdCard,
+  MapPin,
 } from 'lucide-react';
 import type { ReactNode } from 'react';
 import {
@@ -107,6 +108,12 @@ export default function ChauffeurMobileAccountHub({
       id: 'appearance',
       label: isEn ? 'Appearance' : 'Apparence',
       icon: <Palette size={18} />,
+      onClick: () => onOpen('preferences'),
+    },
+    {
+      id: 'location',
+      label: isEn ? 'Location' : 'Localisation',
+      icon: <MapPin size={18} />,
       onClick: () => onOpen('preferences'),
     },
     {

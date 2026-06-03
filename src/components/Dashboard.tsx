@@ -2843,6 +2843,7 @@ const Dashboard = ({
                 : ''
             }`}
           >
+            {!(isMobileViewport && activeView === 'user') ? (
             <header
               className={`dashboard-topbar${
                 isMobileViewport || showChauffeurToolbarOnly ? ' dashboard-topbar--chauffeur-mobile-toolbar' : ''
@@ -2881,6 +2882,7 @@ const Dashboard = ({
                 )}
               </div>
             </header>
+            ) : null}
 
             {isMobileViewport && chauffeurMobileStatsGroupActive ? (
               <DashboardMobilePillSwitch
@@ -4022,21 +4024,12 @@ const Dashboard = ({
                       </aside>
                       ) : null}
                       <div className="dashboard-org-main">
-                      {!chauffeurPresence.tracking && userSubView !== 'preferences' ? (
-                        <div className="dashboard-preferences-geo" style={{ marginBottom: 16 }}>
-                          <ChauffeurPresenceGeoBar
-                            onActivate={chauffeurPresence.startTracking}
-                            onRefresh={chauffeurPresence.refreshLocation}
-                            error={chauffeurPresence.geoError}
-                            tracking={chauffeurPresence.tracking}
-                          />
-                        </div>
-                      ) : null}
                       {userSubView === 'palto-account' ? (
                         <section className="dashboard-table-section dashboard-table-section--palto-account">
                           <ChauffeurPaltoAccountPanel
                             sessionEmail={getChauffeurSessionEmail()}
                             initialSection={paltoAccountSection}
+                            mobileLayout={isMobileViewport}
                             afterDeleteContent={
                               <article className="dashboard-user-card" style={{ marginTop: 20 }}>
                                 <div className="dashboard-user-card-head">
@@ -4044,8 +4037,12 @@ const Dashboard = ({
                                     <h4>{language === 'en' ? 'Driver contact' : 'Contact chauffeur'}</h4>
                                     <p className="dashboard-field-hint">
                                       {language === 'en'
-                                        ? 'Phone and Reunion commune used for Palto rides.'
-                                        : 'Téléphone et commune réunionnaise utilisés pour vos courses Palto.'}
+                                        ? isMobileViewport
+                                          ? 'Phone number used for Palto rides.'
+                                          : 'Phone and Reunion commune used for Palto rides.'
+                                        : isMobileViewport
+                                          ? 'Numéro de téléphone utilisé pour vos courses Palto.'
+                                          : 'Téléphone et commune réunionnaise utilisés pour vos courses Palto.'}
                                     </p>
                                   </div>
                                 </div>
@@ -4093,6 +4090,7 @@ const Dashboard = ({
                                       </small>
                                     )}
                                   </label>
+                                  {!isMobileViewport ? (
                                   <label>
                                     Commune (La Réunion)
                                     <select
@@ -4114,6 +4112,7 @@ const Dashboard = ({
                                       ))}
                                     </select>
                                   </label>
+                                  ) : null}
                                   {isChauffeurProfileFormDirty ? (
                                     <div className="dashboard-user-edit-actions">
                                       <button type="submit" className="dashboard-user-save-btn">
@@ -4556,10 +4555,18 @@ const Dashboard = ({
                               <div>
                                 <h4>Préférences</h4>
                                 <p className="dashboard-field-hint">
-                                  Langue, apparence et visibilité sur les courses (page Go).
+                                  Langue, apparence, localisation et visibilité sur les courses (page Go).
                                 </p>
                               </div>
                             </div>
+                              <h3 className="client-compte-section-title">
+                                {language === 'en' ? 'Location' : 'Localisation'}
+                              </h3>
+                              <p className="dashboard-field-hint" style={{ margin: '0 0 12px' }}>
+                                {language === 'en'
+                                  ? 'Allow Palto to show your position on the Go page.'
+                                  : 'Autorisez Palto a afficher votre position sur la page Go.'}
+                              </p>
                               <div className="dashboard-preferences-geo">
                                 <ChauffeurPresenceGeoBar
                                   onActivate={chauffeurPresence.startTracking}
@@ -4590,6 +4597,74 @@ const Dashboard = ({
                                   <option value="dark">{language === 'en' ? 'Dark' : 'Sombre'}</option>
                                   <option value="contrast">{language === 'en' ? 'High contrast' : 'Contraste eleve'}</option>
                                 </select>
+                              </label>
+
+                              <h3 className="client-compte-section-title" style={{ marginTop: 20 }}>
+                                {t('clientAccount.settingsTextSizeTitle')}
+                              </h3>
+                              <p className="dashboard-field-hint" style={{ margin: '0 0 12px' }}>
+                                {t('clientAccount.settingsTextSizeHint')}
+                              </p>
+                              <div className="client-compte-font-scale-row">
+                                <span className="client-compte-font-scale-end" aria-hidden="true">
+                                  {FONT_SCALE_PERCENT_MIN} %
+                                </span>
+                                <input
+                                  type="range"
+                                  className="client-compte-font-scale-range"
+                                  min={FONT_SCALE_PERCENT_MIN}
+                                  max={FONT_SCALE_PERCENT_MAX}
+                                  step={1}
+                                  value={appPrefs.fontScalePercent}
+                                  onChange={(e) => setFontScalePercent(Number(e.target.value))}
+                                  aria-label={t('clientAccount.settingsTextSizeAria')}
+                                  aria-valuemin={FONT_SCALE_PERCENT_MIN}
+                                  aria-valuemax={FONT_SCALE_PERCENT_MAX}
+                                  aria-valuenow={appPrefs.fontScalePercent}
+                                  aria-valuetext={t('clientAccount.settingsTextSizeValue', {
+                                    n: String(appPrefs.fontScalePercent),
+                                  })}
+                                />
+                                <span
+                                  className="client-compte-font-scale-end client-compte-font-scale-end--max"
+                                  aria-hidden="true"
+                                >
+                                  {FONT_SCALE_PERCENT_MAX} %
+                                </span>
+                              </div>
+                              <p className="client-compte-font-scale-value" aria-live="polite">
+                                {t('clientAccount.settingsTextSizeValue', { n: String(appPrefs.fontScalePercent) })}
+                              </p>
+
+                              <h3 className="client-compte-section-title" style={{ marginTop: 20 }}>
+                                {t('clientAccount.settingsNotificationsTitle')}
+                              </h3>
+                              <p className="dashboard-field-hint" style={{ margin: '0 0 8px' }}>
+                                {t('clientAccount.settingsNotificationsHint')}
+                              </p>
+                              <label className="client-compte-settings-toggle-row">
+                                <span>{t('clientAccount.settingsNotifyEmail')}</span>
+                                <input
+                                  type="checkbox"
+                                  checked={appPrefs.notifyEmail}
+                                  onChange={() => toggleAppNotify('notifyEmail')}
+                                />
+                              </label>
+                              <label className="client-compte-settings-toggle-row">
+                                <span>{t('clientAccount.settingsNotifySms')}</span>
+                                <input
+                                  type="checkbox"
+                                  checked={appPrefs.notifySms}
+                                  onChange={() => toggleAppNotify('notifySms')}
+                                />
+                              </label>
+                              <label className="client-compte-settings-toggle-row">
+                                <span>{t('clientAccount.settingsNotifyPush')}</span>
+                                <input
+                                  type="checkbox"
+                                  checked={appPrefs.notifyPush}
+                                  onChange={() => toggleAppNotify('notifyPush')}
+                                />
                               </label>
 
                           </>

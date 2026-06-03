@@ -207,18 +207,29 @@
   }
 
   .dashboard-user-mobile-shell--account-mobile .dashboard-topbar--chauffeur-mobile-toolbar,
-  .dashboard-user-mobile-shell--drill .dashboard-topbar--chauffeur-mobile-toolbar {
-    display: none;
-  }
-
-  .dashboard-container--client-compte.dashboard-user-mobile-shell--account-mobile .dashboard-topbar--home-client,
+  .dashboard-user-mobile-shell--drill .dashboard-topbar--chauffeur-mobile-toolbar,
+  .dashboard-container--client-compte .dashboard-user-mobile-shell--account-mobile .dashboard-topbar--home-client,
   .dashboard-container--client-compte .dashboard-user-mobile-shell--drill .dashboard-topbar--home-client {
-    display: none;
+    display: none !important;
   }
 
   .dashboard-user-mobile-shell--account-mobile .dashboard-topbar-title-stack--in-content,
   .dashboard-user-mobile-shell--drill .dashboard-topbar-title-stack--in-content {
     display: none;
+  }
+
+  .dashboard-container--client-compte .dashboard-user-mobile-shell--account-mobile .dashboard-content,
+  .dashboard-container--client-compte .dashboard-user-mobile-shell--drill .dashboard-content,
+  .dashboard-container--chauffeur .dashboard-user-mobile-shell--account-mobile .dashboard-content,
+  .dashboard-container--chauffeur .dashboard-user-mobile-shell--drill .dashboard-content {
+    padding-top: 8px;
+  }
+
+  .dashboard-user-mobile-shell--account-mobile .mobile-account-hub__toolbar,
+  .dashboard-user-mobile-shell--drill .mobile-account-hub__toolbar,
+  .dashboard-user-mobile-shell--drill .mobile-account-drill .mobile-account-hub__toolbar {
+    margin-top: 0;
+    margin-bottom: 0;
   }
 }
 

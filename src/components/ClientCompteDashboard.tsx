@@ -2230,6 +2230,7 @@ export default function ClientCompteDashboard({ onBack, onOpenClientLiveMeet }: 
             }`}
           >
             <SiteChromeStack>
+            {!(isMobileViewport && activeNav === 'account') ? (
             <header
               className="dashboard-topbar dashboard-topbar--home-client"
             >
@@ -2362,6 +2363,7 @@ export default function ClientCompteDashboard({ onBack, onOpenClientLiveMeet }: 
                 </div>
               </div>
             </header>
+            ) : null}
             </SiteChromeStack>
 
             {activeNav === 'overview' && (

@@ -40,12 +40,15 @@ type Props = {
   sessionEmail: string
   initialSection?: ChauffeurPaltoAccountSection
   afterDeleteContent?: ReactNode
+  /** Hub drill mobile : nav verticale, identité dans la section perso uniquement. */
+  mobileLayout?: boolean
 }
 
 export default function ChauffeurPaltoAccountPanel({
   sessionEmail,
   initialSection = 'personal',
   afterDeleteContent,
+  mobileLayout = false,
 }: Props) {
   const { language } = useLanguage()
   const isEn = language === 'en'
@@ -243,88 +246,117 @@ export default function ChauffeurPaltoAccountPanel({
     return node
   }, [])
 
-  return (
-    <div className="client-compte-account-layout chauffeur-palto-account-layout">
-      <aside className="client-compte-account-sidebar" aria-label={isEn ? 'Palto account' : 'Compte Palto'}>
-        <div className="client-compte-account-profile">
-          <label className="client-compte-account-avatar-uploader">
-            <span className="client-compte-account-avatar-uploader__visual">
-              <span className="dashboard-user-avatar-lg">
-                {photoDraftUrl ? (
-                  <img src={photoDraftUrl} alt="" />
-                ) : (
-                  <User size={22} aria-hidden />
-                )}
-              </span>
-              <span className="client-compte-account-avatar-uploader__overlay" aria-hidden>
-                <Pencil size={22} strokeWidth={2.25} />
-              </span>
-              <input
-                type="file"
-                accept="image/jpeg,image/png,image/webp"
-                aria-label={isEn ? 'Change profile photo' : 'Changer la photo de profil'}
-                className="client-compte-account-avatar-uploader__input"
-                onChange={(e) => {
-                  void onPhotoPick(e.target.files?.[0])
-                  e.currentTarget.value = ''
-                }}
-              />
-            </span>
-          </label>
-          <div className="client-compte-account-profile-meta">
-            <strong>
-              {profile.prenom} {profile.nom}
-            </strong>
-            <span>{profile.email || emailKey}</span>
-          </div>
+  const sectionNav = (
+    <nav
+      className={
+        mobileLayout
+          ? 'chauffeur-palto-account-mobile-sections'
+          : 'client-compte-account-nav'
+      }
+      aria-label={isEn ? 'Palto account sections' : 'Sections du compte Palto'}
+    >
+      <button
+        type="button"
+        className={`client-compte-account-nav-item${section === 'personal' ? ' is-active' : ''}`}
+        onClick={() => setSection('personal')}
+      >
+        <span className="nav-icon" aria-hidden>
+          <IdCard size={16} />
+        </span>
+        <span>{isEn ? 'Personal info' : 'Infos personnelles'}</span>
+      </button>
+      <button
+        type="button"
+        className={`client-compte-account-nav-item${section === 'payment' ? ' is-active' : ''}`}
+        onClick={() => setSection('payment')}
+      >
+        <span className="nav-icon" aria-hidden>
+          <Wallet size={16} />
+        </span>
+        <span>{isEn ? 'Payment' : 'Paiement'}</span>
+      </button>
+    </nav>
+  )
+
+  const identityBlock = (
+    <div className="client-compte-account-profile chauffeur-palto-account-identity">
+      <label className="client-compte-account-avatar-uploader">
+        <span className="client-compte-account-avatar-uploader__visual">
+          <span className="dashboard-user-avatar-lg">
+            {photoDraftUrl ? (
+              <img src={photoDraftUrl} alt="" />
+            ) : (
+              <User size={22} aria-hidden />
+            )}
+          </span>
+          <span className="client-compte-account-avatar-uploader__overlay" aria-hidden>
+            <Pencil size={22} strokeWidth={2.25} />
+          </span>
+          <input
+            type="file"
+            accept="image/jpeg,image/png,image/webp"
+            aria-label={isEn ? 'Change profile photo' : 'Changer la photo de profil'}
+            className="client-compte-account-avatar-uploader__input"
+            onChange={(e) => {
+              void onPhotoPick(e.target.files?.[0])
+              e.currentTarget.value = ''
+            }}
+          />
+        </span>
+      </label>
+      {!mobileLayout ? (
+        <div className="client-compte-account-profile-meta">
+          <strong>
+            {profile.prenom} {profile.nom}
+          </strong>
+          <span>{profile.email || emailKey}</span>
         </div>
-        <nav className="client-compte-account-nav">
-          <button
-            type="button"
-            className={`client-compte-account-nav-item${section === 'personal' ? ' is-active' : ''}`}
-            onClick={() => setSection('personal')}
-          >
-            <span className="nav-icon" aria-hidden>
-              <IdCard size={16} />
-            </span>
-            <span>{isEn ? 'Personal info' : 'Infos personnelles'}</span>
-          </button>
-          <button
-            type="button"
-            className={`client-compte-account-nav-item${section === 'payment' ? ' is-active' : ''}`}
-            onClick={() => setSection('payment')}
-          >
-            <span className="nav-icon" aria-hidden>
-              <Wallet size={16} />
-            </span>
-            <span>{isEn ? 'Payment' : 'Paiement'}</span>
-          </button>
-        </nav>
-      </aside>
+      ) : null}
+    </div>
+  )
+
+  return (
+    <div
+      className={`client-compte-account-layout chauffeur-palto-account-layout${
+        mobileLayout ? ' chauffeur-palto-account-layout--mobile' : ''
+      }`}
+    >
+      {mobileLayout ? (
+        sectionNav
+      ) : (
+        <aside className="client-compte-account-sidebar" aria-label={isEn ? 'Palto account' : 'Compte Palto'}>
+          {identityBlock}
+          {sectionNav}
+        </aside>
+      )}
 
       <div className="client-compte-account-main">
-        <header className="client-compte-account-main-head">
-          <h3>
-            {section === 'personal'
-              ? isEn
-                ? 'Personal information'
-                : 'Informations personnelles'
-              : isEn
-                ? 'Payment methods'
-                : 'Moyens de paiement'}
-          </h3>
-          <p className="dashboard-field-hint">
-            {section === 'personal'
-              ? isEn
-                ? 'Name, email and photo for your Palto account (shared with passenger app).'
-                : 'Nom, email et photo du compte Palto (partage avec l’app passager).'
-              : isEn
-                ? 'Stripe test cards for Go rides. Driver payouts (IBAN) are under Versements in the sidebar.'
-                : 'Cartes Stripe en mode test pour les courses Go. Les versements chauffeur (IBAN) sont dans Versements.'}
-          </p>
-        </header>
+        {!mobileLayout ? (
+          <header className="client-compte-account-main-head">
+            <h3>
+              {section === 'personal'
+                ? isEn
+                  ? 'Personal information'
+                  : 'Informations personnelles'
+                : isEn
+                  ? 'Payment methods'
+                  : 'Moyens de paiement'}
+            </h3>
+            <p className="dashboard-field-hint">
+              {section === 'personal'
+                ? isEn
+                  ? 'Name, email and photo for your Palto account (shared with passenger app).'
+                  : 'Nom, email et photo du compte Palto (partage avec l’app passager).'
+                : isEn
+                  ? 'Stripe test cards for Go rides. Driver payouts (IBAN) are under Versements in the sidebar.'
+                  : 'Cartes Stripe en mode test pour les courses Go. Les versements chauffeur (IBAN) sont dans Versements.'}
+            </p>
+          </header>
+        ) : null}
 
         {section === 'personal' ? (
+          <>
+            {mobileLayout ? identityBlock : null}
           <form
             className="dashboard-user-edit-grid"
             onSubmit={(e) => {
@@ -369,6 +401,7 @@ export default function ChauffeurPaltoAccountPanel({
               </div>
             ) : null}
           </form>
+          </>
         ) : (
           <section className="client-compte-payment-layout">
             <p className="client-compte-payment-stripe-notice" role="status">
@@ -480,7 +513,7 @@ export default function ChauffeurPaltoAccountPanel({
           </section>
         )}
         {section === 'personal' ? afterDeleteContent : null}
-        <PaltoAccountDeleteBlock role="chauffeur" />
+        {section === 'personal' ? <PaltoAccountDeleteBlock role="chauffeur" /> : null}
       </div>
 
       {mountAccountModal(

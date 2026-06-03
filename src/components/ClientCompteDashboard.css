@@ -1459,6 +1459,55 @@ html[data-app-theme='dark'] .client-compte-account-edit-modal-input {
   width: 100%;
 }
 
+@media (max-width: 768px) {
+  .chauffeur-palto-account-layout--mobile {
+    width: 100%;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .chauffeur-palto-account-layout--mobile .chauffeur-palto-account-mobile-sections {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    gap: 8px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .chauffeur-palto-account-layout--mobile .chauffeur-palto-account-mobile-sections .client-compte-account-nav-item {
+    width: 100%;
+    min-height: 44px;
+    height: auto;
+    padding: 12px 14px;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    background: #ffffff;
+    justify-content: flex-start;
+    flex-wrap: nowrap;
+    white-space: normal;
+  }
+
+  .chauffeur-palto-account-layout--mobile .client-compte-account-main {
+    width: 100%;
+    min-width: 0;
+  }
+
+  .chauffeur-palto-account-layout--mobile .chauffeur-palto-account-identity {
+    align-items: center;
+    text-align: center;
+    width: 100%;
+    margin-bottom: 4px;
+  }
+
+  .dashboard-org-layout--mobile-drill .dashboard-table-section--palto-account {
+    padding-inline: 0;
+  }
+}
+
 .client-compte-account-avatar-uploader {
   display: inline-flex;
   cursor: pointer;
