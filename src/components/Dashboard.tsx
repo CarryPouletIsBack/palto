@@ -346,6 +346,21 @@ function courseCountsInDriverMetrics(statut: CourseStatut): boolean {
   return statut !== 'En attente';
 }
 
+function startOfWeekMonday(reference: Date = new Date()): Date {
+  const date = new Date(reference);
+  date.setHours(0, 0, 0, 0);
+  const day = date.getDay();
+  const offset = day === 0 ? -6 : 1 - day;
+  date.setDate(date.getDate() + offset);
+  return date;
+}
+
+function parseIsoDateAtNoon(isoDate: string): Date | null {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(isoDate)) return null;
+  const parsed = new Date(`${isoDate}T12:00:00`);
+  return Number.isNaN(parsed.getTime()) ? null : parsed;
+}
+
 function inferProfileFromEmail(emailRaw: string): Pick<ChauffeurProfile, 'prenom' | 'nom'> {
   const localPart = emailRaw.split('@')[0] ?? '';
   const chunks = localPart
@@ -2233,23 +2248,33 @@ const Dashboard = ({
   };
 
   const weeklyHeatmap = useMemo(() => {
-    const labels = ['Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam', 'Dim'];
+    const dayNames = ['Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam', 'Dim'];
+    const weekStart = startOfWeekMonday(new Date());
+    const weekEnd = new Date(weekStart);
+    weekEnd.setDate(weekStart.getDate() + 7);
+
     const counts = [0, 0, 0, 0, 0, 0, 0];
     for (const course of courseRows) {
       if (!courseCountsInDriverMetrics(course.statut)) continue;
       if (course.statut === 'Annulee') continue;
-      const date = new Date(`${course.date}T12:00:00`);
+      const date = parseIsoDateAtNoon(course.date);
+      if (!date) continue;
+      if (date.getTime() < weekStart.getTime() || date.getTime() >= weekEnd.getTime()) continue;
       const jsDay = date.getDay(); // 0=dimanche
       const mondayIndex = jsDay === 0 ? 6 : jsDay - 1;
       counts[mondayIndex] += 1;
     }
     const max = Math.max(1, ...counts);
     const total = counts.reduce((acc, n) => acc + n, 0);
-    const cells = labels.map((label, idx) => ({
-      label,
-      count: counts[idx],
-      level: counts[idx] / max,
-    }));
+    const cells = dayNames.map((dayName, idx) => {
+      const dayDate = new Date(weekStart);
+      dayDate.setDate(weekStart.getDate() + idx);
+      return {
+        label: `${dayName} ${dayDate.getDate()}`,
+        count: counts[idx],
+        level: counts[idx] / max,
+      };
+    });
     return { cells, total };
   }, [courseRows]);
 
@@ -2965,7 +2990,7 @@ const Dashboard = ({
                       className="dashboard-heatmap-card dashboard-heatmap-card--action"
                       onClick={() => handleNavSelect('planning')}
                     >
-                      <div className="dashboard-heatmap-grid" role="img" aria-label="Heatmap des courses par jour de semaine">
+                      <div className="dashboard-heatmap-grid" role="img" aria-label="Heatmap des courses de la semaine en cours">
                         {weeklyHeatmap.cells.map((cell) => (
                           <div key={cell.label} className="dashboard-heatmap-col">
                             <div
@@ -2985,7 +3010,7 @@ const Dashboard = ({
                         ))}
                       </div>
                       <p className="dashboard-heatmap-footnote">
-                        {weeklyHeatmap.total} course{weeklyHeatmap.total > 1 ? 's' : ''} sur la semaine type (hors annulées).
+                        {weeklyHeatmap.total} course{weeklyHeatmap.total > 1 ? 's' : ''} cette semaine (hors annulées).
                       </p>
                     </button>
                   </section>
