@@ -301,3 +301,9 @@ html[data-app-theme='dark'] .client-compte-topbar-user-btn--mobile-topbar-nav {
   background: var(--app-bg-alt);
   border-color: var(--app-border-medium);
 }
+
+html[data-app-theme='dark'] .client-compte-mobile-tabbar-add-btn {
+  background: var(--app-bg-alt);
+  border-color: var(--app-border-medium);
+  color: var(--app-text-primary);
+}

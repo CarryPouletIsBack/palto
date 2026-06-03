@@ -114,6 +114,43 @@
     cursor: not-allowed;
   }
 
+  .dashboard-mobile-tabbar-row--client {
+    position: fixed;
+    z-index: 22000;
+    left: max(12px, env(safe-area-inset-left));
+    right: max(12px, env(safe-area-inset-right));
+    bottom: max(10px, env(safe-area-inset-bottom));
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    box-sizing: border-box;
+  }
+
+  .dashboard-mobile-tabbar-row--client .dashboard-mobile-tabbar {
+    position: static;
+    flex: 1 1 auto;
+    min-width: 0;
+    left: auto;
+    right: auto;
+    bottom: auto;
+  }
+
+  .client-compte-mobile-tabbar-add-btn {
+    width: 58px;
+    height: 58px;
+    min-width: 58px;
+    min-height: 58px;
+    border-radius: 50%;
+    box-shadow: 0 8px 28px rgba(15, 23, 42, 0.12);
+  }
+
+  .client-compte-mobile-tabbar-add-anchor .client-compte-account-menu--tabbar {
+    bottom: calc(100% + 10px);
+    top: auto;
+    right: 0;
+    left: auto;
+  }
+
   .dashboard-mobile-launch-dock {
     position: fixed;
     z-index: 21990;

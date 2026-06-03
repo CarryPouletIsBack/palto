@@ -2261,22 +2261,10 @@ export default function ClientCompteDashboard({ onBack, onOpenClientLiveMeet }: 
                     />
                   )}
                 </div>
+                {!isMobileViewport ? (
                 <div className="dashboard-topbar-right" ref={accountMenuRef}>
                   <div className="dashboard-home-topbar-right-cluster">
-                    {!isMobileViewport ? <LanguageSwitcher /> : null}
-                    {isMobileViewport ? (
-                      activeNav === 'overview' ? (
-                        <ClientAccountTopbarBackButton
-                          onClick={handleBackSite}
-                          ariaLabel={t('clientAccount.navBackSite')}
-                        />
-                      ) : (
-                        <ClientAccountTopbarBackButton
-                          onClick={() => goNav('overview')}
-                          ariaLabel={t('clientAccount.navBackOverviewAria')}
-                        />
-                      )
-                    ) : null}
+                    <LanguageSwitcher />
                     <div className="client-compte-topbar-menu-anchor">
                       <button
                         type="button"
@@ -2308,8 +2296,7 @@ export default function ClientCompteDashboard({ onBack, onOpenClientLiveMeet }: 
                       ) : null}
                     </div>
 
-                    {!isMobileViewport ? (
-                      <div className="client-compte-topbar-menu-anchor">
+                    <div className="client-compte-topbar-menu-anchor">
                         <button
                           type="button"
                           className="client-compte-topbar-user-btn"
@@ -2384,9 +2371,9 @@ export default function ClientCompteDashboard({ onBack, onOpenClientLiveMeet }: 
                           </div>
                         ) : null}
                       </div>
-                    ) : null}
                   </div>
                 </div>
+                ) : null}
               </div>
             </header>
             ) : null}
@@ -4214,26 +4201,62 @@ export default function ClientCompteDashboard({ onBack, onOpenClientLiveMeet }: 
           </div>
 
           {isMobileViewport && activeNav !== 'account' ? (
-            <DashboardMobileTabBar
-              variant="client"
-              ariaLabel={t('clientAccount.mobileTabNavAria')}
-              items={[
-                {
-                  id: 'home',
-                  label: t('clientAccount.mobileNavHome'),
-                  icon: <House size={20} strokeWidth={2} />,
-                  active: clientMobileTabId === 'home',
-                  onClick: () => handleClientMobileTab('home'),
-                },
-                {
-                  id: 'activity',
-                  label: t('clientAccount.mobileNavActivity'),
-                  icon: <Route size={20} strokeWidth={2} />,
-                  active: clientMobileTabId === 'activity',
-                  onClick: () => handleClientMobileTab('activity'),
-                },
-              ]}
-            />
+            <div className="dashboard-mobile-tabbar-row dashboard-mobile-tabbar-row--client" ref={accountMenuRef}>
+              <DashboardMobileTabBar
+                variant="client"
+                ariaLabel={t('clientAccount.mobileTabNavAria')}
+                items={[
+                  {
+                    id: 'home',
+                    label: t('clientAccount.mobileNavHome'),
+                    icon: <House size={20} strokeWidth={2} />,
+                    active: clientMobileTabId === 'home',
+                    onClick: () => handleClientMobileTab('home'),
+                  },
+                  {
+                    id: 'activity',
+                    label: t('clientAccount.mobileNavActivity'),
+                    icon: <Route size={20} strokeWidth={2} />,
+                    active: clientMobileTabId === 'activity',
+                    onClick: () => handleClientMobileTab('activity'),
+                  },
+                ]}
+              />
+              <div className="client-compte-topbar-menu-anchor client-compte-mobile-tabbar-add-anchor">
+                <button
+                  type="button"
+                  className="client-compte-topbar-add-btn client-compte-mobile-tabbar-add-btn"
+                  onClick={() => {
+                    setCreateRideMenuOpen((prev) => !prev);
+                    setAccountModalOpen(false);
+                    trackEvent('click', 'client_account', 'open_create_ride_menu');
+                  }}
+                  aria-label={t('clientAccount.bookRide')}
+                >
+                  <Plus size={22} strokeWidth={2.25} aria-hidden />
+                </button>
+                {createRideMenuOpen ? (
+                  <div
+                    className="client-compte-account-menu client-compte-account-menu--add client-compte-account-menu--tabbar"
+                    role="menu"
+                    aria-label="Commander"
+                  >
+                    <div className="client-compte-account-menu__actions">
+                      <button
+                        type="button"
+                        className="client-compte-account-menu__item"
+                        onClick={() => {
+                          setCreateRideMenuOpen(false);
+                          handleGoPage();
+                        }}
+                      >
+                        {t('clientAccount.bookRide')}
+                      </button>
+                    </div>
+                  </div>
+                ) : null}
+              </div>
+            </div>
           ) : null}
 
           {mapPickTarget ? (
