@@ -5004,6 +5004,7 @@ button.dashboard-org-sidebar-brand--home:focus-visible {
     overflow: hidden;
     display: flex;
     flex-direction: column;
+    padding-top: 20px;
   }
 
   .dashboard-container--chauffeur .dashboard-content.dashboard-content--org-fullbleed > .dashboard-org-layout {
@@ -5053,6 +5054,23 @@ button.dashboard-org-sidebar-brand--home:focus-visible {
     flex-shrink: 0;
   }
 
+  .dashboard-container--chauffeur .dashboard-topbar--chauffeur-mobile-toolbar {
+    padding: max(10px, env(safe-area-inset-top, 0px)) max(12px, env(safe-area-inset-right, 0px)) 10px
+      max(12px, env(safe-area-inset-left, 0px));
+    box-sizing: border-box;
+    min-height: 48px;
+  }
+
+  .dashboard-container--chauffeur .dashboard-main--chauffeur-mobile-floating-account {
+    padding-top: 0;
+  }
+
+  .dashboard-container--chauffeur .dashboard-mobile-stats-switch {
+    flex-shrink: 0;
+    padding: 4px max(20px, env(safe-area-inset-left, 0px)) 8px max(20px, env(safe-area-inset-right, 0px));
+    margin: 0;
+  }
+
   .dashboard-container--chauffeur .dashboard-content {
     flex: 1 1 auto;
     min-height: 0;
@@ -5062,6 +5080,10 @@ button.dashboard-org-sidebar-brand--home:focus-visible {
     -webkit-overflow-scrolling: touch;
     overscroll-behavior: contain;
     touch-action: pan-y;
+    padding-top: 20px;
+    padding-bottom: 12px;
+    padding-inline: max(20px, env(safe-area-inset-left, 0px)) max(20px, env(safe-area-inset-right, 0px));
+    box-sizing: border-box;
   }
 
   .dashboard-container--chauffeur .dashboard-content.dashboard-content--org-fullbleed {
@@ -5186,10 +5208,6 @@ button.dashboard-org-sidebar-brand--home:focus-visible {
     color: #475569;
   }
 
-  .dashboard-container--chauffeur .dashboard-main--chauffeur-mobile-floating-account {
-    padding-top: calc(6px + env(safe-area-inset-top, 0px) + 48px);
-  }
-
   /* Typographie & espacements — valeurs hautes des plages (titres ~32px, corps ~17px, gouttières ~20px, gaps ~12px, padding cartes ~16px, sections ~32px) */
   .dashboard-container--chauffeur .dashboard-chauffeur-main-title {
     font-size: clamp(28px, 7.5vw, 32px);
@@ -5204,17 +5222,18 @@ button.dashboard-org-sidebar-brand--home:focus-visible {
   }
 
   .dashboard-container--chauffeur .dashboard-topbar-title-stack--in-content {
-    padding-block: 8px 6px;
-    padding-inline: max(20px, env(safe-area-inset-left, 0px)) max(20px, env(safe-area-inset-right, 0px));
+    padding-block: 0 10px;
+    padding-inline: 0;
     gap: 6px;
   }
 
   .dashboard-container--chauffeur .dashboard-content {
-    padding-inline: max(20px, env(safe-area-inset-left, 0px)) max(20px, env(safe-area-inset-right, 0px));
     gap: 32px;
   }
 
   .dashboard-container--chauffeur .dashboard-content.dashboard-content--org-fullbleed {
+    padding-top: 20px;
+    padding-bottom: 0;
     padding-inline: 0;
     gap: 0;
   }
@@ -5222,7 +5241,7 @@ button.dashboard-org-sidebar-brand--home:focus-visible {
   .dashboard-container--chauffeur .dashboard-content.dashboard-content--org-fullbleed > .dashboard-topbar-title-stack--in-content {
     padding-left: max(20px, env(safe-area-inset-left, 0px));
     padding-right: max(20px, env(safe-area-inset-right, 0px));
-    padding-top: max(12px, env(safe-area-inset-top, 0px));
+    padding-top: 0;
   }
 
   .dashboard-container--chauffeur .dashboard-favorites,

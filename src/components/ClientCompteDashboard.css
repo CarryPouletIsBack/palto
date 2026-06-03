@@ -832,6 +832,16 @@ body.accueil-page .dashboard-container--home-accueil .dashboard-main {
   background: #f8fafc;
 }
 
+.dashboard-container--client-compte .client-compte-topbar-back-btn {
+  margin: 0;
+  min-height: 40px;
+}
+
+.dashboard-container--client-compte .dashboard-home-topbar-start:has(.client-compte-topbar-back-btn) {
+  flex: 0 1 auto;
+  min-width: 0;
+}
+
 .client-compte-account-menu {
   position: absolute;
   top: calc(100% + 8px);
