@@ -758,6 +758,10 @@ html[data-app-theme='dark'] .planning-modal-head h3 {
     background: rgba(56, 189, 248, 0.12);
     color: #7dd3fc;
   }
+
+  html[data-app-theme='dark'] .dashboard-mobile-launch-dock .topbar-ride-launch-card {
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+  }
 }
 
 /* Chauffeur : bouton compte photo seule (cercle, sans bordure blanche parasite) */

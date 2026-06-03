@@ -4017,6 +4017,7 @@ html[data-app-theme='dark'] .ride-status-badge--cancelled {
   .dashboard-mobile-bottombar,
   .dashboard-mobile-tabbar,
   .dashboard-mobile-stats-switch,
+  .dashboard-mobile-launch-dock,
   .dashboard-mobile-backdrop {
     display: none;
   }

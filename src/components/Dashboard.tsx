@@ -1975,6 +1975,62 @@ const Dashboard = ({
     return accepted[0] ?? null;
   }, [courseRows]);
 
+  const renderTopbarLaunchRide = () => {
+    if (!topbarLaunchCourse) return null;
+    return (
+      <div className="topbar-ride-wrap" aria-label="Prochaine course acceptee">
+        <div className="topbar-ride-strip topbar-ride-strip--launch">
+          <div className="topbar-ride-launch-card">
+            <div className="topbar-ride-launch-card__info">
+              <p className="topbar-ride-launch-card__meta">
+                <span className="topbar-ride-launch-card__badge">À lancer</span>
+                <strong className="topbar-ride-launch-card__client">{topbarLaunchCourse.client}</strong>
+                <span className="topbar-ride-launch-card__km">{topbarLaunchCourse.km.toFixed(1)} km</span>
+              </p>
+              <p
+                className="topbar-ride-launch-card__route"
+                title={`${topbarLaunchCourse.depart} → ${topbarLaunchCourse.arrivee}`}
+              >
+                <MapPin size={12} className="topbar-ride-launch-card__route-ico" aria-hidden />
+                <span className="topbar-ride-launch-card__route-text">
+                  {simplifyAddressDisplay(topbarLaunchCourse.depart)}
+                </span>
+                <ArrowRight size={12} className="topbar-ride-launch-card__route-ico" aria-hidden />
+                <span className="topbar-ride-launch-card__route-text">
+                  {simplifyAddressDisplay(topbarLaunchCourse.arrivee)}
+                </span>
+              </p>
+            </div>
+            <button
+              type="button"
+              className={`topbar-launch-ride-btn topbar-launch-ride-btn--card${isRideActionPending(topbarLaunchCourse.id, 'start') ? ' is-pending' : ''}`}
+              disabled={
+                coursesBlockedByCompliance ||
+                rideActionBusy ||
+                isRideActionPending(topbarLaunchCourse.id, 'start')
+              }
+              aria-busy={isRideActionPending(topbarLaunchCourse.id, 'start')}
+              title={
+                coursesBlockedByCompliance
+                  ? t('chauffeurCompliance.bannerTitle')
+                  : `${topbarLaunchCourse.depart} → ${topbarLaunchCourse.arrivee}`
+              }
+              onClick={() => void launchCourseById(topbarLaunchCourse.id)}
+            >
+              <ButtonLoadingLabel
+                pending={isRideActionPending(topbarLaunchCourse.id, 'start')}
+                pendingLabel={chauffeurRideActionPendingLabel('start')}
+                spinnerVariant="inverse"
+              >
+                {isMobileViewport ? 'Lancer' : 'Lancer la course'}
+              </ButtonLoadingLabel>
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
   /** Chauffeur : pas de topbar type accueil (Palto / langue) — bouton user fixe sauf bandeau course. */
   const showChauffeurToolbarOnly = topbarLaunchCourse == null;
   /** Compte chauffeur : bouton utilisateur photo seule sur toutes les vues (y compris bandeau course). */
@@ -2514,7 +2570,9 @@ const Dashboard = ({
     <div className="page active">
       <div className="main-accueil">
         <div
-          className={`dashboard-container dashboard-container--chauffeur${activeView === 'user' ? ' dashboard-container--chauffeur-account' : ''} ${sidebarCollapsed ? 'sidebar-collapsed' : ''} ${mobileSidebarOpen ? 'mobile-sidebar-open' : ''}`}
+          className={`dashboard-container dashboard-container--chauffeur${activeView === 'user' ? ' dashboard-container--chauffeur-account' : ''}${
+            isMobileViewport && topbarLaunchCourse ? ' dashboard-container--chauffeur-has-mobile-launch' : ''
+          } ${sidebarCollapsed ? 'sidebar-collapsed' : ''} ${mobileSidebarOpen ? 'mobile-sidebar-open' : ''}`}
         >
           {isMobileViewport && mobileSidebarOpen && (
             <button
@@ -2699,65 +2757,14 @@ const Dashboard = ({
           >
             <header
               className={`dashboard-topbar${
-                showChauffeurToolbarOnly ? ' dashboard-topbar--chauffeur-mobile-toolbar' : ''
-              }${topbarLaunchCourse ? ' dashboard-topbar--with-launch-ride' : ''}${
-                isChauffeurAccountUserOnly ? ' dashboard-topbar--chauffeur-account-user-only' : ''
+                isMobileViewport || showChauffeurToolbarOnly ? ' dashboard-topbar--chauffeur-mobile-toolbar' : ''
+              }${topbarLaunchCourse && !isMobileViewport ? ' dashboard-topbar--with-launch-ride' : ''}${
+                isChauffeurAccountUserOnly && !isMobileViewport
+                  ? ' dashboard-topbar--chauffeur-account-user-only'
+                  : ''
               }`}
             >
-              {topbarLaunchCourse ? (
-                <div className="topbar-ride-wrap" aria-label="Prochaine course acceptee">
-                  <div className="topbar-ride-strip topbar-ride-strip--launch">
-                    <div className="topbar-ride-launch-card">
-                      <div className="topbar-ride-launch-card__info">
-                        <p className="topbar-ride-launch-card__meta">
-                          <span className="topbar-ride-launch-card__badge">À lancer</span>
-                          <strong className="topbar-ride-launch-card__client">{topbarLaunchCourse.client}</strong>
-                          <span className="topbar-ride-launch-card__km">
-                            {topbarLaunchCourse.km.toFixed(1)} km
-                          </span>
-                        </p>
-                        <p
-                          className="topbar-ride-launch-card__route"
-                          title={`${topbarLaunchCourse.depart} → ${topbarLaunchCourse.arrivee}`}
-                        >
-                          <MapPin size={12} className="topbar-ride-launch-card__route-ico" aria-hidden />
-                          <span className="topbar-ride-launch-card__route-text">
-                            {simplifyAddressDisplay(topbarLaunchCourse.depart)}
-                          </span>
-                          <ArrowRight size={12} className="topbar-ride-launch-card__route-ico" aria-hidden />
-                          <span className="topbar-ride-launch-card__route-text">
-                            {simplifyAddressDisplay(topbarLaunchCourse.arrivee)}
-                          </span>
-                        </p>
-                      </div>
-                      <button
-                        type="button"
-                        className={`topbar-launch-ride-btn topbar-launch-ride-btn--card${isRideActionPending(topbarLaunchCourse.id, 'start') ? ' is-pending' : ''}`}
-                        disabled={
-                          coursesBlockedByCompliance ||
-                          rideActionBusy ||
-                          isRideActionPending(topbarLaunchCourse.id, 'start')
-                        }
-                        aria-busy={isRideActionPending(topbarLaunchCourse.id, 'start')}
-                        title={
-                          coursesBlockedByCompliance
-                            ? t('chauffeurCompliance.bannerTitle')
-                            : `${topbarLaunchCourse.depart} → ${topbarLaunchCourse.arrivee}`
-                        }
-                        onClick={() => void launchCourseById(topbarLaunchCourse.id)}
-                      >
-                        <ButtonLoadingLabel
-                          pending={isRideActionPending(topbarLaunchCourse.id, 'start')}
-                          pendingLabel={chauffeurRideActionPendingLabel('start')}
-                          spinnerVariant="inverse"
-                        >
-                          {isMobileViewport ? 'Lancer' : 'Lancer la course'}
-                        </ButtonLoadingLabel>
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              ) : null}
+              {!isMobileViewport ? renderTopbarLaunchRide() : null}
               <div className="dashboard-topbar-right">
                 {isMobileViewport ? (
                   <div className="dashboard-chauffeur-mobile-topbar-actions">
@@ -2777,25 +2784,13 @@ const Dashboard = ({
                     >
                       <Bell size={16} />
                     </button>
-                    <button
-                      className="topbar-icon-btn"
-                      type="button"
-                      aria-label={t('driverDashboard.moreMenuAria')}
-                      aria-expanded={moreMenuOpen}
-                      onClick={() => {
-                        setAlertsOpen(false);
-                        setTopbarAccountMenuOpen(false);
-                        setMoreMenuOpen((prev) => !prev);
-                      }}
-                    >
-                      <MoreVertical size={16} aria-hidden />
-                    </button>
                   </div>
-                ) : null}
-                {renderChauffeurTopbarAccountControl({
-                  photoAside: false,
-                  showNameInButton: false,
-                })}
+                ) : (
+                  renderChauffeurTopbarAccountControl({
+                    photoAside: false,
+                    showNameInButton: false,
+                  })
+                )}
               </div>
             </header>
 
@@ -5211,6 +5206,10 @@ const Dashboard = ({
               </div>
             );
           })()}
+
+          {isMobileViewport && topbarLaunchCourse ? (
+            <div className="dashboard-mobile-launch-dock">{renderTopbarLaunchRide()}</div>
+          ) : null}
 
           {isMobileViewport ? (
             <DashboardMobileTabBar

@@ -2233,81 +2233,83 @@ export default function ClientCompteDashboard({ onBack, onOpenClientLiveMeet }: 
                       ) : null}
                     </div>
 
-                    <div className="client-compte-topbar-menu-anchor">
-                      <button
-                        type="button"
-                        className="client-compte-topbar-user-btn"
-                        onClick={() => {
-                          setAccountModalOpen((prev) => !prev);
-                          setCreateRideMenuOpen(false);
-                          trackEvent('click', 'client_account', 'open_manage_modal');
-                        }}
-                        aria-label="Gerer le compte"
-                      >
-                        {profile.profilePhotoUrl ? (
-                          <img
-                            src={profile.profilePhotoUrl}
-                            alt={t('clientAccount.photoAlt')}
-                            className="client-compte-topbar-user-btn__avatar"
-                          />
-                        ) : (
-                          <User size={16} aria-hidden />
-                        )}
-                        <span>
-                          {profile.prenom} {profile.nom}
-                        </span>
-                      </button>
-                      <input
-                        ref={topbarPhotoInputRef}
-                        type="file"
-                        accept="image/*"
-                        onChange={(e) => {
-                          const file = e.target.files?.[0];
-                          void onTopbarPhotoPick(file);
-                          e.currentTarget.value = '';
-                        }}
-                        style={{ display: 'none' }}
-                      />
-                      {accountModalOpen ? (
-                        <div className="client-compte-account-menu" role="menu" aria-label="Menu compte">
-                          <div className="client-compte-account-menu__head">
-                            <strong>
-                              {profile.prenom} {profile.nom}
-                            </strong>
-                            <span>{profile.email}</span>
+                    {!isMobileViewport ? (
+                      <div className="client-compte-topbar-menu-anchor">
+                        <button
+                          type="button"
+                          className="client-compte-topbar-user-btn"
+                          onClick={() => {
+                            setAccountModalOpen((prev) => !prev);
+                            setCreateRideMenuOpen(false);
+                            trackEvent('click', 'client_account', 'open_manage_modal');
+                          }}
+                          aria-label="Gerer le compte"
+                        >
+                          {profile.profilePhotoUrl ? (
+                            <img
+                              src={profile.profilePhotoUrl}
+                              alt={t('clientAccount.photoAlt')}
+                              className="client-compte-topbar-user-btn__avatar"
+                            />
+                          ) : (
+                            <User size={16} aria-hidden />
+                          )}
+                          <span>
+                            {profile.prenom} {profile.nom}
+                          </span>
+                        </button>
+                        <input
+                          ref={topbarPhotoInputRef}
+                          type="file"
+                          accept="image/*"
+                          onChange={(e) => {
+                            const file = e.target.files?.[0];
+                            void onTopbarPhotoPick(file);
+                            e.currentTarget.value = '';
+                          }}
+                          style={{ display: 'none' }}
+                        />
+                        {accountModalOpen ? (
+                          <div className="client-compte-account-menu" role="menu" aria-label="Menu compte">
+                            <div className="client-compte-account-menu__head">
+                              <strong>
+                                {profile.prenom} {profile.nom}
+                              </strong>
+                              <span>{profile.email}</span>
+                            </div>
+                            <div className="client-compte-account-menu__actions">
+                              <button
+                                type="button"
+                                className="client-compte-account-menu__item"
+                                onClick={() => {
+                                  goNav('settings');
+                                  setAccountModalOpen(false);
+                                }}
+                              >
+                                Reglages Palto
+                              </button>
+                              <button
+                                type="button"
+                                className="client-compte-account-menu__item"
+                                onClick={() => {
+                                  openManageAccount('personal');
+                                  setAccountModalOpen(false);
+                                }}
+                              >
+                                Gerer le compte Palto
+                              </button>
+                              <button
+                                type="button"
+                                className="client-compte-account-menu__item client-compte-account-menu__item--danger"
+                                onClick={handleClientLogout}
+                              >
+                                {isEn ? 'Sign out' : 'Se deconnecter'}
+                              </button>
+                            </div>
                           </div>
-                          <div className="client-compte-account-menu__actions">
-                            <button
-                              type="button"
-                              className="client-compte-account-menu__item"
-                              onClick={() => {
-                                goNav('settings');
-                                setAccountModalOpen(false);
-                              }}
-                            >
-                              Reglages Palto
-                            </button>
-                            <button
-                              type="button"
-                              className="client-compte-account-menu__item"
-                              onClick={() => {
-                                openManageAccount('personal');
-                                setAccountModalOpen(false);
-                              }}
-                            >
-                              Gerer le compte Palto
-                            </button>
-                            <button
-                              type="button"
-                              className="client-compte-account-menu__item client-compte-account-menu__item--danger"
-                              onClick={handleClientLogout}
-                            >
-                              {isEn ? 'Sign out' : 'Se deconnecter'}
-                            </button>
-                          </div>
-                        </div>
-                      ) : null}
-                    </div>
+                        ) : null}
+                      </div>
+                    ) : null}
                   </div>
                 </div>
               </div>
