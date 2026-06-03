@@ -85,7 +85,7 @@ import {
 } from '../constants/clientSavedPlacesStorage';
 import DashboardMobileTabBar from './DashboardMobileTabBar';
 import ClientMobileAccountHub, { type ClientMobileAccountDestination } from './ClientMobileAccountHub';
-import { MobileAccountDrillShell } from './MobileAccountHub';
+import { MobileAccountDrillShell, MobileTopbarAccountButton } from './MobileAccountHub';
 import './MobileAccountHub.css';
 import ClientComptePlaceAddressField from './ClientComptePlaceAddressField';
 import ClientComptePlaceMapModal, { type ClientCompteMapPickResult } from './ClientComptePlaceMapModal';
@@ -2281,6 +2281,19 @@ export default function ClientCompteDashboard({ onBack, onOpenClientLiveMeet }: 
                         </div>
                       ) : null}
                     </div>
+
+                    {isMobileViewport ? (
+                      <MobileTopbarAccountButton
+                        photoUrl={profile.profilePhotoUrl}
+                        ariaLabel={isEn ? 'Account' : 'Compte'}
+                        onClick={() => {
+                          setCreateRideMenuOpen(false);
+                          setAccountModalOpen(false);
+                          goNav('account');
+                          setClientAccountMobileScreen('hub');
+                        }}
+                      />
+                    ) : null}
 
                     {!isMobileViewport ? (
                       <div className="client-compte-topbar-menu-anchor">

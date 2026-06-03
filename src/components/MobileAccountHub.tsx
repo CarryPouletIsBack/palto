@@ -101,6 +101,36 @@ export function MobileAccountHubMenuCard({ rows }: { rows: MobileAccountHubMenuR
   );
 }
 
+export function MobileTopbarAccountButton({
+  photoUrl,
+  ariaLabel,
+  onClick,
+}: {
+  photoUrl: string | null;
+  ariaLabel: string;
+  onClick: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      className="client-compte-topbar-user-btn client-compte-topbar-user-btn--photo-only client-compte-topbar-user-btn--mobile-topbar-nav"
+      onClick={onClick}
+      aria-label={ariaLabel}
+    >
+      <span
+        className="client-compte-topbar-user-btn__photo-shell client-compte-topbar-user-btn__photo-shell--fill"
+        aria-hidden
+      >
+        {photoUrl ? (
+          <img src={photoUrl} alt="" className="client-compte-topbar-user-btn__avatar" />
+        ) : (
+          <User size={20} aria-hidden />
+        )}
+      </span>
+    </button>
+  );
+}
+
 export function MobileAccountDrillShell({
   title,
   onBack,

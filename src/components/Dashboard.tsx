@@ -30,7 +30,7 @@ import DashboardMobilePillSwitch from './DashboardMobilePillSwitch';
 import ChauffeurMobileAccountHub, {
   type ChauffeurMobileAccountDestination,
 } from './ChauffeurMobileAccountHub';
-import { MobileAccountDrillShell } from './MobileAccountHub';
+import { MobileAccountDrillShell, MobileTopbarAccountButton } from './MobileAccountHub';
 import './DashboardMobileTabBar.css';
 import './MobileAccountHub.css';
 import {
@@ -2881,6 +2881,16 @@ const Dashboard = ({
                     >
                       <Bell size={16} />
                     </button>
+                    <MobileTopbarAccountButton
+                      photoUrl={paltoIdentity.photoUrl}
+                      ariaLabel={language === 'en' ? 'Account' : 'Compte'}
+                      onClick={() => {
+                        setAlertsOpen(false);
+                        setTopbarAccountMenuOpen(false);
+                        handleNavSelect('user');
+                        setChauffeurAccountMobileScreen('hub');
+                      }}
+                    />
                   </div>
                 ) : (
                   renderChauffeurTopbarAccountControl({
