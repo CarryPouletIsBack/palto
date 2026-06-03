@@ -240,6 +240,28 @@ html[data-app-theme='dark'] .topbar-launch-ride-btn:hover {
   background: #f1f5f9;
 }
 
+html[data-app-theme='dark'] .topbar-ride-launch-card {
+  background: var(--app-surface-card, #0f172a);
+  border-color: var(--app-border-medium, rgba(255, 255, 255, 0.12));
+  box-shadow: none;
+}
+
+html[data-app-theme='dark'] .topbar-ride-launch-card__meta {
+  color: var(--app-text-muted, #94a3b8);
+}
+
+html[data-app-theme='dark'] .topbar-ride-launch-card__client {
+  color: var(--app-text-primary, #f1f5f9);
+}
+
+html[data-app-theme='dark'] .topbar-ride-launch-card__route {
+  color: var(--app-text-muted, #94a3b8);
+}
+
+html[data-app-theme='dark'] .dashboard-container--chauffeur .dashboard-topbar--with-launch-ride {
+  background: transparent;
+}
+
 html[data-app-theme='dark'] .topbar-icon-btn {
   background: rgba(255, 255, 255, 0.06);
   border-color: var(--app-border-subtle);

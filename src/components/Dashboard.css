@@ -1123,68 +1123,162 @@ html[data-app-theme='dark'] .dashboard-home-topbar-upcoming-btn {
   background: #1e293b;
 }
 
-/* Mobile : trajet sur une ligne défilante, bouton « Lancer » en dessous (lisible sur petit écran). */
-@media (max-width: 768px) {
-  .dashboard-container--chauffeur .dashboard-topbar--with-launch-ride {
-    flex-wrap: nowrap;
-    align-items: flex-start;
-    gap: 8px;
-    padding-inline: max(8px, env(safe-area-inset-left, 0px))
-      max(8px, env(safe-area-inset-right, 0px));
-    padding-block: max(8px, env(safe-area-inset-top, 0px)) 8px;
-    box-sizing: border-box;
-    min-height: 0;
-    height: auto;
+/* Bandeau « course à lancer » : carte compacte (pas de défilement horizontal). */
+.dashboard-container--chauffeur .topbar-ride-strip--launch {
+  display: block;
+  width: 100%;
+  max-width: 100%;
+  overflow: visible;
+  flex-wrap: nowrap;
+  justify-content: stretch;
+  gap: 0;
+}
+
+.topbar-ride-launch-card {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 8px;
+  width: 100%;
+  min-width: 0;
+  padding: 8px 10px;
+  box-sizing: border-box;
+  background: #ffffff;
+  border: 1px solid #dbe3ee;
+  border-radius: 12px;
+  box-shadow: 0 1px 0 rgba(15, 23, 42, 0.06);
+}
+
+.topbar-ride-launch-card__info {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.topbar-ride-launch-card__meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 8px;
+  margin: 0;
+  font-size: 12px;
+  line-height: 1.3;
+  color: #334155;
+}
+
+.topbar-ride-launch-card__badge {
+  flex-shrink: 0;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  padding: 2px 7px;
+  border-radius: 999px;
+  background: #dcfce7;
+  color: #166534;
+  border: 1px solid #86efac;
+}
+
+.topbar-ride-launch-card__client {
+  font-weight: 700;
+  color: #0f172a;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 100%;
+}
+
+.topbar-ride-launch-card__km {
+  flex-shrink: 0;
+  font-weight: 600;
+  color: #64748b;
+  white-space: nowrap;
+}
+
+.topbar-ride-launch-card__route {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  margin: 5px 0 0;
+  min-width: 0;
+  font-size: 11px;
+  line-height: 1.35;
+  color: #64748b;
+}
+
+.topbar-ride-launch-card__route-ico {
+  flex-shrink: 0;
+  color: #94a3b8;
+}
+
+.topbar-ride-launch-card__route-text {
+  min-width: 0;
+  flex: 1 1 0%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.topbar-launch-ride-btn--card {
+  width: 100%;
+  height: 36px;
+  margin-left: 0;
+  font-size: 12px;
+  border-radius: 10px;
+}
+
+.dashboard-container--chauffeur .dashboard-topbar--with-launch-ride {
+  align-items: flex-start;
+  gap: 8px;
+  padding: 8px max(8px, env(safe-area-inset-right, 0px)) 8px max(8px, env(safe-area-inset-left, 0px));
+  box-sizing: border-box;
+  height: auto;
+  min-height: 0;
+  background: #f3f6fb;
+}
+
+.dashboard-container--chauffeur .dashboard-topbar--with-launch-ride .topbar-ride-wrap {
+  align-self: stretch;
+  overflow: visible;
+}
+
+.dashboard-container--chauffeur .dashboard-topbar--with-launch-ride .dashboard-topbar-right {
+  padding-top: 4px;
+}
+
+@media (min-width: 520px) {
+  .topbar-ride-launch-card {
+    flex-direction: row;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 10px 8px 12px;
   }
 
-  .dashboard-container--chauffeur .dashboard-topbar--with-launch-ride .topbar-ride-wrap {
+  .topbar-launch-ride-btn--card {
     width: auto;
+    min-width: 118px;
+    flex-shrink: 0;
+  }
+}
+
+@media (max-width: 768px) {
+  .dashboard-container--chauffeur .dashboard-topbar--with-launch-ride .topbar-ride-wrap {
     flex: 1 1 0%;
     min-width: 0;
     max-width: calc(100% - 44px - 8px);
-    align-self: stretch;
-    overflow: visible;
   }
 
   .dashboard-container--chauffeur .dashboard-topbar--with-launch-ride .dashboard-topbar-right {
     flex: 0 0 auto;
-    min-width: 0;
-    width: auto;
-    padding-top: 2px;
-  }
-
-  .dashboard-container--chauffeur .dashboard-topbar--with-launch-ride .topbar-ride-strip {
-    flex-direction: column;
-    align-items: stretch;
-    width: 100%;
-    gap: 6px;
-    overflow: visible;
-  }
-
-  .dashboard-container--chauffeur .dashboard-topbar--with-launch-ride .topbar-ride-strip-scroll {
-    display: flex;
-    align-items: center;
-    flex: 0 0 auto;
-    flex-wrap: nowrap;
-    gap: 6px 10px;
-    width: 100%;
-    max-width: 100%;
-    min-width: 0;
-    min-height: 28px;
-    overflow-x: auto;
-    overflow-y: hidden;
-    -webkit-overflow-scrolling: touch;
-    scrollbar-width: thin;
-    box-sizing: border-box;
   }
 
   .topbar-ride-wrap {
     justify-content: flex-start;
     align-items: stretch;
-    width: 100%;
-    min-width: 0;
   }
+}
 
+@media (max-width: 768px) {
   .topbar-ride-strip {
     flex-wrap: nowrap;
     justify-content: flex-start;
@@ -1227,14 +1321,6 @@ html[data-app-theme='dark'] .dashboard-home-topbar-upcoming-btn {
   .topbar-ride-meta {
     flex-shrink: 0;
     white-space: nowrap;
-  }
-
-  .dashboard-container--chauffeur .dashboard-topbar--with-launch-ride .topbar-launch-ride-btn {
-    flex-shrink: 0;
-    width: 100%;
-    margin-left: 0;
-    height: 34px;
-    font-size: 12px;
   }
 
   .topbar-launch-ride-btn {

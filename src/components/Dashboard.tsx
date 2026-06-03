@@ -88,6 +88,7 @@ import ChauffeurPaltoAccountPanel, {
 import ChauffeurRideSettingsForm from './ChauffeurRideSettingsForm';
 import { toast } from 'sonner';
 import { chauffeurCancelledPaymentLabel } from '../lib/chauffeurPaymentStatusLabel';
+import { simplifyAddressDisplay } from '../services/addressDisplay';
 import './Dashboard.css';
 import './Dashboard.app-theme.css';
 import './ClientCompteDashboard.css';
@@ -384,111 +385,6 @@ function ElapsedSince({ startedAt }: { startedAt: number }) {
     <span>
       {m} min {String(s).padStart(2, '0')} s
     </span>
-  );
-}
-
-/** Mobile : défilement horizontal lent (ping-pong) pour lire trajet + client dans la topbar. */
-function TopbarRideStripAutoScroll({ children, scrollKey }: { children: ReactNode; scrollKey: string }) {
-  const ref = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    const el = ref.current;
-    if (!el) return undefined;
-
-    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
-      return undefined;
-    }
-
-    const mq = window.matchMedia('(max-width: 768px)');
-    let raf = 0;
-    let cancelled = false;
-    let direction = 1;
-    let pauseUntil = 0;
-    const speed = 0.45;
-    const pauseAtEndMs = 2400;
-    const pauseAtStartMs = 1600;
-
-    const stopRaf = () => {
-      cancelAnimationFrame(raf);
-      raf = 0;
-    };
-
-    const tick = (t: number) => {
-      if (cancelled) return;
-      if (!mq.matches) {
-        el.scrollLeft = 0;
-        return;
-      }
-      const maxScroll = el.scrollWidth - el.clientWidth;
-      if (maxScroll <= 2) {
-        el.scrollLeft = 0;
-        return;
-      }
-      if (t < pauseUntil) {
-        raf = requestAnimationFrame(tick);
-        return;
-      }
-      el.scrollLeft += speed * direction;
-      if (direction === 1 && el.scrollLeft >= maxScroll - 0.75) {
-        el.scrollLeft = maxScroll;
-        direction = -1;
-        pauseUntil = t + pauseAtEndMs;
-      } else if (direction === -1 && el.scrollLeft <= 0.75) {
-        el.scrollLeft = 0;
-        direction = 1;
-        pauseUntil = t + pauseAtStartMs;
-      }
-      raf = requestAnimationFrame(tick);
-    };
-
-    const start = () => {
-      stopRaf();
-      el.scrollLeft = 0;
-      direction = 1;
-      pauseUntil = 0;
-      if (!mq.matches) return;
-      /* Attendre le layout (flex + police) pour que scrollWidth soit fiable */
-      requestAnimationFrame(() => {
-        requestAnimationFrame(() => {
-          if (cancelled) return;
-          raf = requestAnimationFrame(tick);
-        });
-      });
-    };
-
-    const pauseForInteraction = () => {
-      pauseUntil = Math.max(pauseUntil, performance.now() + 6500);
-    };
-
-    const ro = new ResizeObserver(() => {
-      start();
-    });
-    ro.observe(el);
-
-    const onMq = () => {
-      start();
-    };
-    mq.addEventListener('change', onMq);
-    el.addEventListener('touchstart', pauseForInteraction, { passive: true });
-    el.addEventListener('wheel', pauseForInteraction, { passive: true });
-    start();
-    const lateLayoutTimer = window.setTimeout(() => start(), 400);
-
-    return () => {
-      window.clearTimeout(lateLayoutTimer);
-      cancelled = true;
-      stopRaf();
-      ro.disconnect();
-      mq.removeEventListener('change', onMq);
-      el.removeEventListener('touchstart', pauseForInteraction);
-      el.removeEventListener('wheel', pauseForInteraction);
-    };
-  }, [scrollKey]);
-
-  return (
-    <div className="topbar-ride-strip-scroll" ref={ref}>
-      {children}
-    </div>
   );
 }
 
@@ -2790,44 +2686,55 @@ const Dashboard = ({
             >
               {topbarLaunchCourse ? (
                 <div className="topbar-ride-wrap" aria-label="Prochaine course acceptee">
-                  <div className="topbar-ride-strip">
-                    <TopbarRideStripAutoScroll scrollKey={topbarLaunchCourse.id}>
-                      <MapPin size={14} className="topbar-ride-ico" aria-hidden />
-                      <span className="topbar-ride-dep" title={topbarLaunchCourse.depart}>
-                        {topbarLaunchCourse.depart}
-                      </span>
-                      <ArrowRight size={14} className="topbar-ride-ico" aria-hidden />
-                      <span className="topbar-ride-arr" title={topbarLaunchCourse.arrivee}>
-                        {topbarLaunchCourse.arrivee}
-                      </span>
-                      <span className="topbar-ride-meta">
-                        {topbarLaunchCourse.client} · {topbarLaunchCourse.km.toFixed(1)} km
-                      </span>
-                    </TopbarRideStripAutoScroll>
-                    <button
-                      type="button"
-                      className={`topbar-launch-ride-btn${isRideActionPending(topbarLaunchCourse.id, 'start') ? ' is-pending' : ''}`}
-                      disabled={
-                        coursesBlockedByCompliance ||
-                        rideActionBusy ||
-                        isRideActionPending(topbarLaunchCourse.id, 'start')
-                      }
-                      aria-busy={isRideActionPending(topbarLaunchCourse.id, 'start')}
-                      title={
-                        coursesBlockedByCompliance
-                          ? t('chauffeurCompliance.bannerTitle')
-                          : undefined
-                      }
-                      onClick={() => void launchCourseById(topbarLaunchCourse.id)}
-                    >
-                      <ButtonLoadingLabel
-                        pending={isRideActionPending(topbarLaunchCourse.id, 'start')}
-                        pendingLabel={chauffeurRideActionPendingLabel('start')}
-                        spinnerVariant="inverse"
+                  <div className="topbar-ride-strip topbar-ride-strip--launch">
+                    <div className="topbar-ride-launch-card">
+                      <div className="topbar-ride-launch-card__info">
+                        <p className="topbar-ride-launch-card__meta">
+                          <span className="topbar-ride-launch-card__badge">À lancer</span>
+                          <strong className="topbar-ride-launch-card__client">{topbarLaunchCourse.client}</strong>
+                          <span className="topbar-ride-launch-card__km">
+                            {topbarLaunchCourse.km.toFixed(1)} km
+                          </span>
+                        </p>
+                        <p
+                          className="topbar-ride-launch-card__route"
+                          title={`${topbarLaunchCourse.depart} → ${topbarLaunchCourse.arrivee}`}
+                        >
+                          <MapPin size={12} className="topbar-ride-launch-card__route-ico" aria-hidden />
+                          <span className="topbar-ride-launch-card__route-text">
+                            {simplifyAddressDisplay(topbarLaunchCourse.depart)}
+                          </span>
+                          <ArrowRight size={12} className="topbar-ride-launch-card__route-ico" aria-hidden />
+                          <span className="topbar-ride-launch-card__route-text">
+                            {simplifyAddressDisplay(topbarLaunchCourse.arrivee)}
+                          </span>
+                        </p>
+                      </div>
+                      <button
+                        type="button"
+                        className={`topbar-launch-ride-btn topbar-launch-ride-btn--card${isRideActionPending(topbarLaunchCourse.id, 'start') ? ' is-pending' : ''}`}
+                        disabled={
+                          coursesBlockedByCompliance ||
+                          rideActionBusy ||
+                          isRideActionPending(topbarLaunchCourse.id, 'start')
+                        }
+                        aria-busy={isRideActionPending(topbarLaunchCourse.id, 'start')}
+                        title={
+                          coursesBlockedByCompliance
+                            ? t('chauffeurCompliance.bannerTitle')
+                            : `${topbarLaunchCourse.depart} → ${topbarLaunchCourse.arrivee}`
+                        }
+                        onClick={() => void launchCourseById(topbarLaunchCourse.id)}
                       >
-                        {isMobileViewport ? 'Lancer' : 'Lancer la course'}
-                      </ButtonLoadingLabel>
-                    </button>
+                        <ButtonLoadingLabel
+                          pending={isRideActionPending(topbarLaunchCourse.id, 'start')}
+                          pendingLabel={chauffeurRideActionPendingLabel('start')}
+                          spinnerVariant="inverse"
+                        >
+                          {isMobileViewport ? 'Lancer' : 'Lancer la course'}
+                        </ButtonLoadingLabel>
+                      </button>
+                    </div>
                   </div>
                 </div>
               ) : null}
