@@ -4187,7 +4187,7 @@ export default function ClientCompteDashboard({ onBack, onOpenClientLiveMeet }: 
 
           </div>
 
-          {isMobileViewport ? (
+          {isMobileViewport && activeNav !== 'account' ? (
             <DashboardMobileTabBar
               variant="client"
               ariaLabel={t('clientAccount.mobileTabNavAria')}

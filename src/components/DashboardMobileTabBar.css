@@ -132,11 +132,23 @@
   .dashboard-mobile-launch-dock .topbar-ride-launch-card {
     width: 100%;
     box-sizing: border-box;
-    box-shadow: 0 8px 24px rgba(15, 23, 42, 0.1);
+    border: 1px solid #cbd5e1;
+    border-radius: 14px;
+    box-shadow: 0 4px 16px rgba(15, 23, 42, 0.08);
   }
 
   .dashboard-container--chauffeur-has-mobile-launch .dashboard-main {
     padding-bottom: calc(70px + 76px + max(10px, env(safe-area-inset-bottom)) + 16px);
+  }
+
+  .dashboard-container--chauffeur-account .dashboard-main.dashboard-user-mobile-shell--account-mobile,
+  .dashboard-container--chauffeur-account .dashboard-main.dashboard-user-mobile-shell--drill {
+    padding-bottom: calc(max(12px, env(safe-area-inset-bottom)) + 12px);
+  }
+
+  .dashboard-container--client-compte .dashboard-main.dashboard-user-mobile-shell--account-mobile,
+  .dashboard-container--client-compte .dashboard-main.dashboard-user-mobile-shell--drill {
+    padding-bottom: calc(max(12px, env(safe-area-inset-bottom)) + 12px);
   }
 
   .dashboard-container--chauffeur .dashboard-topbar--chauffeur-mobile-toolbar .dashboard-topbar-right {

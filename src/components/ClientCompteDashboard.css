@@ -852,12 +852,24 @@ body.accueil-page .dashboard-container--home-accueil .dashboard-main {
   width: 40px;
   height: 40px;
   min-width: 40px;
+  max-width: 40px;
   min-height: 40px;
+  max-height: 40px;
   padding: 0;
   gap: 0;
-  border-radius: 999px;
+  border-radius: 50%;
+  aspect-ratio: 1;
+  box-sizing: border-box;
   justify-content: center;
+  align-items: center;
+  flex-shrink: 0;
+  line-height: 0;
   -webkit-tap-highlight-color: transparent;
+}
+
+.dashboard-container--client-compte .client-compte-topbar-back-btn svg {
+  display: block;
+  flex-shrink: 0;
 }
 
 .dashboard-container--client-compte .dashboard-home-topbar-start:has(.client-compte-topbar-back-btn) {
@@ -1131,10 +1143,21 @@ body.accueil-page .dashboard-container--home-accueil .dashboard-main {
     font-weight: 600;
   }
 
-  .dashboard-container--client-compte .client-compte-content-back-btn {
+  .dashboard-container--client-compte .client-compte-content-back-btn:not(.client-compte-topbar-back-btn) {
     min-height: 44px;
     padding: 10px 14px;
     font-size: 16px;
+  }
+
+  .dashboard-container--client-compte .client-compte-topbar-back-btn {
+    width: 40px;
+    height: 40px;
+    min-width: 40px;
+    max-width: 40px;
+    min-height: 40px;
+    max-height: 40px;
+    padding: 0;
+    border-radius: 50%;
   }
 
   .dashboard-container--client-compte .client-compte-overview-empty-cta {
@@ -1468,27 +1491,21 @@ html[data-app-theme='dark'] .client-compte-account-edit-modal-input {
     gap: 12px;
   }
 
-  .chauffeur-palto-account-layout--mobile .chauffeur-palto-account-mobile-sections {
+  .chauffeur-palto-account-mobile-stack {
     display: flex;
     flex-direction: column;
+    gap: 12px;
     width: 100%;
-    gap: 8px;
-    margin: 0;
-    padding: 0;
-    list-style: none;
   }
 
-  .chauffeur-palto-account-layout--mobile .chauffeur-palto-account-mobile-sections .client-compte-account-nav-item {
-    width: 100%;
-    min-height: 44px;
-    height: auto;
-    padding: 12px 14px;
-    border: 1px solid #e2e8f0;
-    border-radius: 12px;
-    background: #ffffff;
-    justify-content: flex-start;
-    flex-wrap: nowrap;
-    white-space: normal;
+  .chauffeur-palto-account-layout--mobile .chauffeur-palto-account-card {
+    margin: 0;
+    padding: 16px 14px;
+    border-radius: 16px;
+  }
+
+  .chauffeur-palto-account-layout--mobile .chauffeur-palto-account-card .client-compte-section-title {
+    margin: 0 0 12px;
   }
 
   .chauffeur-palto-account-layout--mobile .client-compte-account-main {

@@ -762,7 +762,8 @@ html[data-app-theme='dark'] .planning-modal-head h3 {
   }
 
   html[data-app-theme='dark'] .dashboard-mobile-launch-dock .topbar-ride-launch-card {
-    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+    border-color: var(--app-border-medium);
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.35);
   }
 }
 

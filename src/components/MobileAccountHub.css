@@ -98,10 +98,6 @@
   }
 
   .mobile-account-hub__quick-card-icon {
-    width: 32px;
-    height: 32px;
-    border-radius: 10px;
-    background: #f1f5f9;
     display: inline-flex;
     align-items: center;
     justify-content: center;
@@ -147,10 +143,6 @@
   }
 
   .mobile-account-hub__menu-row-icon {
-    width: 36px;
-    height: 36px;
-    border-radius: 10px;
-    background: #f8fafc;
     display: inline-flex;
     align-items: center;
     justify-content: center;
@@ -163,11 +155,6 @@
     min-width: 0;
     font-size: 15px;
     font-weight: 600;
-  }
-
-  .mobile-account-hub__menu-row-chevron {
-    color: #94a3b8;
-    flex-shrink: 0;
   }
 
   .mobile-account-hub__menu-row--danger .mobile-account-hub__menu-row-label {
@@ -225,11 +212,20 @@
     padding-top: 8px;
   }
 
-  .dashboard-user-mobile-shell--account-mobile .mobile-account-hub__toolbar,
-  .dashboard-user-mobile-shell--drill .mobile-account-hub__toolbar,
-  .dashboard-user-mobile-shell--drill .mobile-account-drill .mobile-account-hub__toolbar {
+  .dashboard-user-mobile-shell--account-mobile .mobile-account-hub__toolbar {
     margin-top: 0;
     margin-bottom: 0;
+  }
+
+  .mobile-account-drill .mobile-account-hub__toolbar {
+    margin-top: 0;
+    margin-bottom: 10px;
+  }
+
+  .mobile-account-drill__title.dashboard-chauffeur-main-title {
+    margin: 4px 0 16px;
+    padding-inline: 4px;
+    line-height: 1.2;
   }
 }
 

@@ -1339,8 +1339,8 @@ const Dashboard = ({
 
   const openChauffeurMobileAccount = useCallback(
     (dest: ChauffeurMobileAccountDestination) => {
-      if (dest === 'palto-account') {
-        openChauffeurPaltoAccount('personal');
+      if (dest === 'palto-account' || dest === 'palto-payment') {
+        openChauffeurPaltoAccount(dest === 'palto-payment' ? 'payment' : 'personal');
         setChauffeurAccountMobileScreen('palto-account');
         return;
       }
@@ -1367,7 +1367,13 @@ const Dashboard = ({
       case 'help':
         return t('driverDashboard.navHelp');
       case 'palto-account':
-        return language === 'en' ? 'Personal information' : 'Informations personnelles';
+        return paltoAccountSection === 'payment'
+          ? language === 'en'
+            ? 'Payment'
+            : 'Paiement'
+          : language === 'en'
+            ? 'Personal information'
+            : 'Informations personnelles';
       case 'documents':
         return language === 'en' ? 'Documents' : 'Documents et factures';
       case 'preferences':
@@ -1377,7 +1383,7 @@ const Dashboard = ({
       default:
         return t('driverDashboard.titleUser');
     }
-  }, [language, t, userSubView]);
+  }, [language, paltoAccountSection, t, userSubView]);
 
   const chauffeurStatsPillItems = useMemo(
     () => [
@@ -2653,7 +2659,9 @@ const Dashboard = ({
       <div className="main-accueil">
         <div
           className={`dashboard-container dashboard-container--chauffeur${activeView === 'user' ? ' dashboard-container--chauffeur-account' : ''}${
-            isMobileViewport && topbarLaunchCourse ? ' dashboard-container--chauffeur-has-mobile-launch' : ''
+            isMobileViewport && topbarLaunchCourse && activeView !== 'user'
+              ? ' dashboard-container--chauffeur-has-mobile-launch'
+              : ''
           } ${sidebarCollapsed ? 'sidebar-collapsed' : ''} ${mobileSidebarOpen ? 'mobile-sidebar-open' : ''}`}
         >
           {isMobileViewport && mobileSidebarOpen && (
@@ -4031,21 +4039,26 @@ const Dashboard = ({
                             initialSection={paltoAccountSection}
                             mobileLayout={isMobileViewport}
                             afterDeleteContent={
-                              <article className="dashboard-user-card" style={{ marginTop: 20 }}>
-                                <div className="dashboard-user-card-head">
-                                  <div>
-                                    <h4>{language === 'en' ? 'Driver contact' : 'Contact chauffeur'}</h4>
-                                    <p className="dashboard-field-hint">
-                                      {language === 'en'
-                                        ? isMobileViewport
-                                          ? 'Phone number used for Palto rides.'
-                                          : 'Phone and Reunion commune used for Palto rides.'
-                                        : isMobileViewport
-                                          ? 'Numéro de téléphone utilisé pour vos courses Palto.'
+                              <article
+                                className={`dashboard-user-card chauffeur-palto-account-card${
+                                  isMobileViewport ? '' : ''
+                                }`}
+                                style={{ marginTop: isMobileViewport ? 0 : 20 }}
+                              >
+                                {isMobileViewport ? (
+                                  <h4 className="client-compte-section-title">Contact</h4>
+                                ) : (
+                                  <div className="dashboard-user-card-head">
+                                    <div>
+                                      <h4>{language === 'en' ? 'Driver contact' : 'Contact chauffeur'}</h4>
+                                      <p className="dashboard-field-hint">
+                                        {language === 'en'
+                                          ? 'Phone and Reunion commune used for Palto rides.'
                                           : 'Téléphone et commune réunionnaise utilisés pour vos courses Palto.'}
-                                    </p>
+                                      </p>
+                                    </div>
                                   </div>
-                                </div>
+                                )}
                                 <form
                                   className="dashboard-user-edit-grid dashboard-chauffeur-profile-form"
                                   onSubmit={(e) => {
@@ -5394,11 +5407,11 @@ const Dashboard = ({
             );
           })()}
 
-          {isMobileViewport && topbarLaunchCourse ? (
+          {isMobileViewport && topbarLaunchCourse && activeView !== 'user' ? (
             <div className="dashboard-mobile-launch-dock">{renderTopbarLaunchRide()}</div>
           ) : null}
 
-          {isMobileViewport ? (
+          {isMobileViewport && activeView !== 'user' ? (
             <DashboardMobileTabBar
               variant="chauffeur"
               ariaLabel={t('driverDashboard.mobileTabNavAria')}

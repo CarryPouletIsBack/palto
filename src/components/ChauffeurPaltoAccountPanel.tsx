@@ -315,20 +315,65 @@ export default function ChauffeurPaltoAccountPanel({
     </div>
   )
 
+  const personalForm = (
+    <form
+      className="dashboard-user-edit-grid"
+      onSubmit={(e) => {
+        e.preventDefault()
+        savePersonal()
+      }}
+    >
+      <label>
+        {isEn ? 'First name' : 'Prenom'}
+        <input
+          type="text"
+          value={prenomDraft}
+          onChange={(e) => setPrenomDraft(e.target.value)}
+          required
+        />
+      </label>
+      <label>
+        {isEn ? 'Last name' : 'Nom'}
+        <input type="text" value={nomDraft} onChange={(e) => setNomDraft(e.target.value)} required />
+      </label>
+      <label>
+        Email
+        <input type="email" value={emailDraft} onChange={(e) => setEmailDraft(e.target.value)} required />
+      </label>
+      {personalDirty ? (
+        <div className="dashboard-user-edit-actions">
+          <button type="submit" className="dashboard-user-save-btn">
+            {isEn ? 'Save' : 'Enregistrer'}
+          </button>
+          <button
+            type="button"
+            className="dashboard-user-cancel-btn"
+            onClick={() => {
+              setPrenomDraft(profile.prenom)
+              setNomDraft(profile.nom)
+              setEmailDraft(profile.email || emailKey)
+              setPhotoDraftUrl(profile.profilePhotoUrl ?? null)
+            }}
+          >
+            {isEn ? 'Cancel' : 'Annuler'}
+          </button>
+        </div>
+      ) : null}
+    </form>
+  )
+
   return (
     <div
       className={`client-compte-account-layout chauffeur-palto-account-layout${
         mobileLayout ? ' chauffeur-palto-account-layout--mobile' : ''
       }`}
     >
-      {mobileLayout ? (
-        sectionNav
-      ) : (
+      {!mobileLayout ? (
         <aside className="client-compte-account-sidebar" aria-label={isEn ? 'Palto account' : 'Compte Palto'}>
           {identityBlock}
           {sectionNav}
         </aside>
-      )}
+      ) : null}
 
       <div className="client-compte-account-main">
         {!mobileLayout ? (
@@ -355,53 +400,22 @@ export default function ChauffeurPaltoAccountPanel({
         ) : null}
 
         {section === 'personal' ? (
-          <>
-            {mobileLayout ? identityBlock : null}
-          <form
-            className="dashboard-user-edit-grid"
-            onSubmit={(e) => {
-              e.preventDefault()
-              savePersonal()
-            }}
-          >
-            <label>
-              {isEn ? 'First name' : 'Prenom'}
-              <input
-                type="text"
-                value={prenomDraft}
-                onChange={(e) => setPrenomDraft(e.target.value)}
-                required
-              />
-            </label>
-            <label>
-              {isEn ? 'Last name' : 'Nom'}
-              <input type="text" value={nomDraft} onChange={(e) => setNomDraft(e.target.value)} required />
-            </label>
-            <label>
-              Email
-              <input type="email" value={emailDraft} onChange={(e) => setEmailDraft(e.target.value)} required />
-            </label>
-            {personalDirty ? (
-              <div className="dashboard-user-edit-actions">
-                <button type="submit" className="dashboard-user-save-btn">
-                  {isEn ? 'Save' : 'Enregistrer'}
-                </button>
-                <button
-                  type="button"
-                  className="dashboard-user-cancel-btn"
-                  onClick={() => {
-                    setPrenomDraft(profile.prenom)
-                    setNomDraft(profile.nom)
-                    setEmailDraft(profile.email || emailKey)
-                    setPhotoDraftUrl(profile.profilePhotoUrl ?? null)
-                  }}
-                >
-                  {isEn ? 'Cancel' : 'Annuler'}
-                </button>
-              </div>
-            ) : null}
-          </form>
-          </>
+          mobileLayout ? (
+            <div className="chauffeur-palto-account-mobile-stack">
+              <article className="dashboard-user-card chauffeur-palto-account-card">
+                {identityBlock}
+                {personalForm}
+              </article>
+              {afterDeleteContent}
+              <PaltoAccountDeleteBlock role="chauffeur" />
+            </div>
+          ) : (
+            <>
+              {personalForm}
+              {afterDeleteContent}
+              <PaltoAccountDeleteBlock role="chauffeur" />
+            </>
+          )
         ) : (
           <section className="client-compte-payment-layout">
             <p className="client-compte-payment-stripe-notice" role="status">
@@ -512,8 +526,6 @@ export default function ChauffeurPaltoAccountPanel({
 
           </section>
         )}
-        {section === 'personal' ? afterDeleteContent : null}
-        {section === 'personal' ? <PaltoAccountDeleteBlock role="chauffeur" /> : null}
       </div>
 
       {mountAccountModal(

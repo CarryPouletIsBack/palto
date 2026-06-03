@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react';
-import { ChevronLeft, ChevronRight, X, User } from 'lucide-react';
+import { ChevronLeft, X, User } from 'lucide-react';
 import './MobileAccountHub.css';
 
 export function MobileAccountHubToolbar({
@@ -95,7 +95,6 @@ export function MobileAccountHubMenuCard({ rows }: { rows: MobileAccountHubMenuR
             {row.icon}
           </span>
           <span className="mobile-account-hub__menu-row-label">{row.label}</span>
-          <ChevronRight size={18} className="mobile-account-hub__menu-row-chevron" aria-hidden />
         </button>
       ))}
     </div>
@@ -116,9 +115,7 @@ export function MobileAccountDrillShell({
   return (
     <div className="mobile-account-drill">
       <MobileAccountHubToolbar mode="back" onPrimaryAction={onBack} primaryAriaLabel={backAriaLabel} />
-      <h2 className="dashboard-chauffeur-main-title" style={{ margin: '0 0 12px', paddingInline: 4 }}>
-        {title}
-      </h2>
+      <h2 className="dashboard-chauffeur-main-title mobile-account-drill__title">{title}</h2>
       <div className="mobile-account-drill__body">{children}</div>
     </div>
   );

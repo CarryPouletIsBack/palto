@@ -13,6 +13,7 @@ import {
   Building2,
   IdCard,
   MapPin,
+  Wallet,
 } from 'lucide-react';
 import type { ReactNode } from 'react';
 import {
@@ -28,6 +29,7 @@ export type ChauffeurMobileAccountDestination =
   | 'ride-settings'
   | 'help'
   | 'palto-account'
+  | 'palto-payment'
   | 'documents'
   | 'preferences'
   | 'organization'
@@ -70,6 +72,12 @@ export default function ChauffeurMobileAccountHub({
       label: isEn ? 'Personal information' : 'Informations personnelles',
       icon: <IdCard size={18} />,
       onClick: () => onOpen('palto-account'),
+    },
+    {
+      id: 'payment',
+      label: isEn ? 'Payment' : 'Paiement',
+      icon: <Wallet size={18} />,
+      onClick: () => onOpen('palto-payment'),
     },
     {
       id: 'documents',
