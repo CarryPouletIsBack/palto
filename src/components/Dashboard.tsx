@@ -2896,7 +2896,7 @@ const Dashboard = ({
                                 <span>Client</span>
                                 <strong>{overviewNextCourse.client}</strong>
                               </div>
-                              <div className="dashboard-metric-row">
+                              <div className="dashboard-metric-row dashboard-metric-row--trajet">
                                 <span>Trajet</span>
                                 <strong>{overviewNextCourse.depart} → {overviewNextCourse.arrivee}</strong>
                               </div>
