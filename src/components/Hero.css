@@ -1540,6 +1540,11 @@ body.accueil-page .hero-columns-wrap {
     min-height: 0;
   }
 
+  .hero-accueil-root .beta-test-banner--bottom {
+    align-self: stretch;
+    margin-top: 0;
+  }
+
   /* Footer accueil : bandeau pleine largeur ; le texte reste lisible dans .home-footer__inner */
   .hero-accueil-root .home-footer {
     padding-left: env(safe-area-inset-left, 0px);

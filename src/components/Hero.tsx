@@ -4,6 +4,7 @@ import { trackEvent } from '../services/googleAnalyticsTracking'
 import { DashboardHomeTopbar } from './DashboardHomeTopbar'
 import { DashboardHomeRidesBanner } from './DashboardHomeRidesBanner'
 import { HomeFooter } from './HomeFooter'
+import BetaTestBanner from './BetaTestBanner'
 import './Dashboard.css'
 import './Dashboard.app-theme.css'
 import './Hero.css'
@@ -387,6 +388,7 @@ const Hero = ({
           </div>
         </div>
         <HomeFooter onPageChange={onPageChange} />
+        <BetaTestBanner placement="bottom" />
       </div>
     </div>
   )

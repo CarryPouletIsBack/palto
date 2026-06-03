@@ -99,6 +99,7 @@ import {
   type ClientSavedPaymentMethod,
 } from '../constants/clientPaymentMethodsStorage';
 import { DEFAULT_HERO_DEPARTMENT_ID } from '../data/heroDepartments';
+import { PLACEHOLDER_LOGO } from '../constants/imagePlaceholders';
 import { cashOnlyPaymentsEnabled, stripeCheckoutEnabled, stripePublishableKey } from '../constants/featureFlags';
 import PaltoStripeSetupForm from './PaltoStripeSetupForm';
 import PaltoStripePaymentForm from './PaltoStripePaymentForm';
@@ -2168,10 +2169,17 @@ export default function ClientCompteDashboard({ onBack, onOpenClientLiveMeet }: 
                 <div className="dashboard-home-topbar-start">
                   <button
                     type="button"
-                    className="dashboard-client-main-title"
+                    className={`dashboard-client-main-title${isMobileViewport && activeNav === 'overview' ? ' dashboard-client-main-title--brand-icon' : ''}`}
                     onClick={handleBackSite}
+                    aria-label={mainSectionTitle}
                   >
-                    {mainSectionTitle}
+                    {isMobileViewport && activeNav === 'overview' ? (
+                      <span className="dashboard-client-main-title__icon" aria-hidden>
+                        <img src={PLACEHOLDER_LOGO} alt="" />
+                      </span>
+                    ) : (
+                      mainSectionTitle
+                    )}
                   </button>
                 </div>
                 <div className="dashboard-topbar-right" ref={accountMenuRef}>

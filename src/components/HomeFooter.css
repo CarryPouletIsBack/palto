@@ -1,4 +1,5 @@
-body.accueil-page .home-footer {
+body.accueil-page .home-footer,
+body.accueil-page .beta-test-banner--bottom {
   pointer-events: auto;
 }
 

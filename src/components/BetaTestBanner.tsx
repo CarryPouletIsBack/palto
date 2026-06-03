@@ -10,6 +10,8 @@ type BetaTestBannerProps = {
 }
 
 export default function BetaTestBanner({ placement = 'top', inPageFlow = false }: BetaTestBannerProps) {
+  const isBottom = placement === 'bottom'
+  const showClose = !isBottom
   const apiBase = apiBaseUrl()
   const bannerRef = useRef<HTMLDivElement | null>(null)
   const [dismissed, setDismissed] = useState(false)
@@ -20,12 +22,13 @@ export default function BetaTestBanner({ placement = 'top', inPageFlow = false }
   const [feedbackStatus, setFeedbackStatus] = useState<string | null>(null)
 
   useEffect(() => {
+    if (isBottom) return
     try {
       setDismissed(localStorage.getItem(BETA_BANNER_DISMISSED_KEY) === '1')
     } catch {
       setDismissed(false)
     }
-  }, [])
+  }, [isBottom])
 
   useEffect(() => {
     if (placement !== 'top' || inPageFlow) return
@@ -54,13 +57,13 @@ export default function BetaTestBanner({ placement = 'top', inPageFlow = false }
     }
   }, [dismissed, placement, inPageFlow])
 
-  if (dismissed) return null
+  if (!isBottom && dismissed) return null
 
   return (
     <>
       <div
         ref={bannerRef}
-        className={`beta-test-banner${placement === 'bottom' || inPageFlow ? ' beta-test-banner--inline' : ''}`}
+        className={`beta-test-banner${isBottom ? ' beta-test-banner--bottom' : ''}${isBottom || inPageFlow ? ' beta-test-banner--inline' : ''}`}
         role="region"
         aria-label="Information beta test Palto"
       >
@@ -76,21 +79,23 @@ export default function BetaTestBanner({ placement = 'top', inPageFlow = false }
             En savoir plus
           </button>
         </div>
-        <button
-          type="button"
-          className="beta-test-banner__close"
-          aria-label="Fermer le bandeau"
-          onClick={() => {
-            setDismissed(true)
-            try {
-              localStorage.setItem(BETA_BANNER_DISMISSED_KEY, '1')
-            } catch {
-              /* ignore */
-            }
-          }}
-        >
-          ×
-        </button>
+        {showClose ? (
+          <button
+            type="button"
+            className="beta-test-banner__close"
+            aria-label="Fermer le bandeau"
+            onClick={() => {
+              setDismissed(true)
+              try {
+                localStorage.setItem(BETA_BANNER_DISMISSED_KEY, '1')
+              } catch {
+                /* ignore */
+              }
+            }}
+          >
+            ×
+          </button>
+        ) : null}
       </div>
 
       {modalOpen ? (

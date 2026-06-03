@@ -176,6 +176,39 @@ html[data-app-theme='dark'] .dashboard-container--client-compte .dashboard-avata
   padding: 0;
 }
 
+/* Compte client mobile : icône app (favicon) à la place du libellé « Palto » */
+.dashboard-container--client-compte .dashboard-client-main-title--brand-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+  min-width: 0;
+  padding: 2px 0;
+}
+
+.dashboard-container--client-compte .dashboard-client-main-title__icon {
+  position: relative;
+  display: block;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  overflow: hidden;
+  flex-shrink: 0;
+  box-shadow: 0 0 0 2px var(--search-a20, rgba(15, 23, 42, 0.12));
+  background: var(--header-logo-face, #f8fafc);
+}
+
+.dashboard-container--client-compte .dashboard-client-main-title__icon img {
+  position: absolute;
+  top: 4%;
+  left: 9%;
+  width: 50%;
+  height: 50%;
+  object-fit: contain;
+  object-position: center;
+  display: block;
+}
+
 .dashboard-container--home-accueil .dashboard-topbar {
   z-index: 50;
   flex-shrink: 0;

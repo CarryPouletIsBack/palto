@@ -197,6 +197,14 @@
   margin-top: 0;
 }
 
+.beta-test-banner--bottom {
+  flex-shrink: 0;
+  width: 100%;
+  justify-content: center;
+  border-bottom: none;
+  border-top: 1px solid var(--app-border-medium, rgba(255, 255, 255, 0.14));
+}
+
 .beta-test-banner__content {
   display: flex;
   align-items: center;
