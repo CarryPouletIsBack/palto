@@ -144,12 +144,38 @@
   }
 }
 
-.beta-test-banner {
-  position: fixed;
+.app-site-chrome {
+  flex: 0 0 auto;
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  position: sticky;
   top: 0;
-  left: 0;
-  right: 0;
   z-index: 10050;
+}
+
+.app-site-chrome .header {
+  position: relative;
+  top: auto;
+  left: auto;
+  right: auto;
+  z-index: auto;
+}
+
+.site-chrome-stack {
+  flex: 0 0 auto;
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  min-width: 0;
+}
+
+.beta-test-banner {
+  position: relative;
+  top: auto;
+  left: auto;
+  right: auto;
+  z-index: auto;
   display: flex;
   align-items: center;
   justify-content: space-between;

@@ -18,6 +18,7 @@ import Menu from './components/Menu'
 import { DestinationSpotlight } from './components/DestinationSpotlight'
 import { GeolocationPromptBanner } from './components/GeolocationPromptBanner'
 import BetaTestBanner from './components/BetaTestBanner'
+import { usesEmbeddedBetaBanner } from './constants/siteChrome'
 import { getDestinationById, type PopularDestination } from './data/popularDestinations'
 import { AppToaster } from './components/AppToaster'
 import { isAuthenticated, isClientAuthenticated, type AccountRole } from './services/authService'
@@ -999,16 +1000,30 @@ function App() {
       <AnalyticsGuard />
       <GeolocationPromptBanner />
       <AppToaster />
-      {currentPage !== 'dashboard' && currentPage !== 'dashboard-navigation' ? <BetaTestBanner /> : null}
-      {currentPage !== 'dashboard' &&
-        currentPage !== 'dashboard-navigation' &&
-        currentPage !== 'client-compte' &&
-        currentPage !== 'client-meet-driver' &&
-        currentPage !== 'accueil' &&
-        currentPage !== 'accueil-chauffeur' &&
-        !currentPage.startsWith('destination-') ? (
-        <Header onContactClick={handleContactClick} onLogoClick={handleLogoClick} />
-      ) : null}
+      {(() => {
+        const showTopBeta =
+          currentPage !== 'dashboard' &&
+          currentPage !== 'dashboard-navigation' &&
+          !usesEmbeddedBetaBanner(currentPage)
+        const showHeader =
+          currentPage !== 'dashboard' &&
+          currentPage !== 'dashboard-navigation' &&
+          currentPage !== 'client-compte' &&
+          currentPage !== 'client-meet-driver' &&
+          currentPage !== 'accueil' &&
+          currentPage !== 'accueil-chauffeur' &&
+          currentPage !== 'project-Go' &&
+          !currentPage.startsWith('destination-')
+        if (!showTopBeta && !showHeader) return null
+        return (
+          <div className="app-site-chrome">
+            {showTopBeta ? <BetaTestBanner placement="top" /> : null}
+            {showHeader ? (
+              <Header onContactClick={handleContactClick} onLogoClick={handleLogoClick} />
+            ) : null}
+          </div>
+        )
+      })()}
       {currentPage === 'client-meet-driver' ? (
         <ClientMeetDriverPage
           onBack={() => {

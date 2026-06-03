@@ -85,6 +85,7 @@ import {
   PALTO_CLIENT_SESSION_CHANGED_EVENT,
 } from '../services/authService';
 import { DashboardHomeTopbar } from './DashboardHomeTopbar';
+import { SiteChromeStack } from './SiteChromeStack';
 import { DashboardHomeRidesBanner } from './DashboardHomeRidesBanner';
 import { useClientHomeTopbarRides } from '../hooks/useClientHomeTopbarRides';
 import { simplifyAddressDisplay as simplifyRideAddress } from '../services/addressDisplay';
@@ -2871,9 +2872,21 @@ const SingleProjectNew: FC<SingleProjectProps> = ({
         <div className="main-single-project">
         {isGoProjectPage ? (
         <>
+        {isGoProjectPage && !isDesktopViewport ? (
+          <div className="single-project-go-topbar-wrap single-project-go-topbar-wrap--mobile-chrome">
+            <SiteChromeStack>
+              <DashboardHomeTopbar
+                onOpenClientAccountAuth={onOpenClientAccountAuth}
+                onOpenClientAccount={onOpenClientAccount}
+                onNavigateHome={onNavigateHome}
+              />
+            </SiteChromeStack>
+          </div>
+        ) : null}
         {isDesktopViewport ? (
         <div className="dashboard-container dashboard-container--home-accueil single-project-go-topbar-wrap">
           <div className="dashboard-main single-project-go-topbar-wrap__main">
+            <SiteChromeStack>
             <DashboardHomeTopbar
               onOpenClientAccountAuth={onOpenClientAccountAuth}
               onOpenClientAccount={onOpenClientAccount}
@@ -2885,6 +2898,7 @@ const SingleProjectNew: FC<SingleProjectProps> = ({
               onOpenClientLiveMeet={onOpenClientLiveMeet}
               analyticsSuffix="go"
             />
+            </SiteChromeStack>
           </div>
         </div>
         ) : null}

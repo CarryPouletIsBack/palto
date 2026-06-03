@@ -5,9 +5,11 @@ const BETA_BANNER_DISMISSED_KEY = 'palto_beta_banner_dismissed_v1'
 
 type BetaTestBannerProps = {
   placement?: 'top' | 'bottom'
+  /** Bandeau empilé avec la topbar (pas de offset global --beta-banner-height). */
+  inPageFlow?: boolean
 }
 
-export default function BetaTestBanner({ placement = 'top' }: BetaTestBannerProps) {
+export default function BetaTestBanner({ placement = 'top', inPageFlow = false }: BetaTestBannerProps) {
   const apiBase = apiBaseUrl()
   const bannerRef = useRef<HTMLDivElement | null>(null)
   const [dismissed, setDismissed] = useState(false)
@@ -26,7 +28,7 @@ export default function BetaTestBanner({ placement = 'top' }: BetaTestBannerProp
   }, [])
 
   useEffect(() => {
-    if (placement !== 'top') return
+    if (placement !== 'top' || inPageFlow) return
     if (typeof document === 'undefined') return
     const root = document.documentElement
     const applyHeight = () => {
@@ -50,7 +52,7 @@ export default function BetaTestBanner({ placement = 'top' }: BetaTestBannerProp
       window.removeEventListener('resize', applyHeight)
       root.style.setProperty('--beta-banner-height', '0px')
     }
-  }, [dismissed, placement])
+  }, [dismissed, placement, inPageFlow])
 
   if (dismissed) return null
 
@@ -58,7 +60,7 @@ export default function BetaTestBanner({ placement = 'top' }: BetaTestBannerProp
     <>
       <div
         ref={bannerRef}
-        className={`beta-test-banner${placement === 'bottom' ? ' beta-test-banner--inline' : ''}`}
+        className={`beta-test-banner${placement === 'bottom' || inPageFlow ? ' beta-test-banner--inline' : ''}`}
         role="region"
         aria-label="Information beta test Palto"
       >

@@ -29,6 +29,7 @@ import {
 import { toast } from 'sonner';
 import { useLanguage } from '../contexts/LanguageContext';
 import LanguageSwitcher from './LanguageSwitcher';
+import { SiteChromeStack } from './SiteChromeStack';
 import { trackEvent } from '../services/googleAnalyticsTracking';
 import { fileToCompressedProfilePhotoDataUrl } from '../utils/clientProfilePhotoDataUrl';
 import { useClientHomeTopbarRides } from '../hooks/useClientHomeTopbarRides';
@@ -2159,6 +2160,7 @@ export default function ClientCompteDashboard({ onBack, onOpenClientLiveMeet }: 
           </aside>
 
           <div className="dashboard-main">
+            <SiteChromeStack>
             <header
               className="dashboard-topbar dashboard-topbar--home-client"
             >
@@ -2285,6 +2287,7 @@ export default function ClientCompteDashboard({ onBack, onOpenClientLiveMeet }: 
                 </div>
               </div>
             </header>
+            </SiteChromeStack>
 
             {activeNav === 'overview' && (
             <div className="dashboard-content">

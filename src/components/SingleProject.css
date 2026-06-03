@@ -6691,6 +6691,18 @@ html[data-app-theme='dark'] .palto-ride-timing-expand__option:hover {
   padding-bottom: 8px !important;
 }
 
+.single-project-page .single-project-go-topbar-wrap .site-chrome-stack,
+.single-project-page .single-project-go-topbar-wrap--mobile-chrome {
+  width: 100%;
+  max-width: 100%;
+  align-self: stretch;
+}
+
+.single-project-page .single-project-go-topbar-wrap--mobile-chrome {
+  flex: 0 0 auto;
+  z-index: 41;
+}
+
 .single-project-page .single-project-go-topbar-wrap .dashboard-topbar.dashboard-topbar--home-client {
   width: 100%;
   max-width: 100%;

@@ -2,6 +2,7 @@ import { useCallback } from 'react'
 import { useLanguage } from '../contexts/LanguageContext'
 import { trackEvent } from '../services/googleAnalyticsTracking'
 import { DashboardHomeTopbar } from './DashboardHomeTopbar'
+import { SiteChromeStack } from './SiteChromeStack'
 import { HomeFooter } from './HomeFooter'
 import './Dashboard.css'
 import './Dashboard.app-theme.css'
@@ -62,11 +63,13 @@ export function HeroChauffeur({
       <div className="main-accueil">
         <div className="dashboard-container dashboard-container--home-accueil dashboard-container--home-chauffeur">
           <div className="dashboard-main">
+            <SiteChromeStack>
             <DashboardHomeTopbar
               onOpenClientAccountAuth={onOpenChauffeurAuth ?? onOpenClientAccountAuth}
               onOpenClientAccount={onOpenClientAccount}
               onNavigateHome={onNavigateHome}
             />
+            </SiteChromeStack>
 
             <div className="hero-chauffeur-landing">
               <div className="hero-chauffeur-landing__inner">

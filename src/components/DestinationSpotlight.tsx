@@ -3,6 +3,7 @@ import { motion, useMotionValue, animate } from 'framer-motion'
 import { useLanguage } from '../contexts/LanguageContext'
 import { trackEvent } from '../services/googleAnalyticsTracking'
 import { DashboardHomeTopbar } from './DashboardHomeTopbar'
+import { SiteChromeStack } from './SiteChromeStack'
 import { DashboardHomeRidesBanner } from './DashboardHomeRidesBanner'
 import { useClientHomeTopbarRides } from '../hooks/useClientHomeTopbarRides'
 import { getDestinationById, type FlightRouteBannerData, type PopularDestination } from '../data/popularDestinations'
@@ -255,11 +256,13 @@ export function DestinationSpotlight({
         <div className="dashboard-container dashboard-container--home-accueil single-project-go-topbar-wrap">
           {isDesktopViewport ? (
             <div className="dashboard-main single-project-go-topbar-wrap__main">
+              <SiteChromeStack>
               <DashboardHomeTopbar
                 onOpenClientAccountAuth={onOpenClientAccountAuth}
                 onOpenClientAccount={onOpenClientAccount}
                 onNavigateHome={onNavigateHome}
               />
+              </SiteChromeStack>
               <DashboardHomeRidesBanner
                 clientUpcomingRide={clientUpcomingRide}
                 clientLiveMeetActive={clientLiveMeetActive}
@@ -269,11 +272,13 @@ export function DestinationSpotlight({
             </div>
           ) : (
             <>
+              <SiteChromeStack>
               <DashboardHomeTopbar
                 onOpenClientAccountAuth={onOpenClientAccountAuth}
                 onOpenClientAccount={onOpenClientAccount}
                 onNavigateHome={onNavigateHome}
               />
+              </SiteChromeStack>
               <DashboardHomeRidesBanner
                 clientUpcomingRide={clientUpcomingRide}
                 clientLiveMeetActive={clientLiveMeetActive}
