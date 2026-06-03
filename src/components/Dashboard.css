@@ -5054,21 +5054,26 @@ button.dashboard-org-sidebar-brand--home:focus-visible {
     flex-shrink: 0;
   }
 
-  .dashboard-container--chauffeur .dashboard-topbar--chauffeur-mobile-toolbar {
-    padding: max(10px, env(safe-area-inset-top, 0px)) max(12px, env(safe-area-inset-right, 0px)) 10px
-      max(12px, env(safe-area-inset-left, 0px));
-    box-sizing: border-box;
-    min-height: 48px;
-  }
-
   .dashboard-container--chauffeur .dashboard-main--chauffeur-mobile-floating-account {
     padding-top: 0;
   }
 
   .dashboard-container--chauffeur .dashboard-mobile-stats-switch {
     flex-shrink: 0;
-    padding: 4px max(20px, env(safe-area-inset-left, 0px)) 8px max(20px, env(safe-area-inset-right, 0px));
+    position: relative;
+    z-index: 50;
+    isolation: isolate;
+    pointer-events: auto;
+    padding: 4px max(20px, env(safe-area-inset-left, 0px)) 10px max(20px, env(safe-area-inset-right, 0px));
     margin: 0;
+  }
+
+  .dashboard-container--chauffeur .dashboard-mobile-stats-switch__btn {
+    min-height: 44px;
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+    border: 1px solid #dbe3ee !important;
+    cursor: pointer;
   }
 
   .dashboard-container--chauffeur .dashboard-content {
@@ -5098,28 +5103,36 @@ button.dashboard-org-sidebar-brand--home:focus-visible {
     overflow: hidden;
   }
 
-  /* Pas de bandeau header : seul le bouton compte reste, fixe (style proche iOS / ClickUp) */
+  /* Topbar mobile : hauteur réelle + pas de calque invisible qui bloque les onglets Stats */
   .dashboard-container--chauffeur .dashboard-topbar--chauffeur-mobile-toolbar {
     position: relative;
-    z-index: 22100;
-    height: 0;
-    min-height: 0;
-    padding: 0;
+    z-index: 40;
+    height: auto;
+    min-height: 48px;
+    padding: max(10px, env(safe-area-inset-top, 0px)) max(12px, env(safe-area-inset-right, 0px)) 10px
+      max(12px, env(safe-area-inset-left, 0px));
     margin: 0;
     border: none;
     background: transparent;
     box-shadow: none;
     overflow: visible;
+    pointer-events: none;
+    box-sizing: border-box;
+  }
+
+  .dashboard-container--chauffeur .dashboard-topbar--chauffeur-mobile-toolbar .dashboard-topbar-right,
+  .dashboard-container--chauffeur .dashboard-topbar--chauffeur-mobile-toolbar .dashboard-chauffeur-mobile-topbar-actions,
+  .dashboard-container--chauffeur .dashboard-topbar--chauffeur-mobile-toolbar .dashboard-chauffeur-mobile-topbar-actions .topbar-icon-btn {
+    pointer-events: auto;
   }
 
   .dashboard-container--chauffeur .dashboard-topbar--chauffeur-mobile-toolbar .dashboard-topbar-right {
-    position: fixed;
-    top: max(10px, env(safe-area-inset-top, 0px));
-    right: max(16px, env(safe-area-inset-right, 0px));
-    z-index: 22100;
+    position: static;
+    z-index: auto;
     min-width: 0;
     width: auto;
-    max-width: min(320px, calc(100vw - 24px));
+    max-width: none;
+    margin-left: auto;
     justify-content: flex-end;
   }
 

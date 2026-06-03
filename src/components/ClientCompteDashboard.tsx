@@ -9,6 +9,7 @@ import {
   PanelLeft,
   Menu,
   ArrowLeft,
+  ChevronLeft,
   House,
   Briefcase,
   Plane,
@@ -101,7 +102,6 @@ import {
   type ClientSavedPaymentMethod,
 } from '../constants/clientPaymentMethodsStorage';
 import { DEFAULT_HERO_DEPARTMENT_ID } from '../data/heroDepartments';
-import { PLACEHOLDER_LOGO } from '../constants/imagePlaceholders';
 import { cashOnlyPaymentsEnabled, stripeCheckoutEnabled, stripePublishableKey } from '../constants/featureFlags';
 import PaltoStripeSetupForm from './PaltoStripeSetupForm';
 import PaltoStripePaymentForm from './PaltoStripePaymentForm';
@@ -646,11 +646,7 @@ type AccountEditModalState = {
   }>;
 };
 
-function ClientAccountTopbarBackButton(props: {
-  onClick: () => void;
-  label: string;
-  ariaLabel: string;
-}) {
+function ClientAccountTopbarBackButton(props: { onClick: () => void; ariaLabel: string }) {
   return (
     <button
       type="button"
@@ -658,8 +654,7 @@ function ClientAccountTopbarBackButton(props: {
       onClick={props.onClick}
       aria-label={props.ariaLabel}
     >
-      <ArrowLeft size={18} aria-hidden />
-      <span>{props.label}</span>
+      <ChevronLeft size={20} strokeWidth={2.25} aria-hidden />
     </button>
   );
 }
@@ -2004,29 +1999,6 @@ export default function ClientCompteDashboard({ onBack, onOpenClientLiveMeet }: 
     [goNav]
   );
 
-  const showClientTopbarBack = activeNav !== 'overview';
-
-  const mainSectionTitle =
-    activeNav === 'overview'
-      ? 'Palto'
-      : activeNav === 'account'
-        ? 'Gerer le compte'
-      : activeNav === 'personal'
-        ? t('clientAccount.navPersonalInfo')
-        : activeNav === 'courses'
-          ? t('clientAccount.navCourses')
-          : activeNav === 'places'
-            ? t('clientAccount.navPlaces')
-            : activeNav === 'wallet'
-              ? t('clientAccount.navWallet')
-              : activeNav === 'security'
-                ? t('clientAccount.navSecurity')
-                : activeNav === 'privacy'
-                  ? t('clientAccount.navPrivacy')
-                  : activeNav === 'settings'
-                    ? t('clientAccount.navSettings')
-                    : t('clientAccount.navHelp');
-
   return (
     <div className="page active">
       <div className="main-accueil">
@@ -2189,27 +2161,16 @@ export default function ClientCompteDashboard({ onBack, onOpenClientLiveMeet }: 
             >
               <div className="dashboard-home-topbar-row">
                 <div className="dashboard-home-topbar-start">
-                  {showClientTopbarBack ? (
+                  {activeNav === 'overview' ? (
                     <ClientAccountTopbarBackButton
-                      onClick={() => goNav('overview')}
-                      label={t('clientAccount.navBackOverview')}
-                      ariaLabel={t('clientAccount.navBackOverviewAria')}
+                      onClick={handleBackSite}
+                      ariaLabel={t('clientAccount.navBackSite')}
                     />
                   ) : (
-                    <button
-                      type="button"
-                      className={`dashboard-client-main-title${isMobileViewport ? ' dashboard-client-main-title--brand-icon' : ''}`}
-                      onClick={handleBackSite}
-                      aria-label={mainSectionTitle}
-                    >
-                      {isMobileViewport ? (
-                        <span className="dashboard-client-main-title__icon" aria-hidden>
-                          <img src={PLACEHOLDER_LOGO} alt="" />
-                        </span>
-                      ) : (
-                        mainSectionTitle
-                      )}
-                    </button>
+                    <ClientAccountTopbarBackButton
+                      onClick={() => goNav('overview')}
+                      ariaLabel={t('clientAccount.navBackOverviewAria')}
+                    />
                   )}
                 </div>
                 <div className="dashboard-topbar-right" ref={accountMenuRef}>
@@ -2226,7 +2187,7 @@ export default function ClientCompteDashboard({ onBack, onOpenClientLiveMeet }: 
                         }}
                         aria-label={t('clientAccount.bookRide')}
                       >
-                        <Plus size={16} aria-hidden />
+                        <Plus size={18} strokeWidth={2.25} aria-hidden />
                       </button>
                       {createRideMenuOpen ? (
                         <div className="client-compte-account-menu client-compte-account-menu--add" role="menu" aria-label="Commander">
