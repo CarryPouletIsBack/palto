@@ -1,5 +1,4 @@
 import type { SupabaseClient } from '@supabase/supabase-js'
-import { CHAUFFEUR_PRESENCE_VISIBILITY_MS } from './chauffeurPresence.js'
 import { sanitizeChauffeurProfileSnapshot } from './chauffeurProfileSanitize.js'
 import {
   estimateChauffeurFareTtc,
@@ -9,33 +8,13 @@ import {
 } from './chauffeurFareEstimate.js'
 import { haversineKm, type GeoPoint } from './haversineKm.js'
 import { vehicleTypeLabel } from './vehicleTypeLabel.js'
-
-export type NearbyDriverApiItem = {
-  id: string
-  name: string
-  moto: string
-  distance: string
-  price: string
-  longitude: number
-  latitude: number
-  distanceKm: number
-  /** false = pas de GPS connu (affiché quand même dans la liste inscrits). */
-  positionKnown?: boolean
-  profilePhotoUrl?: string
-  petFriendly: boolean
-  luggageAssistance: boolean
-  insulatedBag: boolean
-  deliveryEquipped: boolean
-  ridePricing?: RidePricingFields
-}
+import type { NearbyDriverApiItem } from './nearbyDriversFromPresence.js'
 
 function profilePhotoFromSnapshot(raw: unknown): string | undefined {
   const snap = sanitizeChauffeurProfileSnapshot(raw ?? {})
   const url = snap.profilePhotoUrl?.trim()
   return url || undefined
 }
-
-const PRESENCE_MAX_AGE_MS = CHAUFFEUR_PRESENCE_VISIBILITY_MS
 
 function displayName(fullName: string | null | undefined, email: string | null | undefined): string {
   const n = (fullName ?? '').trim()
@@ -63,34 +42,40 @@ function indicativePriceEur(
   return amount > 0 ? amount : Math.max(6, Math.round(8 + distanceToPickupKm * 1.15))
 }
 
-export async function listNearbyDriversFromPresence(
+const NO_POSITION_DISTANCE_KM = 999_999
+
+/**
+ * Tous les chauffeurs inscrits (`app_accounts`), triés du plus proche au plus loin du pickup.
+ * Pas de filtre « présence récente » : position issue de `chauffeur_presence` si dispo (même ancienne).
+ */
+export async function listRegisteredChauffeursForBooking(
   supabase: SupabaseClient,
   origin: GeoPoint,
   radiusKm: number,
   limit: number
 ): Promise<NearbyDriverApiItem[]> {
-  const cutoff = new Date(Date.now() - PRESENCE_MAX_AGE_MS).toISOString()
-
-  const { data: presenceRows, error: presenceErr } = await supabase
-    .from('chauffeur_presence')
-    .select('account_id, lng, lat, updated_at')
-    .eq('is_available', true)
-    .gte('updated_at', cutoff)
-
-  if (presenceErr || !presenceRows?.length) return []
-
-  const accountIds = presenceRows.map((r) => String(r.account_id))
   const { data: accounts, error: accErr } = await supabase
     .from('app_accounts')
     .select(
       'id, email, full_name, vehicle_type, pet_friendly, luggage_assistance, insulated_bag, delivery_equipped'
     )
     .eq('role', 'chauffeur')
-    .in('id', accountIds)
 
   if (accErr || !accounts?.length) return []
 
-  const accountById = new Map(accounts.map((a) => [String(a.id), a]))
+  const accountIds = accounts.map((a) => String(a.id))
+  const { data: presenceRows } = await supabase
+    .from('chauffeur_presence')
+    .select('account_id, lng, lat')
+    .in('account_id', accountIds)
+
+  const presenceByAccountId = new Map<string, { lng: number; lat: number }>()
+  for (const row of presenceRows ?? []) {
+    const lng = Number(row.lng)
+    const lat = Number(row.lat)
+    if (!Number.isFinite(lng) || !Number.isFinite(lat)) continue
+    presenceByAccountId.set(String(row.account_id), { lng, lat })
+  }
 
   const { data: profileRows } = await supabase
     .from('chauffeur_profile_data')
@@ -101,37 +86,39 @@ export async function listNearbyDriversFromPresence(
   const ridePricingByAccountId = new Map<string, RidePricingFields>()
   for (const row of profileRows ?? []) {
     const id = String(row.account_id)
-    const snap = row.account_snapshot
-    const photo = profilePhotoFromSnapshot(snap)
+    const photo = profilePhotoFromSnapshot(row.account_snapshot)
     if (photo) photoByAccountId.set(id, photo)
-    const pricing = parseRidePricingFromSnapshot(snap)
+    const pricing = parseRidePricingFromSnapshot(row.account_snapshot)
     if (pricing) ridePricingByAccountId.set(id, pricing)
   }
 
-  const ranked = presenceRows
-    .map((row) => {
-      const lng = Number(row.lng)
-      const lat = Number(row.lat)
-      if (!Number.isFinite(lng) || !Number.isFinite(lat)) return null
-      const point = { lng, lat }
-      const distanceKm = haversineKm(origin, point)
-      if (distanceKm > radiusKm) return null
-      const acc = accountById.get(String(row.account_id))
-      if (!acc) return null
-      const minutes = Math.max(2, Math.round((distanceKm / 22) * 60))
+  const ranked = accounts
+    .map((acc) => {
+      const id = String(acc.id)
+      const presence = presenceByAccountId.get(id)
+      const hasPosition = Boolean(presence)
+      const point = presence ?? origin
+      const distanceKm = hasPosition ? haversineKm(origin, point) : NO_POSITION_DISTANCE_KM
+      if (hasPosition && distanceKm > radiusKm) return null
+
       const moto = vehicleTypeLabel(acc.vehicle_type as string | null)
-      const ridePricing = ridePricingByAccountId.get(String(acc.id)) ?? null
-      const priceEur = indicativePriceEur(distanceKm, moto, ridePricing)
-      const profilePhotoUrl = photoByAccountId.get(String(acc.id))
+      const ridePricing = ridePricingByAccountId.get(id) ?? null
+      const priceEur = indicativePriceEur(hasPosition ? distanceKm : 0, moto, ridePricing)
+      const minutes = hasPosition ? Math.max(2, Math.round((distanceKm / 22) * 60)) : null
+      const profilePhotoUrl = photoByAccountId.get(id)
+
       return {
-        id: String(acc.id),
+        id,
         name: displayName(acc.full_name as string | null, acc.email as string | null),
         moto,
-        distance: `${distanceKm.toFixed(1).replace('.', ',')} km · ~${minutes} min`,
+        distance: hasPosition
+          ? `${distanceKm.toFixed(1).replace('.', ',')} km · ~${minutes} min`
+          : 'Inscrit sur Palto',
         price: formatFareEurDisplay(priceEur),
-        longitude: lng,
-        latitude: lat,
+        longitude: point.lng,
+        latitude: point.lat,
         distanceKm,
+        positionKnown: hasPosition,
         ...(profilePhotoUrl ? { profilePhotoUrl } : {}),
         ...(ridePricing ? { ridePricing } : {}),
         petFriendly: acc.pet_friendly === true,

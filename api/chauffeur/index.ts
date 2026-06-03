@@ -159,7 +159,6 @@ function emptyComplianceSnapshot(): Record<string, boolean> {
 /** Course visible dans la liste / actions (demandes à accepter + courses du chauffeur). */
 function visibleForDriver(row: CourseRow, driverKey: string): boolean {
   if (row.status === 'pending') {
-    if (row.booking_kind === 'scheduled') return true
     return sameDriverExternalKey(row.requested_driver_external_key, driverKey)
   }
   if (row.status === 'accepted' || row.status === 'in_progress') {
@@ -230,7 +229,10 @@ async function handleRidesActionPost(
   const nowIso = new Date().toISOString()
   if (action === 'accept') {
     if (row.status !== 'pending') return res.status(409).json({ error: 'Course deja traitee' })
-    if (row.booking_kind === 'instant' && !sameDriverExternalKey(row.requested_driver_external_key, driverKey)) {
+    if (
+      row.requested_driver_external_key?.trim() &&
+      !sameDriverExternalKey(row.requested_driver_external_key, driverKey)
+    ) {
       return res.status(403).json({ error: 'Cette course est reservee a un autre chauffeur' })
     }
     const { data: updated, error: upErr } = await supabase

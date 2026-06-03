@@ -41,6 +41,7 @@ function normalizeNearbyDriver(raw: unknown): NearbyDriver {
         ? d.profilePhotoUrl.trim()
         : undefined,
     ridePricing: normalizeRidePricing(d.ridePricing),
+    positionKnown: d.positionKnown !== false,
   }
 }
 

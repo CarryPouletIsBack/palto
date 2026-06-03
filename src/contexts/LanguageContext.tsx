@@ -287,7 +287,8 @@ const TRANSLATIONS: Record<Language, Record<string, unknown>> = {
       sectorsTitle: 'Sur l’île',
       chooseRideTitle: 'Choisissez une course',
       chooseRideSubtitle: 'Temps estimé et distance pour chaque chauffeur.',
-      chooseRideRadiusLead: 'Chauffeurs disponibles dans un rayon de {km} km autour de votre départ.',
+      chooseRideRadiusLead:
+        'Chauffeurs inscrits sur Palto, du plus proche au plus éloigné (rayon {km} km si position connue).',
       editRideQuery: 'Modifier le trajet',
       goPreviousStep: 'Précédent',
       chooseDriverCta: 'Choisir ce chauffeur',
@@ -1095,7 +1096,8 @@ const TRANSLATIONS: Record<Language, Record<string, unknown>> = {
       sectorsTitle: 'On the island',
       chooseRideTitle: 'Choose a ride',
       chooseRideSubtitle: 'Estimated time and distance for each driver.',
-      chooseRideRadiusLead: 'Drivers available within {km} km of your pickup.',
+      chooseRideRadiusLead:
+        'Registered Palto drivers, nearest first (within {km} km when location is known).',
       editRideQuery: 'Edit trip',
       goPreviousStep: 'Back',
       chooseDriverCta: 'Choose this driver',

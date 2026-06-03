@@ -409,7 +409,7 @@ const SingleProjectNew: FC<SingleProjectProps> = ({
       void getNearbyDrivers({
         origin: pickupResolvedPoint,
         radiusKm: PICKUP_DRIVER_SEARCH_RADIUS_KM,
-        limit: 9,
+        limit: 40,
       })
         .then((drivers) => {
           if (!cancelled) setAllNearbyDrivers(drivers);
@@ -430,6 +430,7 @@ const SingleProjectNew: FC<SingleProjectProps> = ({
   const pickupFilteredDrivers = useMemo(() => {
     if (!pickupResolvedPoint) return [];
     return allNearbyDrivers.filter((d) => {
+      if (d.positionKnown === false) return true;
       const distKm = haversineDistanceKm(pickupResolvedPoint, {
         latitude: d.latitude,
         longitude: d.longitude,
@@ -476,7 +477,6 @@ const SingleProjectNew: FC<SingleProjectProps> = ({
     return null;
   }, [pickupResolvedPoint, paltoMapSelectedDestination, paltoMapRouteFeature]);
   const showDriversColumn =
-    paltoPickupTiming === 'now' &&
     chauffeursSearchOk &&
     pickupResolvedPoint !== null &&
     paltoMapSelectedDestination !== null;
@@ -833,7 +833,7 @@ const SingleProjectNew: FC<SingleProjectProps> = ({
   const submitScheduledReservation = useCallback(async () => {
     setChauffeursSearchOk(false);
     const ok = await prepareRideBookingEndpoints();
-    if (ok) setIsRecapPopupOpen(true);
+    if (ok) setChauffeursSearchOk(true);
   }, [prepareRideBookingEndpoints]);
 
   const onPrimaryBookingAction = useCallback(() => {
@@ -1799,7 +1799,7 @@ const SingleProjectNew: FC<SingleProjectProps> = ({
     [isMobileGoViewport]
   );
   const handleRecapModalConfirmOrder = useCallback(() => {
-    if (paltoPickupTiming === 'now' && !paltoSelectedDriver) {
+    if (!paltoSelectedDriver) {
       return;
     }
     if (paltoPickupTiming === 'later' && !paltoPickupDateTime.trim()) {
@@ -1818,8 +1818,8 @@ const SingleProjectNew: FC<SingleProjectProps> = ({
     paltoPickupDateTime,
   ]);
   const handleCheckoutConfirm = useCallback(async () => {
-    if (paltoPickupTiming === 'now' && !paltoSelectedDriver) {
-      setCheckoutError('Veuillez selectionner un chauffeur pour une course immediate.');
+    if (!paltoSelectedDriver) {
+      setCheckoutError('Veuillez selectionner un chauffeur.');
       return;
     }
     if (paltoPickupTiming === 'later' && !paltoPickupDateTime.trim()) {
@@ -1893,13 +1893,9 @@ const SingleProjectNew: FC<SingleProjectProps> = ({
         clientEmail: email,
         clientComment: checkoutClientComment.trim() || null,
         requestedDriverExternalKey:
-          bookingKind === 'instant' && selDriver && !isChauffeurAccountUuid(selDriver.id)
-            ? selDriver.id
-            : null,
+          selDriver && !isChauffeurAccountUuid(selDriver.id) ? selDriver.id : null,
         requestedChauffeurAccountId:
-          bookingKind === 'instant' && selDriver && isChauffeurAccountUuid(selDriver.id)
-            ? selDriver.id
-            : null,
+          selDriver && isChauffeurAccountUuid(selDriver.id) ? selDriver.id : null,
         pickupLng: pickupResolvedPoint?.longitude ?? null,
         pickupLat: pickupResolvedPoint?.latitude ?? null,
         dropoffLng: paltoMapSelectedDestination?.longitude ?? null,
@@ -1927,15 +1923,12 @@ const SingleProjectNew: FC<SingleProjectProps> = ({
         return
       }
 
-      const driverLabel =
-        bookingKind === 'instant' && paltoSelectedDriver
-          ? paltoSelectedDriver.name
-          : 'un chauffeur disponible'
+      const driverLabel = paltoSelectedDriver?.name ?? 'chauffeur'
       const stripeWarn = result.stripeSetupWarning?.trim()
       const successMessage = stripeWarn
         ? `${stripeWarn} Ref. ${result.externalCode}. Suivi : ${email}.`
         : bookingKind === 'scheduled'
-          ? `Demande prise en compte (${result.externalCode}). Un chauffeur l'acceptera prochainement. Suivi : ${email}.`
+          ? `Reservation enregistree (${result.externalCode}). Chauffeur : ${driverLabel}. Suivi : ${email}.`
           : `Commande enregistree (${result.externalCode}). Chauffeur : ${driverLabel}. Suivi : ${email}.`
       setCheckoutSuccessMessage(successMessage)
       window.setTimeout(() => {
@@ -3375,22 +3368,12 @@ const SingleProjectNew: FC<SingleProjectProps> = ({
                   <div className="palto-ride-recap__section">
                     <p className="palto-ride-recap-row">
                       <span>Chauffeur selectionne</span>
-                      <strong>
-                        {paltoPickupTiming === 'later'
-                          ? 'A confirmer par un chauffeur'
-                          : paltoSelectedDriver
-                            ? paltoSelectedDriver.name
-                            : 'Aucun'}
-                      </strong>
+                      <strong>{paltoSelectedDriver ? paltoSelectedDriver.name : 'Aucun'}</strong>
                     </p>
                     <p className="palto-ride-recap-row">
                       <span>Vehicule</span>
                       <strong>
-                        {paltoPickupTiming === 'later'
-                          ? '—'
-                          : paltoSelectedDriver
-                            ? paltoSelectedDriver.moto
-                            : '-'}
+                        {paltoSelectedDriver ? paltoSelectedDriver.moto : '—'}
                       </strong>
                     </p>
                   </div>
@@ -3444,10 +3427,7 @@ const SingleProjectNew: FC<SingleProjectProps> = ({
                     variant="primary"
                     type="button"
                     className="palto-ride-search-btn palto-ride-recap-modal__cta"
-                    disabled={
-                      (paltoPickupTiming === 'now' && !paltoSelectedDriver) ||
-                      (paltoPickupTiming === 'later' && !paltoPickupDateTime.trim())
-                    }
+                    disabled={!paltoSelectedDriver || (paltoPickupTiming === 'later' && !paltoPickupDateTime.trim())}
                     onClick={handleRecapModalConfirmOrder}
                   >
                     {paltoPickupTiming === 'later'
@@ -3509,23 +3489,11 @@ const SingleProjectNew: FC<SingleProjectProps> = ({
                     <>
                       <p>
                         <span>{t('search.checkoutDriverLabel')}</span>{' '}
-                        <strong>
-                          {paltoPickupTiming === 'later'
-                            ? t('search.checkoutDriverLater')
-                            : paltoSelectedDriver
-                              ? paltoSelectedDriver.name
-                              : '—'}
-                        </strong>
+                        <strong>{paltoSelectedDriver ? paltoSelectedDriver.name : '—'}</strong>
                       </p>
                       <p>
                         <span>{t('search.checkoutVehicleLabel')}</span>{' '}
-                        <strong>
-                          {paltoPickupTiming === 'later'
-                            ? '—'
-                            : paltoSelectedDriver
-                              ? paltoSelectedDriver.moto
-                              : '—'}
-                        </strong>
+                        <strong>{paltoSelectedDriver ? paltoSelectedDriver.moto : '—'}</strong>
                       </p>
                       {(() => {
                         let driverEur = paltoFareEur ?? NaN
@@ -3577,9 +3545,7 @@ const SingleProjectNew: FC<SingleProjectProps> = ({
                       type="button"
                       className="palto-ride-search-btn palto-ride-recap-modal__cta"
                       disabled={
-                        checkoutSubmitting ||
-                        Boolean(checkoutSuccessMessage) ||
-                        (paltoPickupTiming === 'now' && !paltoSelectedDriver)
+                        checkoutSubmitting || Boolean(checkoutSuccessMessage) || !paltoSelectedDriver
                       }
                       onClick={() => void handleCheckoutConfirm()}
                     >

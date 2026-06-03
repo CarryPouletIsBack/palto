@@ -9,7 +9,7 @@ import {
   type ResolvedDriverMeta,
 } from '../../server/lib/acceptedDriverPayload.js'
 import { getSupabaseAdmin } from '../../server/lib/supabaseAdmin.js'
-import { listNearbyDriversFromPresence } from '../../server/lib/nearbyDriversFromPresence.js'
+import { listRegisteredChauffeursForBooking } from '../../server/lib/registeredChauffeursForBooking.js'
 import { notifyRideStatusChange } from '../../server/lib/rideEmailNotifications.js'
 import {
   applyCancelPaymentOutcome,
@@ -190,7 +190,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       return
     }
     const { lat, lng, radiusKm = 20, limit = 9 } = nearbyParsed.data
-    const drivers = await listNearbyDriversFromPresence(supabase, { lng, lat }, radiusKm, limit)
+    const drivers = await listRegisteredChauffeursForBooking(supabase, { lng, lat }, radiusKm, limit)
     res.status(200).json({ drivers })
     return
   }

@@ -11,9 +11,8 @@ export function sameDriverExternalKey(a: string | null | undefined, b: string | 
 }
 
 export function resolveRequestedDriverKeyForInsert(
-  bookingKind: 'instant' | 'scheduled',
+  _bookingKind: 'instant' | 'scheduled',
   requested: string | null | undefined
 ): string | null {
-  if (bookingKind !== 'instant') return null
   return normalizeDriverExternalKey(requested)
 }

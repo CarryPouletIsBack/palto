@@ -2,8 +2,8 @@ import type { NearbyDriver, NearbyDriversQuery } from '../data/nearbyDrivers'
 import { nearbyDriversApiEnabled, fetchNearbyDriversFromApi } from './nearbyDriversApi'
 
 /**
- * Chauffeurs à proximité : uniquement la présence live (API).
- * Retourne [] si l’API est désactivée, sans origine, ou aucun chauffeur en ligne.
+ * Chauffeurs pour la page Go : tous les comptes chauffeur inscrits, triés par distance au pickup (API).
+ * Retourne [] si l’API est désactivée ou sans origine.
  */
 export async function getNearbyDrivers(query: NearbyDriversQuery = {}): Promise<NearbyDriver[]> {
   const origin = query.origin

@@ -16,10 +16,7 @@ import {
   type CoursePaymentMethod,
 } from '../../server/lib/coursePaymentMethod.js'
 import { validateChauffeurOrderAmount } from '../../server/lib/validateChauffeurOrderAmount.js'
-import {
-  notifyDriverNewRideRequest,
-  notifyDriversScheduledRideCreated,
-} from '../../server/lib/rideEmailNotifications.js'
+import { notifyDriverNewRideRequest } from '../../server/lib/rideEmailNotifications.js'
 
 function readBearerToken(req: VercelRequest): string | null {
   const raw = req.headers.authorization
@@ -45,7 +42,7 @@ const BodySchema = z
     clientComment: z.string().max(600).nullable().optional(),
     /** Clé « mock » (ex. d1) ou futur slug court — préférer requestedChauffeurAccountId (UUID compte). */
     requestedDriverExternalKey: z.string().max(64).nullable().optional(),
-    /** UUID `app_accounts` rôle chauffeur — réservé à bookingKind instant. */
+    /** UUID `app_accounts` rôle chauffeur (instant ou programmée). */
     requestedChauffeurAccountId: z.string().uuid().nullable().optional(),
     pickupLng: z.number().finite().nullable().optional(),
     pickupLat: z.number().finite().nullable().optional(),
@@ -54,28 +51,12 @@ const BodySchema = z
     paymentMethod: z.enum(['card', 'cash']).optional(),
   })
   .superRefine((data, ctx) => {
-    if (data.bookingKind === 'instant') {
-      const hasAcc = Boolean(data.requestedChauffeurAccountId?.trim())
-      const hasLeg = Boolean(data.requestedDriverExternalKey?.trim())
-      if (!hasAcc && !hasLeg) {
-        ctx.addIssue({
-          code: 'custom',
-          message: 'Chauffeur requis pour une commande instantanee',
-          path: ['requestedChauffeurAccountId'],
-        })
-      }
-    }
-    if (data.bookingKind === 'scheduled' && data.requestedDriverExternalKey?.trim()) {
+    const hasAcc = Boolean(data.requestedChauffeurAccountId?.trim())
+    const hasLeg = Boolean(data.requestedDriverExternalKey?.trim())
+    if (!hasAcc && !hasLeg) {
       ctx.addIssue({
         code: 'custom',
-        message: 'Ne pas cibler un chauffeur pour une reservation programme',
-        path: ['requestedDriverExternalKey'],
-      })
-    }
-    if (data.bookingKind === 'scheduled' && data.requestedChauffeurAccountId?.trim()) {
-      ctx.addIssue({
-        code: 'custom',
-        message: 'Ne pas cibler un chauffeur (UUID) pour une reservation programme',
+        message: 'Chauffeur requis pour cette commande',
         path: ['requestedChauffeurAccountId'],
       })
     }
@@ -207,22 +188,23 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   }
 
   let requestedDriverKey: string | null = null
-  if (b.bookingKind === 'instant') {
-    const accId = b.requestedChauffeurAccountId?.trim()
-    if (accId) {
-      const { data: accRow, error: accErr } = await supabase
-        .from('app_accounts')
-        .select('id')
-        .eq('id', accId)
-        .eq('role', 'chauffeur')
-        .maybeSingle()
-      if (accErr || !accRow) {
-        return res.status(400).json({ error: 'Chauffeur demande inconnu ou invalide' })
-      }
-      requestedDriverKey = accRow.id
-    } else {
-      requestedDriverKey = resolveRequestedDriverKeyForInsert(b.bookingKind, b.requestedDriverExternalKey)
+  const accId = b.requestedChauffeurAccountId?.trim()
+  if (accId) {
+    const { data: accRow, error: accErr } = await supabase
+      .from('app_accounts')
+      .select('id')
+      .eq('id', accId)
+      .eq('role', 'chauffeur')
+      .maybeSingle()
+    if (accErr || !accRow) {
+      return res.status(400).json({ error: 'Chauffeur demande inconnu ou invalide' })
     }
+    requestedDriverKey = accRow.id
+  } else {
+    requestedDriverKey = resolveRequestedDriverKeyForInsert(b.bookingKind, b.requestedDriverExternalKey)
+  }
+  if (!requestedDriverKey) {
+    return res.status(400).json({ error: 'Chauffeur requis pour cette commande' })
   }
 
   const chauffeurAccountIdForPricing = b.requestedChauffeurAccountId?.trim() || null
@@ -332,52 +314,33 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   const scheduledAtIso = toReunionIso(b.scheduledDate, scheduledTime)
   const externalCodeForEmail = courseRow.external_code ?? code
 
-  if (b.bookingKind === 'instant' && requestedDriverKey) {
-    try {
-      const { data: chauffeurAccount, error: chauffeurErr } = await supabase
-        .from('app_accounts')
-        .select('email, full_name')
-        .eq('id', requestedDriverKey)
-        .eq('role', 'chauffeur')
-        .maybeSingle()
+  try {
+    const { data: chauffeurAccount, error: chauffeurErr } = await supabase
+      .from('app_accounts')
+      .select('email, full_name')
+      .eq('id', requestedDriverKey)
+      .eq('role', 'chauffeur')
+      .maybeSingle()
 
-      if (chauffeurErr) {
-        console.warn('[rides/create] chauffeur lookup notification', chauffeurErr)
-      } else if (chauffeurAccount?.email) {
-        await notifyDriverNewRideRequest({
-          supabase,
-          courseId: courseRow.id,
-          externalCode: externalCodeForEmail,
-          driverEmail: chauffeurAccount.email,
-          driverName: String(chauffeurAccount.full_name ?? '').trim() || 'Chauffeur',
-          clientName: fullName,
-          pickupAddress: insertPayload.pickup_address,
-          dropoffAddress: insertPayload.dropoff_address,
-          scheduledAtIso,
-          amountEur: driverAmountEur,
-        })
-      }
-    } catch (notificationError) {
-      console.error('[rides/create] driver email notification', notificationError)
-    }
-  }
-
-  if (b.bookingKind === 'scheduled') {
-    try {
-      const broadcast = await notifyDriversScheduledRideCreated({
+    if (chauffeurErr) {
+      console.warn('[rides/create] chauffeur lookup notification', chauffeurErr)
+    } else if (chauffeurAccount?.email) {
+      await notifyDriverNewRideRequest({
         supabase,
         courseId: courseRow.id,
         externalCode: externalCodeForEmail,
+        driverEmail: chauffeurAccount.email,
+        driverName: String(chauffeurAccount.full_name ?? '').trim() || 'Chauffeur',
         clientName: fullName,
         pickupAddress: insertPayload.pickup_address,
         dropoffAddress: insertPayload.dropoff_address,
         scheduledAtIso,
         amountEur: driverAmountEur,
+        bookingKind: b.bookingKind,
       })
-      console.info('[rides/create] scheduled driver emails', broadcast)
-    } catch (notificationError) {
-      console.error('[rides/create] scheduled driver email notification', notificationError)
     }
+  } catch (notificationError) {
+    console.error('[rides/create] driver email notification', notificationError)
   }
 
   let stripeClientSecret: string | null = null

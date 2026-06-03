@@ -24,6 +24,8 @@ export type NearbyDriver = {
   deliveryEquipped?: boolean
   /** Grille tarifaire (API profil chauffeur). */
   ridePricing?: ChauffeurProfileRidePricingFields
+  /** false = chauffeur inscrit sans position GPS connue (affiché quand même). */
+  positionKnown?: boolean
 }
 
 export type NearbyDriversQuery = {

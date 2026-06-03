@@ -34,8 +34,7 @@ Puis ouvre le site et va sur la page Contact. Avec `npm run dev` seul, l’appel
 
 ## Notifications courses (chauffeur/client)
 
-- **Course immédiate** : email au chauffeur choisi à la création (`POST /api/rides/create`).
-- **Course programmée** : email à **tous** les comptes chauffeur (avec email) à la création.
+- **Course immédiate ou programmée** : un seul email au **chauffeur choisi** par le client à la création (`POST /api/rides/create`).
 - **Changement de statut** (`acceptée`, `en cours`, `terminée`, `annulée`, no-show) : email au **client** et au **chauffeur assigné** (si connu), selon qui a agi.
 - Rappel client 30 min avant départ : endpoint cron `GET/POST /api/notifications/course-reminders` (voir plan Hobby ci-dessous).
 - Anti-doublon : table `course_notifications_log` (unique par course + type + destinataire).
