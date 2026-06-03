@@ -328,8 +328,15 @@ body.accueil-page .dashboard-container--home-accueil .dashboard-main {
   height: 40px;
 }
 
-.dashboard-mobile-bottombar--client {
-  display: none;
+@media (max-width: 768px) {
+  .dashboard-container--client-compte .dashboard-main {
+    padding-bottom: calc(70px + max(10px, env(safe-area-inset-bottom)) + 16px);
+  }
+
+  .dashboard-container--client-compte .dashboard-content {
+    margin-bottom: 0;
+    padding-bottom: calc(28px + 12px);
+  }
 }
 
 .client-compte-topbar-user-btn {

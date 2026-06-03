@@ -36,6 +36,7 @@ import { useClientHomeTopbarRides } from '../hooks/useClientHomeTopbarRides';
 import { useBodyScrollLock } from '../hooks/useBodyScrollLock';
 import './Dashboard.css';
 import './Dashboard.app-theme.css';
+import './DashboardMobileTabBar.css';
 import './ClientCompteDashboard.css';
 import {
   buildInternationalPhone,
@@ -81,6 +82,7 @@ import {
   saveClientSavedPlaces,
   type ClientSavedPlacesSnapshot,
 } from '../constants/clientSavedPlacesStorage';
+import DashboardMobileTabBar from './DashboardMobileTabBar';
 import ClientComptePlaceAddressField from './ClientComptePlaceAddressField';
 import ClientComptePlaceMapModal, { type ClientCompteMapPickResult } from './ClientComptePlaceMapModal';
 import ClientCompteRideMeetDriver from './ClientCompteRideMeetDriver';
@@ -1982,6 +1984,21 @@ export default function ClientCompteDashboard({ onBack, onOpenClientLiveMeet }: 
       trackEvent('click', 'client_account', 'password_local_updated');
     },
     [activeClientEmail, newPwd, confirmPwd, t]
+  );
+
+  const clientMobileTabId = useMemo((): 'home' | 'activity' | 'account' => {
+    if (activeNav === 'overview') return 'home';
+    if (activeNav === 'courses') return 'activity';
+    return 'account';
+  }, [activeNav]);
+
+  const handleClientMobileTab = useCallback(
+    (tab: 'home' | 'activity' | 'account') => {
+      if (tab === 'home') goNav('overview');
+      else if (tab === 'activity') goNav('courses');
+      else goNav('account');
+    },
+    [goNav]
   );
 
   const mainSectionTitle =
@@ -4042,23 +4059,35 @@ export default function ClientCompteDashboard({ onBack, onOpenClientLiveMeet }: 
 
           </div>
 
-          {isMobileViewport && (
-            <div
-              className="dashboard-mobile-bottombar dashboard-mobile-bottombar--client"
-              role="group"
-              aria-label={t('clientAccount.mobileActions')}
-            >
-              <button
-                type="button"
-                className="dashboard-mobile-menu-btn"
-                aria-label={mobileSidebarOpen ? t('clientAccount.closeMenu') : t('clientAccount.openMenu')}
-                aria-expanded={mobileSidebarOpen}
-                onClick={() => setMobileSidebarOpen((prev) => !prev)}
-              >
-                <Menu size={18} aria-hidden />
-              </button>
-            </div>
-          )}
+          {isMobileViewport ? (
+            <DashboardMobileTabBar
+              variant="client"
+              ariaLabel={t('clientAccount.mobileTabNavAria')}
+              items={[
+                {
+                  id: 'home',
+                  label: t('clientAccount.mobileNavHome'),
+                  icon: <House size={20} strokeWidth={2} />,
+                  active: clientMobileTabId === 'home',
+                  onClick: () => handleClientMobileTab('home'),
+                },
+                {
+                  id: 'activity',
+                  label: t('clientAccount.mobileNavActivity'),
+                  icon: <Route size={20} strokeWidth={2} />,
+                  active: clientMobileTabId === 'activity',
+                  onClick: () => handleClientMobileTab('activity'),
+                },
+                {
+                  id: 'account',
+                  label: t('clientAccount.mobileNavAccount'),
+                  icon: <User size={20} strokeWidth={2} />,
+                  active: clientMobileTabId === 'account',
+                  onClick: () => handleClientMobileTab('account'),
+                },
+              ]}
+            />
+          ) : null}
 
           {mapPickTarget ? (
             <ClientComptePlaceMapModal

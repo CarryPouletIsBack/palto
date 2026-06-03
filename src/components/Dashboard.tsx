@@ -25,6 +25,8 @@ import DashboardStats, {
   type ChauffeurActivityStatsForView,
   type ChauffeurHeatmapStatsForView,
 } from './DashboardStats';
+import DashboardMobileTabBar from './DashboardMobileTabBar';
+import './DashboardMobileTabBar.css';
 import {
   formatFrenchPlateInput,
   normalizeFrenchPlate,
@@ -49,8 +51,6 @@ import {
   PanelLeft,
   MapPin,
   ArrowRight,
-  Search,
-  Menu,
   Pencil,
   Settings,
   Wallet,
@@ -1299,6 +1299,26 @@ const Dashboard = ({
       }
     },
     [isMobileViewport, userSubView]
+  );
+
+  const chauffeurMobileStatsGroupActive =
+    activeView === 'stats' || activeView === 'courses' || activeView === 'clients';
+
+  const chauffeurMobileTabId = useMemo((): 'home' | 'planning' | 'stats' | 'account' => {
+    if (activeView === 'overview') return 'home';
+    if (activeView === 'planning') return 'planning';
+    if (chauffeurMobileStatsGroupActive) return 'stats';
+    return 'account';
+  }, [activeView, chauffeurMobileStatsGroupActive]);
+
+  const handleChauffeurMobileTab = useCallback(
+    (tab: 'home' | 'planning' | 'stats' | 'account') => {
+      if (tab === 'home') handleNavSelect('overview');
+      else if (tab === 'planning') handleNavSelect('planning');
+      else if (tab === 'stats') handleNavSelect('stats');
+      else handleNavSelect('user');
+    },
+    [handleNavSelect]
   );
 
   const handleTopbarLogout = useCallback(() => {
@@ -2739,12 +2759,81 @@ const Dashboard = ({
                 </div>
               ) : null}
               <div className="dashboard-topbar-right">
+                {isMobileViewport ? (
+                  <div className="dashboard-chauffeur-mobile-topbar-actions">
+                    <button
+                      className="topbar-icon-btn"
+                      type="button"
+                      aria-label="Notifications"
+                      onClick={() => {
+                        setMoreMenuOpen(false);
+                        setTopbarAccountMenuOpen(false);
+                        setAlertsOpen((prev) => {
+                          const next = !prev;
+                          if (next) markCancelAlertsRead();
+                          return next;
+                        });
+                      }}
+                    >
+                      <Bell size={16} />
+                    </button>
+                    <button
+                      className="topbar-icon-btn"
+                      type="button"
+                      aria-label={t('driverDashboard.moreMenuAria')}
+                      aria-expanded={moreMenuOpen}
+                      onClick={() => {
+                        setAlertsOpen(false);
+                        setTopbarAccountMenuOpen(false);
+                        setMoreMenuOpen((prev) => !prev);
+                      }}
+                    >
+                      <MoreVertical size={16} aria-hidden />
+                    </button>
+                  </div>
+                ) : null}
                 {renderChauffeurTopbarAccountControl({
                   photoAside: false,
                   showNameInButton: false,
                 })}
               </div>
             </header>
+
+            {isMobileViewport && chauffeurMobileStatsGroupActive ? (
+              <div
+                className="dashboard-mobile-stats-switch"
+                role="tablist"
+                aria-label={t('driverDashboard.mobileStatsSwitchAria')}
+              >
+                <button
+                  type="button"
+                  role="tab"
+                  aria-selected={activeView === 'stats'}
+                  className={`dashboard-mobile-stats-switch__btn${activeView === 'stats' ? ' is-active' : ''}`}
+                  onClick={() => handleNavSelect('stats')}
+                >
+                  {t('driverDashboard.mobileStatsTab')}
+                </button>
+                <button
+                  type="button"
+                  role="tab"
+                  aria-selected={activeView === 'courses'}
+                  className={`dashboard-mobile-stats-switch__btn${activeView === 'courses' ? ' is-active' : ''}`}
+                  onClick={() => handleNavSelect('courses')}
+                >
+                  {t('driverDashboard.mobileCoursesTab')}
+                </button>
+                <button
+                  type="button"
+                  role="tab"
+                  aria-selected={activeView === 'clients'}
+                  className={`dashboard-mobile-stats-switch__btn${activeView === 'clients' ? ' is-active' : ''}`}
+                  onClick={() => handleNavSelect('clients')}
+                >
+                  {t('driverDashboard.mobileClientsTab')}
+                </button>
+              </div>
+            ) : null}
 
             {activeView === 'stats' ? (
               <div className="dashboard-content">
@@ -5123,24 +5212,42 @@ const Dashboard = ({
             );
           })()}
 
-          {isMobileViewport && (
-            <div className="dashboard-mobile-bottombar" role="group" aria-label="Actions dashboard mobile">
-              <button type="button" className="dashboard-mobile-search-btn" aria-label="Rechercher">
-                <Search size={16} aria-hidden />
-                <span>Rechercher...</span>
-              </button>
-              <span className="dashboard-mobile-divider" aria-hidden />
-              <button
-                type="button"
-                className="dashboard-mobile-menu-btn"
-                aria-label={mobileSidebarOpen ? 'Fermer le menu' : 'Ouvrir le menu'}
-                aria-expanded={mobileSidebarOpen}
-                onClick={() => setMobileSidebarOpen((prev) => !prev)}
-              >
-                <Menu size={18} aria-hidden />
-              </button>
-            </div>
-          )}
+          {isMobileViewport ? (
+            <DashboardMobileTabBar
+              variant="chauffeur"
+              ariaLabel={t('driverDashboard.mobileTabNavAria')}
+              items={[
+                {
+                  id: 'home',
+                  label: t('driverDashboard.mobileNavHome'),
+                  icon: <House size={20} strokeWidth={2} />,
+                  active: chauffeurMobileTabId === 'home',
+                  onClick: () => handleChauffeurMobileTab('home'),
+                },
+                {
+                  id: 'planning',
+                  label: t('driverDashboard.mobileNavPlanning'),
+                  icon: <CalendarDays size={20} strokeWidth={2} />,
+                  active: chauffeurMobileTabId === 'planning',
+                  onClick: () => handleChauffeurMobileTab('planning'),
+                },
+                {
+                  id: 'stats',
+                  label: t('driverDashboard.mobileNavStats'),
+                  icon: <BarChart3 size={20} strokeWidth={2} />,
+                  active: chauffeurMobileTabId === 'stats',
+                  onClick: () => handleChauffeurMobileTab('stats'),
+                },
+                {
+                  id: 'account',
+                  label: t('driverDashboard.mobileNavAccount'),
+                  icon: <User size={20} strokeWidth={2} />,
+                  active: chauffeurMobileTabId === 'account',
+                  onClick: () => handleChauffeurMobileTab('account'),
+                },
+              ]}
+            />
+          ) : null}
         </div>
       </div>
     </div>

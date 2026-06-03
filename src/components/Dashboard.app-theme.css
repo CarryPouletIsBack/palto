@@ -732,22 +732,31 @@ html[data-app-theme='dark'] .planning-modal-head h3 {
     box-shadow: 0 16px 34px rgba(0, 0, 0, 0.45);
   }
 
-  html[data-app-theme='dark'] .dashboard-mobile-bottombar {
+  html[data-app-theme='dark'] .dashboard-mobile-tabbar {
     background: var(--app-bg-alt);
     border-color: var(--app-border-subtle);
     box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
   }
 
-  html[data-app-theme='dark'] .dashboard-mobile-search-btn {
+  html[data-app-theme='dark'] .dashboard-mobile-tabbar__item {
     color: var(--app-text-muted);
   }
 
-  html[data-app-theme='dark'] .dashboard-mobile-divider {
-    background: var(--app-border-subtle);
+  html[data-app-theme='dark'] .dashboard-mobile-tabbar__item.is-active {
+    color: var(--app-text-primary);
+    background: var(--app-surface-muted, rgba(255, 255, 255, 0.08));
   }
 
-  html[data-app-theme='dark'] .dashboard-mobile-menu-btn {
-    color: var(--app-text-primary);
+  html[data-app-theme='dark'] .dashboard-mobile-stats-switch__btn {
+    background: var(--app-bg-alt);
+    border-color: var(--app-border-subtle);
+    color: var(--app-text-muted);
+  }
+
+  html[data-app-theme='dark'] .dashboard-mobile-stats-switch__btn.is-active {
+    border-color: #38bdf8;
+    background: rgba(56, 189, 248, 0.12);
+    color: #7dd3fc;
   }
 }
 
