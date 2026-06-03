@@ -1,0 +1,249 @@
+@media (max-width: 768px) {
+  .mobile-account-hub {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    padding-bottom: 20px;
+  }
+
+  .mobile-account-hub__toolbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    min-height: 44px;
+    margin-bottom: 4px;
+  }
+
+  .mobile-account-hub__icon-btn {
+    width: 40px;
+    height: 40px;
+    min-width: 40px;
+    border-radius: 999px;
+    border: 1px solid #dbe3ee;
+    background: #ffffff;
+    color: #0f172a;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    padding: 0;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  .mobile-account-hub__profile {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    gap: 8px;
+    padding: 8px 12px 4px;
+  }
+
+  .mobile-account-hub__avatar {
+    width: 72px;
+    height: 72px;
+    border-radius: 999px;
+    overflow: hidden;
+    background: #e2e8f0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    color: #64748b;
+  }
+
+  .mobile-account-hub__avatar img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  .mobile-account-hub__name {
+    margin: 0;
+    font-size: 22px;
+    font-weight: 700;
+    line-height: 1.15;
+    color: #0f172a;
+  }
+
+  .mobile-account-hub__email {
+    margin: 0;
+    font-size: 14px;
+    color: #64748b;
+    word-break: break-word;
+  }
+
+  .mobile-account-hub__quick-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+  }
+
+  .mobile-account-hub__quick-card {
+    border: 1px solid #dbe3ee;
+    border-radius: 16px;
+    background: #ffffff;
+    padding: 14px 12px;
+    min-height: 88px;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    justify-content: flex-end;
+    gap: 8px;
+    text-align: left;
+    cursor: pointer;
+    font: inherit;
+    color: #0f172a;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  .mobile-account-hub__quick-card-icon {
+    width: 32px;
+    height: 32px;
+    border-radius: 10px;
+    background: #f1f5f9;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    color: #0ea5e9;
+  }
+
+  .mobile-account-hub__quick-card-title {
+    font-size: 14px;
+    font-weight: 700;
+    line-height: 1.2;
+  }
+
+  .mobile-account-hub__menu-card {
+    border: 1px solid #dbe3ee;
+    border-radius: 16px;
+    background: #ffffff;
+    overflow: hidden;
+  }
+
+  .mobile-account-hub__menu-row {
+    width: 100%;
+    border: none;
+    border-bottom: 1px solid #eef2f7;
+    background: transparent;
+    padding: 14px 14px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    text-align: left;
+    font: inherit;
+    color: #0f172a;
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  .mobile-account-hub__menu-row:last-child {
+    border-bottom: none;
+  }
+
+  .mobile-account-hub__menu-row:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+  }
+
+  .mobile-account-hub__menu-row-icon {
+    width: 36px;
+    height: 36px;
+    border-radius: 10px;
+    background: #f8fafc;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    color: #475569;
+    flex-shrink: 0;
+  }
+
+  .mobile-account-hub__menu-row-label {
+    flex: 1 1 auto;
+    min-width: 0;
+    font-size: 15px;
+    font-weight: 600;
+  }
+
+  .mobile-account-hub__menu-row-chevron {
+    color: #94a3b8;
+    flex-shrink: 0;
+  }
+
+  .mobile-account-hub__menu-row--danger .mobile-account-hub__menu-row-label {
+    color: #dc2626;
+  }
+
+  .mobile-account-drill {
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+    flex: 1 1 auto;
+    animation: mobile-account-drill-in 0.26s cubic-bezier(0.22, 1, 0.36, 1);
+  }
+
+  @keyframes mobile-account-drill-in {
+    from {
+      transform: translateX(18%);
+      opacity: 0.35;
+    }
+    to {
+      transform: translateX(0);
+      opacity: 1;
+    }
+  }
+
+  .mobile-account-drill__body {
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior: contain;
+    padding-bottom: 16px;
+  }
+
+  .mobile-account-drill__body .dashboard-org-main {
+    padding-top: 0;
+  }
+
+  .dashboard-user-mobile-shell--account-mobile .dashboard-topbar--chauffeur-mobile-toolbar,
+  .dashboard-user-mobile-shell--drill .dashboard-topbar--chauffeur-mobile-toolbar {
+    display: none;
+  }
+
+  .dashboard-container--client-compte.dashboard-user-mobile-shell--account-mobile .dashboard-topbar--home-client,
+  .dashboard-container--client-compte .dashboard-user-mobile-shell--drill .dashboard-topbar--home-client {
+    display: none;
+  }
+
+  .dashboard-user-mobile-shell--account-mobile .dashboard-topbar-title-stack--in-content,
+  .dashboard-user-mobile-shell--drill .dashboard-topbar-title-stack--in-content {
+    display: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .mobile-account-drill {
+    animation: none;
+  }
+}
+
+html[data-app-theme='dark'] .mobile-account-hub__icon-btn,
+html[data-app-theme='dark'] .mobile-account-hub__quick-card,
+html[data-app-theme='dark'] .mobile-account-hub__menu-card {
+  background: var(--app-bg-alt);
+  border-color: var(--app-border-subtle);
+}
+
+html[data-app-theme='dark'] .mobile-account-hub__name {
+  color: var(--app-text-primary);
+}
+
+html[data-app-theme='dark'] .mobile-account-hub__email {
+  color: var(--app-text-muted);
+}
+
+html[data-app-theme='dark'] .mobile-account-hub__menu-row {
+  border-bottom-color: var(--app-border-subtle);
+  color: var(--app-text-primary);
+}

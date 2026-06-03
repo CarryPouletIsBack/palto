@@ -84,7 +84,9 @@ import {
   type ClientSavedPlacesSnapshot,
 } from '../constants/clientSavedPlacesStorage';
 import DashboardMobileTabBar from './DashboardMobileTabBar';
-import DashboardMobilePillSwitch from './DashboardMobilePillSwitch';
+import ClientMobileAccountHub, { type ClientMobileAccountDestination } from './ClientMobileAccountHub';
+import { MobileAccountDrillShell } from './MobileAccountHub';
+import './MobileAccountHub.css';
 import ClientComptePlaceAddressField from './ClientComptePlaceAddressField';
 import ClientComptePlaceMapModal, { type ClientCompteMapPickResult } from './ClientComptePlaceMapModal';
 import ClientCompteRideMeetDriver from './ClientCompteRideMeetDriver';
@@ -694,6 +696,10 @@ export default function ClientCompteDashboard({ onBack, onOpenClientLiveMeet }: 
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
   const [activeNav, setActiveNav] = useState<ClientAccountNavId>(() => readCompteNavFromPath());
   const [accountManageSection, setAccountManageSection] = useState<AccountManageSectionId>('personal');
+  const [clientAccountMobileScreen, setClientAccountMobileScreen] = useState<'hub' | 'drill'>('hub');
+  const [clientAccountDrillKind, setClientAccountDrillKind] = useState<
+    AccountManageSectionId | 'settings' | 'about'
+  >('personal');
   const [accountCardOverrides, setAccountCardOverrides] = useState<Record<string, string>>({});
   const [accountEditModal, setAccountEditModal] = useState<AccountEditModalState>({
     open: false,
@@ -1995,42 +2001,69 @@ export default function ClientCompteDashboard({ onBack, onOpenClientLiveMeet }: 
     (tab: 'home' | 'activity' | 'account') => {
       if (tab === 'home') goNav('overview');
       else if (tab === 'activity') goNav('courses');
-      else goNav('account');
+      else {
+        goNav('account');
+        setClientAccountMobileScreen('hub');
+      }
     },
     [goNav]
   );
 
-  const clientAccountPillItems = useMemo(() => {
-    const items = [
-      {
-        id: 'personal',
-        label: isEn ? 'Personal' : 'Infos perso',
-        active: accountManageSection === 'personal',
-        onClick: () => openManageAccount('personal'),
-      },
-      {
-        id: 'security',
-        label: isEn ? 'Security' : 'Securite',
-        active: accountManageSection === 'security',
-        onClick: () => openManageAccount('security'),
-      },
-    ];
-    if (paymentFeaturesEnabled) {
-      items.push({
-        id: 'payment',
-        label: isEn ? 'Payment' : 'Paiement',
-        active: accountManageSection === 'payment',
-        onClick: () => openManageAccount('payment'),
-      });
+  useEffect(() => {
+    if (activeNav !== 'account') {
+      setClientAccountMobileScreen('hub');
     }
-    items.push({
-      id: 'help',
-      label: isEn ? 'Help' : 'Aides',
-      active: accountManageSection === 'help',
-      onClick: () => openManageAccount('help'),
-    });
-    return items;
-  }, [accountManageSection, isEn, openManageAccount, paymentFeaturesEnabled]);
+  }, [activeNav]);
+
+  const openClientMobileAccount = useCallback(
+    (dest: ClientMobileAccountDestination) => {
+      if (dest === 'courses') {
+        goNav('courses');
+        return;
+      }
+      if (dest === 'places') {
+        goNav('places');
+        return;
+      }
+      if (dest === 'settings') {
+        setClientAccountDrillKind('settings');
+        setClientAccountMobileScreen('drill');
+        goNav('account');
+        return;
+      }
+      if (dest === 'about') {
+        setClientAccountDrillKind('about');
+        setClientAccountMobileScreen('drill');
+        goNav('account');
+        return;
+      }
+      if (dest === 'personal' || dest === 'security' || dest === 'payment' || dest === 'help') {
+        setClientAccountDrillKind(dest);
+        openManageAccount(dest);
+        setClientAccountMobileScreen('drill');
+      }
+    },
+    [goNav, openManageAccount]
+  );
+
+  const clientAccountDrillTitle = useMemo(() => {
+    if (clientAccountDrillKind === 'settings') {
+      return isEn ? 'Palto settings' : 'Reglages Palto';
+    }
+    if (clientAccountDrillKind === 'about') {
+      return isEn ? 'About Palto' : 'A propos de Palto';
+    }
+    if (clientAccountDrillKind === 'personal') {
+      return isEn ? 'Personal information' : 'Informations personnelles';
+    }
+    if (clientAccountDrillKind === 'security') {
+      return isEn ? 'Sign-in and security' : 'Connexion et securite';
+    }
+    if (clientAccountDrillKind === 'payment') {
+      return isEn ? 'Payment methods' : 'Moyens de paiement';
+    }
+    return isEn ? 'Help' : 'Aides';
+  }, [clientAccountDrillKind, isEn]);
 
   return (
     <div className="page active">
@@ -2187,7 +2220,15 @@ export default function ClientCompteDashboard({ onBack, onOpenClientLiveMeet }: 
             </div>
           </aside>
 
-          <div className="dashboard-main">
+          <div
+            className={`dashboard-main${
+              isMobileViewport && activeNav === 'account'
+                ? ` dashboard-user-mobile-shell--account-mobile${
+                    clientAccountMobileScreen === 'drill' ? ' dashboard-user-mobile-shell--drill' : ''
+                  }`
+                : ''
+            }`}
+          >
             <SiteChromeStack>
             <header
               className="dashboard-topbar dashboard-topbar--home-client"
@@ -2567,14 +2608,100 @@ export default function ClientCompteDashboard({ onBack, onOpenClientLiveMeet }: 
 
             {activeNav === 'account' && (
             <div className="dashboard-content">
-              {isMobileViewport ? (
-                <DashboardMobilePillSwitch
-                  scroll
-                  ariaLabel={t('clientAccount.mobileAccountSectionsAria')}
-                  items={clientAccountPillItems}
+              {isMobileViewport && clientAccountMobileScreen === 'hub' ? (
+                <ClientMobileAccountHub
+                  photoUrl={profile.profilePhotoUrl}
+                  prenom={profile.prenom}
+                  nom={profile.nom}
+                  email={profile.email}
+                  paymentEnabled={paymentFeaturesEnabled}
+                  isEn={isEn}
+                  onClose={() => goNav('overview')}
+                  onOpen={openClientMobileAccount}
+                  onLogout={logoutClientToHome}
+                  bookRideButton={
+                    <button
+                      type="button"
+                      className="topbar-icon-btn mobile-account-hub__icon-btn"
+                      aria-label={t('clientAccount.bookRide')}
+                      onClick={() => {
+                        setCreateRideMenuOpen(false);
+                        setAccountModalOpen(false);
+                        handleGoPage();
+                      }}
+                    >
+                      <Plus size={18} strokeWidth={2.25} aria-hidden />
+                    </button>
+                  }
                 />
               ) : null}
+              {(!isMobileViewport || clientAccountMobileScreen === 'drill') ? (
+                (() => {
+                  const clientAccountSettingsPanel = (
+                    <>
+                      <p className="dashboard-field-hint" style={{ margin: '0 0 16px' }}>
+                        {t('clientAccount.settingsLead')}
+                      </p>
+                      <section className="dashboard-table-section">
+                        <article className="dashboard-user-card">
+                          <h3 className="client-compte-section-title">{t('clientAccount.settingsLanguageTitle')}</h3>
+                          <p className="dashboard-field-hint" style={{ margin: '0 0 12px' }}>
+                            {t('clientAccount.settingsLanguageHint')}
+                          </p>
+                          <div className="client-compte-settings-lang-row">
+                            <LanguageSwitcher />
+                          </div>
+                        </article>
+                        <article className="dashboard-user-card" style={{ marginTop: 20 }}>
+                          <h3 className="client-compte-section-title">{t('clientAccount.settingsAppearanceTitle')}</h3>
+                          <p className="dashboard-field-hint" style={{ margin: '0 0 8px' }}>
+                            {t('clientAccount.settingsAppearanceHint')}
+                          </p>
+                          <label className="client-compte-settings-toggle-row">
+                            <span>{isEn ? 'Theme' : 'Theme'}</span>
+                            <select
+                              value={appPrefs.theme}
+                              onChange={(e) => setAppTheme(e.target.value as AppTheme)}
+                            >
+                              <option value="light">{isEn ? 'Light' : 'Clair'}</option>
+                              <option value="dark">{isEn ? 'Dark' : 'Sombre'}</option>
+                              <option value="contrast">{isEn ? 'High contrast' : 'Contraste eleve'}</option>
+                            </select>
+                          </label>
+                        </article>
+                        <p className="dashboard-field-hint" style={{ marginTop: 20 }}>
+                          {t('clientAccount.settingsMoreHint')}
+                        </p>
+                      </section>
+                    </>
+                  );
+
+                  const clientAccountAboutPanel = (
+                    <>
+                      <p className="dashboard-field-hint" style={{ margin: '0 0 16px' }}>
+                        {t('clientAccount.helpLead')}
+                      </p>
+                      <section className="dashboard-table-section">
+                        <article className="dashboard-user-card">
+                          <dl className="client-compte-help-faq">
+                            <dt>{t('clientAccount.helpFaq1Q')}</dt>
+                            <dd>{t('clientAccount.helpFaq1A')}</dd>
+                            <dt>{t('clientAccount.helpFaq2Q')}</dt>
+                            <dd>{t('clientAccount.helpFaq2A')}</dd>
+                            <dt>{t('clientAccount.helpFaq3Q')}</dt>
+                            <dd>{t('clientAccount.helpFaq3A')}</dd>
+                          </dl>
+                          <p className="dashboard-field-hint" style={{ marginTop: 20 }}>
+                            {t('clientAccount.helpContactHint')}
+                          </p>
+                        </article>
+                      </section>
+                    </>
+                  );
+
+                  const clientAccountManagePanel = (
               <section className="client-compte-account-layout">
+                {!isMobileViewport ? (
                 <aside className="client-compte-account-sidebar">
                   <div className="client-compte-account-profile">
                     <label className="client-compte-account-avatar-uploader">
@@ -2639,7 +2766,9 @@ export default function ClientCompteDashboard({ onBack, onOpenClientLiveMeet }: 
                   </nav>
                   ) : null}
                 </aside>
+                ) : null}
                 <div className="client-compte-account-main">
+                  {!isMobileViewport ? (
                   <header className="client-compte-account-main-head">
                     <h3>
                       {accountManageSection === 'personal'
@@ -2664,6 +2793,7 @@ export default function ClientCompteDashboard({ onBack, onOpenClientLiveMeet }: 
                             : t('clientAccount.helpLead')}
                     </p>
                   </header>
+                  ) : null}
                   {accountManageSection === 'payment' ? (
                     <section className="client-compte-payment-layout">
                       {pendingWalletTopupEur != null && stripeOn && stripePk ? (
@@ -2904,6 +3034,28 @@ export default function ClientCompteDashboard({ onBack, onOpenClientLiveMeet }: 
                   {accountManageSection === 'personal' ? <PaltoAccountDeleteBlock role="client" /> : null}
                 </div>
               </section>
+                  );
+
+                  const drillBody =
+                    clientAccountDrillKind === 'settings'
+                      ? clientAccountSettingsPanel
+                      : clientAccountDrillKind === 'about'
+                        ? clientAccountAboutPanel
+                        : clientAccountManagePanel;
+
+                  return isMobileViewport ? (
+                    <MobileAccountDrillShell
+                      title={clientAccountDrillTitle}
+                      onBack={() => setClientAccountMobileScreen('hub')}
+                      backAriaLabel={isEn ? 'Back to account' : 'Retour au compte'}
+                    >
+                      {drillBody}
+                    </MobileAccountDrillShell>
+                  ) : (
+                    clientAccountManagePanel
+                  );
+                })()
+              ) : null}
             </div>
             )}
             {accountEditModal.open ? (

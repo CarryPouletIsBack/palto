@@ -27,7 +27,12 @@ import DashboardStats, {
 } from './DashboardStats';
 import DashboardMobileTabBar from './DashboardMobileTabBar';
 import DashboardMobilePillSwitch from './DashboardMobilePillSwitch';
+import ChauffeurMobileAccountHub, {
+  type ChauffeurMobileAccountDestination,
+} from './ChauffeurMobileAccountHub';
+import { MobileAccountDrillShell } from './MobileAccountHub';
 import './DashboardMobileTabBar.css';
+import './MobileAccountHub.css';
 import {
   formatFrenchPlateInput,
   normalizeFrenchPlate,
@@ -591,6 +596,7 @@ const Dashboard = ({
   const [complianceUiTick, setComplianceUiTick] = useState(0);
   const [orgSubView, setOrgSubView] = useState<OrganizationSubView>('profile');
   const [userSubView, setUserSubView] = useState<UserSubView>('profile');
+  const [chauffeurAccountMobileScreen, setChauffeurAccountMobileScreen] = useState<'hub' | UserSubView>('hub');
   const [paltoAccountSection, setPaltoAccountSection] = useState<ChauffeurPaltoAccountSection>('personal');
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [isMobileViewport, setIsMobileViewport] = useState(() =>
@@ -1317,10 +1323,61 @@ const Dashboard = ({
       if (tab === 'home') handleNavSelect('overview');
       else if (tab === 'planning') handleNavSelect('planning');
       else if (tab === 'stats') handleNavSelect('stats');
-      else handleNavSelect('user');
+      else {
+        handleNavSelect('user');
+        setChauffeurAccountMobileScreen('hub');
+      }
     },
     [handleNavSelect]
   );
+
+  useEffect(() => {
+    if (activeView !== 'user') {
+      setChauffeurAccountMobileScreen('hub');
+    }
+  }, [activeView]);
+
+  const openChauffeurMobileAccount = useCallback(
+    (dest: ChauffeurMobileAccountDestination) => {
+      if (dest === 'palto-account') {
+        openChauffeurPaltoAccount('personal');
+        setChauffeurAccountMobileScreen('palto-account');
+        return;
+      }
+      const view: UserSubView =
+        dest === 'about' ? 'help' : dest;
+      setUserSubView(view);
+      if (view === 'organization') {
+        setOrgSubView('profile');
+      }
+      setChauffeurAccountMobileScreen(view);
+      if (isMobileViewport) {
+        setMobileSidebarOpen(false);
+      }
+    },
+    [isMobileViewport, openChauffeurPaltoAccount]
+  );
+
+  const chauffeurAccountDrillTitle = useMemo(() => {
+    switch (userSubView) {
+      case 'profile':
+        return language === 'en' ? 'Your vehicle' : 'Votre vehicule';
+      case 'ride-settings':
+        return language === 'en' ? 'My pricing' : 'Mes tarifs';
+      case 'help':
+        return t('driverDashboard.navHelp');
+      case 'palto-account':
+        return language === 'en' ? 'Personal information' : 'Informations personnelles';
+      case 'documents':
+        return language === 'en' ? 'Documents' : 'Documents et factures';
+      case 'preferences':
+        return language === 'en' ? 'Preferences' : 'Preferences';
+      case 'organization':
+        return t('driverDashboard.titleOrganization');
+      default:
+        return t('driverDashboard.titleUser');
+    }
+  }, [language, t, userSubView]);
 
   const chauffeurStatsPillItems = useMemo(
     () => [
@@ -1345,104 +1402,6 @@ const Dashboard = ({
     ],
     [activeView, handleNavSelect, t]
   );
-
-  const chauffeurUserPillItems = useMemo(
-    () => [
-      {
-        id: 'palto-account',
-        label: language === 'en' ? 'Palto account' : 'Compte Palto',
-        active: userSubView === 'palto-account',
-        onClick: () => openChauffeurPaltoAccount('personal'),
-      },
-      {
-        id: 'profile',
-        label: language === 'en' ? 'Vehicle' : 'Vehicule',
-        active: userSubView === 'profile',
-        onClick: () => setUserSubView('profile'),
-      },
-      {
-        id: 'documents',
-        label: language === 'en' ? 'Documents' : 'Documents',
-        active: userSubView === 'documents',
-        onClick: () => setUserSubView('documents'),
-      },
-      {
-        id: 'ride-settings',
-        label: language === 'en' ? 'Pricing' : 'Tarifs',
-        active: userSubView === 'ride-settings',
-        onClick: () => setUserSubView('ride-settings'),
-      },
-      {
-        id: 'organization',
-        label: t('driverDashboard.orgSectionTitle'),
-        active: userSubView === 'organization',
-        onClick: () => {
-          setUserSubView('organization');
-          setOrgSubView('profile');
-        },
-      },
-      {
-        id: 'preferences',
-        label: language === 'en' ? 'Preferences' : 'Preferences',
-        active: userSubView === 'preferences',
-        onClick: () => setUserSubView('preferences'),
-      },
-      {
-        id: 'help',
-        label: t('driverDashboard.navHelp'),
-        active: userSubView === 'help',
-        onClick: () => setUserSubView('help'),
-      },
-    ],
-    [language, openChauffeurPaltoAccount, t, userSubView]
-  );
-
-  const chauffeurOrgSubPillItems = useMemo(() => {
-    if (!chauffeurOrg) return [];
-    const items = [
-      {
-        id: 'team',
-        label: t('driverDashboard.orgNavTeam'),
-        active: orgSubView === 'team',
-        onClick: () => {
-          setUserSubView('organization');
-          setOrgSubView('team');
-        },
-      },
-    ];
-    if (isChauffeurOrgAdmin) {
-      items.push(
-        {
-          id: 'fleet',
-          label: t('driverDashboard.orgNavFleet'),
-          active: orgSubView === 'fleet',
-          onClick: () => {
-            setUserSubView('organization');
-            setOrgSubView('fleet');
-          },
-        },
-        {
-          id: 'invites',
-          label: t('driverDashboard.orgNavInvites'),
-          active: orgSubView === 'invites',
-          onClick: () => {
-            setUserSubView('organization');
-            setOrgSubView('invites');
-          },
-        },
-        {
-          id: 'settings',
-          label: t('driverDashboard.orgNavSettings'),
-          active: orgSubView === 'settings',
-          onClick: () => {
-            setUserSubView('organization');
-            setOrgSubView('settings');
-          },
-        }
-      );
-    }
-    return items;
-  }, [chauffeurOrg, isChauffeurOrgAdmin, orgSubView, t]);
 
   const handleTopbarLogout = useCallback(() => {
     setTopbarAccountMenuOpen(false);
@@ -2876,6 +2835,12 @@ const Dashboard = ({
               activeView === 'organization' || activeView === 'user' ? ' dashboard-main--org-flush' : ''
             }${
               showChauffeurToolbarOnly ? ' dashboard-main--chauffeur-mobile-floating-account' : ''
+            }${
+              isMobileViewport && activeView === 'user'
+                ? ` dashboard-user-mobile-shell--account-mobile${
+                    chauffeurAccountMobileScreen !== 'hub' ? ' dashboard-user-mobile-shell--drill' : ''
+                  }`
+                : ''
             }`}
           >
             <header
@@ -2922,23 +2887,6 @@ const Dashboard = ({
                 ariaLabel={t('driverDashboard.mobileStatsSwitchAria')}
                 items={chauffeurStatsPillItems}
               />
-            ) : null}
-
-            {isMobileViewport && activeView === 'user' ? (
-              <>
-                <DashboardMobilePillSwitch
-                  scroll
-                  ariaLabel={t('driverDashboard.mobileAccountSectionsAria')}
-                  items={chauffeurUserPillItems}
-                />
-                {userSubView === 'organization' && chauffeurOrgSubPillItems.length > 0 ? (
-                  <DashboardMobilePillSwitch
-                    scroll
-                    ariaLabel={t('driverDashboard.mobileOrgSectionsAria')}
-                    items={chauffeurOrgSubPillItems}
-                  />
-                ) : null}
-              </>
             ) : null}
 
             {activeView === 'stats' ? (
@@ -3916,13 +3864,48 @@ const Dashboard = ({
                     </div>
                   )}
 
-                  {activeView === 'user' && (
-                    <div className="dashboard-org-layout">
-                      <aside
-                        className={`dashboard-org-sidebar${isMobileViewport ? ' dashboard-org-sidebar--mobile-pills-only' : ''}`}
-                        aria-label={t('driverDashboard.titleUser')}
+                  {activeView === 'user' && isMobileViewport && chauffeurAccountMobileScreen === 'hub' ? (
+                    <ChauffeurMobileAccountHub
+                      photoUrl={paltoIdentity.photoUrl}
+                      prenom={chauffeurProfile.prenom}
+                      nom={chauffeurProfile.nom}
+                      email={paltoIdentity.email}
+                      hasOrganization={Boolean(chauffeurOrg)}
+                      isEn={language === 'en'}
+                      onClose={() => handleNavSelect('overview')}
+                      onOpen={openChauffeurMobileAccount}
+                      onLogout={handleTopbarLogout}
+                      notificationsButton={
+                        <button
+                          className="topbar-icon-btn mobile-account-hub__icon-btn"
+                          type="button"
+                          aria-label="Notifications"
+                          onClick={() => {
+                            setMoreMenuOpen(false);
+                            setTopbarAccountMenuOpen(false);
+                            setAlertsOpen((prev) => {
+                              const next = !prev;
+                              if (next) markCancelAlertsRead();
+                              return next;
+                            });
+                          }}
+                        >
+                          <Bell size={16} />
+                        </button>
+                      }
+                    />
+                  ) : null}
+
+                  {activeView === 'user' && (!isMobileViewport || chauffeurAccountMobileScreen !== 'hub') ? (
+                    (() => {
+                      const chauffeurUserMain = (
+                      <div
+                        className={`dashboard-org-layout${
+                          isMobileViewport ? ' dashboard-org-layout--mobile-drill' : ''
+                        }`}
                       >
-                        {!isMobileViewport ? (
+                      {!isMobileViewport ? (
+                      <aside className="dashboard-org-sidebar" aria-label={t('driverDashboard.titleUser')}>
                         <nav className="dashboard-org-nav">
                           <button
                             type="button"
@@ -4036,8 +4019,8 @@ const Dashboard = ({
                             </div>
                           ) : null}
                         </nav>
-                        ) : null}
                       </aside>
+                      ) : null}
                       <div className="dashboard-org-main">
                       {!chauffeurPresence.tracking && userSubView !== 'preferences' ? (
                         <div className="dashboard-preferences-geo" style={{ marginBottom: 16 }}>
@@ -4636,7 +4619,20 @@ const Dashboard = ({
                       )}
                       </div>
                     </div>
-                  )}
+                      );
+                      return isMobileViewport ? (
+                        <MobileAccountDrillShell
+                          title={chauffeurAccountDrillTitle}
+                          onBack={() => setChauffeurAccountMobileScreen('hub')}
+                          backAriaLabel={language === 'en' ? 'Back to account' : 'Retour au compte'}
+                        >
+                          {chauffeurUserMain}
+                        </MobileAccountDrillShell>
+                      ) : (
+                        chauffeurUserMain
+                      );
+                    })()
+                  ) : null}
 
                   {activeView === 'settings' && (
                     <section className="dashboard-table-section">
