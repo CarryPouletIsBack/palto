@@ -3810,15 +3810,6 @@ html[data-app-theme='dark'] .ride-status-badge--cancelled {
     margin-right: 4px;
   }
 
-  .client-compte-topbar-user-btn--mobile-topbar-nav {
-    padding: 2px;
-    gap: 0;
-  }
-
-  .client-compte-topbar-user-btn--mobile-topbar-nav .client-compte-topbar-user-btn__chevron {
-    display: none;
-  }
-
   .sidebar-toggle-btn {
     display: none;
   }
@@ -5146,12 +5137,27 @@ button.dashboard-org-sidebar-brand--home:focus-visible {
     box-sizing: border-box;
   }
 
+  .dashboard-container--chauffeur .dashboard-topbar--chauffeur-mobile-toolbar.dashboard-topbar--chauffeur-mobile-split {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+  }
+
+  .dashboard-container--chauffeur .dashboard-topbar--chauffeur-mobile-split .dashboard-topbar-left {
+    pointer-events: auto;
+    flex: 0 0 auto;
+    display: inline-flex;
+    align-items: center;
+  }
+
   .dashboard-container--chauffeur .dashboard-topbar--chauffeur-mobile-toolbar .dashboard-topbar-right,
+  .dashboard-container--chauffeur .dashboard-topbar--chauffeur-mobile-toolbar .dashboard-topbar-left,
   .dashboard-container--chauffeur .dashboard-topbar--chauffeur-mobile-toolbar .dashboard-chauffeur-mobile-topbar-actions,
   .dashboard-container--chauffeur .dashboard-topbar--chauffeur-mobile-toolbar .dashboard-chauffeur-mobile-topbar-actions .topbar-icon-btn,
   .dashboard-container--chauffeur
     .dashboard-topbar--chauffeur-mobile-toolbar
-    .dashboard-chauffeur-mobile-topbar-actions
+    .dashboard-topbar-left
     .client-compte-topbar-user-btn--mobile-topbar-nav {
     pointer-events: auto;
   }

@@ -2855,32 +2855,16 @@ const Dashboard = ({
             <header
               className={`dashboard-topbar${
                 isMobileViewport || showChauffeurToolbarOnly ? ' dashboard-topbar--chauffeur-mobile-toolbar' : ''
-              }${topbarLaunchCourse && !isMobileViewport ? ' dashboard-topbar--with-launch-ride' : ''}${
+              }${isMobileViewport ? ' dashboard-topbar--chauffeur-mobile-split' : ''}${topbarLaunchCourse && !isMobileViewport ? ' dashboard-topbar--with-launch-ride' : ''}${
                 isChauffeurAccountUserOnly && !isMobileViewport
                   ? ' dashboard-topbar--chauffeur-account-user-only'
                   : ''
               }`}
             >
               {!isMobileViewport ? renderTopbarLaunchRide() : null}
-              <div className="dashboard-topbar-right">
-                {isMobileViewport ? (
-                  <div className="dashboard-chauffeur-mobile-topbar-actions">
-                    <button
-                      className="topbar-icon-btn"
-                      type="button"
-                      aria-label="Notifications"
-                      onClick={() => {
-                        setMoreMenuOpen(false);
-                        setTopbarAccountMenuOpen(false);
-                        setAlertsOpen((prev) => {
-                          const next = !prev;
-                          if (next) markCancelAlertsRead();
-                          return next;
-                        });
-                      }}
-                    >
-                      <Bell size={16} />
-                    </button>
+              {isMobileViewport ? (
+                <>
+                  <div className="dashboard-topbar-left">
                     <MobileTopbarAccountButton
                       photoUrl={paltoIdentity.photoUrl}
                       ariaLabel={language === 'en' ? 'Account' : 'Compte'}
@@ -2892,13 +2876,35 @@ const Dashboard = ({
                       }}
                     />
                   </div>
-                ) : (
-                  renderChauffeurTopbarAccountControl({
+                  <div className="dashboard-topbar-right">
+                    <div className="dashboard-chauffeur-mobile-topbar-actions">
+                      <button
+                        className="topbar-icon-btn"
+                        type="button"
+                        aria-label="Notifications"
+                        onClick={() => {
+                          setMoreMenuOpen(false);
+                          setTopbarAccountMenuOpen(false);
+                          setAlertsOpen((prev) => {
+                            const next = !prev;
+                            if (next) markCancelAlertsRead();
+                            return next;
+                          });
+                        }}
+                      >
+                        <Bell size={16} />
+                      </button>
+                    </div>
+                  </div>
+                </>
+              ) : (
+              <div className="dashboard-topbar-right">
+                  {renderChauffeurTopbarAccountControl({
                     photoAside: false,
                     showNameInButton: false,
-                  })
-                )}
+                  })}
               </div>
+              )}
             </header>
             ) : null}
 
@@ -5446,13 +5452,6 @@ const Dashboard = ({
                   icon: <BarChart3 size={20} strokeWidth={2} />,
                   active: chauffeurMobileTabId === 'stats',
                   onClick: () => handleChauffeurMobileTab('stats'),
-                },
-                {
-                  id: 'account',
-                  label: t('driverDashboard.mobileNavAccount'),
-                  icon: <User size={20} strokeWidth={2} />,
-                  active: chauffeurMobileTabId === 'account',
-                  onClick: () => handleChauffeurMobileTab('account'),
                 },
               ]}
             />

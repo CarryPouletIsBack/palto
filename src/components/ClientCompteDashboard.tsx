@@ -2232,11 +2232,24 @@ export default function ClientCompteDashboard({ onBack, onOpenClientLiveMeet }: 
             <SiteChromeStack>
             {!(isMobileViewport && activeNav === 'account') ? (
             <header
-              className="dashboard-topbar dashboard-topbar--home-client"
+              className={`dashboard-topbar dashboard-topbar--home-client${
+                isMobileViewport ? ' dashboard-topbar--home-client-mobile-split' : ''
+              }`}
             >
               <div className="dashboard-home-topbar-row">
                 <div className="dashboard-home-topbar-start">
-                  {activeNav === 'overview' ? (
+                  {isMobileViewport ? (
+                    <MobileTopbarAccountButton
+                      photoUrl={profile.profilePhotoUrl}
+                      ariaLabel={isEn ? 'Account' : 'Compte'}
+                      onClick={() => {
+                        setCreateRideMenuOpen(false);
+                        setAccountModalOpen(false);
+                        goNav('account');
+                        setClientAccountMobileScreen('hub');
+                      }}
+                    />
+                  ) : activeNav === 'overview' ? (
                     <ClientAccountTopbarBackButton
                       onClick={handleBackSite}
                       ariaLabel={t('clientAccount.navBackSite')}
@@ -2251,6 +2264,19 @@ export default function ClientCompteDashboard({ onBack, onOpenClientLiveMeet }: 
                 <div className="dashboard-topbar-right" ref={accountMenuRef}>
                   <div className="dashboard-home-topbar-right-cluster">
                     {!isMobileViewport ? <LanguageSwitcher /> : null}
+                    {isMobileViewport ? (
+                      activeNav === 'overview' ? (
+                        <ClientAccountTopbarBackButton
+                          onClick={handleBackSite}
+                          ariaLabel={t('clientAccount.navBackSite')}
+                        />
+                      ) : (
+                        <ClientAccountTopbarBackButton
+                          onClick={() => goNav('overview')}
+                          ariaLabel={t('clientAccount.navBackOverviewAria')}
+                        />
+                      )
+                    ) : null}
                     <div className="client-compte-topbar-menu-anchor">
                       <button
                         type="button"
@@ -2281,19 +2307,6 @@ export default function ClientCompteDashboard({ onBack, onOpenClientLiveMeet }: 
                         </div>
                       ) : null}
                     </div>
-
-                    {isMobileViewport ? (
-                      <MobileTopbarAccountButton
-                        photoUrl={profile.profilePhotoUrl}
-                        ariaLabel={isEn ? 'Account' : 'Compte'}
-                        onClick={() => {
-                          setCreateRideMenuOpen(false);
-                          setAccountModalOpen(false);
-                          goNav('account');
-                          setClientAccountMobileScreen('hub');
-                        }}
-                      />
-                    ) : null}
 
                     {!isMobileViewport ? (
                       <div className="client-compte-topbar-menu-anchor">
@@ -4218,13 +4231,6 @@ export default function ClientCompteDashboard({ onBack, onOpenClientLiveMeet }: 
                   icon: <Route size={20} strokeWidth={2} />,
                   active: clientMobileTabId === 'activity',
                   onClick: () => handleClientMobileTab('activity'),
-                },
-                {
-                  id: 'account',
-                  label: t('clientAccount.mobileNavAccount'),
-                  icon: <User size={20} strokeWidth={2} />,
-                  active: clientMobileTabId === 'account',
-                  onClick: () => handleClientMobileTab('account'),
                 },
               ]}
             />

@@ -152,8 +152,12 @@
     align-items: center;
   }
 
-  .dashboard-container--client-compte .client-compte-topbar-user-btn--mobile-topbar-nav {
-    flex-shrink: 0;
+  .dashboard-container--client-compte .dashboard-topbar--home-client-mobile-split .dashboard-home-topbar-row {
+    align-items: center;
+  }
+
+  .dashboard-container--client-compte .dashboard-topbar--home-client-mobile-split .dashboard-home-topbar-start {
+    flex: 0 0 auto;
   }
 }
 
