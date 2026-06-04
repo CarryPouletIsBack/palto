@@ -20,6 +20,28 @@ export const CLIENT_AUTH_TOKEN_KEY = 'palto:client_token'
 const LEGACY_SESSION_ROLE_KEY = 'palto:account_role'
 const LEGACY_AUTH_MIGRATION_KEY = 'palto:auth-split-migration-v1'
 
+/** Après reset mot de passe : ouvrir la modale de connexion au prochain écran auth. */
+export const POST_PASSWORD_RESET_LOGIN_HINT_KEY = 'palto:post_password_reset_login'
+
+export function setPostPasswordResetLoginHint(role: AccountRole): void {
+  try {
+    sessionStorage.setItem(POST_PASSWORD_RESET_LOGIN_HINT_KEY, role)
+  } catch {
+    /* quota / mode privé */
+  }
+}
+
+export function consumePostPasswordResetLoginHint(): AccountRole | null {
+  try {
+    const raw = sessionStorage.getItem(POST_PASSWORD_RESET_LOGIN_HINT_KEY)
+    sessionStorage.removeItem(POST_PASSWORD_RESET_LOGIN_HINT_KEY)
+    if (raw === 'client' || raw === 'chauffeur') return raw
+  } catch {
+    /* ignore */
+  }
+  return null
+}
+
 export type AccountRole = 'client' | 'chauffeur'
 
 const API_BASE_URL = apiBaseUrl()

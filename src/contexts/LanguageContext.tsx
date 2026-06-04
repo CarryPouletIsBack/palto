@@ -354,6 +354,7 @@ const TRANSLATIONS: Record<Language, Record<string, unknown>> = {
       forgotPasswordEmailRequired: 'Saisissez votre e-mail pour recevoir le lien de réinitialisation.',
       forgotPasswordSuccess:
         'Si un compte existe avec cet e-mail, un lien de réinitialisation a été envoyé (valable 30 min). Vérifiez vos spams.',
+      passwordResetDone: 'Mot de passe mis à jour. Connectez-vous avec votre nouveau mot de passe.',
       submitLogin: 'Se connecter',
       submitSignup: 'Créer mon compte et me connecter',
       submittingLogin: 'Connexion…',
@@ -406,6 +407,7 @@ const TRANSLATIONS: Record<Language, Record<string, unknown>> = {
       forgotPasswordEmailRequired: 'Saisissez votre e-mail pour recevoir le lien de réinitialisation.',
       forgotPasswordSuccess:
         'Si un compte existe avec cet e-mail, un lien de réinitialisation a été envoyé (valable 30 min). Vérifiez vos spams.',
+      passwordResetDone: 'Mot de passe mis à jour. Connectez-vous avec votre nouveau mot de passe.',
       submitLogin: 'Se connecter',
       submitSignup: 'Créer mon compte et me connecter',
       submittingLogin: 'Connexion…',
@@ -1189,6 +1191,7 @@ const TRANSLATIONS: Record<Language, Record<string, unknown>> = {
       forgotPasswordEmailRequired: 'Enter your email to receive a reset link.',
       forgotPasswordSuccess:
         'If an account exists for this email, a reset link was sent (valid 30 min). Check your spam folder.',
+      passwordResetDone: 'Password updated. Sign in with your new password.',
       submitLogin: 'Sign in',
       submitSignup: 'Create account and sign in',
       submittingLogin: 'Signing in…',
@@ -1241,6 +1244,7 @@ const TRANSLATIONS: Record<Language, Record<string, unknown>> = {
       forgotPasswordEmailRequired: 'Enter your email to receive a reset link.',
       forgotPasswordSuccess:
         'If an account exists for this email, a reset link was sent (valid 30 min). Check your spam folder.',
+      passwordResetDone: 'Password updated. Sign in with your new password.',
       submitLogin: 'Sign in',
       submitSignup: 'Create account and sign in',
       submittingLogin: 'Signing in…',

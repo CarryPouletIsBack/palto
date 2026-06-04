@@ -3,6 +3,7 @@ import { Eye, EyeOff, X } from 'lucide-react'
 import { useLanguage } from '../contexts/LanguageContext'
 import ChauffeurSignupWizard from './ChauffeurSignupWizard'
 import {
+  consumePostPasswordResetLoginHint,
   getCurrentClientUser,
   isClientAuthenticated,
   loginChauffeurOnly,
@@ -31,6 +32,12 @@ export default function ChauffeurAuthPage({ onAuthSuccess, onClose }: Props) {
   const [loading, setLoading] = useState(false)
   const [forgotLoading, setForgotLoading] = useState(false)
   const clientAlreadyLogged = isClientAuthenticated()
+
+  useEffect(() => {
+    if (consumePostPasswordResetLoginHint() !== 'chauffeur') return
+    setMode('login')
+    setHelpMessage(t('chauffeurAuth.passwordResetDone'))
+  }, [t])
 
   useEffect(() => {
     if (email.trim()) return

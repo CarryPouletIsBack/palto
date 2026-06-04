@@ -1,4 +1,4 @@
-import { useMemo, useState, type FormEvent } from 'react'
+import { useEffect, useMemo, useRef, useState, type FormEvent } from 'react'
 import { resetPasswordWithToken, type AccountRole } from '../services/authService'
 import './AuthPage.css'
 
@@ -17,6 +17,14 @@ export default function ResetPasswordPage({ onDone }: Props) {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [success, setSuccess] = useState<string | null>(null)
+  const redirectScheduledRef = useRef(false)
+
+  useEffect(() => {
+    if (!success || redirectScheduledRef.current) return
+    redirectScheduledRef.current = true
+    const timer = window.setTimeout(() => onDone(role), 1200)
+    return () => window.clearTimeout(timer)
+  }, [success, role, onDone])
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault()
@@ -41,7 +49,7 @@ export default function ResetPasswordPage({ onDone }: Props) {
       setError(result.error ?? 'Reinitialisation impossible')
       return
     }
-    setSuccess('Mot de passe reinitialise. Vous pouvez maintenant vous connecter.')
+    setSuccess('Mot de passe reinitialise. Redirection vers la connexion…')
   }
 
   return (
@@ -75,7 +83,7 @@ export default function ResetPasswordPage({ onDone }: Props) {
           {error ? <p className="auth-page-error">{error}</p> : null}
           {success ? <p className="auth-page-help">{success}</p> : null}
           <div className="auth-page-actions">
-            <button className="auth-page-btn" type="submit" disabled={loading}>
+            <button className="auth-page-btn" type="submit" disabled={loading || Boolean(success)}>
               {loading ? 'Validation...' : 'Valider'}
             </button>
             <button

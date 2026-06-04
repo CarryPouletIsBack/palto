@@ -69,6 +69,12 @@ Le cœur **Palto** (accueil carte, **Go**, comptes, dashboard chauffeur) est **m
 - **Carte** ailleurs : **MapLibre GL** (`react-map-gl`) — fond **OpenStreetMap** via **OpenFreeMap Liberty** (tuiles publiques, sans Mapbox ni Carto CDN). Même logique sur **accueil**, **page Go**, **navigation** (`DriverNavigationView`), **compte** (carte lieux).
 - **Navigation course + fin de course** : pendant une course **en cours**, le chauffeur peut envoyer sa position en **temps réel** (Supabase Realtime **broadcast** sur `ride_geo:{courseId}`) ; le passager voit le suivi sur la vue **rencontre chauffeur** et, après clôture côté chauffeur, un **récap** (montant, distance, durée) lorsque les données sont fournies par l’API.
 
+## Authentification & mot de passe oublié
+
+- **Connexion** : modales **client** (`ClientAuthPage`) et **chauffeur** (`ChauffeurAuthPage`) ; **Mot de passe oublié ?** → `POST /api/auth?role=client|chauffeur&action=forgot-password` → e-mail **Resend** avec lien (30 min).
+- **Réinitialisation** : page **`/fr/reset-password`** (sans header site — pas de logo Palto en haut) ; après validation du nouveau mot de passe → redirection automatique vers la **modale de connexion** (`/compte` ou `/dashboard` selon le rôle).
+- **Variables** : `RESEND_API_KEY`, `RESEND_FROM`, `APP_BASE_URL`, Supabase — voir **[RESEND_CONTACT.md](./RESEND_CONTACT.md)** et **`.env.example`**. Dev API : `npm run dev:api`.
+
 ## Compte passager (`/compte`)
 
 - **UI** : `ClientCompteDashboard.tsx` (aperçu, cours, lieux, portefeuille simulé local, sécurité, réglages) ; entrée **« Gérer le compte »** (tuiles style Apple) pour nom, téléphone, e-mail affiché, langue, etc.
@@ -115,7 +121,7 @@ La cover du projet **Go** et le panneau de réservation échangent des événeme
 
 | Fichier | Méthodes | Paramètres / corps | Rôle |
 |---------|----------|-------------------|------|
-| `api/auth/index.ts` | `POST`, `GET` | `?role=client\|chauffeur&action=login\|register` ; `?action=realtime-token` | Auth Palto + JWT Realtime |
+| `api/auth/index.ts` | `POST`, `GET` | `?role=…&action=login\|register\|forgot-password\|reset-password\|delete` ; `?action=realtime-token` | Auth Palto, reset mot de passe (Resend), JWT Realtime |
 | `api/client/rides.ts` | `GET`, `POST` | `GET` : `email`, `status`, `limit` ou `mode=nearby` ; `POST` : `{ courseId }` annulation | Courses client + chauffeurs à proximité |
 | `api/client/profile.ts` | `GET`, `PUT` | Bearer client | Profil client Supabase |
 | `api/chauffeur/index.ts` | `GET`, `PUT`, `POST` | `?resource=` : `rides`, `rides-action`, `profile`, `ride-profile`, `presence`, `stats`, `organization`, `compliance`, `cron-expire-instant` | Dashboard chauffeur |
@@ -246,6 +252,7 @@ Référence arbres **user flow** : implémentation surtout sur la page **Go** (`
 
 ### Dernière mise à jour README — **28 mai 2026**
 
+- **Mot de passe oublié** : Resend + page `/reset-password` (sans header) ; retour auto vers modale connexion après changement de MDP.
 - **Carte chauffeurs** : marqueurs **avatar** (photo profil API / mock, repli **initiales**) — plus d’icône moto ; util `src/utils/driverMapMarkerAvatar.ts`, sync cover Go.
 - **Go** : chauffeurs via **`GET ?mode=nearby`** ; mock local documenté comme tests uniquement.
 - **Prix Go** : affichage unifié **`82,56 €`** (`formatFareEurDisplay` / `formatDriverPriceLabel`, front + server).

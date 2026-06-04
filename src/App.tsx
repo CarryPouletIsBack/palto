@@ -21,7 +21,14 @@ import BetaTestBanner from './components/BetaTestBanner'
 import { usesEmbeddedBetaBanner } from './constants/siteChrome'
 import { getDestinationById, type PopularDestination } from './data/popularDestinations'
 import { AppToaster } from './components/AppToaster'
-import { isAuthenticated, isClientAuthenticated, type AccountRole } from './services/authService'
+import {
+  isAuthenticated,
+  isClientAuthenticated,
+  logout,
+  logoutClient,
+  setPostPasswordResetLoginHint,
+  type AccountRole,
+} from './services/authService'
 import {
   FONT_SCALE_CHANGED_EVENT,
   clampFontScalePercent,
@@ -801,6 +808,10 @@ function App() {
             {currentPage === 'reset-password' && (
               <ResetPasswordPage
                 onDone={(role) => {
+                  setPostPasswordResetLoginHint(role)
+                  if (role === 'client') logoutClient()
+                  else logout()
+                  setAuthUiTick((n) => n + 1)
                   const prefix = language === 'en' ? '/en' : '/fr'
                   const path = role === 'chauffeur' ? `${prefix}/dashboard` : `${prefix}/compte`
                   setCurrentPage(role === 'chauffeur' ? 'dashboard' : 'client-compte')
@@ -1004,12 +1015,14 @@ function App() {
         const showTopBeta =
           currentPage !== 'dashboard' &&
           currentPage !== 'dashboard-navigation' &&
+          currentPage !== 'reset-password' &&
           !usesEmbeddedBetaBanner(currentPage)
         const showHeader =
           currentPage !== 'dashboard' &&
           currentPage !== 'dashboard-navigation' &&
           currentPage !== 'client-compte' &&
           currentPage !== 'client-meet-driver' &&
+          currentPage !== 'reset-password' &&
           currentPage !== 'accueil' &&
           currentPage !== 'accueil-chauffeur' &&
           currentPage !== 'project-Go' &&

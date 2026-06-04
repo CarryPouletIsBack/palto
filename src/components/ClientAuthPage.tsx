@@ -1,8 +1,14 @@
-import { useMemo, useState, type FormEvent } from 'react'
+import { useEffect, useMemo, useState, type FormEvent } from 'react'
 import { Eye, EyeOff, X } from 'lucide-react'
 import AuthSignupIdentityFields from './AuthSignupIdentityFields'
 import { useLanguage } from '../contexts/LanguageContext'
-import { loginClient, registerClient, requestPasswordReset, type AccountRole } from '../services/authService'
+import {
+  consumePostPasswordResetLoginHint,
+  loginClient,
+  registerClient,
+  requestPasswordReset,
+  type AccountRole,
+} from '../services/authService'
 import {
   buildInternationalPhone,
   isValidNationalPhone,
@@ -31,6 +37,12 @@ export default function ClientAuthPage({ onAuthSuccess, onClose }: Props) {
   const [helpMessage, setHelpMessage] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
   const [forgotLoading, setForgotLoading] = useState(false)
+
+  useEffect(() => {
+    if (consumePostPasswordResetLoginHint() !== 'client') return
+    setMode('login')
+    setHelpMessage(t('clientAuth.passwordResetDone'))
+  }, [t])
 
   const submitSignup = async () => {
     const prenomTrim = prenom.trim()
