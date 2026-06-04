@@ -135,10 +135,23 @@ ReactGA.initialize(GA_MEASUREMENT_ID, {
 - [Documentation Google Analytics 4](https://developers.google.com/analytics/devguides/collection/ga4)
 - [Google Analytics](https://analytics.google.com/)
 
+## Microsoft Clarity
+
+Palto charge Clarity via `@microsoft/clarity` dans `src/services/analytics/index.ts` — **ne pas** coller le snippet `<script>` dans `index.html` (doublon).
+
+Projet Palto : `x1rl80e35j` (URL tag : `https://www.clarity.ms/tag/x1rl80e35j`).
+
+```env
+VITE_CLARITY_PROJECT_ID=x1rl80e35j
+```
+
+Même règle que GA : préfixe `VITE_` + variable sur Vercel (Production + Preview) puis redéploiement.
+
 ## ✅ Checklist
 
 - [ ] Variable `VITE_GA_MEASUREMENT_ID` configurée dans `.env.local` (développement)
 - [ ] Variable `VITE_GA_MEASUREMENT_ID` configurée dans Vercel (production)
+- [ ] Variable `VITE_CLARITY_PROJECT_ID=x1rl80e35j` dans `.env.local` et Vercel
 - [ ] Application déployée sur Vercel
 - [ ] Visites vérifiées dans Google Analytics (Temps réel)
 
