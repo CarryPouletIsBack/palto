@@ -29,6 +29,7 @@ import {
 import { useBodyScrollLock } from '../hooks/useBodyScrollLock'
 import { fileToCompressedProfilePhotoDataUrl } from '../utils/clientProfilePhotoDataUrl'
 import { formatStripeBillingLines, formatStripeCardBrand } from '../utils/stripeDisplay'
+import { PaymentCardsSkeleton } from './skeletons/ApiSkeletonLayouts'
 import PaltoStripeSetupForm from './PaltoStripeSetupForm'
 import PaltoStripeTestCardHint from './PaltoStripeTestCardHint'
 import PaltoAccountDeleteBlock from './PaltoAccountDeleteBlock'
@@ -446,9 +447,7 @@ export default function ChauffeurPaltoAccountPanel({
 
             {stripeOn ? <PaltoStripeTestCardHint className="client-compte-payment-test-hint" /> : null}
 
-            {stripeLoading ? (
-              <p className="dashboard-field-hint">{isEn ? 'Loading cards…' : 'Chargement des cartes…'}</p>
-            ) : null}
+            {stripeLoading ? <PaymentCardsSkeleton count={2} /> : null}
 
             <div className="client-compte-payment-row">
               <div className="client-compte-payment-cards-list">

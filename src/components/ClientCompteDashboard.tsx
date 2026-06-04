@@ -110,6 +110,7 @@ import PaltoStripeSetupForm from './PaltoStripeSetupForm';
 import PaltoStripePaymentForm from './PaltoStripePaymentForm';
 import PaltoStripeTestCardHint from './PaltoStripeTestCardHint';
 import PaltoAccountDeleteBlock from './PaltoAccountDeleteBlock';
+import { OverviewRidesListSkeleton, RideRowListSkeleton } from './skeletons/ApiSkeletonLayouts';
 import {
   clientStripeApiEnabled,
   confirmClientWalletTopUp,
@@ -768,6 +769,7 @@ export default function ClientCompteDashboard({ onBack, onOpenClientLiveMeet }: 
   const [pwdError, setPwdError] = useState<string | null>(null);
   const [selectedRideId, setSelectedRideId] = useState<string | null>(null);
   const [clientRides, setClientRides] = useState<ClientRideItem[]>([]);
+  const [clientRidesLoading, setClientRidesLoading] = useState(false);
   const [ridesSyncTick, setRidesSyncTick] = useState(0);
   const [authSessionTick, setAuthSessionTick] = useState(0);
   const [profileSyncTick, setProfileSyncTick] = useState(0);
@@ -972,14 +974,17 @@ export default function ClientCompteDashboard({ onBack, onOpenClientLiveMeet }: 
   useEffect(() => {
     if (!clientRidesApiEnabled()) {
       setClientRides([]);
+      setClientRidesLoading(false);
       return;
     }
     const user = getCurrentClientUser();
     if (!user?.email || !isClientAuthenticated()) {
       setClientRides([]);
+      setClientRidesLoading(false);
       return;
     }
     let cancelled = false;
+    setClientRidesLoading(true);
     void fetchClientRides(user.email, 'all')
       .then((items) => {
         if (!cancelled) setClientRides(items);
@@ -987,6 +992,9 @@ export default function ClientCompteDashboard({ onBack, onOpenClientLiveMeet }: 
       .catch((e) => {
         console.warn('[ClientCompteDashboard] rides api unavailable', e);
         if (!cancelled) setClientRides([]);
+      })
+      .finally(() => {
+        if (!cancelled) setClientRidesLoading(false);
       });
     return () => {
       cancelled = true;
@@ -2471,7 +2479,9 @@ export default function ClientCompteDashboard({ onBack, onOpenClientLiveMeet }: 
                     </span>
                     <span>{t('clientAccount.navCourses')}</span>
                   </h3>
-                  {overviewRecentRides.length > 0 ? (
+                  {clientRidesLoading && overviewRecentRides.length === 0 ? (
+                    <OverviewRidesListSkeleton count={3} />
+                  ) : overviewRecentRides.length > 0 ? (
                     <ul className="client-compte-overview-rides-list" aria-label={t('clientAccount.coursesRecapTitle')}>
                       {overviewRecentRides.map((ride) => (
                         <li
@@ -3416,26 +3426,30 @@ export default function ClientCompteDashboard({ onBack, onOpenClientLiveMeet }: 
                   <p className="dashboard-field-hint" style={{ margin: '0 0 12px' }}>
                     {t('clientAccount.recentRidesCaption')}
                   </p>
-                  <ul className="client-compte-ride-list">
-                    {ridesForUi.map((r) => (
-                      <li key={r.id}>
-                        <button
-                          type="button"
-                          className={`client-compte-ride-row${selectedRideId === r.id ? ' client-compte-ride-row--selected' : ''}`}
-                          onClick={() => setSelectedRideId(r.id)}
-                          aria-pressed={selectedRideId === r.id}
-                        >
-                          <strong>{r.route}</strong>
-                          <span className="client-compte-ride-row-meta">
-                            {rideRowDateLabel(r, language)} ·{' '}
-                            <span className={`ride-status-badge ride-status-badge--${rideStatusTone(rideRowStatusLabel(r, language))}`}>
-                              {rideRowStatusLabel(r, language)}
+                  {clientRidesLoading && ridesForUi.length === 0 ? (
+                    <RideRowListSkeleton count={5} />
+                  ) : (
+                    <ul className="client-compte-ride-list">
+                      {ridesForUi.map((r) => (
+                        <li key={r.id}>
+                          <button
+                            type="button"
+                            className={`client-compte-ride-row${selectedRideId === r.id ? ' client-compte-ride-row--selected' : ''}`}
+                            onClick={() => setSelectedRideId(r.id)}
+                            aria-pressed={selectedRideId === r.id}
+                          >
+                            <strong>{r.route}</strong>
+                            <span className="client-compte-ride-row-meta">
+                              {rideRowDateLabel(r, language)} ·{' '}
+                              <span className={`ride-status-badge ride-status-badge--${rideStatusTone(rideRowStatusLabel(r, language))}`}>
+                                {rideRowStatusLabel(r, language)}
+                              </span>
                             </span>
-                          </span>
-                        </button>
-                      </li>
-                    ))}
-                  </ul>
+                          </button>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
                   {selectedRide ? (
                     <section className="client-compte-ride-detail" aria-live="polite">
                       <div className="client-compte-ride-detail-head">

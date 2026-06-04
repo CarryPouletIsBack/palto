@@ -1,4 +1,6 @@
 .skeleton {
+  display: inline-block;
+  min-height: 1em;
   background: linear-gradient(
     90deg,
     rgba(255, 255, 255, 0.1) 0%,
@@ -8,6 +10,32 @@
   background-size: 200% 100%;
   animation: skeleton-loading 1.5s ease-in-out infinite;
   border-radius: 4px;
+}
+
+.skeleton.skeleton--block {
+  display: block;
+  max-width: 100%;
+}
+
+/* Cartes claires (compte, Go, dashboard) */
+.skeleton.skeleton--on-surface {
+  background: linear-gradient(
+    90deg,
+    rgba(0, 0, 0, 0.06) 0%,
+    rgba(0, 0, 0, 0.1) 50%,
+    rgba(0, 0, 0, 0.06) 100%
+  );
+  background-size: 200% 100%;
+}
+
+html[data-app-theme='dark'] .skeleton.skeleton--on-surface {
+  background: linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0.06) 0%,
+    rgba(255, 255, 255, 0.12) 50%,
+    rgba(255, 255, 255, 0.06) 100%
+  );
+  background-size: 200% 100%;
 }
 
 @keyframes skeleton-loading {

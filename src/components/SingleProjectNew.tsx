@@ -38,6 +38,7 @@ import { TreeNode } from './flow/FlowTree';
 import type { FlowNodeData } from '../data/flowData';
 import Button from './Button';
 import { ButtonLoadingLabel } from './ButtonLoadingLabel';
+import { RideDriverListSkeleton } from './skeletons/ApiSkeletonLayouts';
 import { ChevronLeft } from 'lucide-react';
 import PaltoGoMobileRouteCard from './PaltoGoMobileRouteCard';
 import PaltoGoMobileSuggestionsPanel, {
@@ -551,7 +552,9 @@ const SingleProjectNew: FC<SingleProjectProps> = ({
     return (
       <div className="palto-ride-drivers-list">
         {nearbyDriversLoading && pickupFilteredDrivers.length === 0 ? (
-          <p className="palto-ride-drivers-empty">{t('search.driversLoading')}</p>
+          <div className="palto-ride-drivers-loading" aria-busy="true" aria-label={t('search.driversLoading')}>
+            <RideDriverListSkeleton count={4} />
+          </div>
         ) : pickupFilteredDrivers.length === 0 ? (
           <p className="palto-ride-drivers-empty">{t('search.driversEmpty')}</p>
         ) : (

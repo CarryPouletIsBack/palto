@@ -178,6 +178,7 @@ import { loadClientAccountSnapshot, saveClientAccountSnapshot } from '../constan
 import { syncChauffeurProfileWithServer } from '../services/chauffeurProfileSync';
 import ChauffeurDocumentsChecklist from './ChauffeurDocumentsChecklist';
 import { ButtonLoadingLabel } from './ButtonLoadingLabel';
+import { DashboardCoursesTableSkeleton } from './skeletons/ApiSkeletonLayouts';
 
 type ChauffeurRideActionKind = 'accept' | 'decline' | 'cancel' | 'start' | 'complete';
 
@@ -693,13 +694,23 @@ const Dashboard = ({
     );
   }, [clientRows]);
 
+  const ridesApiInitialLoadRef = useRef(true);
+  const [ridesApiLoading, setRidesApiLoading] = useState(false);
+
   const refreshRides = useCallback(async () => {
     if (!persistRides) return;
+    const isInitialLoad = ridesApiInitialLoadRef.current;
+    if (isInitialLoad) setRidesApiLoading(true);
     try {
       const rows = await fetchChauffeurRidesFromApi();
       setCourseRows(rows);
     } catch (e) {
       console.error('[Dashboard] refresh rides', e);
+    } finally {
+      if (isInitialLoad) {
+        ridesApiInitialLoadRef.current = false;
+        setRidesApiLoading(false);
+      }
     }
   }, [persistRides]);
 
@@ -3244,7 +3255,13 @@ const Dashboard = ({
                           Reinitialiser
                         </button>
                       </div>
-                      <div className="dashboard-table-shell">
+                      <div
+                        className="dashboard-table-shell"
+                        aria-busy={ridesApiLoading && courseRows.length === 0}
+                      >
+                        {ridesApiLoading && courseRows.length === 0 ? (
+                          <DashboardCoursesTableSkeleton rows={6} />
+                        ) : (
                         <table className="dashboard-table dashboard-table--courses">
                           <thead>
                             <tr>
@@ -3277,6 +3294,7 @@ const Dashboard = ({
                             ))}
                           </tbody>
                         </table>
+                        )}
                       </div>
                     </section>
                   )}

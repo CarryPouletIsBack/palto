@@ -252,6 +252,7 @@ Référence arbres **user flow** : implémentation surtout sur la page **Go** (`
 
 ### Dernière mise à jour README — **28 mai 2026**
 
+- **Skeletons API** : chargements `Skeleton` + `src/components/skeletons/ApiSkeletonLayouts.tsx` (liste chauffeurs Go, courses compte, tableau dashboard, cartes Stripe).
 - **Mot de passe oublié** : Resend + page `/reset-password` (sans header) ; retour auto vers modale connexion après changement de MDP.
 - **Carte chauffeurs** : marqueurs **avatar** (photo profil API / mock, repli **initiales**) — plus d’icône moto ; util `src/utils/driverMapMarkerAvatar.ts`, sync cover Go.
 - **Go** : chauffeurs via **`GET ?mode=nearby`** ; mock local documenté comme tests uniquement.
