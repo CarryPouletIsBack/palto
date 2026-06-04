@@ -91,10 +91,13 @@ import { DashboardHomeRidesBanner } from './DashboardHomeRidesBanner';
 import { useClientHomeTopbarRides } from '../hooks/useClientHomeTopbarRides';
 import { simplifyAddressDisplay as simplifyRideAddress } from '../services/addressDisplay';
 import { getNearbyDrivers } from '../services/getNearbyDrivers';
+import { toNearbyDriverMapPoint } from '../utils/driverMapMarkerAvatar';
 import type { NearbyDriver } from '../data/nearbyDrivers';
 import { formatDriverMetaLine } from '../lib/formatDriverMetaLine';
 import {
   estimateChauffeurFareTtc,
+  formatDriverPriceLabel,
+  formatFareEurDisplay,
   normalizeRidePricing,
   parsePriceEurFromDisplay,
 } from '../lib/chauffeurFareEstimate';
@@ -575,7 +578,9 @@ const SingleProjectNew: FC<SingleProjectProps> = ({
                   <span className="palto-ride-driver-item__meta">{meta}</span>
                 </span>
                 <span className="palto-ride-driver-item__price">
-                  {dynamicDriverTtc !== null ? `${dynamicDriverTtc.toFixed(2)} EUR` : driver.price}
+                  {dynamicDriverTtc !== null
+                    ? formatFareEurDisplay(dynamicDriverTtc)
+                    : formatDriverPriceLabel(driver.price)}
                 </span>
               </button>
             );
@@ -2670,7 +2675,9 @@ const SingleProjectNew: FC<SingleProjectProps> = ({
     window.dispatchEvent(
       new CustomEvent('palto:go-cover-nearby-drivers-sync', {
         detail: {
-          drivers: chauffeursSearchOk ? pickupFilteredDrivers : [],
+          drivers: chauffeursSearchOk
+            ? pickupFilteredDrivers.map(toNearbyDriverMapPoint)
+            : [],
         },
       })
     );
@@ -2873,17 +2880,6 @@ const SingleProjectNew: FC<SingleProjectProps> = ({
         <div className="main-single-project">
         {isGoProjectPage ? (
         <>
-        {isGoProjectPage && !isDesktopViewport ? (
-          <div className="single-project-go-topbar-wrap single-project-go-topbar-wrap--mobile-chrome">
-            <SiteChromeStack>
-              <DashboardHomeTopbar
-                onOpenClientAccountAuth={onOpenClientAccountAuth}
-                onOpenClientAccount={onOpenClientAccount}
-                onNavigateHome={onNavigateHome}
-              />
-            </SiteChromeStack>
-          </div>
-        ) : null}
         {isDesktopViewport ? (
         <div className="dashboard-container dashboard-container--home-accueil single-project-go-topbar-wrap">
           <div className="dashboard-main single-project-go-topbar-wrap__main">
@@ -3283,7 +3279,9 @@ const SingleProjectNew: FC<SingleProjectProps> = ({
                   flyToTarget={embeddedMapFlyToTarget}
                   selectedDestination={paltoMapSelectedDestination}
                   routeFeature={paltoMapRouteFeature}
-                  nearbyDrivers={chauffeursSearchOk ? pickupFilteredDrivers : []}
+                  nearbyDrivers={
+                    chauffeursSearchOk ? pickupFilteredDrivers.map(toNearbyDriverMapPoint) : []
+                  }
                   onMapDestinationPick={handlePaltoMainMapPick}
                   recenterRouteLabel={t('clientAccount.mapRecenterRoute')}
                 />
@@ -3317,8 +3315,8 @@ const SingleProjectNew: FC<SingleProjectProps> = ({
                         const ttc = computeDriverPriceTtc(paltoSelectedDriver);
                         const priceLabel =
                           ttc !== null
-                            ? `${ttc.toFixed(2).replace('.', ',')} €`
-                            : paltoSelectedDriver.price;
+                            ? formatFareEurDisplay(ttc)
+                            : formatDriverPriceLabel(paltoSelectedDriver.price);
                         return `${t('search.chooseDriverCta')} · ${priceLabel}`;
                       })()}
                     </Button>
@@ -3414,23 +3412,23 @@ const SingleProjectNew: FC<SingleProjectProps> = ({
                       <>
                         <p className="palto-ride-recap-price-row">
                           <span>{t('search.checkoutDriverFare')}</span>
-                          <strong>{paltoRecapPriceBreakdown.driverEur} EUR</strong>
+                          <strong>{formatFareEurDisplay(Number(paltoRecapPriceBreakdown.driverEur))}</strong>
                         </p>
                         {effectiveCheckoutPaymentMethod === 'card' ? (
                           <>
                             <p className="palto-ride-recap-price-row">
                               <span>{t('search.checkoutPaltoFee')}</span>
-                              <strong>{paltoRecapPriceBreakdown.paltoFeeEur} EUR</strong>
+                              <strong>{formatFareEurDisplay(Number(paltoRecapPriceBreakdown.paltoFeeEur))}</strong>
                             </p>
                             <p className="palto-ride-recap-price-row palto-ride-recap-price-row--total">
                               <span>{t('search.checkoutTotalAuth')}</span>
-                              <strong>{paltoRecapPriceBreakdown.totalAuthorizedEur} EUR</strong>
+                              <strong>{formatFareEurDisplay(Number(paltoRecapPriceBreakdown.totalAuthorizedEur))}</strong>
                             </p>
                           </>
                         ) : (
                           <p className="palto-ride-recap-price-row palto-ride-recap-price-row--total">
                             <span>{t('search.checkoutPaymentCash')}</span>
-                            <strong>{paltoRecapPriceBreakdown.driverEur} EUR</strong>
+                            <strong>{formatFareEurDisplay(Number(paltoRecapPriceBreakdown.driverEur))}</strong>
                           </p>
                         )}
                       </>
@@ -3524,23 +3522,23 @@ const SingleProjectNew: FC<SingleProjectProps> = ({
                           <>
                             <p>
                               <span>{t('search.checkoutDriverFare')}</span>{' '}
-                              <strong>{breakdown.driverEur.toFixed(2)} EUR</strong>
+                              <strong>{formatFareEurDisplay(breakdown.driverEur)}</strong>
                             </p>
                             {effectiveCheckoutPaymentMethod === 'card' ? (
                               <>
                                 <p>
                                   <span>{t('search.checkoutPaltoFee')}</span>{' '}
-                                  <strong>{breakdown.paltoFeeEur.toFixed(2)} EUR</strong>
+                                  <strong>{formatFareEurDisplay(breakdown.paltoFeeEur)}</strong>
                                 </p>
                                 <p>
                                   <span>{t('search.checkoutTotalAuth')}</span>{' '}
-                                  <strong>{breakdown.totalEur.toFixed(2)} EUR</strong>
+                                  <strong>{formatFareEurDisplay(breakdown.totalEur)}</strong>
                                 </p>
                               </>
                             ) : (
                               <p>
                                 <span>{t('search.checkoutPaymentCash')}</span>{' '}
-                                <strong>{breakdown.driverEur.toFixed(2)} EUR</strong>
+                                <strong>{formatFareEurDisplay(breakdown.driverEur)}</strong>
                               </p>
                             )}
                           </>

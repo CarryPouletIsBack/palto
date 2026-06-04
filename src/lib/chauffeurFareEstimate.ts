@@ -108,5 +108,12 @@ export function estimateChauffeurFareTtc(input: EstimateChauffeurFareInput): num
 }
 
 export function formatFareEurDisplay(amount: number): string {
-  return `${amount.toFixed(2).replace('.', ',')} EUR`
+  return `${amount.toFixed(2).replace('.', ',')} €`
+}
+
+/** Libellé prix chauffeur (API ou mock « 82 EUR » → « 82,00 € »). */
+export function formatDriverPriceLabel(price: string): string {
+  const parsed = parsePriceEurFromDisplay(price)
+  if (parsed > 0) return formatFareEurDisplay(parsed)
+  return price.replace(/\s*EUR\s*$/i, ' €').trim()
 }

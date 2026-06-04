@@ -5,6 +5,7 @@
 import { DEFAULT_USER_ORIGIN } from '../constants/defaultUserOrigin'
 import type { ChauffeurProfileRidePricingFields } from '../constants/chauffeurProfileStorage'
 import type { GeoPoint } from '../services/distanceGeo'
+import { mockDriverProfilePhotoUrl } from '../utils/driverMapMarkerAvatar'
 
 /** Chauffeur généré pour les tests locaux de l’overlay + marqueurs carte. */
 export type NearbyDriver = {
@@ -95,14 +96,16 @@ export function getNearbyDriversMock({
     const minutes = Math.max(2, Math.round((distanceKm / tpl.speedKmh) * 60))
     const price = Math.max(6, tpl.basePriceEur + distanceKm * 1.15)
     const display = ACCOUNT_DISPLAY_OVERRIDES[tpl.id]
+    const name = display?.name ?? tpl.name
     return {
       id: tpl.id,
-      name: display?.name ?? tpl.name,
+      name,
       moto: display?.moto ?? tpl.moto,
       distance: `${distanceKm.toFixed(1).replace('.', ',')} km · ~${minutes} min`,
-      price: `${Math.round(price)} EUR`,
+      price: `${Math.round(price).toString().replace('.', ',')} €`,
       longitude: pos.longitude,
       latitude: pos.latitude,
+      profilePhotoUrl: mockDriverProfilePhotoUrl(name),
     }
   })
 }

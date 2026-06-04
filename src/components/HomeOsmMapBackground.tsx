@@ -21,6 +21,13 @@ import {
 } from '../constants/reunionIsland'
 import type { GeoPoint } from '../services/distanceGeo'
 import { isValidMapLngLat } from '../utils/mapLngLat'
+import {
+  driverInitialsFromDisplayName,
+  driverMapMarkerAccentColor,
+  type NearbyDriverMapPoint,
+} from '../utils/driverMapMarkerAvatar'
+
+export type { NearbyDriverMapPoint }
 import { computeMapAutoCameraKey, hasMapAutoFrameContent } from '../utils/mapAutoCameraKey'
 
 /** Centre carte : La Réunion (île), zoom large pour contexte local. */
@@ -55,15 +62,6 @@ export type HomeMapFlyTo = {
   zoom?: number
 }
 
-export type NearbyDriverMapPoint = {
-  id: string
-  longitude: number
-  latitude: number
-  name?: string
-  /** Photo de profil chauffeur (sinon icône moto par défaut). */
-  profilePhotoUrl?: string
-}
-
 /** Source DEM relief — id dédié pour éviter les collisions avec le style. */
 const MAP_TERRAIN_SOURCE_ID = 'palto-terrain-dem'
 const MAP_HILLSHADE_LAYER_ID = 'palto-terrain-hillshade'
@@ -71,15 +69,53 @@ const MAP_TERRAIN_EXAGGERATION = 1.45
 
 const MAP_PITCH_3D = 60
 
+function DriverMapInitialsAvatar({
+  name,
+  seed,
+  title,
+  ariaLabel,
+}: {
+  name: string
+  seed: string
+  title?: string
+  ariaLabel: string
+}) {
+  const initials = driverInitialsFromDisplayName(name)
+  const bg = driverMapMarkerAccentColor(seed)
+  return (
+    <div
+      className="home-osm-map-driver-avatar home-osm-map-driver-avatar--initials"
+      style={{ background: bg }}
+      title={title}
+      role="img"
+      aria-label={ariaLabel}
+    >
+      <span className="home-osm-map-driver-avatar__initials" aria-hidden>
+        {initials}
+      </span>
+    </div>
+  )
+}
+
 function DriverMapProfileAvatar({
   photoUrl,
+  name,
+  seed,
   title,
   ariaLabel,
 }: {
   photoUrl: string
+  name: string
+  seed: string
   title?: string
   ariaLabel: string
 }) {
+  const [photoFailed, setPhotoFailed] = useState(false)
+  if (photoFailed) {
+    return (
+      <DriverMapInitialsAvatar name={name} seed={seed} title={title} ariaLabel={ariaLabel} />
+    )
+  }
   return (
     <div
       className="home-osm-map-driver-avatar"
@@ -87,40 +123,43 @@ function DriverMapProfileAvatar({
       role="img"
       aria-label={ariaLabel}
     >
-      <img src={photoUrl} alt="" className="home-osm-map-driver-avatar__img" />
+      <img
+        src={photoUrl}
+        alt=""
+        className="home-osm-map-driver-avatar__img"
+        onError={() => setPhotoFailed(true)}
+      />
     </div>
   )
 }
 
-/** Icône moto (vue de profil) pour les chauffeurs sans photo de profil. */
-function DriverMapMotoIcon({ title, ariaLabel }: { title?: string; ariaLabel: string }) {
+function DriverMapMarkerAvatar({
+  driver,
+}: {
+  driver: NearbyDriverMapPoint
+}) {
+  const title = driver.name ?? 'Chauffeur'
+  const ariaLabel = driver.name ? `Chauffeur ${driver.name}` : 'Chauffeur'
+  const photo = driver.profilePhotoUrl?.trim()
+  const displayName = driver.name?.trim() || 'Chauffeur'
+  if (photo) {
+    return (
+      <DriverMapProfileAvatar
+        photoUrl={photo}
+        name={displayName}
+        seed={driver.id}
+        title={title}
+        ariaLabel={ariaLabel}
+      />
+    )
+  }
   return (
-    <div className="home-osm-map-driver-moto" title={title} role="img" aria-label={ariaLabel}>
-      <svg
-        className="home-osm-map-driver-moto__svg"
-        viewBox="0 0 32 32"
-        xmlns="http://www.w3.org/2000/svg"
-        aria-hidden
-        focusable="false"
-      >
-        {/* Silhouette vue de profil : réservoir, selle, fourche */}
-        <path
-          d="M 9.5 23.5 L 11.5 16 Q 12 13.5 14.5 13 L 21.5 12.5 L 25 14.5 L 23 21.5 L 17 20.8 L 13 23.5 Z"
-          fill="#a3e635"
-          stroke="rgba(255,255,255,0.92)"
-          strokeWidth="0.85"
-          strokeLinejoin="round"
-        />
-        <path
-          d="M 24.5 13.5 L 27 11.8"
-          stroke="#ecfccb"
-          strokeWidth="1.35"
-          strokeLinecap="round"
-        />
-        <circle cx="8.6" cy="23.5" r="4.35" fill="#1a1a1a" stroke="rgba(255,255,255,0.95)" strokeWidth="1.2" />
-        <circle cx="23.6" cy="23.5" r="4.35" fill="#1a1a1a" stroke="rgba(255,255,255,0.95)" strokeWidth="1.2" />
-      </svg>
-    </div>
+    <DriverMapInitialsAvatar
+      name={displayName}
+      seed={driver.id}
+      title={title}
+      ariaLabel={ariaLabel}
+    />
   )
 }
 
@@ -608,18 +647,7 @@ export default function HomeOsmMapBackground({
               anchor="center"
               style={{ pointerEvents: 'none' }}
             >
-              {d.profilePhotoUrl?.trim() ? (
-                <DriverMapProfileAvatar
-                  photoUrl={d.profilePhotoUrl.trim()}
-                  title={d.name ?? 'Chauffeur'}
-                  ariaLabel={d.name ? `Chauffeur ${d.name}` : 'Chauffeur'}
-                />
-              ) : (
-                <DriverMapMotoIcon
-                  title={d.name ?? 'Chauffeur'}
-                  ariaLabel={d.name ? `Chauffeur ${d.name}` : 'Chauffeur moto'}
-                />
-              )}
+              <DriverMapMarkerAvatar driver={d} />
             </Marker>
           ))}
 

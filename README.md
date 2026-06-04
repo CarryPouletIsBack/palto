@@ -1,6 +1,6 @@
 # Palto
 
-Application web autour de la **mobilité à La Réunion** : carte **OSM** dans la **grille d’accueil** (colonne carte), **recherche / clic carte → destination**, **itinéraire routier**, marqueurs départ / arrivée, **chauffeurs à proximité** (données mock + icônes moto sur la carte), et outils d’**estimation de distance** / barème kilométrique (usage indicatif, voir `src/services/`).
+Application web autour de la **mobilité à La Réunion** : carte **OSM** dans la **grille d’accueil** (colonne carte), **recherche / clic carte → destination**, **itinéraire routier**, marqueurs départ / arrivée, **chauffeurs à proximité** (API ou mock local, **avatars** photo / initiales sur la carte), et outils d’**estimation de distance** / barème kilométrique (usage indicatif, voir `src/services/`).
 
 Le dépôt reprend une base **React + Vite + TypeScript** : périmètre produit **Palto** (carte, trajets, réservation Go, comptes, dashboard). Déploiement de référence : **[palto-six.vercel.app](https://palto-six.vercel.app)**.
 
@@ -52,7 +52,7 @@ Prod de référence : **[palto-six.vercel.app](https://palto-six.vercel.app)**. 
 
 ## Périmètre livré & évolutions (2026)
 
-Le cœur **Palto** (accueil carte, **Go**, comptes, dashboard chauffeur) est **maintenu dans ce dépôt** ; le build production cible `npm run build` (voir ci-dessous pour la **PWA**). Les détails d’implémentation vivent dans **Git**. Le parcours **Go** (`/go`) reste un **prototype** front (mock chauffeurs) ; les **courses persistées** passent par l’**API** + **Supabase** lorsque les flags / variables d’environnement sont activés. Pour le déploiement : **DEPLOY.md**, **.env.example** ; pour les chauffeurs sur la carte d’accueil : remplacer à terme `getNearbyDriversMock()` dans `src/data/nearbyDrivers.ts` par un appel API réel (contrat décrit dans `.cursorrules`).
+Le cœur **Palto** (accueil carte, **Go**, comptes, dashboard chauffeur) est **maintenu dans ce dépôt** ; le build production cible `npm run build` (voir ci-dessous pour la **PWA**). Les détails d’implémentation vivent dans **Git**. Le parcours **Go** (`/go`) charge les chauffeurs via **`getNearbyDrivers()`** → **`GET /api/client/rides?mode=nearby`** (présence + photo profil Supabase) ; le mock **`getNearbyDriversMock()`** dans `src/data/nearbyDrivers.ts` reste réservé aux tests / démos locales (voir `.cursorrules`). Les **courses persistées** passent par l’**API** + **Supabase** lorsque les flags / variables d’environnement sont activés. Déploiement : **DEPLOY.md**, **.env.example**.
 
 ## Dashboard chauffeur (`/dashboard`)
 
@@ -82,7 +82,7 @@ Le cœur **Palto** (accueil carte, **Go**, comptes, dashboard chauffeur) est **m
 
 - **Carte** dans la **3e colonne** de l’accueil (`Hero` → `HomeOsmMapBackground` en mode `embedded`). Fond tuiles : **OSM / OpenFreeMap Liberty** uniquement (pas de fond Mapbox).
 - **Position « utilisateur » (dev)** : `3 Allée Dachau, 97420 Le Port` — `DEFAULT_USER_ORIGIN` / libellé associé dans `src/constants/defaultUserOrigin.ts`.
-- **Pins** départ (bleu), arrivée (orange), chauffeurs (icône moto SVG). **Chauffeurs à proximité** : liste dans la colonne centrale du `Hero` + marqueurs sur la carte ; données `src/data/nearbyDrivers.ts` (`getNearbyDriversMock()`). Sans itinéraire ni destination ciblée, la carte **cadre** départ + chauffeurs pour les garder visibles.
+- **Pins** départ (bleu), arrivée (orange), chauffeurs (**avatar** : photo de profil si disponible, sinon **initiales** colorées — `HomeOsmMapBackground` + `src/utils/driverMapMarkerAvatar.ts`). **Chauffeurs à proximité** : liste + marqueurs sur la carte ; prod via API nearby, mock optionnel en local (`getNearbyDriversMock()` avec URLs d’avatar générées). Sans itinéraire ni destination ciblée, la carte **cadre** départ + chauffeurs pour les garder visibles.
 - **Sélection d’un chauffeur** : état `homeSelectedDriverId` dans `App.tsx` ; pas d’itinéraire vers la position du chauffeur mock (distinct de la destination course).
 - **Tracé d’itinéraire** : calcul routier **OSRM** (public `router.project-osrm.org`) entre l’origine et la **destination** ; implémentation **`src/services/osrmRouting.ts`** (snap « nearest » + route `driving`). Côté **page Go**, requêtes **débouncées** et **annulables** (`AbortSignal`) pour éviter la saturation navigateur (`net::ERR_INSUFFICIENT_RESOURCES`) quand départ / arrivée changent vite.
 - **Clic sur la carte** : point sur l’île, puis **géocodage inverse** — le champ **Destination** (colonne réservation) affiche l’adresse résolue, ou les coordonnées en secours.
@@ -97,7 +97,7 @@ Le cœur **Palto** (accueil carte, **Go**, comptes, dashboard chauffeur) est **m
 Route **`/go`** (projet **Go** dans `projects.ts` / `SingleProjectNew.tsx`). Parcours type **commande de course** (prototype, sans backend de commande réelle) :
 
 - **Localisation (départ)** et **destination** : saisie, **pré-sélection** au focus (lieux enregistrés, dernière valeur ; **géolocalisation navigateur** uniquement sur le départ), **suggestions d’adresse** via `/api/geocode` (BAN + OSM, biais La Réunion) à partir de quelques caractères, bouton **×** pour vider chaque champ.
-- **Rechercher** : géocodage **départ + destination** en une fois ; affichage des **chauffeurs** (mock `getNearbyDriversMock()`, rayon **20 km** autour du départ validé) et tracé **itinéraire** sur la carte embarquée.
+- **Rechercher** : géocodage **départ + destination** en une fois ; affichage des **chauffeurs** inscrits / à proximité (**API** `mode=nearby`, rayon **20 km** autour du départ validé) avec **avatars sur la carte** (cover mobile synchronisée via `palto:go-cover-nearby-drivers-sync`) et tracé **itinéraire** sur la carte embarquée. Prix affichés en **€** (`formatFareEurDisplay`).
 - **Clic sur un chauffeur** (desktop) : ouverture d’une **modal « Recap commande »** (détail trajet, chauffeur, prix indicatif) avec bouton **Commandez la course** (fermeture + événement analytics ; pas de paiement).
 - Carte : pin départ après validation, `flyTo` sur le pickup, pins / route OSM comme sur le reste du site.
 
@@ -129,7 +129,7 @@ La cover du projet **Go** et le panneau de réservation échangent des événeme
 
 ## Stack technique
 
-- **React 18.3**, **TypeScript**, **Vite**
+- **React 18.3**, **TypeScript**, **Vite** — config TS projet : `tsconfig.json` (références) + **`tsconfig.app.json`** (code sous `src/`, alias `@/*`) + **`tsconfig.node.json`** (Vite / scripts Node)
 - **OSM** (carte, marqueurs, tracés)
 - **Framer Motion**, **GSAP**, **MUI**, **Radix**, **Tailwind** (selon pages)
 - **Navigation SPA** (`history.pushState` / `popstate`, sans React Router pour le cœur)
@@ -190,7 +190,8 @@ src/
   components/          # UI — Hero, Dashboard (chauffeur), ClientCompteDashboard, SingleProjectNew, DriverNavigationView, HomeOsmMapBackground, …
   constants/            # stockages locaux client/chauffeur, defaultUserOrigin, …
   services/             # addressGeocoding, osrmRouting, paltoRideLocationRealtime, paltoCoursesRealtime, clientRidesApi…
-  data/                 # nearbyDrivers.ts (mock chauffeurs), destinations, menu, projets…
+  data/                 # nearbyDrivers.ts (types + mock local), destinations, menu, projets…
+  utils/                # driverMapMarkerAvatar.ts (marqueurs carte chauffeurs), mapLngLat…
 api/                    # Serverless — geocode, auth, client/rides, chauffeur, auth/realtime-token, …
 public/
 ```
@@ -245,10 +246,10 @@ Référence arbres **user flow** : implémentation surtout sur la page **Go** (`
 
 ### Dernière mise à jour README — **28 mai 2026**
 
-- **Beta / capacité** : section [Beta publique & capacité](#beta-publique--capacité-vercel-hobby--supabase-free) + guide **[docs/MONITORING-BETA-FREE-TIER.md](./docs/MONITORING-BETA-FREE-TIER.md)** (seuils, checklist Vercel/Supabase, quand passer Pro).
-- **Flag** : `VITE_CASH_ONLY_PAYMENTS` documenté pour la phase test public.
-- **Audit déploiement** : section [Vérification](#vérification-build-prod-bdd-stripe) ; prod **palto-six.vercel.app**.
-- **Routes API** : **9** fonctions serverless + rewrites / cron Vercel.
-- **Supabase** : migrations **0008–0011** ; `npm run check:supabase`.
+- **Carte chauffeurs** : marqueurs **avatar** (photo profil API / mock, repli **initiales**) — plus d’icône moto ; util `src/utils/driverMapMarkerAvatar.ts`, sync cover Go.
+- **Go** : chauffeurs via **`GET ?mode=nearby`** ; mock local documenté comme tests uniquement.
+- **Prix Go** : affichage unifié **`82,56 €`** (`formatFareEurDisplay` / `formatDriverPriceLabel`, front + server).
+- **TypeScript** : `tsconfig.app.json` / `tsconfig.node.json` mentionnés dans [Stack](#stack-technique).
+- **Beta / capacité** : [docs/MONITORING-BETA-FREE-TIER.md](./docs/MONITORING-BETA-FREE-TIER.md), `VITE_CASH_ONLY_PAYMENTS`, vérif prod **palto-six.vercel.app**.
 
 *Palto — prod [palto-six.vercel.app](https://palto-six.vercel.app) · **OSM** + **`/api/geocode`** · **Go** `/go` · **compte** `/compte` · **dashboard** `/dashboard` · API + Supabase + Stripe selon `.env` / Vercel.*

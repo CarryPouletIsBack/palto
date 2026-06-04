@@ -126,6 +126,21 @@
   display: block;
 }
 
+.home-osm-map-driver-avatar--initials {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.home-osm-map-driver-avatar__initials {
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1;
+  color: #fff;
+  letter-spacing: 0.02em;
+  user-select: none;
+}
+
 .home-osm-map-driver-moto {
   width: 38px;
   height: 38px;

@@ -111,5 +111,5 @@ export function estimateChauffeurFareTtc(input: EstimateChauffeurFareInput): num
 }
 
 export function formatFareEurDisplay(amount: number): string {
-  return `${amount.toFixed(2).replace('.', ',')} EUR`
+  return `${amount.toFixed(2).replace('.', ',')} €`
 }
