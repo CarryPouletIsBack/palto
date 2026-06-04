@@ -1,7 +1,8 @@
 import { useMemo, useState, type FormEvent } from 'react'
 import { Eye, EyeOff, X } from 'lucide-react'
 import AuthSignupIdentityFields from './AuthSignupIdentityFields'
-import { loginClient, registerClient, type AccountRole } from '../services/authService'
+import { useLanguage } from '../contexts/LanguageContext'
+import { loginClient, registerClient, requestPasswordReset, type AccountRole } from '../services/authService'
 import {
   buildInternationalPhone,
   isValidNationalPhone,
@@ -16,6 +17,7 @@ type Props = {
 }
 
 export default function ClientAuthPage({ onAuthSuccess, onClose }: Props) {
+  const { t } = useLanguage()
   const signupDefault = useMemo(() => new URLSearchParams(window.location.search).get('clientSignup') === '1', [])
   const [mode, setMode] = useState<'login' | 'signup'>(signupDefault ? 'signup' : 'login')
   const [prenom, setPrenom] = useState('')
@@ -28,6 +30,7 @@ export default function ClientAuthPage({ onAuthSuccess, onClose }: Props) {
   const [error, setError] = useState<string | null>(null)
   const [helpMessage, setHelpMessage] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
+  const [forgotLoading, setForgotLoading] = useState(false)
 
   const submitSignup = async () => {
     const prenomTrim = prenom.trim()
@@ -76,11 +79,22 @@ export default function ClientAuthPage({ onAuthSuccess, onClose }: Props) {
     onAuthSuccess(result.role)
   }
 
-  const handleForgotPassword = () => {
+  const handleForgotPassword = async () => {
     setError(null)
-    setHelpMessage(
-      'Reinitialisation temporairement indisponible pendant la beta. Contactez le support Palto.'
-    )
+    setHelpMessage(null)
+    const emailTrim = email.trim()
+    if (!emailTrim) {
+      setError(t('clientAuth.forgotPasswordEmailRequired'))
+      return
+    }
+    setForgotLoading(true)
+    const result = await requestPasswordReset('client', emailTrim)
+    setForgotLoading(false)
+    if (!result.success) {
+      setError(result.error ?? t('clientAuth.errorGeneric'))
+      return
+    }
+    setHelpMessage(t('clientAuth.forgotPasswordSuccess'))
   }
 
   const handleSubmit = (e: FormEvent) => {
@@ -157,9 +171,10 @@ export default function ClientAuthPage({ onAuthSuccess, onClose }: Props) {
             <button
               className="auth-page-forgot"
               type="button"
-              onClick={handleForgotPassword}
+              disabled={forgotLoading || loading}
+              onClick={() => void handleForgotPassword()}
             >
-              Mot de passe oublie ?
+              {forgotLoading ? t('clientAuth.forgotPasswordSending') : t('clientAuth.forgotPassword')}
             </button>
           ) : null}
           {error ? <p className="auth-page-error">{error}</p> : null}

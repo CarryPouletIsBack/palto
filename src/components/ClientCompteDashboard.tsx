@@ -2358,7 +2358,7 @@ export default function ClientCompteDashboard({ onBack, onOpenClientLiveMeet }: 
                                   setAccountModalOpen(false);
                                 }}
                               >
-                                Gerer le compte Palto
+                                Gerer le compte
                               </button>
                               <button
                                 type="button"

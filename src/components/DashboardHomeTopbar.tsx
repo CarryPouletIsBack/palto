@@ -209,7 +209,7 @@ export function DashboardHomeTopbar({
             </div>
             <div className="client-compte-account-menu__actions">
               <button type="button" className="client-compte-account-menu__item" onClick={handleClientAccount}>
-                {language === 'en' ? 'Manage Palto account' : 'Gerer le compte Palto'}
+                {language === 'en' ? 'Manage account' : 'Gerer le compte'}
               </button>
               <button
                 type="button"

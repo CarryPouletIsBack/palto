@@ -6,6 +6,7 @@ import {
   getCurrentClientUser,
   isClientAuthenticated,
   loginChauffeurOnly,
+  requestPasswordReset,
   type AccountRole,
 } from '../services/authService'
 import './AuthPage.css'
@@ -28,6 +29,7 @@ export default function ChauffeurAuthPage({ onAuthSuccess, onClose }: Props) {
   const [error, setError] = useState<string | null>(null)
   const [helpMessage, setHelpMessage] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
+  const [forgotLoading, setForgotLoading] = useState(false)
   const clientAlreadyLogged = isClientAuthenticated()
 
   useEffect(() => {
@@ -54,11 +56,22 @@ export default function ChauffeurAuthPage({ onAuthSuccess, onClose }: Props) {
     void submitLogin()
   }
 
-  const handleForgotPassword = () => {
+  const handleForgotPassword = async () => {
     setError(null)
-    setHelpMessage(
-      'Reinitialisation temporairement indisponible pendant la beta. Contactez le support Palto.'
-    )
+    setHelpMessage(null)
+    const emailTrim = email.trim()
+    if (!emailTrim) {
+      setError(t('chauffeurAuth.forgotPasswordEmailRequired'))
+      return
+    }
+    setForgotLoading(true)
+    const result = await requestPasswordReset('chauffeur', emailTrim)
+    setForgotLoading(false)
+    if (!result.success) {
+      setError(result.error ?? t('chauffeurAuth.errorGeneric'))
+      return
+    }
+    setHelpMessage(t('chauffeurAuth.forgotPasswordSuccess'))
   }
 
   return (
@@ -123,9 +136,10 @@ export default function ChauffeurAuthPage({ onAuthSuccess, onClose }: Props) {
             <button
               className="auth-page-forgot"
               type="button"
-              onClick={handleForgotPassword}
+              disabled={forgotLoading || loading}
+              onClick={() => void handleForgotPassword()}
             >
-              Mot de passe oublie ?
+              {forgotLoading ? t('chauffeurAuth.forgotPasswordSending') : t('chauffeurAuth.forgotPassword')}
             </button>
             {error ? <p className="auth-page-error">{error}</p> : null}
             {helpMessage ? <p className="auth-page-help">{helpMessage}</p> : null}

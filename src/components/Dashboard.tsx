@@ -2225,7 +2225,7 @@ const Dashboard = ({
                 className="client-compte-account-menu__item"
                 onClick={() => openChauffeurPaltoAccount('personal')}
               >
-                {language === 'en' ? 'Manage Palto account' : 'Gerer le compte Palto'}
+                {language === 'en' ? 'Manage account' : 'Gerer le compte'}
               </button>
               <button
                 type="button"

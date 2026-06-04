@@ -71,7 +71,7 @@ Le cœur **Palto** (accueil carte, **Go**, comptes, dashboard chauffeur) est **m
 
 ## Compte passager (`/compte`)
 
-- **UI** : `ClientCompteDashboard.tsx` (aperçu, cours, lieux, portefeuille simulé local, sécurité, réglages) ; entrée **« Gérer mon compte Palto »** (tuiles style Apple) pour nom, téléphone, e-mail affiché, langue, etc.
+- **UI** : `ClientCompteDashboard.tsx` (aperçu, cours, lieux, portefeuille simulé local, sécurité, réglages) ; entrée **« Gérer le compte »** (tuiles style Apple) pour nom, téléphone, e-mail affiché, langue, etc.
 - **Persistance** : profil, lieux, sécurité et préférences en **`localStorage` par e-mail** (`src/constants/clientAccountStorage.ts`) ; sync profil serveur via **`PUT /api/client/profile`** quand l’API client est active.
 - **Portefeuille — Derniers mouvements** : la liste affichée sur `/compte` (bento + page portefeuille) est dérivée des **courses API** (`clientRides` / `ridesForUi`), pas d’un tableau mock vide.
 - **Courses** : si `VITE_USE_CLIENT_RIDES_API` est actif (défaut : oui), liste via **`GET /api/client/rides`** ; annulation **`POST`** (`pending` / `accepted`) avec logique Stripe si carte ; chauffeurs proches **`GET ?mode=nearby`**. Realtime optionnel : `src/services/paltoCoursesRealtime.ts`.

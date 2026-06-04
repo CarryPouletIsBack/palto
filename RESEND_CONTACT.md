@@ -7,9 +7,29 @@ Dans le dashboard Vercel → Settings → Environment Variables, ajoute :
 | Variable | Description |
 |----------|-------------|
 | `RESEND_API_KEY` | Clé API Resend (obligatoire) |
-| `RESEND_TO_EMAIL` | Email qui reçoit les messages (**obligatoire** côté API) |
-| `RESEND_FROM` | Expéditeur (optionnel, ex. `Palto <noreply@votre-domaine.com>`) |
+| `RESEND_TO_EMAIL` | Email qui reçoit les messages contact (**obligatoire** pour `/api/send`) |
+| `RESEND_FROM` | Expéditeur (ex. `Palto <noreply@votre-domaine.com>`) — reset mot de passe + courses |
+| `APP_BASE_URL` | URL publique du site (ex. `https://palto-six.vercel.app`) — liens dans l’email « mot de passe oublié » |
 | `CRON_SECRET` | Secret partagé pour protéger les endpoints cron (fortement recommandé) |
+
+## Mot de passe oublié (client + chauffeur)
+
+Flux déjà côté API : `POST /api/auth?role=client|chauffeur&action=forgot-password` puis page `/fr/reset-password?role=…&token=…`.
+
+1. **Vercel** : `RESEND_API_KEY`, `RESEND_FROM` (domaine vérifié sur Resend), `APP_BASE_URL`, Supabase (`SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`).
+2. **Local** : `npm run dev:api` (`vercel dev`) — `npm run dev` seul ne expose pas `/api/auth`.
+3. Sur les modales **Connexion client** / **Connexion chauffeur** : saisir l’e-mail → **Mot de passe oublié ?** → message de confirmation (réponse neutre si l’e-mail n’existe pas).
+4. L’utilisateur ouvre le lien reçu (30 min), définit un nouveau mot de passe, puis se reconnecte.
+
+Test rapide :
+
+```bash
+curl -s -X POST "http://localhost:3000/api/auth?role=client&action=forgot-password" \
+  -H "Content-Type: application/json" \
+  -d '{"email":"votre@email.com"}'
+```
+
+Réponse attendue : `{"success":true}` (même si l’e-mail est inconnu, pour éviter l’énumération des comptes).
 
 ## Test en local
 

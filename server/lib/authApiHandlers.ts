@@ -104,10 +104,15 @@ async function sendForgotPasswordEmail(params: {
   const from = process.env.RESEND_FROM ?? 'Palto <onboarding@resend.dev>'
   const appLabel = params.role === 'chauffeur' ? 'Palto Chauffeur' : 'Palto Client'
   const roleLabel = params.role === 'chauffeur' ? 'chauffeur' : 'client'
-  await resend.emails.send({
+  const { error } = await resend.emails.send({
     from,
     to: [params.email],
     subject: `[Palto] Reinitialisation du mot de passe (${appLabel})`,
+    html: `<p>Bonjour,</p>
+<p>Une demande de reinitialisation a ete faite pour votre compte <strong>${roleLabel}</strong>.</p>
+<p><a href="${params.resetLink}">Reinitialiser mon mot de passe</a> (lien valable 30 minutes)</p>
+<p>Ou copiez ce lien dans votre navigateur :<br>${params.resetLink}</p>
+<p>Si vous n'etes pas a l'origine de cette demande, ignorez ce message ou contactez le support Palto.</p>`,
     text: `Bonjour,
 
 Une demande de reinitialisation a ete faite pour votre compte ${roleLabel}.
@@ -119,6 +124,7 @@ Ouvrez ce lien pour choisir un nouveau mot de passe.
 Si vous n'etes pas a l'origine de cette demande, contactez le support Palto.
 `,
   })
+  if (error) throw new Error(error.message)
 }
 
 export async function handleAuthClientLogin(req: VercelRequest, res: VercelResponse) {
