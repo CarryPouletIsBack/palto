@@ -1,3 +1,4 @@
+import Clarity from '@microsoft/clarity'
 import ReactGA from 'react-ga4'
 
 export const ANALYTICS_ADMIN_STORAGE_KEY = 'exclude_analytics'
@@ -19,6 +20,7 @@ export type AnalyticsDeviceContext = {
 export type AnalyticsRuntimeConfig = {
   gaMeasurementId: string | null
   gtmId: string | null
+  clarityProjectId: string | null
   rb2bKey: string | null
   enableVercelAnalytics: boolean
   enableSpeedInsights: boolean
@@ -27,6 +29,7 @@ export type AnalyticsRuntimeConfig = {
 
 let gaReady = false
 let gtmReady = false
+let clarityReady = false
 let currentUserContext: AnalyticsUserContext = {}
 
 function envString(value: unknown): string | null {
@@ -44,6 +47,7 @@ export function readAnalyticsRuntimeConfig(): AnalyticsRuntimeConfig {
   return {
     gaMeasurementId: envString(import.meta.env.VITE_GA_MEASUREMENT_ID),
     gtmId: envString(import.meta.env.VITE_GTM_ID),
+    clarityProjectId: envString(import.meta.env.VITE_CLARITY_PROJECT_ID),
     rb2bKey: envString(import.meta.env.VITE_RB2B_KEY),
     enableVercelAnalytics: isEnabled(import.meta.env.VITE_ENABLE_VERCEL_ANALYTICS),
     enableSpeedInsights: isEnabled(import.meta.env.VITE_ENABLE_SPEED_INSIGHTS),
@@ -145,10 +149,16 @@ export function initAnalytics(): void {
     gtmReady = true
   }
 
+  if (config.clarityProjectId && !clarityReady) {
+    Clarity.init(config.clarityProjectId)
+    clarityReady = true
+  }
+
   if (config.debug) {
     console.info('[analytics] initialized', {
       ga: Boolean(config.gaMeasurementId),
       gtm: Boolean(config.gtmId),
+      clarity: Boolean(config.clarityProjectId),
       device: getAnalyticsDeviceContext(),
     })
   }
@@ -161,6 +171,11 @@ export function setUserContext(context: AnalyticsUserContext): void {
 export function identify(id: string, context: Omit<AnalyticsUserContext, 'id'> = {}): void {
   setUserContext({ ...context, id })
   if (isAnalyticsExcluded()) return
+  if (clarityReady) {
+    const friendlyName = context.role ? `${context.role}:${id}` : id
+    Clarity.identify(id, undefined, undefined, friendlyName)
+    if (context.role) Clarity.setTag('role', context.role)
+  }
   pushDataLayer({ event: 'palto_identify', user: currentUserContext })
 }
 
@@ -193,6 +208,11 @@ export function trackEvent(
 
   if (gaReady) {
     ReactGA.event({ action, category, label, value })
+  }
+
+  if (clarityReady) {
+    const clarityEvent = label ? `${category}_${action}_${label}` : `${category}_${action}`
+    Clarity.event(clarityEvent.slice(0, 128))
   }
 
   pushDataLayer({
