@@ -1,4 +1,11 @@
-/** Même seuil que la page Go : datetime-local seul déborde sur iOS / mobile étroit. */
+import { isNativeTouchDevice } from '../lib/nativeTouchDevice'
+
+/** Split date/heure : appareil tactile natif uniquement (pas viewport desktop réduit). */
+export function prefersSplitDateTimeFields(): boolean {
+  return isNativeTouchDevice()
+}
+
+/** @deprecated Préférer {@link prefersSplitDateTimeFields} pour l’accueil. */
 export const MOBILE_DATETIME_SPLIT_MQ = '(max-width: 768px)'
 
 export function splitDateTimeLocal(value: string): { date: string; time: string } {

@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState, type FC } from 'react'
 import {
-  MOBILE_DATETIME_SPLIT_MQ,
   mergeDateTimeLocal,
+  prefersSplitDateTimeFields,
   splitDateTimeLocal,
 } from '../utils/pickupDateTimeLocal'
 
@@ -20,23 +20,17 @@ const HeroHomePickupDateTime: FC<HeroHomePickupDateTimeProps> = ({
   minDateTimeLocal,
   ariaLabel,
 }) => {
-  const [isMobileLayout, setIsMobileLayout] = useState(
-    () => typeof window !== 'undefined' && window.matchMedia(MOBILE_DATETIME_SPLIT_MQ).matches
-  )
+  const [isNativeSplit, setIsNativeSplit] = useState(() => prefersSplitDateTimeFields())
 
   useEffect(() => {
-    const mq = window.matchMedia(MOBILE_DATETIME_SPLIT_MQ)
-    const sync = () => setIsMobileLayout(mq.matches)
-    sync()
-    mq.addEventListener('change', sync)
-    return () => mq.removeEventListener('change', sync)
+    setIsNativeSplit(prefersSplitDateTimeFields())
   }, [])
 
   const minDate = minDateTimeLocal.slice(0, 10)
   const minTime = minDateTimeLocal.length >= 16 ? minDateTimeLocal.slice(11, 16) : ''
   const { date: dateValue, time: timeValue } = useMemo(() => splitDateTimeLocal(value), [value])
 
-  if (isMobileLayout) {
+  if (isNativeSplit) {
     return (
       <div className="hero-home-datetime-split" role="group" aria-label={ariaLabel}>
         <input

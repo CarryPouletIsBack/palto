@@ -2025,100 +2025,100 @@ body.accueil-page .hero-columns-wrap {
   font-size: 15px;
 }
 
-/* Mobile accueil : date + heure planifiées (champ hero-home-pickup-datetime uniquement). */
-@media (max-width: 768px) {
-  .hero-main--home-booking,
-  .hero-home-booking,
-  .hero-home-booking__grid,
-  .hero-home-booking__col--left,
-  .hero-home-booking__field-grid.dashboard-user-edit-grid,
-  .hero-home-booking__datetime-label {
-    width: 100%;
-    min-width: 0;
-    max-width: 100%;
-    box-sizing: border-box;
-  }
+/* Accueil mobile natif : date + heure planifiées (#hero-home-pickup-datetime uniquement). */
+html[data-native-touch='true'] .hero-main--home-booking,
+html[data-native-touch='true'] .hero-home-booking,
+html[data-native-touch='true'] .hero-home-booking__grid,
+html[data-native-touch='true'] .hero-home-booking__col--left,
+html[data-native-touch='true'] .hero-home-booking__field-grid.dashboard-user-edit-grid,
+html[data-native-touch='true'] .hero-home-booking__datetime-label {
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
+  box-sizing: border-box;
+}
 
-  .hero-main--home-booking {
-    overflow-x: clip;
-  }
+html[data-native-touch='true'] .hero-main--home-booking {
+  overflow-x: clip;
+}
 
-  .hero-home-booking__datetime-label {
-    overflow: visible;
-  }
+html[data-native-touch='true'] .hero-home-booking__datetime-label {
+  overflow: visible;
+}
 
-  .hero-home-datetime-split {
-    display: flex;
-    flex-direction: column;
-    align-items: stretch;
-    gap: 8px;
-    width: 100%;
-    min-width: 0;
-    max-width: 100%;
-    box-sizing: border-box;
-  }
+html[data-native-touch='true'] .hero-home-datetime-split {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 8px;
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
+  box-sizing: border-box;
+}
 
-  .hero-home-booking__field-grid.dashboard-user-edit-grid .hero-home-datetime-field {
-    display: block;
-    width: 100%;
-    min-width: 0;
-    max-width: 100%;
-    box-sizing: border-box;
-    margin: 0;
-    min-height: 44px;
-    height: 44px;
-    padding: 0 12px;
-    font-size: 16px;
-    line-height: 1.25;
-    color: #111827;
-    background: #fff;
-    border: 1px solid #d1d5db;
-    border-radius: 8px;
-    -webkit-min-logical-width: 0;
-    color-scheme: light;
-  }
+html[data-native-touch='true'] .hero-home-booking__field-grid.dashboard-user-edit-grid .hero-home-datetime-field {
+  display: block;
+  width: 100%;
+  width: -webkit-fill-available;
+  min-width: 0;
+  max-width: 100%;
+  box-sizing: border-box;
+  margin: 0;
+  min-height: 44px;
+  height: 44px;
+  padding: 0 12px;
+  font-size: 16px !important;
+  line-height: 1.25;
+  color: #111827;
+  background: #fff;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  -webkit-min-logical-width: 0;
+  color-scheme: light;
+}
 
-  .hero-home-booking__field-grid.dashboard-user-edit-grid .hero-home-datetime-field--date,
-  .hero-home-booking__field-grid.dashboard-user-edit-grid .hero-home-datetime-field--time {
-    position: relative;
-    padding-right: 2.75rem;
-    text-align: left;
-  }
+html[data-native-touch='true'] .hero-home-booking__field-grid.dashboard-user-edit-grid .hero-home-datetime-field--date,
+html[data-native-touch='true'] .hero-home-booking__field-grid.dashboard-user-edit-grid .hero-home-datetime-field--time {
+  text-align: left;
+  padding-right: 12px;
+}
 
-  .hero-home-booking__field-grid.dashboard-user-edit-grid .hero-home-datetime-field::-webkit-datetime-edit {
-    display: inline-flex;
-    align-items: center;
-    min-width: 0;
-    max-width: 100%;
-    overflow: visible;
-    padding: 0;
-  }
+html[data-native-touch='true'] .hero-home-booking__field-grid.dashboard-user-edit-grid .hero-home-datetime-field::-webkit-datetime-edit {
+  display: inline-flex;
+  align-items: center;
+  flex: 1 1 auto;
+  min-width: 0;
+  max-width: 100%;
+  overflow: hidden;
+  padding: 0;
+}
 
-  .hero-home-booking__field-grid.dashboard-user-edit-grid
-    .hero-home-datetime-field::-webkit-datetime-edit-fields-wrapper {
-    min-width: 0;
-    padding: 0;
-  }
+html[data-native-touch='true'] .hero-home-booking__field-grid.dashboard-user-edit-grid
+  .hero-home-datetime-field::-webkit-datetime-edit-fields-wrapper {
+  min-width: 0;
+  padding: 0;
+}
 
-  .hero-home-booking__field-grid.dashboard-user-edit-grid .hero-home-datetime-field::-webkit-date-and-time-value {
-    min-width: 0;
-    max-width: 100%;
-    margin: 0;
-    text-align: left;
-  }
+html[data-native-touch='true'] .hero-home-booking__field-grid.dashboard-user-edit-grid .hero-home-datetime-field::-webkit-date-and-time-value {
+  min-width: 0;
+  max-width: 100%;
+  margin: 0;
+  text-align: left;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
 
-  .hero-home-booking__field-grid.dashboard-user-edit-grid .hero-home-datetime-field::-webkit-calendar-picker-indicator {
-    position: absolute;
-    right: 10px;
-    top: 50%;
-    transform: translateY(-50%);
-    width: 1.25rem;
-    height: 1.25rem;
-    margin: 0;
-    padding: 0;
-    opacity: 0.9;
-    cursor: pointer;
-  }
+html[data-native-touch='true'] .hero-home-booking__field-grid.dashboard-user-edit-grid .hero-home-datetime-field::-webkit-calendar-picker-indicator {
+  display: block;
+  flex-shrink: 0;
+  width: 1.15rem;
+  height: 1.15rem;
+  margin: 0 0 0 6px;
+  padding: 0;
+  opacity: 0.85;
+  cursor: pointer;
 }
 
 .hero-home-booking__submit.add-course-submit {

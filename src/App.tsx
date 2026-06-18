@@ -17,6 +17,7 @@ import Contact from './components/Contact'
 import Menu from './components/Menu'
 import { DestinationSpotlight } from './components/DestinationSpotlight'
 import { GeolocationPromptBanner } from './components/GeolocationPromptBanner'
+import { markNativeTouchOnDocument } from './lib/nativeTouchDevice'
 import BetaTestBanner from './components/BetaTestBanner'
 import { usesEmbeddedBetaBanner } from './constants/siteChrome'
 import { getDestinationById, type PopularDestination } from './data/popularDestinations'
@@ -93,6 +94,7 @@ function App() {
 
   useEffect(() => {
     purgeStaleLocalSnapshotsOnce()
+    markNativeTouchOnDocument()
   }, [])
 
   useEffect(() => {
@@ -1053,14 +1055,18 @@ function App() {
           className={`app-page-font-zoom${
             currentPage === 'dashboard' ||
             currentPage === 'dashboard-navigation' ||
-            currentPage === 'client-compte'
+            currentPage === 'client-compte' ||
+            currentPage === 'accueil' ||
+            currentPage === 'accueil-chauffeur'
               ? ' app-page-font-zoom--prefer-font-size'
               : ''
           }`}
           style={
             currentPage === 'dashboard' ||
             currentPage === 'dashboard-navigation' ||
-            currentPage === 'client-compte'
+            currentPage === 'client-compte' ||
+            currentPage === 'accueil' ||
+            currentPage === 'accueil-chauffeur'
               ? undefined
               : { zoom: appFontZoomFactor }
           }
