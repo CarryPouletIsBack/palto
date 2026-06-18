@@ -37,7 +37,7 @@
 
 .auth-page-shell__bg-slide {
   position: absolute;
-  inset: 0;
+  inset: -14%;
   background-position: center;
   background-size: cover;
   background-repeat: no-repeat;
@@ -68,11 +68,11 @@
 .auth-page-shell__bg-scrim {
   position: absolute;
   inset: 0;
-  background: linear-gradient(180deg, rgba(15, 23, 42, 0.38) 0%, rgba(15, 23, 42, 0.58) 100%);
+  background: linear-gradient(180deg, rgba(15, 23, 42, 0.26) 0%, rgba(15, 23, 42, 0.46) 100%);
 }
 
 .auth-page-shell--photo-bg.auth-page-shell--overlay .auth-page-shell__bg-scrim {
-  background: linear-gradient(180deg, rgba(2, 6, 23, 0.48) 0%, rgba(2, 6, 23, 0.68) 100%);
+  background: linear-gradient(180deg, rgba(2, 6, 23, 0.36) 0%, rgba(2, 6, 23, 0.56) 100%);
 }
 
 .auth-page-shell--photo-bg > .auth-page-stack {
