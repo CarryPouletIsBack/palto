@@ -100,6 +100,7 @@ import {
   normalizeRidePricing,
   parsePriceEurFromDisplay,
 } from '../lib/chauffeurFareEstimate';
+import { VehicleIllustration } from './vehicle/VehicleIllustration';
 
 /** Rayon d’affichage des chauffeurs autour du point de départ validé (page Go). */
 const PICKUP_DRIVER_SEARCH_RADIUS_KM = 20;
@@ -605,6 +606,7 @@ const SingleProjectNew: FC<SingleProjectProps> = ({
                   setIsRecapPopupOpen(true);
                 }}
               >
+                {driver.vehicleIllustration ? <VehicleIllustration /> : null}
                 <span className="palto-ride-driver-item__left">
                   <span className="palto-ride-driver-item__name">{driver.name}</span>
                   <span className="palto-ride-driver-item__meta">{meta}</span>

@@ -27,6 +27,8 @@ export type NearbyDriver = {
   ridePricing?: ChauffeurProfileRidePricingFields
   /** false = chauffeur inscrit sans position GPS connue (affiché quand même). */
   positionKnown?: boolean
+  /** Affiche l’illustration véhicule à gauche dans la carte chauffeur. */
+  vehicleIllustration?: boolean
 }
 
 export type NearbyDriversQuery = {

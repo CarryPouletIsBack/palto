@@ -45,3 +45,7 @@ Thumbs.db
 /coverage
 .vercel
 .env*.local
+
+# Modèles 3D locaux lourds (hors repo)
+public/models/
+src/data/localDevNearbyDriver.local.ts

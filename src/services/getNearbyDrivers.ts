@@ -1,5 +1,14 @@
 import type { NearbyDriver, NearbyDriversQuery } from '../data/nearbyDrivers'
+import { getLocalDevNearbyDrivers } from '../data/localDevNearbyDriver'
 import { nearbyDriversApiEnabled, fetchNearbyDriversFromApi } from './nearbyDriversApi'
+
+function mergeWithLocalDevDrivers(apiDrivers: NearbyDriver[]): NearbyDriver[] {
+  if (!import.meta.env.DEV) return apiDrivers
+  const local = getLocalDevNearbyDrivers()
+  if (local.length === 0) return apiDrivers
+  const ids = new Set(apiDrivers.map((d) => d.id))
+  return [...apiDrivers, ...local.filter((d) => !ids.has(d.id))]
+}
 
 /**
  * Chauffeurs pour la page Go : tous les comptes chauffeur inscrits, triés par distance au pickup (API).
@@ -11,8 +20,10 @@ export async function getNearbyDrivers(query: NearbyDriversQuery = {}): Promise<
   const limit = query.limit ?? 9
 
   if (!nearbyDriversApiEnabled() || !origin) {
-    return []
+    return import.meta.env.DEV ? getLocalDevNearbyDrivers() : [];
   }
 
-  return fetchNearbyDriversFromApi({ origin, radiusKm, limit })
+  const apiDrivers = await fetchNearbyDriversFromApi({ origin, radiusKm, limit })
+  const merged = mergeWithLocalDevDrivers(apiDrivers)
+  return merged.length > 0 ? merged : import.meta.env.DEV ? getLocalDevNearbyDrivers() : []
 }
