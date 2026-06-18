@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState, type FormEvent } from 'react'
-import { Eye, EyeOff, X } from 'lucide-react'
+import { Eye, EyeOff } from 'lucide-react'
 import { useLanguage } from '../contexts/LanguageContext'
 import ChauffeurSignupWizard from './ChauffeurSignupWizard'
 import {
@@ -11,13 +11,17 @@ import {
   type AccountRole,
 } from '../services/authService'
 import './AuthPage.css'
+import { AuthPagePhotoBackground } from './AuthPagePhotoBackground'
+import { AuthPageRoleTabs } from './AuthPageRoleTabs'
+import { AuthPageCloseButton } from './AuthPageCloseButton'
 
 type Props = {
   onAuthSuccess: (role: AccountRole) => void
   onClose?: () => void
+  onSwitchToClient?: () => void
 }
 
-export default function ChauffeurAuthPage({ onAuthSuccess, onClose }: Props) {
+export default function ChauffeurAuthPage({ onAuthSuccess, onClose, onSwitchToClient }: Props) {
   const { t } = useLanguage()
   const signupDefault = useMemo(
     () => new URLSearchParams(window.location.search).get('chauffeurSignup') === '1',
@@ -82,13 +86,27 @@ export default function ChauffeurAuthPage({ onAuthSuccess, onClose }: Props) {
   }
 
   return (
-    <section className={`auth-page-shell${onClose ? ' auth-page-shell--overlay' : ''}`}>
-      <div className="auth-page-card">
-        {onClose ? (
-          <button type="button" className="auth-page-close" onClick={onClose} aria-label="Fermer">
-            <X size={18} aria-hidden />
-          </button>
-        ) : null}
+    <section
+      className={`auth-page-shell auth-page-shell--chauffeur auth-page-shell--photo-bg${
+        onClose ? ' auth-page-shell--overlay' : ''
+      }`}
+    >
+      <AuthPagePhotoBackground />
+      {onClose ? (
+        <AuthPageCloseButton
+          onClose={onClose}
+          ariaLabel={t('chauffeurAuth.closeAria')}
+          overlayFixed={Boolean(onClose)}
+        />
+      ) : null}
+      <div className={`auth-page-stack${mode === 'signup' ? ' auth-page-stack--wide' : ''}`}>
+        <AuthPageRoleTabs
+          activeRole="chauffeur"
+          clientLabel={t('chauffeurAuth.roleClient')}
+          chauffeurLabel={t('chauffeurAuth.roleChauffeur')}
+          onSelectClient={onSwitchToClient}
+        />
+        <div className={`auth-page-card${mode === 'signup' ? ' auth-page-card--wide' : ''}`}>
         <h1 className="auth-page-title">
           {mode === 'signup' ? t('chauffeurAuth.titleSignup') : t('chauffeurAuth.titleLogin')}
         </h1>
@@ -182,6 +200,7 @@ export default function ChauffeurAuthPage({ onAuthSuccess, onClose }: Props) {
             </button>
           </div>
         ) : null}
+        </div>
       </div>
     </section>
   )

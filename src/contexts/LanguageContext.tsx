@@ -362,6 +362,10 @@ const TRANSLATIONS: Record<Language, Record<string, unknown>> = {
       submittingSignup: 'Création…',
       switchToSignup: 'Pas encore de compte ? Créer un compte',
       switchToLogin: 'Déjà un compte ? Se connecter',
+      switchToClient: 'Espace client',
+      roleClient: 'Client',
+      roleChauffeur: 'Chauffeur',
+      closeAria: 'Fermer',
       backToSite: 'Retour au site',
       footerLegal:
         'En continuant, vous reconnaissez avoir pris connaissance des conditions d’utilisation et de la politique de confidentialité de Palto.',
@@ -415,6 +419,10 @@ const TRANSLATIONS: Record<Language, Record<string, unknown>> = {
       submittingSignup: 'Création…',
       switchToSignup: 'Pas encore de compte ? Créer un compte',
       switchToLogin: 'Déjà un compte ? Se connecter',
+      switchToChauffeur: 'Espace chauffeur',
+      roleClient: 'Client',
+      roleChauffeur: 'Chauffeur',
+      closeAria: 'Fermer',
       backToSite: 'Retour au site',
       footerLegal:
         'En continuant, vous reconnaissez avoir pris connaissance des conditions d’utilisation et de la politique de confidentialité de Palto.',
@@ -1200,6 +1208,10 @@ const TRANSLATIONS: Record<Language, Record<string, unknown>> = {
       submittingSignup: 'Creating…',
       switchToSignup: 'No account yet? Create one',
       switchToLogin: 'Already have an account? Sign in',
+      switchToClient: 'Passenger area',
+      roleClient: 'Passenger',
+      roleChauffeur: 'Driver',
+      closeAria: 'Close',
       backToSite: 'Back to site',
       footerLegal:
         'By continuing you acknowledge Palto’s terms of use and privacy policy.',
@@ -1253,6 +1265,10 @@ const TRANSLATIONS: Record<Language, Record<string, unknown>> = {
       submittingSignup: 'Creating…',
       switchToSignup: 'No account yet? Create one',
       switchToLogin: 'Already have an account? Sign in',
+      switchToChauffeur: 'Driver area',
+      roleClient: 'Passenger',
+      roleChauffeur: 'Driver',
+      closeAria: 'Close',
       backToSite: 'Back to site',
       footerLegal:
         'By continuing you acknowledge Palto’s terms of use and privacy policy.',

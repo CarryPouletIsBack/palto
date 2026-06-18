@@ -14,10 +14,106 @@
   -webkit-overflow-scrolling: touch;
 }
 
+.auth-page-shell--chauffeur,
+.auth-page-shell--client,
+.auth-page-shell--photo-bg {
+  position: relative;
+  background: #0f172a;
+  isolation: isolate;
+}
+
+.auth-page-shell--photo-bg.auth-page-shell--overlay {
+  background: transparent;
+  backdrop-filter: none;
+}
+
+.auth-page-shell__bg {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.auth-page-shell__bg-slide {
+  position: absolute;
+  inset: 0;
+  background-position: center;
+  background-size: cover;
+  background-repeat: no-repeat;
+  opacity: 0;
+  animation: auth-page-bg-fade 32s ease-in-out infinite;
+  will-change: opacity;
+}
+
+.auth-page-shell__bg-slide--a {
+  background-image: url('/images/chauffeur-auth-bg.jpg');
+}
+
+.auth-page-shell__bg-slide--b {
+  background-image: url('/images/client-auth-bg.jpg');
+  animation-delay: -8s;
+}
+
+.auth-page-shell__bg-slide--c {
+  background-image: url('/images/auth-bg-couple-car.jpg');
+  animation-delay: -16s;
+}
+
+.auth-page-shell__bg-slide--d {
+  background-image: url('/images/auth-bg-chauffeur-man.jpg');
+  animation-delay: -24s;
+}
+
+.auth-page-shell__bg-scrim {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, rgba(15, 23, 42, 0.38) 0%, rgba(15, 23, 42, 0.58) 100%);
+}
+
+.auth-page-shell--photo-bg.auth-page-shell--overlay .auth-page-shell__bg-scrim {
+  background: linear-gradient(180deg, rgba(2, 6, 23, 0.48) 0%, rgba(2, 6, 23, 0.68) 100%);
+}
+
+.auth-page-shell--photo-bg > .auth-page-stack {
+  position: relative;
+  z-index: 1;
+}
+
+@keyframes auth-page-bg-fade {
+  0%,
+  21% {
+    opacity: 1;
+  }
+  25%,
+  96% {
+    opacity: 0;
+  }
+  100% {
+    opacity: 1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .auth-page-shell__bg-slide {
+    animation: none;
+  }
+
+  .auth-page-shell__bg-slide--a {
+    opacity: 1;
+  }
+
+  .auth-page-shell__bg-slide--b,
+  .auth-page-shell__bg-slide--c,
+  .auth-page-shell__bg-slide--d {
+    opacity: 0;
+  }
+}
+
 .auth-page-shell--overlay {
   position: fixed;
   inset: 0;
-  z-index: 90;
+  z-index: 120;
   min-height: 100dvh;
   align-items: flex-start;
   justify-content: center;
@@ -28,10 +124,23 @@
   -webkit-overflow-scrolling: touch;
 }
 
+.auth-page-stack {
+  width: min(100%, 440px);
+  max-width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  box-sizing: border-box;
+}
+
+.auth-page-stack--wide {
+  width: min(100%, 520px);
+}
+
 .auth-page-card {
   position: relative;
-  width: min(100%, 440px);
-  max-height: calc(100dvh - 128px);
+  width: 100%;
+  max-height: calc(100dvh - 168px);
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
   box-sizing: border-box;
@@ -43,15 +152,76 @@
 }
 
 .auth-page-card:has(.auth-signup-wizard) {
-  width: min(100%, 520px);
+  width: 100%;
+}
+
+.auth-page-role-tabs {
+  display: flex;
+  width: 100%;
+  gap: 8px;
+  min-width: 0;
+}
+
+.auth-page-role-tab {
+  flex: 1 1 0;
+  min-width: 0;
+  min-height: 44px;
+  padding: 0 12px;
+  border: 1px solid var(--app-border-subtle);
+  border-radius: 999px;
+  background: var(--app-surface-muted);
+  color: var(--app-text-secondary);
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1.2;
+  cursor: pointer;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+  white-space: nowrap;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.auth-page-role-tab svg {
+  flex-shrink: 0;
+}
+
+.auth-page-role-tab:hover:not(:disabled) {
+  background: var(--app-surface-hover);
+  color: var(--app-text-primary);
+}
+
+.auth-page-role-tab--active {
+  border-color: var(--app-btn-primary-bg);
+  background: var(--app-btn-primary-bg);
+  color: #ffffff;
+  cursor: default;
+}
+
+.auth-page-role-tab:disabled {
+  opacity: 1;
+}
+
+.auth-page-shell--photo-bg .auth-page-role-tab:not(.auth-page-role-tab--active) {
+  background: rgba(255, 255, 255, 0.94);
+  border-color: rgba(203, 213, 225, 0.95);
+  color: #0f172a;
+  box-shadow: 0 2px 12px rgba(15, 23, 42, 0.1);
+}
+
+.auth-page-shell--photo-bg .auth-page-role-tab--active {
+  box-shadow: 0 4px 16px rgba(22, 163, 74, 0.28);
 }
 
 .auth-page-close {
-  position: absolute;
-  top: 14px;
-  right: 14px;
-  width: 34px;
-  height: 34px;
+  position: static;
+  z-index: 1;
+  width: 44px;
+  height: 44px;
+  min-width: 44px;
+  margin: 0;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -60,6 +230,14 @@
   background: var(--app-surface-muted);
   color: var(--app-text-secondary);
   cursor: pointer;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+  flex-shrink: 0;
+}
+
+.auth-page-close svg {
+  width: 24px;
+  height: 24px;
 }
 
 .auth-page-close:hover {
@@ -67,9 +245,18 @@
   color: var(--app-text-primary);
 }
 
+.auth-page-close--overlay-fixed {
+  position: fixed;
+  top: calc(env(safe-area-inset-top, 0px) + var(--beta-banner-height, 0px) + 12px);
+  right: max(12px, env(safe-area-inset-right, 0px));
+  z-index: 121;
+  background: var(--app-surface-card);
+  box-shadow: var(--app-shadow-md);
+}
+
 .auth-page-title {
   margin: 0 0 8px;
-  padding-right: 34px;
+  padding-right: 0;
   font-family: 'Space Grotesk', sans-serif;
   font-size: clamp(24px, 4vw, 30px);
   line-height: 1.12;
@@ -362,6 +549,23 @@ html[data-app-theme='dark'] .auth-page-select:focus {
   cursor: pointer;
 }
 
+@media (min-width: 769px) {
+  .auth-page-shell--photo-bg {
+    align-items: flex-start;
+    justify-content: flex-start;
+    padding-top: calc(env(safe-area-inset-top, 0px) + var(--beta-banner-height, 0px) + 64px);
+    padding-right: 32px;
+    padding-bottom: 40px;
+    padding-left: clamp(48px, 8vw, 128px);
+  }
+
+  .auth-page-shell--photo-bg.auth-page-shell--overlay {
+    align-items: flex-start;
+    justify-content: flex-start;
+    padding-left: clamp(48px, 8vw, 128px);
+  }
+}
+
 @media (max-width: 640px) {
   .auth-page-shell {
     align-items: flex-start;
@@ -370,10 +574,19 @@ html[data-app-theme='dark'] .auth-page-select:focus {
 
   .auth-page-card,
   .auth-page-card:has(.auth-signup-wizard) {
-    width: 100%;
     max-height: calc(100dvh - 88px);
     padding: 24px 18px;
     border-radius: 16px;
+  }
+
+  .auth-page-stack,
+  .auth-page-stack--wide {
+    width: 100%;
+  }
+
+  .auth-page-close--overlay-fixed {
+    top: calc(env(safe-area-inset-top, 0px) + var(--beta-banner-height, 0px) + 8px);
+    right: max(10px, env(safe-area-inset-right, 0px));
   }
 
   .auth-page-phone-row {

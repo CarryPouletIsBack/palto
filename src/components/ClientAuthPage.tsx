@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState, type FormEvent } from 'react'
-import { Eye, EyeOff, X } from 'lucide-react'
+import { Eye, EyeOff } from 'lucide-react'
 import AuthSignupIdentityFields from './AuthSignupIdentityFields'
 import { useLanguage } from '../contexts/LanguageContext'
 import {
@@ -16,13 +16,17 @@ import {
   type SupportedPhoneCountry,
 } from '../services/phoneNumber'
 import './AuthPage.css'
+import { AuthPagePhotoBackground } from './AuthPagePhotoBackground'
+import { AuthPageRoleTabs } from './AuthPageRoleTabs'
+import { AuthPageCloseButton } from './AuthPageCloseButton'
 
 type Props = {
   onAuthSuccess: (role: AccountRole) => void
   onClose?: () => void
+  onSwitchToChauffeur?: () => void
 }
 
-export default function ClientAuthPage({ onAuthSuccess, onClose }: Props) {
+export default function ClientAuthPage({ onAuthSuccess, onClose, onSwitchToChauffeur }: Props) {
   const { t } = useLanguage()
   const signupDefault = useMemo(() => new URLSearchParams(window.location.search).get('clientSignup') === '1', [])
   const [mode, setMode] = useState<'login' | 'signup'>(signupDefault ? 'signup' : 'login')
@@ -120,13 +124,27 @@ export default function ClientAuthPage({ onAuthSuccess, onClose }: Props) {
   }
 
   return (
-    <section className={`auth-page-shell${onClose ? ' auth-page-shell--overlay' : ''}`}>
-      <div className="auth-page-card">
-        {onClose ? (
-          <button type="button" className="auth-page-close" onClick={onClose} aria-label="Fermer">
-            <X size={18} aria-hidden />
-          </button>
-        ) : null}
+    <section
+      className={`auth-page-shell auth-page-shell--client auth-page-shell--photo-bg${
+        onClose ? ' auth-page-shell--overlay' : ''
+      }`}
+    >
+      <AuthPagePhotoBackground />
+      {onClose ? (
+        <AuthPageCloseButton
+          onClose={onClose}
+          ariaLabel={t('clientAuth.closeAria')}
+          overlayFixed={Boolean(onClose)}
+        />
+      ) : null}
+      <div className="auth-page-stack">
+        <AuthPageRoleTabs
+          activeRole="client"
+          clientLabel={t('clientAuth.roleClient')}
+          chauffeurLabel={t('clientAuth.roleChauffeur')}
+          onSelectChauffeur={onSwitchToChauffeur}
+        />
+        <div className="auth-page-card">
         <h1 className="auth-page-title">{mode === 'signup' ? 'Creer un compte client' : 'Connexion client'}</h1>
         <p className="auth-page-subtitle">
           Compte client Palto uniquement. Le compte chauffeur est séparé (autre mot de passe) : espace chauffeur via
@@ -207,6 +225,7 @@ export default function ClientAuthPage({ onAuthSuccess, onClose }: Props) {
             </button>
           </div>
         </form>
+        </div>
       </div>
     </section>
   )

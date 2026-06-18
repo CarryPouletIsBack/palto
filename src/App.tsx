@@ -361,6 +361,21 @@ function App() {
     [language]
   )
 
+  const handleSwitchToChauffeurAuth = useCallback(() => {
+    const prefix = language === 'en' ? '/en' : '/fr'
+    window.history.pushState({}, '', `${prefix}/dashboard`)
+    setCurrentPage('dashboard')
+  }, [language])
+
+  const handleSwitchToClientAuth = useCallback(() => {
+    const prefix = language === 'en' ? '/en' : '/fr'
+    if (!clientAuthReturnPage) {
+      setClientAuthReturnPage(previousPage ?? 'accueil')
+    }
+    window.history.pushState({}, '', `${prefix}/compte`)
+    setCurrentPage('client-compte')
+  }, [clientAuthReturnPage, language, previousPage])
+
   /** Après connexion : ouvrir le dashboard chauffeur ou le compte passager selon le rôle détecté. */
   const redirectAfterAuth = useCallback(
     (role: AccountRole, options?: { preferDashboard?: boolean }) => {
@@ -838,6 +853,7 @@ function App() {
                     setCurrentPage(returnPage)
                     window.history.pushState({}, '', getPathFromPage(returnPage))
                   }}
+                  onSwitchToChauffeur={handleSwitchToChauffeurAuth}
                   onAuthSuccess={redirectAfterAuth}
                 />
               )
@@ -855,6 +871,7 @@ function App() {
                     setCurrentPage('accueil-chauffeur')
                     window.history.pushState({}, '', getPathFromPage('accueil-chauffeur'))
                   }}
+                  onSwitchToClient={handleSwitchToClientAuth}
                   onAuthSuccess={(role) => redirectAfterAuth(role, { preferDashboard: true })}
                 />
               )
@@ -863,7 +880,10 @@ function App() {
               isAuthenticated() ? (
                 <DriverNavigationView courseId={navigationCourseId} onClose={closeDriverNavigation} />
               ) : (
-                <ChauffeurAuthPage onAuthSuccess={(role) => redirectAfterAuth(role, { preferDashboard: true })} />
+                <ChauffeurAuthPage
+                  onSwitchToClient={handleSwitchToClientAuth}
+                  onAuthSuccess={(role) => redirectAfterAuth(role, { preferDashboard: true })}
+                />
               )
             )}
           </>
