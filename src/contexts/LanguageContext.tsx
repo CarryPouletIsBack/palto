@@ -293,6 +293,7 @@ const TRANSLATIONS: Record<Language, Record<string, unknown>> = {
       goPreviousStep: 'Précédent',
       chooseDriverCta: 'Choisir ce chauffeur',
       chooseDriverHint: 'Sélectionnez un chauffeur pour continuer',
+      chooseDriverSelected: 'Chauffeur sélectionné',
       driversLoading: 'Chargement des chauffeurs inscrits…',
       driversEmpty:
         'Aucun chauffeur inscrit sur Palto pour le moment. Un compte chauffeur doit être créé avec le rôle chauffeur dans l’application.',
@@ -1130,6 +1131,7 @@ const TRANSLATIONS: Record<Language, Record<string, unknown>> = {
       goPreviousStep: 'Back',
       chooseDriverCta: 'Choose this driver',
       chooseDriverHint: 'Select a driver to continue',
+      chooseDriverSelected: 'Selected driver',
       driversLoading: 'Loading registered drivers…',
       driversEmpty:
         'No registered Palto drivers yet. A driver account must exist with the chauffeur role in the app.',

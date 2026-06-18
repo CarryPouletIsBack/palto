@@ -22,7 +22,7 @@ import { formatRideTotalWithPaltoFee } from '../constants/stripeFees';
 import PaltoRideCheckoutPanel from './PaltoRideCheckoutPanel';
 import RidePaymentMethodPicker, { type RidePaymentMethod } from './RidePaymentMethodPicker';
 import { useBodyScrollLock } from '../hooks/useBodyScrollLock';
-import { motion, useMotionValue } from 'framer-motion';
+import { motion, useMotionValue, AnimatePresence } from 'framer-motion';
 import { Swiper, SwiperSlide } from 'swiper/react';
 import { Pagination } from 'swiper/modules';
 import 'swiper/css';
@@ -38,7 +38,7 @@ import { TreeNode } from './flow/FlowTree';
 import type { FlowNodeData } from '../data/flowData';
 import Button from './Button';
 import { ButtonLoadingLabel } from './ButtonLoadingLabel';
-import { RideDriverListSkeleton } from './skeletons/ApiSkeletonLayouts';
+import { GoDriverConfirmBarSkeleton, RideDriverListSkeleton } from './skeletons/ApiSkeletonLayouts';
 import { ChevronLeft } from 'lucide-react';
 import PaltoGoMobileRouteCard from './PaltoGoMobileRouteCard';
 import PaltoGoMobileSuggestionsPanel, {
@@ -365,6 +365,8 @@ const SingleProjectNew: FC<SingleProjectProps> = ({
   const [paltoPickupTiming, setPaltoPickupTiming] = useState<'now' | 'later'>('now');
   const [paltoPickupDateTime, setPaltoPickupDateTime] = useState('');
   const [paltoRideSelectedDriverId, setPaltoRideSelectedDriverId] = useState<string | null>(null);
+  const [confirmBarDriverRefreshing, setConfirmBarDriverRefreshing] = useState(false);
+  const confirmBarDriverRefreshTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [paltoRecapPickupText, setPaltoRecapPickupText] = useState('25/04/2026 19:41:00');
   const [paltoRecapCoordsText, setPaltoRecapCoordsText] = useState('-20.8989, 55.4677');
   const [paltoRecapDurationText, setPaltoRecapDurationText] = useState('~31 min');
@@ -546,6 +548,30 @@ const SingleProjectNew: FC<SingleProjectProps> = ({
     setIsRecapPopupOpen(true);
   }, [paltoSelectedDriver]);
 
+  const selectDriverOnMobileChooseRide = useCallback(
+    (driverId: string) => {
+      if (driverId === paltoRideSelectedDriverId) return;
+      setConfirmBarDriverRefreshing(true);
+      setPaltoRideSelectedDriverId(driverId);
+      if (confirmBarDriverRefreshTimerRef.current) {
+        clearTimeout(confirmBarDriverRefreshTimerRef.current);
+      }
+      confirmBarDriverRefreshTimerRef.current = setTimeout(() => {
+        setConfirmBarDriverRefreshing(false);
+        confirmBarDriverRefreshTimerRef.current = null;
+      }, 240);
+    },
+    [paltoRideSelectedDriverId]
+  );
+
+  useEffect(() => {
+    return () => {
+      if (confirmBarDriverRefreshTimerRef.current) {
+        clearTimeout(confirmBarDriverRefreshTimerRef.current);
+      }
+    };
+  }, []);
+
   const renderPaltoDriversList = useCallback((selectionOnly = false): ReactNode => {
     return (
       <div className="palto-ride-drivers-list">
@@ -568,10 +594,12 @@ const SingleProjectNew: FC<SingleProjectProps> = ({
                   (paltoRideSelectedDriverId === driver.id ? ' palto-ride-driver-item--selected' : '')
                 }
                 onClick={() => {
-                  setPaltoRideSelectedDriverId(driver.id);
-                  if (!selectionOnly) {
-                    setIsRecapPopupOpen(true);
+                  if (selectionOnly) {
+                    selectDriverOnMobileChooseRide(driver.id);
+                    return;
                   }
+                  setPaltoRideSelectedDriverId(driver.id);
+                  setIsRecapPopupOpen(true);
                 }}
               >
                 <span className="palto-ride-driver-item__left">
@@ -595,6 +623,7 @@ const SingleProjectNew: FC<SingleProjectProps> = ({
     pickupResolvedPoint,
     computeDriverPriceTtc,
     paltoRideSelectedDriverId,
+    selectDriverOnMobileChooseRide,
     t,
   ]);
 
@@ -832,6 +861,29 @@ const SingleProjectNew: FC<SingleProjectProps> = ({
     if (paltoPickupTiming === 'later' && !paltoPickupDateTime.trim()) return false;
     return true;
   }, [paltoPickupLocation, paltoRideDestination, paltoPickupTiming, paltoPickupDateTime]);
+
+  const mobileShowSearchBar = useMemo(
+    () =>
+      isMobileGoViewport &&
+      !mobileShowChooseRideStep &&
+      isGoBookingReady &&
+      !isRecapPopupOpen &&
+      !isCheckoutPopupOpen,
+    [
+      isMobileGoViewport,
+      mobileShowChooseRideStep,
+      isGoBookingReady,
+      isRecapPopupOpen,
+      isCheckoutPopupOpen,
+    ]
+  );
+
+  const primaryBookingButtonLabel =
+    paltoPickupTiming === 'later' ? t('search.bookingReserve') : t('search.bookingSearch');
+  const primaryBookingButtonPendingLabel =
+    paltoPickupTiming === 'later'
+      ? t('search.bookingReserveLoading')
+      : t('search.bookingSearchLoading');
 
   const handlePickupTimingChange = useCallback((next: 'now' | 'later') => {
     setPaltoPickupTiming(next);
@@ -2501,6 +2553,14 @@ const SingleProjectNew: FC<SingleProjectProps> = ({
   }, [isMobileGoViewport, mobileShowChooseRideStep]);
 
   useEffect(() => {
+    if (!mobileShowSearchBar) return;
+    document.body.classList.add('palto-go-search-bar-open');
+    return () => {
+      document.body.classList.remove('palto-go-search-bar-open');
+    };
+  }, [mobileShowSearchBar]);
+
+  useEffect(() => {
     if (!isGoProjectPage) return;
     const onGoMapUserPick = () => {
       if (isMobileGoViewport && chauffeursSearchOk) {
@@ -3211,7 +3271,7 @@ const SingleProjectNew: FC<SingleProjectProps> = ({
                 ) : null}
               </>
             )}
-            {isGoBookingReady ? (
+            {isGoBookingReady && !isMobileGoViewport ? (
               <Button
                 variant="primary"
                 type="button"
@@ -3222,16 +3282,10 @@ const SingleProjectNew: FC<SingleProjectProps> = ({
               >
                 <ButtonLoadingLabel
                   pending={pickupGeocodeLoading}
-                  pendingLabel={
-                    paltoPickupTiming === 'later'
-                      ? t('search.bookingReserveLoading')
-                      : t('search.bookingSearchLoading')
-                  }
+                  pendingLabel={primaryBookingButtonPendingLabel}
                   spinnerVariant="inverse"
                 >
-                  {paltoPickupTiming === 'later'
-                    ? t('search.bookingReserve')
-                    : t('search.bookingSearch')}
+                  {primaryBookingButtonLabel}
                 </ButtonLoadingLabel>
               </Button>
             ) : null}
@@ -3273,39 +3327,99 @@ const SingleProjectNew: FC<SingleProjectProps> = ({
           ) : null}
           </div>
           {mountGoRideOverlay(
+            mobileShowSearchBar ? (
+              <div
+                className="palto-go-driver-confirm-bar palto-go-search-bar"
+                role="region"
+                aria-label={primaryBookingButtonLabel}
+              >
+                <Button
+                  variant="primary"
+                  type="button"
+                  className={`palto-go-driver-confirm-bar__cta palto-ride-search-btn${pickupGeocodeLoading ? ' is-pending' : ''}`}
+                  onClick={onPrimaryBookingAction}
+                  disabled={pickupGeocodeLoading}
+                  aria-busy={pickupGeocodeLoading}
+                >
+                  <ButtonLoadingLabel
+                    pending={pickupGeocodeLoading}
+                    pendingLabel={primaryBookingButtonPendingLabel}
+                    spinnerVariant="inverse"
+                  >
+                    {primaryBookingButtonLabel}
+                  </ButtonLoadingLabel>
+                </Button>
+              </div>
+            ) : null
+          )}
+          {mountGoRideOverlay(
             mobileShowChooseRideStep && !isRecapPopupOpen && !isCheckoutPopupOpen ? (
               <div
-                className="palto-go-driver-confirm-bar"
+                className={
+                  'palto-go-driver-confirm-bar palto-go-driver-confirm-bar--choose-ride' +
+                  (confirmBarDriverRefreshing ? ' palto-go-driver-confirm-bar--refreshing' : '')
+                }
                 role="region"
                 aria-label={t('search.chooseDriverCta')}
+                aria-busy={confirmBarDriverRefreshing}
               >
-                {paltoSelectedDriver ? (
-                  <>
-                    <div className="palto-go-driver-confirm-bar__summary">
-                      <p className="palto-go-driver-confirm-bar__name">{paltoSelectedDriver.name}</p>
-                      <p className="palto-go-driver-confirm-bar__meta">
-                        {formatDriverMetaLine(paltoSelectedDriver, pickupResolvedPoint)}
-                      </p>
-                    </div>
-                    <Button
-                      variant="primary"
-                      type="button"
-                      className="palto-go-driver-confirm-bar__cta palto-ride-search-btn"
-                      onClick={confirmSelectedDriverOnMobile}
+                <AnimatePresence mode="wait" initial={false}>
+                  {confirmBarDriverRefreshing ? (
+                    <motion.div
+                      key="confirm-bar-skeleton"
+                      className="palto-go-driver-confirm-bar__motion-wrap"
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      exit={{ opacity: 0 }}
+                      transition={{ duration: 0.14 }}
                     >
-                      {(() => {
-                        const ttc = computeDriverPriceTtc(paltoSelectedDriver);
-                        const priceLabel =
-                          ttc !== null
-                            ? formatFareEurDisplay(ttc)
-                            : formatDriverPriceLabel(paltoSelectedDriver.price);
-                        return `${t('search.chooseDriverCta')} · ${priceLabel}`;
-                      })()}
-                    </Button>
-                  </>
-                ) : (
-                  <p className="palto-go-driver-confirm-bar__hint">{t('search.chooseDriverHint')}</p>
-                )}
+                      <GoDriverConfirmBarSkeleton />
+                    </motion.div>
+                  ) : paltoSelectedDriver ? (
+                    <motion.div
+                      key={paltoSelectedDriver.id}
+                      className="palto-go-driver-confirm-bar__motion-wrap palto-go-driver-confirm-bar__motion-wrap--filled"
+                      initial={{ opacity: 0, y: 8 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -6 }}
+                      transition={{ duration: 0.22, ease: 'easeOut' }}
+                    >
+                      <div className="palto-go-driver-confirm-bar__summary">
+                        <p className="palto-go-driver-confirm-bar__eyebrow">{t('search.chooseDriverSelected')}</p>
+                        <p className="palto-go-driver-confirm-bar__name">{paltoSelectedDriver.name}</p>
+                        <p className="palto-go-driver-confirm-bar__meta">
+                          {formatDriverMetaLine(paltoSelectedDriver, pickupResolvedPoint)}
+                        </p>
+                        <p className="palto-go-driver-confirm-bar__price">
+                          {(() => {
+                            const ttc = computeDriverPriceTtc(paltoSelectedDriver);
+                            return ttc !== null
+                              ? formatFareEurDisplay(ttc)
+                              : formatDriverPriceLabel(paltoSelectedDriver.price);
+                          })()}
+                        </p>
+                      </div>
+                      <Button
+                        variant="primary"
+                        type="button"
+                        className="palto-go-driver-confirm-bar__cta palto-ride-search-btn"
+                        onClick={confirmSelectedDriverOnMobile}
+                      >
+                        {t('search.chooseDriverCta')}
+                      </Button>
+                    </motion.div>
+                  ) : (
+                    <motion.p
+                      key="confirm-bar-hint"
+                      className="palto-go-driver-confirm-bar__hint"
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      exit={{ opacity: 0 }}
+                    >
+                      {t('search.chooseDriverHint')}
+                    </motion.p>
+                  )}
+                </AnimatePresence>
               </div>
             ) : null
           )}

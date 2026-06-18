@@ -3,6 +3,17 @@ import './ApiSkeletonLayouts.css'
 
 type CountProps = { count?: number }
 
+/** Bandeau bas /go mobile — changement de chauffeur. */
+export function GoDriverConfirmBarSkeleton() {
+  return (
+    <div className="palto-go-driver-confirm-bar__summary palto-go-driver-confirm-bar__summary--skeleton" aria-hidden>
+      <Skeleton className="skeleton--on-surface skeleton--block" height="11px" width="38%" borderRadius="6px" />
+      <Skeleton className="skeleton--on-surface skeleton--block" height="24px" width="78%" borderRadius="8px" />
+      <Skeleton className="skeleton--on-surface skeleton--block" height="14px" width="52%" borderRadius="6px" />
+    </div>
+  )
+}
+
 /** Liste chauffeurs (page Go). */
 export function RideDriverListSkeleton({ count = 4 }: CountProps) {
   return (
