@@ -2025,27 +2025,32 @@ body.accueil-page .hero-columns-wrap {
   font-size: 15px;
 }
 
-/* Mobile : datetime-local seul déborde (iOS) — champs date + heure séparés via PaltoScheduledDateTimeFields */
+/* Mobile accueil : date + heure planifiées (champ hero-home-pickup-datetime uniquement). */
 @media (max-width: 768px) {
-  .hero-home-booking__col--left {
-    min-width: 0;
-    max-width: 100%;
-  }
-
-  .hero-home-booking__field-grid.dashboard-user-edit-grid {
-    min-width: 0;
-    max-width: 100%;
-  }
-
-  .hero-home-booking__field-grid.dashboard-user-edit-grid label,
+  .hero-main--home-booking,
+  .hero-home-booking,
+  .hero-home-booking__grid,
+  .hero-home-booking__col--left,
+  .hero-home-booking__field-grid.dashboard-user-edit-grid,
   .hero-home-booking__datetime-label {
+    width: 100%;
     min-width: 0;
     max-width: 100%;
+    box-sizing: border-box;
+  }
+
+  .hero-main--home-booking {
+    overflow-x: clip;
+  }
+
+  .hero-home-booking__datetime-label {
+    overflow: visible;
   }
 
   .hero-home-datetime-split {
-    display: grid;
-    grid-template-columns: minmax(0, 1.15fr) minmax(0, 0.85fr);
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
     gap: 8px;
     width: 100%;
     min-width: 0;
@@ -2053,14 +2058,66 @@ body.accueil-page .hero-columns-wrap {
     box-sizing: border-box;
   }
 
-  .hero-home-datetime-split input {
+  .hero-home-booking__field-grid.dashboard-user-edit-grid .hero-home-datetime-field {
+    display: block;
     width: 100%;
     min-width: 0;
     max-width: 100%;
     box-sizing: border-box;
-    -webkit-min-logical-width: 0;
+    margin: 0;
+    min-height: 44px;
+    height: 44px;
+    padding: 0 12px;
     font-size: 16px;
-    padding: 10px 10px;
+    line-height: 1.25;
+    color: #111827;
+    background: #fff;
+    border: 1px solid #d1d5db;
+    border-radius: 8px;
+    -webkit-min-logical-width: 0;
+    color-scheme: light;
+  }
+
+  .hero-home-booking__field-grid.dashboard-user-edit-grid .hero-home-datetime-field--date,
+  .hero-home-booking__field-grid.dashboard-user-edit-grid .hero-home-datetime-field--time {
+    position: relative;
+    padding-right: 2.75rem;
+    text-align: left;
+  }
+
+  .hero-home-booking__field-grid.dashboard-user-edit-grid .hero-home-datetime-field::-webkit-datetime-edit {
+    display: inline-flex;
+    align-items: center;
+    min-width: 0;
+    max-width: 100%;
+    overflow: visible;
+    padding: 0;
+  }
+
+  .hero-home-booking__field-grid.dashboard-user-edit-grid
+    .hero-home-datetime-field::-webkit-datetime-edit-fields-wrapper {
+    min-width: 0;
+    padding: 0;
+  }
+
+  .hero-home-booking__field-grid.dashboard-user-edit-grid .hero-home-datetime-field::-webkit-date-and-time-value {
+    min-width: 0;
+    max-width: 100%;
+    margin: 0;
+    text-align: left;
+  }
+
+  .hero-home-booking__field-grid.dashboard-user-edit-grid .hero-home-datetime-field::-webkit-calendar-picker-indicator {
+    position: absolute;
+    right: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 1.25rem;
+    height: 1.25rem;
+    margin: 0;
+    padding: 0;
+    opacity: 0.9;
+    cursor: pointer;
   }
 }
 

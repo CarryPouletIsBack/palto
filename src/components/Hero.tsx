@@ -22,7 +22,7 @@ import {
   HERO_DEPARTMENTS,
   type HeroDepartmentId,
 } from '../data/heroDepartments'
-import PaltoScheduledDateTimeFields from './PaltoScheduledDateTimeFields'
+import HeroHomePickupDateTime from './HeroHomePickupDateTime'
 
 interface HeroProps {
   onPageChange: (page: string, projectImage?: string, projectCategory?: string) => void
@@ -217,13 +217,12 @@ const Hero = ({
                       {pickupTiming === 'later' ? (
                         <label className="hero-home-booking__datetime-label">
                           {t('hero.homePickupDateTimeLabel')}
-                          <PaltoScheduledDateTimeFields
+                          <HeroHomePickupDateTime
                             id="hero-home-pickup-datetime"
                             value={pickupDateTime}
                             onChange={setPickupDateTime}
                             minDateTimeLocal={minPickupDateTimeLocal()}
                             ariaLabel={t('hero.homePickupDateTimeLabel')}
-                            splitClassName="hero-home-datetime-split"
                           />
                         </label>
                       ) : null}
