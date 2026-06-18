@@ -6039,7 +6039,7 @@ html[data-app-theme='dark'] .palto-ride-timing-expand__option:hover {
 
 .palto-ride-driver-item--selected {
   border-width: 2px;
-  border-color: #16a34a;
+  border-color: rgba(22, 101, 52, 0.45);
   background: rgba(163, 230, 53, 0.22);
   box-shadow:
     0 0 0 1px rgba(22, 163, 74, 0.2),
@@ -6047,7 +6047,7 @@ html[data-app-theme='dark'] .palto-ride-timing-expand__option:hover {
 }
 
 .palto-ride-driver-item--selected:hover {
-  border-color: #15803d;
+  border-color: rgba(22, 101, 52, 0.55);
   background: rgba(163, 230, 53, 0.28);
 }
 
@@ -7171,7 +7171,7 @@ html[data-app-theme='dark'] .palto-ride-timing-expand__option:hover {
 
   .single-project-page:has(.palto-ride-main) .palto-ride-driver-item--selected {
     border-width: 3px;
-    border-color: #16a34a;
+    border-color: rgba(22, 101, 52, 0.45);
     box-shadow:
       0 0 0 2px rgba(22, 163, 74, 0.22),
       0 6px 18px rgba(22, 163, 74, 0.16);
