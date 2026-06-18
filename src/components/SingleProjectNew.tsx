@@ -606,7 +606,7 @@ const SingleProjectNew: FC<SingleProjectProps> = ({
                   setIsRecapPopupOpen(true);
                 }}
               >
-                {driver.vehicleIllustration ? <VehicleIllustration /> : null}
+                <VehicleIllustration />
                 <span className="palto-ride-driver-item__left">
                   <span className="palto-ride-driver-item__name">{driver.name}</span>
                   <span className="palto-ride-driver-item__meta">{meta}</span>
