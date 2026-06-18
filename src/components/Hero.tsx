@@ -11,6 +11,7 @@ import './Hero.css'
 import { PLACEHOLDER_COVER } from '../constants/imagePlaceholders'
 import { POPULAR_DESTINATIONS, type PopularDestination } from '../data/popularDestinations'
 import { saveGoPrefill } from '../constants/goPrefillStorage'
+import { resolveHeroPickupPrefill } from '../services/heroPickupPrefill'
 import { geocodeForwardSuggestions, type GeocodeSuggestion } from '../services/addressGeocoding'
 import { REUNION_ISLAND_BBOX_GEOCODE } from '../constants/reunionIsland'
 import { CalendarRange, Car, Wallet } from 'lucide-react'
@@ -21,6 +22,7 @@ import {
   HERO_DEPARTMENTS,
   type HeroDepartmentId,
 } from '../data/heroDepartments'
+import PaltoScheduledDateTimeFields from './PaltoScheduledDateTimeFields'
 
 interface HeroProps {
   onPageChange: (page: string, projectImage?: string, projectCategory?: string) => void
@@ -68,13 +70,13 @@ const Hero = ({
     return new Date(now.getTime() - tzOffsetMs).toISOString().slice(0, 16)
   }, [])
 
-  const handleVoirLesPrix = useCallback(() => {
+  const handleVoirLesPrix = useCallback(async () => {
+    const pickupPart = await resolveHeroPickupPrefill(pickupDraft)
     saveGoPrefill({
-      pickup: pickupDraft.trim(),
+      ...pickupPart,
       destination: destinationDraft.trim(),
       timing: pickupTiming,
       datetime: pickupTiming === 'later' ? pickupDateTime.trim() : '',
-      homeDepartmentId,
     })
     trackEvent(
       'click',
@@ -82,23 +84,23 @@ const Hero = ({
       `${destinationDraft.trim() ? 'with_dest' : 'empty_dest'}_${pickupTiming}`
     )
     onPageChange('project-Go', PLACEHOLDER_COVER, 'Application')
-  }, [destinationDraft, homeDepartmentId, onPageChange, pickupDateTime, pickupDraft, pickupTiming])
+  }, [destinationDraft, onPageChange, pickupDateTime, pickupDraft, pickupTiming])
 
   const destTitle = (d: PopularDestination) => (language === 'en' ? d.titleEn : d.titleFr)
 
   const handlePopularSuggestionGo = useCallback(
-    (d: PopularDestination) => {
+    async (d: PopularDestination) => {
+      const pickupPart = await resolveHeroPickupPrefill(pickupDraft)
       saveGoPrefill({
-        pickup: pickupDraft.trim(),
+        ...pickupPart,
         destination: d.geocodeQuery,
         timing: pickupTiming,
         datetime: pickupTiming === 'later' ? pickupDateTime.trim() : '',
-        homeDepartmentId,
       })
       trackEvent('click', 'hero_home_suggestion_go', d.id)
       onPageChange('project-Go', PLACEHOLDER_COVER, 'Application')
     },
-    [homeDepartmentId, onPageChange, pickupDateTime, pickupDraft, pickupTiming]
+    [onPageChange, pickupDateTime, pickupDraft, pickupTiming]
   )
 
   useEffect(() => {
@@ -213,14 +215,15 @@ const Hero = ({
                         </select>
                       </label>
                       {pickupTiming === 'later' ? (
-                        <label>
+                        <label className="hero-home-booking__datetime-label">
                           {t('hero.homePickupDateTimeLabel')}
-                          <input
+                          <PaltoScheduledDateTimeFields
                             id="hero-home-pickup-datetime"
-                            type="datetime-local"
                             value={pickupDateTime}
-                            min={minPickupDateTimeLocal()}
-                            onChange={(e) => setPickupDateTime(e.target.value)}
+                            onChange={setPickupDateTime}
+                            minDateTimeLocal={minPickupDateTimeLocal()}
+                            ariaLabel={t('hero.homePickupDateTimeLabel')}
+                            splitClassName="hero-home-datetime-split"
                           />
                         </label>
                       ) : null}

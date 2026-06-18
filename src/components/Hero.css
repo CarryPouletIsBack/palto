@@ -2025,6 +2025,45 @@ body.accueil-page .hero-columns-wrap {
   font-size: 15px;
 }
 
+/* Mobile : datetime-local seul déborde (iOS) — champs date + heure séparés via PaltoScheduledDateTimeFields */
+@media (max-width: 768px) {
+  .hero-home-booking__col--left {
+    min-width: 0;
+    max-width: 100%;
+  }
+
+  .hero-home-booking__field-grid.dashboard-user-edit-grid {
+    min-width: 0;
+    max-width: 100%;
+  }
+
+  .hero-home-booking__field-grid.dashboard-user-edit-grid label,
+  .hero-home-booking__datetime-label {
+    min-width: 0;
+    max-width: 100%;
+  }
+
+  .hero-home-datetime-split {
+    display: grid;
+    grid-template-columns: minmax(0, 1.15fr) minmax(0, 0.85fr);
+    gap: 8px;
+    width: 100%;
+    min-width: 0;
+    max-width: 100%;
+    box-sizing: border-box;
+  }
+
+  .hero-home-datetime-split input {
+    width: 100%;
+    min-width: 0;
+    max-width: 100%;
+    box-sizing: border-box;
+    -webkit-min-logical-width: 0;
+    font-size: 16px;
+    padding: 10px 10px;
+  }
+}
+
 .hero-home-booking__submit.add-course-submit {
   grid-column: auto;
   align-self: flex-start;

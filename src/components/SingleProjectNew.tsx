@@ -71,9 +71,7 @@ import { consumeGoPrefill } from '../constants/goPrefillStorage';
 import {
   DEFAULT_HERO_DEPARTMENT_ID,
   getHeroDepartmentGeocodeArea,
-  getHeroDepartmentLabel,
   getHeroDepartmentOrigin,
-  type HeroDepartmentId,
 } from '../data/heroDepartments';
 import {
   loadClientSavedPlaces,
@@ -607,27 +605,6 @@ const SingleProjectNew: FC<SingleProjectProps> = ({
 
     let cancelled = false;
 
-    const applyDepartmentPickup = async (departmentId: string): Promise<boolean> => {
-      const deptId = (departmentId.trim() || DEFAULT_HERO_DEPARTMENT_ID) as HeroDepartmentId;
-      const label = simplifyRideAddress(getHeroDepartmentLabel(deptId, language));
-      setPaltoPickupLocation(label);
-      try {
-        const seed = getHeroDepartmentOrigin(deptId);
-        const picked = await resolvePickOnRoad(seed.longitude, seed.latitude, {
-          searchRadiusMeters: GO_SNAP_SEARCH_RADIUS_M,
-        });
-        if (cancelled || !isLngLatInsideReunionIsland(picked.longitude, picked.latitude)) return false;
-        if (isLegacyDevPickupOrigin(picked)) return false;
-        setPickupResolvedPoint(picked);
-        setLastConfirmedPickupText(label);
-        setPickupGeocodeError(null);
-        return true;
-      } catch {
-        if (!cancelled) setPaltoPickupLocation(label);
-        return false;
-      }
-    };
-
     void (async () => {
       setPickupResolvedPoint(null);
       setLastConfirmedPickupText(null);
@@ -652,9 +629,15 @@ const SingleProjectNew: FC<SingleProjectProps> = ({
             searchRadiusMeters: GO_SNAP_SEARCH_RADIUS_M,
           });
           if (!cancelled && isLngLatInsideReunionIsland(picked.longitude, picked.latitude) && !isLegacyDevPickupOrigin(picked)) {
-            const label = prefill.pickup.trim()
-              ? simplifyRideAddress(prefill.pickup.trim())
-              : simplifyRideAddress(getHeroDepartmentLabel(DEFAULT_HERO_DEPARTMENT_ID, language));
+            let label = prefill.pickup.trim() ? simplifyRideAddress(prefill.pickup.trim()) : '';
+            if (!label) {
+              label = simplifyRideAddress(
+                (await geocodeReverse(picked.longitude, picked.latitude, undefined, {
+                  language: geocodeLang(language),
+                })) ??
+                  (language === 'en' ? 'Pickup selected on the map' : 'Départ sélectionné sur la carte')
+              );
+            }
             setPaltoPickupLocation(label);
             setPickupResolvedPoint(picked);
             setLastConfirmedPickupText(label);
@@ -674,8 +657,6 @@ const SingleProjectNew: FC<SingleProjectProps> = ({
           setLastConfirmedPickupText(simplifyRideAddress(res.queryUsed));
           pickupReady = true;
         }
-      } else if (!pickupReady && prefill.homeDepartmentId?.trim()) {
-        pickupReady = await applyDepartmentPickup(prefill.homeDepartmentId);
       } else if (!pickupReady && prefill.homeCommune?.trim()) {
         const area = getHeroDepartmentGeocodeArea(DEFAULT_HERO_DEPARTMENT_ID);
         const legacyQ = `${prefill.homeCommune.trim()}, ${area}`;
@@ -688,11 +669,9 @@ const SingleProjectNew: FC<SingleProjectProps> = ({
           setLastConfirmedPickupText(simplifyRideAddress(res.queryUsed));
           pickupReady = true;
         }
-      } else if (!pickupReady) {
-        pickupReady = await applyDepartmentPickup(DEFAULT_HERO_DEPARTMENT_ID);
       }
 
-      if (cancelled || !pickupReady) return;
+      if (cancelled) return;
 
       const destQ = prefill.destination.trim();
       if (destQ) {
