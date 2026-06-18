@@ -399,6 +399,9 @@ const SingleProjectNew: FC<SingleProjectProps> = ({
   const [paltoRouteDeniveleEstimateM, setPaltoRouteDeniveleEstimateM] = useState<number | null>(null);
   /** Après un « Rechercher » réussi : départ + destination géocodés → affichage des chauffeurs. */
   const [chauffeursSearchOk, setChauffeursSearchOk] = useState(false);
+  const [isRecapPopupOpen, setIsRecapPopupOpen] = useState(false);
+  const [isCheckoutPopupOpen, setIsCheckoutPopupOpen] = useState(false);
+  const [isCheckoutAuthOpen, setIsCheckoutAuthOpen] = useState(false);
   const [allNearbyDrivers, setAllNearbyDrivers] = useState<import('../data/nearbyDrivers').NearbyDriver[]>([]);
   const [nearbyDriversLoading, setNearbyDriversLoading] = useState(false);
 
@@ -1760,9 +1763,6 @@ const SingleProjectNew: FC<SingleProjectProps> = ({
   const [isDesktopViewport, setIsDesktopViewport] = useState(
     typeof window !== 'undefined' ? window.matchMedia('(min-width: 769px)').matches : false
   );
-  const [isRecapPopupOpen, setIsRecapPopupOpen] = useState(false);
-  const [isCheckoutPopupOpen, setIsCheckoutPopupOpen] = useState(false);
-  const [isCheckoutAuthOpen, setIsCheckoutAuthOpen] = useState(false);
   const [checkoutCustomerName, setCheckoutCustomerName] = useState('');
   const [checkoutCustomerEmail, setCheckoutCustomerEmail] = useState('');
   const [checkoutClientComment, setCheckoutClientComment] = useState('');

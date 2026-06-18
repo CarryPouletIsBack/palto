@@ -1,3 +1,56 @@
+/* Bouton compte topbar mobile : styles isolés (pas le mode pilule photo-only). */
+.mobile-topbar-account-btn {
+  width: 40px;
+  height: 40px;
+  min-width: 40px;
+  max-width: 40px;
+  min-height: 40px;
+  max-height: 40px;
+  padding: 0;
+  margin: 0;
+  border: 1px solid #cbd5e1;
+  border-radius: 50%;
+  background: #ffffff;
+  overflow: hidden;
+  box-sizing: border-box;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  cursor: pointer;
+  line-height: 0;
+  -webkit-tap-highlight-color: transparent;
+  box-shadow: 0 1px 0 rgba(15, 23, 42, 0.06);
+}
+
+.mobile-topbar-account-btn__photo {
+  width: 100%;
+  height: 100%;
+  display: block;
+  margin: 0;
+  padding: 0;
+  border: none;
+  border-radius: 50%;
+  object-fit: cover;
+  object-position: center center;
+}
+
+.mobile-topbar-account-btn__fallback {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: #64748b;
+}
+
+html[data-app-theme='dark'] .mobile-topbar-account-btn {
+  background: var(--app-bg-alt);
+  border-color: var(--app-border-medium);
+}
+
+html[data-app-theme='dark'] .mobile-topbar-account-btn__fallback {
+  color: var(--app-text-muted, #94a3b8);
+}
+
 @media (max-width: 768px) {
   .mobile-account-hub {
     display: flex;

@@ -113,20 +113,17 @@ export function MobileTopbarAccountButton({
   return (
     <button
       type="button"
-      className="client-compte-topbar-user-btn client-compte-topbar-user-btn--photo-only client-compte-topbar-user-btn--mobile-topbar-nav"
+      className="mobile-topbar-account-btn"
       onClick={onClick}
       aria-label={ariaLabel}
     >
-      <span
-        className="client-compte-topbar-user-btn__photo-shell client-compte-topbar-user-btn__photo-shell--fill"
-        aria-hidden
-      >
-        {photoUrl ? (
-          <img src={photoUrl} alt="" className="client-compte-topbar-user-btn__avatar" />
-        ) : (
-          <User size={20} aria-hidden />
-        )}
-      </span>
+      {photoUrl ? (
+        <img src={photoUrl} alt="" className="mobile-topbar-account-btn__photo" />
+      ) : (
+        <span className="mobile-topbar-account-btn__fallback" aria-hidden>
+          <User size={20} />
+        </span>
+      )}
     </button>
   );
 }
