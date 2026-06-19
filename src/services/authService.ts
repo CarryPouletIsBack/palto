@@ -370,6 +370,34 @@ function persistClientSession(token: string, user: User): void {
   localStorage.setItem(CLIENT_AUTH_STORAGE_KEY, JSON.stringify(user))
 }
 
+/** Session client après OAuth (échange serveur). */
+export function applyClientOAuthSession(token: string, user: User): void {
+  persistClientSession(token, user)
+  notifyClientSessionChanged()
+  const emailNorm = user.email.trim().toLowerCase()
+  saveClientAccountSnapshot(
+    {
+      ...DEFAULT_CLIENT_ACCOUNT,
+      prenom: user.displayName?.split(' ')[0]?.trim() || '',
+      nom: user.displayName?.split(' ').slice(1).join(' ').trim() || '',
+      email: emailNorm,
+      telephone: '',
+      ville: '',
+      preferredPayment: 'indifferent',
+      profilePhotoUrl: null,
+      profilePhotoName: '',
+    },
+    emailNorm
+  )
+  void import('./clientProfileSync').then((m) => m.syncClientProfileWithServer(user.email))
+}
+
+/** Session chauffeur après OAuth (échange serveur). */
+export function applyChauffeurOAuthSession(token: string, user: User): void {
+  persistChauffeurSession(token, user)
+  notifyChauffeurSessionChanged()
+}
+
 export async function registerClient(payload: RegisterClientPayload): Promise<{ success: boolean; error?: string }> {
   const result = await postAuth(
     '/auth?role=client&action=register',

@@ -439,6 +439,22 @@ const TRANSLATIONS: Record<Language, Record<string, unknown>> = {
       errorPasswordMismatch: 'Les mots de passe ne correspondent pas.',
       errorInvalidEmail: 'Adresse e-mail invalide.',
     },
+    authOAuth: {
+      continueWith: 'Continuer avec',
+      google: 'Google',
+      facebook: 'Facebook',
+      orEmail: 'ou par e-mail',
+      chauffeurLoginHint:
+        'Connexion chauffeur uniquement si votre compte pro est déjà créé. Même Google qu’en passager = compte séparé.',
+      errorDenied: 'Connexion annulée ou refusée.',
+      errorUnavailable: 'Connexion sociale indisponible pour le moment.',
+      errorChauffeurRequired:
+        'Aucun compte chauffeur lié à ce profil. Inscrivez-vous d’abord via le formulaire chauffeur.',
+      errorFacebookEmail: 'Facebook n’a pas partagé votre e-mail. Autorisez l’e-mail ou utilisez Google.',
+      errorEmailExists: 'Un compte existe déjà avec cet e-mail pour ce rôle.',
+      errorUseSocial: 'Ce compte utilise Google ou Facebook. Utilisez le bouton correspondant.',
+      errorGeneric: 'Connexion sociale impossible. Réessayez ou utilisez l’e-mail.',
+    },
     error: {
       pageNotFound: 'Page non trouvée',
       pageNotFoundMessage: 'La page que vous recherchez n’existe pas ou a été déplacée.',
@@ -1289,6 +1305,22 @@ const TRANSLATIONS: Record<Language, Record<string, unknown>> = {
       errorPasswordShort: 'Password must be at least 6 characters.',
       errorPasswordMismatch: 'Passwords do not match.',
       errorInvalidEmail: 'Invalid email address.',
+    },
+    authOAuth: {
+      continueWith: 'Continue with',
+      google: 'Google',
+      facebook: 'Facebook',
+      orEmail: 'or with email',
+      chauffeurLoginHint:
+        'Driver sign-in only if your pro account already exists. Same Google as passenger = separate account.',
+      errorDenied: 'Sign-in cancelled or denied.',
+      errorUnavailable: 'Social sign-in is unavailable right now.',
+      errorChauffeurRequired:
+        'No driver account linked to this profile. Sign up with the driver form first.',
+      errorFacebookEmail: 'Facebook did not share your email. Allow email access or use Google.',
+      errorEmailExists: 'An account already exists with this email for this role.',
+      errorUseSocial: 'This account uses Google or Facebook. Use the matching button.',
+      errorGeneric: 'Social sign-in failed. Try again or use email.',
     },
     error: {
       pageNotFound: 'Page not found',

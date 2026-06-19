@@ -14,6 +14,7 @@ import './AuthPage.css'
 import { AuthPagePhotoBackground } from './AuthPagePhotoBackground'
 import { AuthPageRoleTabs } from './AuthPageRoleTabs'
 import { AuthPageCloseButton } from './AuthPageCloseButton'
+import { AuthOAuthButtons } from './AuthOAuthButtons'
 
 type Props = {
   onAuthSuccess: (role: AccountRole) => void
@@ -55,7 +56,11 @@ export default function ChauffeurAuthPage({ onAuthSuccess, onClose, onSwitchToCl
     const result = await loginChauffeurOnly({ email, password })
     setLoading(false)
     if (!result.success || result.role !== 'chauffeur') {
-      setError(result.error ?? 'Erreur de connexion')
+      setError(
+        result.error === 'OAUTH_ACCOUNT_USE_SOCIAL'
+          ? t('authOAuth.errorUseSocial')
+          : (result.error ?? 'Erreur de connexion')
+      )
       return
     }
     onAuthSuccess('chauffeur')
@@ -125,6 +130,7 @@ export default function ChauffeurAuthPage({ onAuthSuccess, onClose, onSwitchToCl
           />
         ) : (
           <form className="auth-page-grid" onSubmit={handleSubmit}>
+            <AuthOAuthButtons role="chauffeur" mode="login" />
             <input
               className="auth-page-input"
               type="email"

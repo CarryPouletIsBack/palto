@@ -19,6 +19,7 @@ import './AuthPage.css'
 import { AuthPagePhotoBackground } from './AuthPagePhotoBackground'
 import { AuthPageRoleTabs } from './AuthPageRoleTabs'
 import { AuthPageCloseButton } from './AuthPageCloseButton'
+import { AuthOAuthButtons } from './AuthOAuthButtons'
 
 type Props = {
   onAuthSuccess: (role: AccountRole) => void
@@ -89,7 +90,11 @@ export default function ClientAuthPage({ onAuthSuccess, onClose, onSwitchToChauf
     const result = await loginClient({ email, password })
     setLoading(false)
     if (!result.success || !result.role) {
-      setError(result.error ?? 'Erreur de connexion')
+      setError(
+        result.error === 'OAUTH_ACCOUNT_USE_SOCIAL'
+          ? t('authOAuth.errorUseSocial')
+          : (result.error ?? 'Erreur de connexion')
+      )
       return
     }
     onAuthSuccess(result.role)
@@ -151,6 +156,7 @@ export default function ClientAuthPage({ onAuthSuccess, onClose, onSwitchToChauf
           le menu Palto Chauffeur.
         </p>
         <form className="auth-page-grid" onSubmit={handleSubmit}>
+          <AuthOAuthButtons role="client" mode={mode} />
           {mode === 'signup' ? (
             <AuthSignupIdentityFields
               prenom={prenom}

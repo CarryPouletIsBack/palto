@@ -153,6 +153,12 @@ export async function handleAuthClientLogin(req: VercelRequest, res: VercelRespo
     return res.status(500).json({ success: false, error: `Lecture compte impossible${error.code ? ` (${error.code})` : ''}` })
   }
   if (!data) return res.status(401).json({ success: false, error: 'Email incorrect' })
+  if (!data.password_hash) {
+    return res.status(401).json({
+      success: false,
+      error: 'OAUTH_ACCOUNT_USE_SOCIAL',
+    })
+  }
   if (!verifyPassword(parsed.data.password, data.password_hash)) {
     return res.status(401).json({ success: false, error: 'Mot de passe incorrect' })
   }
@@ -264,6 +270,12 @@ export async function handleAuthChauffeurLogin(req: VercelRequest, res: VercelRe
     return res.status(500).json({ success: false, error: `Lecture compte impossible${error.code ? ` (${error.code})` : ''}` })
   }
   if (!data) return res.status(401).json({ success: false, error: 'Email incorrect' })
+  if (!data.password_hash) {
+    return res.status(401).json({
+      success: false,
+      error: 'OAUTH_ACCOUNT_USE_SOCIAL',
+    })
+  }
   if (!verifyPassword(parsed.data.password, data.password_hash)) {
     return res.status(401).json({ success: false, error: 'Mot de passe incorrect' })
   }
@@ -498,6 +510,12 @@ export async function handleAuthDeleteAccount(
     return res.status(500).json({ success: false, error: 'Lecture compte impossible' })
   }
   if (!account) return res.status(404).json({ success: false, error: 'Compte introuvable' })
+  if (!account.password_hash) {
+    return res.status(400).json({
+      success: false,
+      error: 'OAUTH_ACCOUNT_NO_PASSWORD',
+    })
+  }
   if (!verifyPassword(parsed.data.password, account.password_hash)) {
     return res.status(401).json({ success: false, error: 'Mot de passe incorrect' })
   }

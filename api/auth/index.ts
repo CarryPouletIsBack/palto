@@ -9,6 +9,12 @@ import {
   handleAuthDeleteAccount,
   handleAuthRealtimeToken,
 } from '../../server/lib/authApiHandlers.js'
+import {
+  handleOAuthCallback,
+  handleOAuthExchange,
+  handleOAuthProviders,
+  handleOAuthStart,
+} from '../../server/lib/oauthAuth.js'
 
 /**
  * Route auth unique (limite Hobby : 12 Serverless Functions max).
@@ -29,6 +35,26 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (action === 'realtime-token') {
     if (req.method !== 'GET') return res.status(405).json({ error: 'Method not allowed' })
     return handleAuthRealtimeToken(req, res)
+  }
+
+  if (action === 'oauth-providers') {
+    if (req.method !== 'GET') return res.status(405).json({ error: 'Method not allowed' })
+    return handleOAuthProviders(req, res)
+  }
+
+  if (action === 'oauth-start') {
+    if (req.method !== 'GET') return res.status(405).json({ error: 'Method not allowed' })
+    return handleOAuthStart(req, res)
+  }
+
+  if (action === 'oauth-callback') {
+    if (req.method !== 'GET') return res.status(405).send('Method not allowed')
+    return handleOAuthCallback(req, res)
+  }
+
+  if (action === 'oauth-exchange') {
+    if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' })
+    return handleOAuthExchange(req, res)
   }
 
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' })

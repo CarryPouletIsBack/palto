@@ -20,6 +20,7 @@ import { GeolocationPromptBanner } from './components/GeolocationPromptBanner'
 import { markNativeTouchOnDocument } from './lib/nativeTouchDevice'
 import BetaTestBanner from './components/BetaTestBanner'
 import { usesEmbeddedBetaBanner } from './constants/siteChrome'
+import { useOAuthReturnHandler } from './hooks/useOAuthReturnHandler'
 import { getDestinationById, type PopularDestination } from './data/popularDestinations'
 import { AppToaster } from './components/AppToaster'
 import {
@@ -381,6 +382,7 @@ function App() {
     (role: AccountRole, options?: { preferDashboard?: boolean }) => {
       const prefix = language === 'en' ? '/en' : '/fr'
       setAuthUiTick((n) => n + 1)
+      setIsLoggedIn(true)
       setClientAuthReturnPage(null)
       const openDashboard = role === 'chauffeur' || options?.preferDashboard === true
       if (openDashboard) {
@@ -393,6 +395,8 @@ function App() {
     },
     [language]
   )
+
+  useOAuthReturnHandler({ onSuccess: redirectAfterAuth })
 
   /** Retour vue racine Palto : accueil, reset course / état projet, persistance locale. */
   const navigateToPaltoHomeRoot = useCallback(() => {

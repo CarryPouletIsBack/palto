@@ -32,6 +32,10 @@
       "destination": "/api/auth?action=realtime-token"
     },
     {
+      "source": "/api/auth/oauth-providers",
+      "destination": "/api/auth?action=oauth-providers"
+    },
+    {
       "source": "/api/cron/expire-instant-pending",
       "destination": "/api/chauffeur?resource=cron-expire-instant"
     },
