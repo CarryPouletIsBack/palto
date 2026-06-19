@@ -86,6 +86,7 @@ import {
 } from '../services/authService';
 import { DashboardHomeTopbar } from './DashboardHomeTopbar';
 import { SiteChromeStack } from './SiteChromeStack';
+import { DashboardHomeChauffeurBanner } from './DashboardHomeChauffeurBanner';
 import { DashboardHomeRidesBanner } from './DashboardHomeRidesBanner';
 import { useClientHomeTopbarRides } from '../hooks/useClientHomeTopbarRides';
 import { simplifyAddressDisplay as simplifyRideAddress } from '../services/addressDisplay';
@@ -336,6 +337,7 @@ interface SingleProjectProps {
   onOpenClientAccountAuth?: (mode: 'login' | 'signup') => void;
   onOpenClientAccount?: () => void;
   onNavigateHome?: () => void;
+  onNavigateChauffeurHome?: () => void;
   /** Passager : vue « chauffeur sur place » (bandeau sous la topbar). */
   onOpenClientLiveMeet?: () => void;
 }
@@ -352,6 +354,7 @@ const SingleProjectNew: FC<SingleProjectProps> = ({
   onOpenClientAccountAuth,
   onOpenClientAccount,
   onNavigateHome,
+  onNavigateChauffeurHome,
   onOpenClientLiveMeet,
 }) => {
   const { t, language } = useLanguage();
@@ -2933,6 +2936,10 @@ const SingleProjectNew: FC<SingleProjectProps> = ({
               onOpenClientAccountAuth={onOpenClientAccountAuth}
               onOpenClientAccount={onOpenClientAccount}
               onNavigateHome={onNavigateHome}
+            />
+            <DashboardHomeChauffeurBanner
+              onNavigateChauffeurHome={onNavigateChauffeurHome}
+              analyticsSuffix="go"
             />
             <DashboardHomeRidesBanner
               clientUpcomingRide={clientUpcomingRide}

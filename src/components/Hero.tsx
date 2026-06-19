@@ -2,6 +2,7 @@ import { useState, useCallback, useEffect, useRef } from 'react'
 import { useLanguage } from '../contexts/LanguageContext'
 import { trackEvent } from '../services/googleAnalyticsTracking'
 import { DashboardHomeTopbar } from './DashboardHomeTopbar'
+import { DashboardHomeChauffeurBanner } from './DashboardHomeChauffeurBanner'
 import { DashboardHomeRidesBanner } from './DashboardHomeRidesBanner'
 import { HomeFooter } from './HomeFooter'
 import BetaTestBanner from './BetaTestBanner'
@@ -32,6 +33,7 @@ interface HeroProps {
   /** Page « chauffeur sur place » (`/compte/course`). */
   onOpenClientLiveMeet?: () => void
   onNavigateHome?: () => void
+  onNavigateChauffeurHome?: () => void
   onOpenChauffeurAuth?: (mode: 'login' | 'signup') => void
 }
 
@@ -47,6 +49,7 @@ const Hero = ({
   onOpenClientAccount,
   onOpenClientLiveMeet,
   onNavigateHome,
+  onNavigateChauffeurHome,
   onOpenChauffeurAuth,
 }: HeroProps) => {
   const { t, language } = useLanguage()
@@ -156,6 +159,10 @@ const Hero = ({
               onOpenClientAccountAuth={onOpenClientAccountAuth}
               onOpenClientAccount={onOpenClientAccount}
               onNavigateHome={onNavigateHome}
+            />
+            <DashboardHomeChauffeurBanner
+              onNavigateChauffeurHome={onNavigateChauffeurHome}
+              analyticsSuffix="home"
             />
             <DashboardHomeRidesBanner
               clientUpcomingRide={clientUpcomingRide}

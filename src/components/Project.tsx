@@ -16,6 +16,7 @@ interface ProjectProps {
   onOpenClientAccountAuth?: (mode: 'login' | 'signup') => void;
   onOpenClientAccount?: () => void;
   onNavigateHome?: () => void;
+  onNavigateChauffeurHome?: () => void;
   onOpenClientLiveMeet?: () => void;
 }
 
@@ -39,6 +40,7 @@ const Project = ({
   onOpenClientAccountAuth,
   onOpenClientAccount,
   onNavigateHome,
+  onNavigateChauffeurHome,
   onOpenClientLiveMeet,
 }: ProjectProps) => {
   const [projectData, setProjectData] = useState<ProjectData | null>(null);
@@ -104,6 +106,7 @@ const Project = ({
       onOpenClientAccountAuth={onOpenClientAccountAuth}
       onOpenClientAccount={onOpenClientAccount}
       onNavigateHome={onNavigateHome}
+      onNavigateChauffeurHome={onNavigateChauffeurHome}
       onOpenClientLiveMeet={onOpenClientLiveMeet}
     />
   );

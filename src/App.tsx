@@ -774,6 +774,7 @@ function App() {
             onOpenClientAccount={handleOpenClientAccount}
             onOpenClientLiveMeet={handleOpenClientMeetDriver}
             onNavigateHome={navigateToPaltoHomeRoot}
+            onNavigateChauffeurHome={navigateToChauffeurHomeRoot}
             onOpenChauffeurAuth={handleOpenChauffeurAuth}
           />
         )}
@@ -899,6 +900,7 @@ function App() {
                 onOpenClientAccount={handleOpenClientAccount}
                 onOpenClientLiveMeet={handleOpenClientMeetDriver}
                 onNavigateHome={navigateToPaltoHomeRoot}
+                onNavigateChauffeurHome={navigateToChauffeurHomeRoot}
                 onOpenChauffeurAuth={handleOpenChauffeurAuth}
               />
             )}
@@ -1006,6 +1008,7 @@ function App() {
             onOpenClientAccountAuth={handleOpenClientAccountAuth}
             onOpenClientAccount={handleOpenClientAccount}
             onNavigateHome={navigateToPaltoHomeRoot}
+            onNavigateChauffeurHome={navigateToChauffeurHomeRoot}
             onOpenClientLiveMeet={handleOpenClientMeetDriver}
           />
         )}

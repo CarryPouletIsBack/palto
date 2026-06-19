@@ -597,6 +597,112 @@ html[data-app-theme='dark'] .dashboard-home-rides-banner {
   border-bottom-color: rgba(255, 255, 255, 0.08);
 }
 
+/* Bandeau chauffeur sous la topbar (accueil passagers / page Go). */
+.dashboard-home-chauffeur-banner {
+  position: relative;
+  z-index: 4;
+  pointer-events: auto;
+  flex-shrink: 0;
+  min-height: min-content;
+  box-sizing: border-box;
+  width: 100%;
+  padding: 12px 16px;
+  border-bottom: 1px solid #fed7aa;
+  background: linear-gradient(90deg, #fff7ed 0%, #fffbeb 55%, #fff7ed 100%);
+}
+
+.dashboard-home-chauffeur-banner__inner {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px 16px;
+  min-width: 0;
+}
+
+.dashboard-home-chauffeur-banner__icon-wrap {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  background: rgba(234, 88, 12, 0.12);
+  color: #c2410c;
+}
+
+.dashboard-home-chauffeur-banner__copy {
+  flex: 1 1 200px;
+  min-width: 0;
+}
+
+.dashboard-home-chauffeur-banner__title {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1.35;
+  color: #9a3412;
+}
+
+.dashboard-home-chauffeur-banner__lead {
+  margin: 2px 0 0;
+  font-size: 12px;
+  line-height: 1.4;
+  color: #b45309;
+}
+
+.dashboard-home-chauffeur-banner__cta {
+  flex-shrink: 0;
+  margin-left: auto;
+  height: 32px;
+  padding: 0 14px;
+  border: none;
+  border-radius: 8px;
+  background: #ea580c;
+  color: #fff;
+  font-size: 11px;
+  font-weight: 700;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.dashboard-home-chauffeur-banner__cta:hover {
+  background: #c2410c;
+}
+
+@media (max-width: 640px) {
+  .dashboard-home-chauffeur-banner__cta {
+    margin-left: 0;
+    width: 100%;
+  }
+}
+
+html[data-app-theme='dark'] .dashboard-home-chauffeur-banner {
+  background: linear-gradient(90deg, #431407 0%, #3b1a0a 55%, #431407 100%);
+  border-bottom-color: rgba(251, 146, 60, 0.25);
+}
+
+html[data-app-theme='dark'] .dashboard-home-chauffeur-banner__icon-wrap {
+  background: rgba(251, 146, 60, 0.18);
+  color: #fdba74;
+}
+
+html[data-app-theme='dark'] .dashboard-home-chauffeur-banner__title {
+  color: #fed7aa;
+}
+
+html[data-app-theme='dark'] .dashboard-home-chauffeur-banner__lead {
+  color: #fdba74;
+}
+
+html[data-app-theme='dark'] .dashboard-home-chauffeur-banner__cta {
+  background: #ea580c;
+}
+
+html[data-app-theme='dark'] .dashboard-home-chauffeur-banner__cta:hover {
+  background: #f97316;
+}
+
 .dashboard-home-topbar-pill {
   flex-shrink: 0;
   height: 30px;
