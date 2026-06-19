@@ -11,9 +11,16 @@ type Props = {
   setDraft: Dispatch<SetStateAction<ChauffeurSignupDraft>>
   showPassword: boolean
   setShowPassword: (value: boolean) => void
+  oauthMode?: boolean
 }
 
-export default function ChauffeurSignupStepIdentity({ draft, setDraft, showPassword, setShowPassword }: Props) {
+export default function ChauffeurSignupStepIdentity({
+  draft,
+  setDraft,
+  showPassword,
+  setShowPassword,
+  oauthMode = false,
+}: Props) {
   const { t } = useLanguage()
 
   return (
@@ -65,42 +72,47 @@ export default function ChauffeurSignupStepIdentity({ draft, setDraft, showPassw
         placeholder={t('chauffeurAuth.email')}
         autoComplete="email"
         required
+        readOnly={oauthMode}
       />
-      <div className="auth-page-password-row">
-        <input
-          className="auth-page-input"
-          type={showPassword ? 'text' : 'password'}
-          value={draft.password}
-          onChange={(e) => setDraft((d) => ({ ...d, password: e.target.value }))}
-          placeholder={t('chauffeurAuth.password')}
-          autoComplete="new-password"
-          required
-          minLength={6}
-        />
-        <button
-          className="auth-page-toggle-visibility"
-          type="button"
-          onMouseDown={() => setShowPassword(true)}
-          onMouseUp={() => setShowPassword(false)}
-          onMouseLeave={() => setShowPassword(false)}
-          onTouchStart={() => setShowPassword(true)}
-          onTouchEnd={() => setShowPassword(false)}
-          onBlur={() => setShowPassword(false)}
-          aria-label="Maintenir pour afficher le mot de passe"
-        >
-          {showPassword ? <EyeOff size={16} aria-hidden /> : <Eye size={16} aria-hidden />}
-        </button>
-      </div>
-      <input
-        className="auth-page-input"
-        type={showPassword ? 'text' : 'password'}
-        value={draft.passwordConfirm}
-        onChange={(e) => setDraft((d) => ({ ...d, passwordConfirm: e.target.value }))}
-        placeholder={t('chauffeurAuth.confirmPassword')}
-        autoComplete="new-password"
-        required
-        minLength={6}
-      />
+      {!oauthMode ? (
+        <>
+          <div className="auth-page-password-row">
+            <input
+              className="auth-page-input"
+              type={showPassword ? 'text' : 'password'}
+              value={draft.password}
+              onChange={(e) => setDraft((d) => ({ ...d, password: e.target.value }))}
+              placeholder={t('chauffeurAuth.password')}
+              autoComplete="new-password"
+              required
+              minLength={6}
+            />
+            <button
+              className="auth-page-toggle-visibility"
+              type="button"
+              onMouseDown={() => setShowPassword(true)}
+              onMouseUp={() => setShowPassword(false)}
+              onMouseLeave={() => setShowPassword(false)}
+              onTouchStart={() => setShowPassword(true)}
+              onTouchEnd={() => setShowPassword(false)}
+              onBlur={() => setShowPassword(false)}
+              aria-label="Maintenir pour afficher le mot de passe"
+            >
+              {showPassword ? <EyeOff size={16} aria-hidden /> : <Eye size={16} aria-hidden />}
+            </button>
+          </div>
+          <input
+            className="auth-page-input"
+            type={showPassword ? 'text' : 'password'}
+            value={draft.passwordConfirm}
+            onChange={(e) => setDraft((d) => ({ ...d, passwordConfirm: e.target.value }))}
+            placeholder={t('chauffeurAuth.confirmPassword')}
+            autoComplete="new-password"
+            required
+            minLength={6}
+          />
+        </>
+      ) : null}
     </div>
   )
 }

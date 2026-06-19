@@ -82,8 +82,8 @@ Appliquer `supabase/migrations/0013_app_oauth_identities.sql` :
 | Contexte | Comportement |
 |----------|----------------|
 | Client — connexion / inscription | Google ou Facebook crée ou connecte le compte **client** |
-| Chauffeur — connexion | OAuth uniquement si compte chauffeur déjà lié ou e-mail existant |
-| Chauffeur — inscription | Formulaire classique (pas d’OAuth : données véhicule obligatoires) |
+| Chauffeur — connexion | OAuth si compte chauffeur déjà lié |
+| Chauffeur — inscription | Google en premier, puis assistant (identité, véhicule, documents) |
 | Même Google client + chauffeur | Deux comptes séparés, deux sessions |
 
 ## API (dans `/api/auth`, pas de nouvelle Serverless Function)

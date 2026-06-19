@@ -2,6 +2,7 @@ import type { VercelRequest, VercelResponse } from '@vercel/node'
 import {
   handleAuthChauffeurLogin,
   handleAuthChauffeurRegister,
+  handleAuthChauffeurCompleteSignup,
   handleAuthClientLogin,
   handleAuthClientRegister,
   handleAuthForgotPassword,
@@ -62,6 +63,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (role === 'client' && action === 'register') return handleAuthClientRegister(req, res)
   if (role === 'chauffeur' && action === 'login') return handleAuthChauffeurLogin(req, res)
   if (role === 'chauffeur' && action === 'register') return handleAuthChauffeurRegister(req, res)
+  if (role === 'chauffeur' && action === 'complete-signup')
+    return handleAuthChauffeurCompleteSignup(req, res)
   if (role === 'client' && action === 'forgot-password') return handleAuthForgotPassword(req, res, 'client')
   if (role === 'chauffeur' && action === 'forgot-password')
     return handleAuthForgotPassword(req, res, 'chauffeur')

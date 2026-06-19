@@ -17,6 +17,7 @@ export type OAuthStatePayload = {
   returnTo: string
   nonce: string
   exp: number
+  intent?: 'login' | 'signup'
 }
 
 export type OAuthUserProfile = {
@@ -405,11 +406,66 @@ async function createOAuthClientAccount(
   return data
 }
 
+async function createOAuthChauffeurAccount(
+  supabase: SupabaseClient,
+  profile: OAuthUserProfile
+): Promise<{ id: string; email: string; full_name: string | null }> {
+  const fullName = profile.fullName || profile.email.split('@')[0] || 'Chauffeur'
+  const { data, error } = await supabase
+    .from('app_accounts')
+    .insert({
+      email: profile.email,
+      role: 'chauffeur',
+      password_hash: null,
+      full_name: fullName,
+      phone: null,
+      vehicle_type: null,
+      delivery_equipped: false,
+      pet_friendly: true,
+      luggage_assistance: true,
+      insulated_bag: false,
+    })
+    .select('id,email,full_name')
+    .single()
+
+  if (error || !data) {
+    if (error?.code === '23505') throw new Error('EMAIL_EXISTS')
+    throw error ?? new Error('CHAUFFEUR_CREATE_FAILED')
+  }
+
+  return data
+}
+
+export async function isChauffeurAccountSignupPending(
+  supabase: SupabaseClient,
+  accountId: string
+): Promise<boolean> {
+  const { data: account, error: accErr } = await supabase
+    .from('app_accounts')
+    .select('vehicle_type')
+    .eq('id', accountId)
+    .eq('role', 'chauffeur')
+    .maybeSingle()
+
+  if (accErr || !account?.vehicle_type) return true
+
+  const { data: profRow } = await supabase
+    .from('chauffeur_profile_data')
+    .select('account_snapshot')
+    .eq('account_id', accountId)
+    .maybeSingle()
+
+  const snap = sanitizeAccountSnapshot(profRow?.account_snapshot ?? {})
+  const plaque = typeof snap.plaque === 'string' ? snap.plaque.trim() : ''
+  return !plaque
+}
+
 async function resolveOrCreateOAuthAccount(
   supabase: SupabaseClient,
   provider: OAuthProvider,
   role: AccountRole,
-  profile: OAuthUserProfile
+  profile: OAuthUserProfile,
+  intent: 'login' | 'signup' = 'login'
 ): Promise<{ id: string; email: string; full_name: string | null }> {
   const linked = await findAccountByOAuth(supabase, provider, profile.providerUserId, role)
   if (linked) return linked
@@ -435,6 +491,19 @@ async function resolveOrCreateOAuthAccount(
   }
 
   if (role === 'chauffeur') {
+    if (intent === 'signup') {
+      if (emailAccount) {
+        if (!profile.emailVerified) throw new Error('EMAIL_NOT_VERIFIED')
+        await linkOAuthIdentity(supabase, {
+          accountId: emailAccount.id,
+          provider,
+          providerUserId: profile.providerUserId,
+          providerEmail: profile.email,
+        })
+        return emailAccount
+      }
+      return createOAuthChauffeurAccount(supabase, profile)
+    }
     throw new Error('CHAUFFEUR_ACCOUNT_REQUIRED')
   }
 
@@ -466,6 +535,8 @@ export async function handleOAuthStart(req: VercelRequest, res: VercelResponse):
   const forcePickerRaw = Array.isArray(req.query.forceAccountPicker)
     ? req.query.forceAccountPicker[0]
     : req.query.forceAccountPicker
+  const intentRaw = Array.isArray(req.query.intent) ? req.query.intent[0] : req.query.intent
+  const intent = intentRaw === 'signup' ? 'signup' : 'login'
 
   const provider = typeof providerRaw === 'string' ? providerRaw.trim().toLowerCase() : ''
   const role = typeof roleRaw === 'string' ? roleRaw.trim().toLowerCase() : ''
@@ -490,6 +561,7 @@ export async function handleOAuthStart(req: VercelRequest, res: VercelResponse):
     returnTo,
     nonce: randomBytes(16).toString('hex'),
     exp: Date.now() + STATE_TTL_MS,
+    intent,
   })
 
   const redirectUri = oauthCallbackUrl(baseUrl, provider)
@@ -521,6 +593,7 @@ export async function handleOAuthCallback(req: VercelRequest, res: VercelRespons
   const state = typeof stateRaw === 'string' ? parseOAuthState(stateRaw) : null
   const returnTo = state?.returnTo ?? (state?.role === 'chauffeur' ? '/fr/dashboard' : '/fr/compte')
   const role = state?.role ?? 'client'
+  const intent = state?.intent === 'signup' ? 'signup' : 'login'
 
   if (oauthError) {
     redirectOAuthError(res, returnTo, 'OAUTH_DENIED', role)
@@ -560,7 +633,7 @@ export async function handleOAuthCallback(req: VercelRequest, res: VercelRespons
 
   let account: { id: string; email: string; full_name: string | null }
   try {
-    account = await resolveOrCreateOAuthAccount(supabase, provider, state.role, profile)
+    account = await resolveOrCreateOAuthAccount(supabase, provider, state.role, profile, intent)
     await linkOAuthIdentity(supabase, {
       accountId: account.id,
       provider,
@@ -594,6 +667,9 @@ export async function handleOAuthCallback(req: VercelRequest, res: VercelRespons
   url.searchParams.set('oauth_exchange', exchangeToken)
   url.searchParams.set('oauth_role', state.role)
   url.searchParams.set('oauth_provider', provider)
+  if (state.role === 'chauffeur' && intent === 'signup') {
+    url.searchParams.set('chauffeurSignup', '1')
+  }
   res.redirect(302, `${url.pathname}${url.search}`)
 }
 
@@ -697,6 +773,10 @@ export async function handleOAuthExchange(req: VercelRequest, res: VercelRespons
     success: true,
     token,
     user: { email: account.email, displayName, profilePhotoUrl },
+    signupPending:
+      roleRaw === 'chauffeur'
+        ? await isChauffeurAccountSignupPending(supabase, String(account.id))
+        : false,
   })
 }
 

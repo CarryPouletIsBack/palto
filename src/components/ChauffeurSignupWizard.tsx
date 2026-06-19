@@ -7,11 +7,14 @@ import {
   type ChauffeurSignupDraft,
 } from '../constants/chauffeurSignup'
 import { normalizeChauffeurEmail } from '../constants/chauffeurRegistrationStorage'
-import {
-  setComplianceDoc,
-} from '../constants/chauffeurComplianceStorage'
+import { setComplianceDoc } from '../constants/chauffeurComplianceStorage'
 import { normalizeReunionCommuneForSelect } from '../data/reunionCommunes'
-import { registerChauffeur } from '../services/authService'
+import {
+  clearChauffeurSignupPending,
+  completeChauffeurSignup,
+  getCurrentUser,
+  registerChauffeur,
+} from '../services/authService'
 import {
   buildInternationalPhone,
   isValidNationalPhone,
@@ -24,11 +27,12 @@ import ChauffeurSignupStepDocuments from './ChauffeurSignupStepDocuments'
 type Props = {
   onSuccess: () => void
   initialEmail?: string
+  oauthMode?: boolean
 }
 
 const TOTAL_STEPS = 3
 
-export default function ChauffeurSignupWizard({ onSuccess, initialEmail }: Props) {
+export default function ChauffeurSignupWizard({ onSuccess, initialEmail, oauthMode = false }: Props) {
   const { t } = useLanguage()
   const [step, setStep] = useState<1 | 2 | 3>(1)
   const [draft, setDraft] = useState<ChauffeurSignupDraft>(() => ({
@@ -41,8 +45,9 @@ export default function ChauffeurSignupWizard({ onSuccess, initialEmail }: Props
   const [registeredEmailNorm, setRegisteredEmailNorm] = useState<string | null>(null)
 
   useEffect(() => {
-    if (!initialEmail?.trim()) return
-    setDraft((d) => (d.email.trim() ? d : { ...d, email: initialEmail.trim() }))
+    const email = initialEmail?.trim() || getCurrentUser()?.email?.trim()
+    if (!email) return
+    setDraft((d) => (d.email.trim() ? d : { ...d, email }))
   }, [initialEmail])
 
   const stepLabel = useMemo(
@@ -73,13 +78,15 @@ export default function ChauffeurSignupWizard({ onSuccess, initialEmail }: Props
       setError(t('chauffeurAuth.errorInvalidEmail'))
       return false
     }
-    if (draft.password.length < 6) {
-      setError(t('chauffeurAuth.errorPasswordShort'))
-      return false
-    }
-    if (draft.password !== draft.passwordConfirm) {
-      setError(t('chauffeurAuth.errorPasswordMismatch'))
-      return false
+    if (!oauthMode) {
+      if (draft.password.length < 6) {
+        setError(t('chauffeurAuth.errorPasswordShort'))
+        return false
+      }
+      if (draft.password !== draft.passwordConfirm) {
+        setError(t('chauffeurAuth.errorPasswordMismatch'))
+        return false
+      }
     }
     return true
   }
@@ -107,11 +114,7 @@ export default function ChauffeurSignupWizard({ onSuccess, initialEmail }: Props
     const licenseYear = parseLicenseYear(draft.licenseYear)
     if (!plateCheck.ok || licenseYear == null) return false
 
-    setLoading(true)
-    setError(null)
-    const reg = await registerChauffeur({
-      email: draft.email.trim(),
-      password: draft.password,
+    const signupPayload = {
       prenom: draft.prenom.trim(),
       nom: draft.nom.trim(),
       phone,
@@ -123,7 +126,17 @@ export default function ChauffeurSignupWizard({ onSuccess, initialEmail }: Props
       licenseYear,
       isVtc: draft.isVtc,
       deliveryEquipped: draft.deliveryEquipped,
-    })
+    }
+
+    setLoading(true)
+    setError(null)
+    const reg = oauthMode
+      ? await completeChauffeurSignup(signupPayload)
+      : await registerChauffeur({
+          email: draft.email.trim(),
+          password: draft.password,
+          ...signupPayload,
+        })
     setLoading(false)
 
     if (!reg.success) {
@@ -131,6 +144,10 @@ export default function ChauffeurSignupWizard({ onSuccess, initialEmail }: Props
         setError(t('chauffeurAuth.errorEmailUsed'))
       } else if (reg.error === 'EMAIL_RESERVED') {
         setError(t('chauffeurAuth.errorEmailReserved'))
+      } else if (reg.error === 'PROFILE_ALREADY_COMPLETE') {
+        clearChauffeurSignupPending()
+        onSuccess()
+        return true
       } else {
         setError(reg.error ?? t('chauffeurAuth.errorGeneric'))
       }
@@ -187,6 +204,7 @@ export default function ChauffeurSignupWizard({ onSuccess, initialEmail }: Props
           setDraft={setDraft}
           showPassword={showPassword}
           setShowPassword={setShowPassword}
+          oauthMode={oauthMode}
         />
       ) : null}
       {step === 2 ? <ChauffeurSignupStepVehicle draft={draft} setDraft={setDraft} /> : null}

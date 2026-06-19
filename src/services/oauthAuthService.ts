@@ -2,6 +2,7 @@ import { apiBaseUrl } from '../constants/featureFlags'
 import {
   applyChauffeurOAuthSession,
   applyClientOAuthSession,
+  setChauffeurSignupPending,
   type AccountRole,
   type User,
 } from './authService'
@@ -84,7 +85,7 @@ export async function fetchOAuthProviders(): Promise<OAuthProvidersAvailability>
 export function startOAuthLogin(
   provider: OAuthProvider,
   role: AccountRole,
-  options?: { forceAccountPicker?: boolean }
+  options?: { forceAccountPicker?: boolean; intent?: 'login' | 'signup' }
 ): void {
   const returnTo = `${window.location.pathname}${window.location.search}`
   const params = new URLSearchParams({
@@ -93,6 +94,8 @@ export function startOAuthLogin(
     role,
     returnTo,
   })
+  const intent = options?.intent === 'signup' ? 'signup' : 'login'
+  if (intent === 'signup') params.set('intent', 'signup')
   const loginHint =
     options?.forceAccountPicker ? undefined : getRememberedOAuthEmail(role, provider) ?? undefined
   if (loginHint) params.set('loginHint', loginHint)
@@ -104,7 +107,7 @@ export async function completeOAuthExchange(
   exchange: string,
   role: AccountRole,
   provider: OAuthProvider = 'google'
-): Promise<{ success: boolean; user?: User; error?: string }> {
+): Promise<{ success: boolean; user?: User; signupPending?: boolean; error?: string }> {
   try {
     const response = await fetch(`${apiBaseUrl()}/auth?action=oauth-exchange`, {
       method: 'POST',
@@ -115,6 +118,7 @@ export async function completeOAuthExchange(
       success?: boolean
       token?: string
       user?: User & { profilePhotoUrl?: string | null }
+      signupPending?: boolean
       error?: string
     } | null
     if (!response.ok || !data?.success || !data.token || !data.user) {
@@ -124,9 +128,11 @@ export async function completeOAuthExchange(
       applyClientOAuthSession(data.token, data.user, provider)
     } else {
       applyChauffeurOAuthSession(data.token, data.user, provider)
+      if (data.signupPending) setChauffeurSignupPending(true)
+      else setChauffeurSignupPending(false)
     }
     rememberOAuthEmail(role, provider, data.user.email)
-    return { success: true, user: data.user }
+    return { success: true, user: data.user, signupPending: data.signupPending === true }
   } catch (error) {
     console.error('[oauthAuthService] exchange', error)
     return { success: false, error: 'Impossible de finaliser la connexion sociale' }

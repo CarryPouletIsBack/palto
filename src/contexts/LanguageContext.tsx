@@ -448,6 +448,8 @@ const TRANSLATIONS: Record<Language, Record<string, unknown>> = {
       orEmail: 'ou par e-mail',
       chauffeurLoginHint:
         'Connexion chauffeur uniquement si votre compte pro est déjà créé. Même Google qu’en passager = compte séparé.',
+      chauffeurSignupHint:
+        'Connectez-vous avec Google pour créer votre compte chauffeur, puis complétez les étapes ci-dessous.',
       errorDenied: 'Connexion annulée ou refusée.',
       errorUnavailable: 'Connexion sociale indisponible pour le moment.',
       errorChauffeurRequired:
@@ -1321,6 +1323,8 @@ const TRANSLATIONS: Record<Language, Record<string, unknown>> = {
       orEmail: 'or with email',
       chauffeurLoginHint:
         'Driver sign-in only if your pro account already exists. Same Google as passenger = separate account.',
+      chauffeurSignupHint:
+        'Sign in with Google to create your driver account, then complete the steps below.',
       errorDenied: 'Sign-in cancelled or denied.',
       errorUnavailable: 'Social sign-in is unavailable right now.',
       errorChauffeurRequired:

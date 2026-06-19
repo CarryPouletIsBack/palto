@@ -15,6 +15,7 @@ import { getVerifiedClientSession } from './clientAuth.js'
 import { getPaltoAppSessionByToken } from './paltoAppSession.js'
 import { signPaltoSupabaseRealtimeJwt } from './paltoRealtimeJwt.js'
 import { seedChauffeurProfileOnRegister } from './seedChauffeurProfileOnRegister.js'
+import { isChauffeurAccountSignupPending } from './oauthAuth.js'
 
 function parseJsonBody(req: VercelRequest): unknown {
   if (typeof req.body === 'string') {
@@ -58,6 +59,8 @@ const ChauffeurRegisterBodySchema = AccountRegistrationIdentitySchema.extend({
   isVtc: z.boolean(),
   deliveryEquipped: z.boolean(),
 })
+
+const ChauffeurCompleteSignupBodySchema = ChauffeurRegisterBodySchema.omit({ email: true, password: true })
 
 function appBaseUrlFromRequest(req: VercelRequest): string {
   const envBase =
@@ -240,6 +243,79 @@ export async function handleAuthClientRegister(req: VercelRequest, res: VercelRe
   return res.status(201).json({
     success: true,
     token,
+    user: { email: data.email, displayName },
+  })
+}
+
+export async function handleAuthChauffeurCompleteSignup(req: VercelRequest, res: VercelResponse) {
+  const body = parseJsonBody(req)
+  if (body === null) return res.status(400).json({ success: false, error: 'Payload JSON invalide' })
+  const parsed = ChauffeurCompleteSignupBodySchema.safeParse(body)
+  if (!parsed.success) return res.status(400).json({ success: false, error: 'Payload invalide' })
+
+  const session = await getVerifiedChauffeurSession(req)
+  if (!session) {
+    return res.status(401).json({ success: false, error: 'Session invalide ou expiree' })
+  }
+
+  let supabase
+  try {
+    supabase = getSupabaseAdmin()
+  } catch {
+    return res.status(503).json({ success: false, error: 'Service indisponible' })
+  }
+
+  const pending = await isChauffeurAccountSignupPending(supabase, session.accountId)
+  if (!pending) {
+    return res.status(409).json({ success: false, error: 'PROFILE_ALREADY_COMPLETE' })
+  }
+
+  const email = normalizeEmail(session.email)
+  const fullName = buildAccountFullName(parsed.data.prenom, parsed.data.nom)
+  const phone = normalizeRegistrationPhone(parsed.data.phone)
+  const displayName = registrationDisplayName(parsed.data.prenom, parsed.data.nom, email)
+
+  const { data, error } = await supabase
+    .from('app_accounts')
+    .update({
+      full_name: fullName,
+      phone,
+      vehicle_type: parsed.data.vehicleType,
+      delivery_equipped: parsed.data.deliveryEquipped,
+      insulated_bag: parsed.data.deliveryEquipped,
+      updated_at: new Date().toISOString(),
+    })
+    .eq('id', session.accountId)
+    .eq('role', 'chauffeur')
+    .select('id,email,full_name')
+    .single()
+
+  if (error || !data) {
+    console.error('[auth/chauffeur/complete-signup]', error)
+    return res.status(500).json({
+      success: false,
+      error: `Mise a jour compte impossible${error?.code ? ` (${error.code})` : ''}`,
+    })
+  }
+
+  await seedChauffeurProfileOnRegister(supabase, {
+    accountId: String(data.id),
+    email,
+    prenom: parsed.data.prenom,
+    nom: parsed.data.nom,
+    phone,
+    adresse: parsed.data.adresse,
+    ville: parsed.data.ville,
+    vehicleType: parsed.data.vehicleType,
+    motorisation: parsed.data.motorisation,
+    plaque: parsed.data.plaque,
+    licenseYear: parsed.data.licenseYear,
+    isVtc: parsed.data.isVtc,
+    deliveryEquipped: parsed.data.deliveryEquipped,
+  })
+
+  return res.status(200).json({
+    success: true,
     user: { email: data.email, displayName },
   })
 }

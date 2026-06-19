@@ -48,13 +48,15 @@ export function AuthOAuthButtons({ role, mode }: AuthOAuthButtonsProps) {
     setRememberedFacebook(getRememberedOAuthEmail(role, 'facebook'))
   }, [mode, role])
 
-  if (role === 'chauffeur' && mode === 'signup') return null
   if (loading) return null
   if (!providers.google && !providers.facebook) return null
 
   const handleClick = (provider: OAuthProvider, forceAccountPicker = false) => {
     trackEvent('click', 'auth_oauth', `${provider}_${role}${forceAccountPicker ? '_other' : ''}`)
-    startOAuthLogin(provider, role, { forceAccountPicker })
+    startOAuthLogin(provider, role, {
+      forceAccountPicker,
+      intent: mode === 'signup' ? 'signup' : 'login',
+    })
   }
 
   const formatRememberedLabel = (providerLabel: string, email: string) =>
@@ -131,6 +133,9 @@ export function AuthOAuthButtons({ role, mode }: AuthOAuthButtonsProps) {
       </div>
       {role === 'chauffeur' && mode === 'login' ? (
         <p className="auth-page-oauth__hint">{t('authOAuth.chauffeurLoginHint')}</p>
+      ) : null}
+      {role === 'chauffeur' && mode === 'signup' ? (
+        <p className="auth-page-oauth__hint">{t('authOAuth.chauffeurSignupHint')}</p>
       ) : null}
       <div className="auth-page-oauth__divider" role="separator" aria-label={t('authOAuth.orEmail')}>
         <span>{t('authOAuth.orEmail')}</span>

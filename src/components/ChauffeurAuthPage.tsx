@@ -3,10 +3,13 @@ import { Eye, EyeOff } from 'lucide-react'
 import { useLanguage } from '../contexts/LanguageContext'
 import ChauffeurSignupWizard from './ChauffeurSignupWizard'
 import {
+  clearChauffeurSignupPending,
   consumePostPasswordResetLoginHint,
   getCurrentClientUser,
+  getCurrentUser,
   isClientAuthenticated,
   loginChauffeurOnly,
+  needsChauffeurSignupCompletion,
   requestPasswordReset,
   type AccountRole,
 } from '../services/authService'
@@ -17,7 +20,7 @@ import { AuthPageCloseButton } from './AuthPageCloseButton'
 import { AuthOAuthButtons } from './AuthOAuthButtons'
 
 type Props = {
-  onAuthSuccess: (role: AccountRole) => void
+  onAuthSuccess: (role: AccountRole, options?: { chauffeurSignupPending?: boolean }) => void
   onClose?: () => void
   onSwitchToClient?: () => void
 }
@@ -25,7 +28,9 @@ type Props = {
 export default function ChauffeurAuthPage({ onAuthSuccess, onClose, onSwitchToClient }: Props) {
   const { t } = useLanguage()
   const signupDefault = useMemo(
-    () => new URLSearchParams(window.location.search).get('chauffeurSignup') === '1',
+    () =>
+      new URLSearchParams(window.location.search).get('chauffeurSignup') === '1' ||
+      needsChauffeurSignupCompletion(),
     []
   )
   const [mode, setMode] = useState<'login' | 'signup'>(signupDefault ? 'signup' : 'login')
@@ -46,9 +51,16 @@ export default function ChauffeurAuthPage({ onAuthSuccess, onClose, onSwitchToCl
 
   useEffect(() => {
     if (email.trim()) return
+    const chauffeurUser = getCurrentUser()
+    if (chauffeurUser?.email?.trim()) {
+      setEmail(chauffeurUser.email.trim())
+      return
+    }
     const clientUser = getCurrentClientUser()
     if (clientUser?.email?.trim()) setEmail(clientUser.email.trim())
   }, [email])
+
+  const oauthSignupResume = needsChauffeurSignupCompletion()
 
   const submitLogin = async () => {
     setLoading(true)
@@ -64,6 +76,11 @@ export default function ChauffeurAuthPage({ onAuthSuccess, onClose, onSwitchToCl
       return
     }
     onAuthSuccess('chauffeur')
+  }
+
+  const finishSignup = () => {
+    clearChauffeurSignupPending()
+    onAuthSuccess('chauffeur', { chauffeurSignupPending: false })
   }
 
   const handleSubmit = (e: FormEvent) => {
@@ -124,10 +141,16 @@ export default function ChauffeurAuthPage({ onAuthSuccess, onClose, onSwitchToCl
         </p>
 
         {mode === 'signup' ? (
-          <ChauffeurSignupWizard
-            initialEmail={email}
-            onSuccess={() => onAuthSuccess('chauffeur')}
-          />
+          <>
+            {!oauthSignupResume ? (
+              <AuthOAuthButtons role="chauffeur" mode="signup" />
+            ) : null}
+            <ChauffeurSignupWizard
+              initialEmail={email}
+              oauthMode={oauthSignupResume}
+              onSuccess={finishSignup}
+            />
+          </>
         ) : (
           <form className="auth-page-grid" onSubmit={handleSubmit}>
             <AuthOAuthButtons role="chauffeur" mode="login" />
@@ -192,7 +215,7 @@ export default function ChauffeurAuthPage({ onAuthSuccess, onClose, onSwitchToCl
           </form>
         )}
 
-        {mode === 'signup' ? (
+        {mode === 'signup' && !oauthSignupResume ? (
           <div className="auth-page-actions" style={{ marginTop: 12 }}>
             <button
               className="auth-page-btn auth-page-btn--ghost"

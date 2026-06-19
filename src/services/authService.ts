@@ -18,6 +18,7 @@ export const CLIENT_AUTH_TOKEN_KEY = 'palto:client_token'
 
 const CLIENT_AUTH_METHOD_KEY = 'palto:client_auth_method'
 const CHAUFFEUR_AUTH_METHOD_KEY = 'palto:chauffeur_auth_method'
+const CHAUFFEUR_SIGNUP_PENDING_KEY = 'palto:chauffeur_signup_pending'
 
 export type PaltoAuthMethod = 'password' | 'google' | 'facebook'
 
@@ -79,6 +80,34 @@ export function getPaltoAuthMethod(role: AccountRole): PaltoAuthMethod | null {
 export function isOAuthOnlyPaltoAccount(role: AccountRole): boolean {
   const method = getPaltoAuthMethod(role)
   return method === 'google' || method === 'facebook'
+}
+
+export function setChauffeurSignupPending(pending: boolean): void {
+  if (typeof window === 'undefined') return
+  try {
+    if (pending) localStorage.setItem(CHAUFFEUR_SIGNUP_PENDING_KEY, '1')
+    else localStorage.removeItem(CHAUFFEUR_SIGNUP_PENDING_KEY)
+  } catch {
+    /* ignore */
+  }
+}
+
+export function isChauffeurSignupPending(): boolean {
+  if (typeof window === 'undefined') return false
+  try {
+    return localStorage.getItem(CHAUFFEUR_SIGNUP_PENDING_KEY) === '1'
+  } catch {
+    return false
+  }
+}
+
+export function clearChauffeurSignupPending(): void {
+  setChauffeurSignupPending(false)
+}
+
+/** Chauffeur connecté mais inscription (véhicule / documents) non terminée. */
+export function needsChauffeurSignupCompletion(): boolean {
+  return isChauffeurSession() && isChauffeurSignupPending()
 }
 
 const API_BASE_URL = apiBaseUrl()
@@ -277,6 +306,15 @@ export async function registerChauffeur(payload: RegisterChauffeurPayload): Prom
   )
   if (!result.success || !result.token || !result.user) return { success: false, error: result.error }
   persistChauffeurSession(result.token, result.user)
+  setPaltoAuthMethod('chauffeur', 'password')
+  persistChauffeurSignupProfile(payload)
+  notifyChauffeurSessionChanged()
+  return { success: true }
+}
+
+export type CompleteChauffeurSignupPayload = Omit<RegisterChauffeurPayload, 'email' | 'password'>
+
+function persistChauffeurSignupProfile(payload: RegisterChauffeurPayload): void {
   const emailNorm = normalizeChauffeurProfileEmail(payload.email)
   persistStoredChauffeurProfile({
     prenom: payload.prenom.trim(),
@@ -308,8 +346,46 @@ export async function registerChauffeur(payload: RegisterChauffeurPayload): Prom
     },
     emailNorm
   )
-  notifyChauffeurSessionChanged()
-  return { success: true }
+}
+
+export async function completeChauffeurSignup(
+  payload: CompleteChauffeurSignupPayload
+): Promise<{ success: boolean; error?: string }> {
+  const auth = getDashboardAuthorizationHeader()
+  if (!auth) return { success: false, error: 'NOT_SIGNED_IN' }
+
+  const user = getCurrentUser()
+  const email = user?.email?.trim()
+  if (!email) return { success: false, error: 'NOT_SIGNED_IN' }
+
+  try {
+    const response = await fetch(`${API_BASE_URL}/auth?role=chauffeur&action=complete-signup`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: auth,
+      },
+      body: JSON.stringify(payload),
+    })
+    const data = (await response.json().catch(() => null)) as {
+      success?: boolean
+      error?: string
+      user?: User
+    } | null
+    if (!response.ok || !data?.success) {
+      return { success: false, error: data?.error || 'COMPLETE_SIGNUP_FAILED' }
+    }
+    if (data.user) {
+      localStorage.setItem(CHAUFFEUR_AUTH_STORAGE_KEY, JSON.stringify(data.user))
+    }
+    persistChauffeurSignupProfile({ ...payload, email, password: '' })
+    clearChauffeurSignupPending()
+    notifyChauffeurSessionChanged()
+    return { success: true }
+  } catch (error) {
+    console.error('[authService] completeChauffeurSignup', error)
+    return { success: false, error: 'NETWORK' }
+  }
 }
 
 /** Session chauffeur valide (dashboard / API chauffeur) — indépendante du compte client. */

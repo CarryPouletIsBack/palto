@@ -8,7 +8,7 @@ import {
 import type { AccountRole } from '../services/authService'
 
 type UseOAuthReturnHandlerOptions = {
-  onSuccess: (role: AccountRole) => void
+  onSuccess: (role: AccountRole, options?: { chauffeurSignupPending?: boolean }) => void
 }
 
 /** Finalise le retour OAuth (`?oauth_exchange=…`) une fois par chargement. */
@@ -43,7 +43,7 @@ export function useOAuthReturnHandler({ onSuccess }: UseOAuthReturnHandlerOption
         window.alert(result.error ?? t('authOAuth.errorGeneric'))
         return
       }
-      onSuccess(role)
+      onSuccess(role, { chauffeurSignupPending: result.signupPending })
     })
   }, [onSuccess, t])
 }

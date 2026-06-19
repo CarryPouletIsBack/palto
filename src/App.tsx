@@ -28,6 +28,7 @@ import {
   isClientAuthenticated,
   logout,
   logoutClient,
+  needsChauffeurSignupCompletion,
   setPostPasswordResetLoginHint,
   type AccountRole,
 } from './services/authService'
@@ -379,14 +380,15 @@ function App() {
 
   /** Après connexion : ouvrir le dashboard chauffeur ou le compte passager selon le rôle détecté. */
   const redirectAfterAuth = useCallback(
-    (role: AccountRole, options?: { preferDashboard?: boolean }) => {
+    (role: AccountRole, options?: { preferDashboard?: boolean; chauffeurSignupPending?: boolean }) => {
       const prefix = language === 'en' ? '/en' : '/fr'
       setAuthUiTick((n) => n + 1)
       setIsLoggedIn(true)
       setClientAuthReturnPage(null)
       const openDashboard = role === 'chauffeur' || options?.preferDashboard === true
       if (openDashboard) {
-        window.history.pushState({}, '', `${prefix}/dashboard`)
+        const signupQuery = options?.chauffeurSignupPending ? '?chauffeurSignup=1' : ''
+        window.history.pushState({}, '', `${prefix}/dashboard${signupQuery}`)
         setCurrentPage('dashboard')
       } else {
         window.history.pushState({}, '', `${prefix}/compte`)
@@ -864,7 +866,7 @@ function App() {
               )
             )}
             {currentPage === 'dashboard' && (
-              (authUiTick >= 0 && isAuthenticated()) ? (
+              authUiTick >= 0 && isAuthenticated() && !needsChauffeurSignupCompletion() ? (
                 <Dashboard
                   onOpenActiveCourseNavigation={openDriverNavigation}
                   onNavigatePublicHome={navigateToPaltoHomeRoot}
@@ -877,7 +879,12 @@ function App() {
                     window.history.pushState({}, '', getPathFromPage('accueil-chauffeur'))
                   }}
                   onSwitchToClient={handleSwitchToClientAuth}
-                  onAuthSuccess={(role) => redirectAfterAuth(role, { preferDashboard: true })}
+                  onAuthSuccess={(role, options) =>
+                    redirectAfterAuth(role, {
+                      preferDashboard: true,
+                      chauffeurSignupPending: options?.chauffeurSignupPending,
+                    })
+                  }
                 />
               )
             )}
