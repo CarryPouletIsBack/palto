@@ -1,4 +1,6 @@
-const BERLINE_PLACEHOLDER_SRC = '/images/placeholder-berline.png';
+import { publicAssetPath } from '../../constants/imagePlaceholders';
+
+const BERLINE_PLACEHOLDER_SRC = publicAssetPath('/images/placeholder-vehicule.png');
 
 export function VehicleIllustration() {
   return (

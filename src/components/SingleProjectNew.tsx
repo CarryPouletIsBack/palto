@@ -589,6 +589,7 @@ const SingleProjectNew: FC<SingleProjectProps> = ({
           pickupFilteredDrivers.map((driver) => {
             const meta = formatDriverMetaLine(driver, pickupResolvedPoint);
             const dynamicDriverTtc = computeDriverPriceTtc(driver);
+            const driverFirstName = driver.name.trim().split(/\s+/)[0] ?? driver.name;
             return (
               <button
                 key={driver.id}
@@ -608,7 +609,7 @@ const SingleProjectNew: FC<SingleProjectProps> = ({
               >
                 <VehicleIllustration />
                 <span className="palto-ride-driver-item__left">
-                  <span className="palto-ride-driver-item__name">{driver.name}</span>
+                  <span className="palto-ride-driver-item__name">{driverFirstName}</span>
                   <span className="palto-ride-driver-item__meta">{meta}</span>
                 </span>
                 <span className="palto-ride-driver-item__price">

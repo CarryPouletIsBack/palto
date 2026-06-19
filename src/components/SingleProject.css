@@ -6020,16 +6020,18 @@ html[data-app-theme='dark'] .palto-ride-timing-expand__option:hover {
   border: 1px solid var(--sp-edge);
   background: var(--sp-surface-alt);
   border-radius: 8px;
-  padding: 10px 12px;
+  padding: 0;
   color: var(--sp-text);
   text-align: left;
   display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
+  align-items: stretch;
+  justify-content: flex-start;
+  gap: 0;
   cursor: pointer;
   touch-action: manipulation;
   -webkit-tap-highlight-color: rgba(0, 0, 0, 0.06);
+  overflow: hidden;
+  min-height: clamp(96px, 24vw, 156px);
 }
 
 .palto-ride-driver-item:hover {
@@ -6052,20 +6054,34 @@ html[data-app-theme='dark'] .palto-ride-timing-expand__option:hover {
 }
 
 .palto-ride-driver-item__vehicle {
-  flex: 0 0 248px;
-  width: 248px;
-  height: 140px;
-  border-radius: 6px;
-  overflow: hidden;
+  position: relative;
+  flex: 0 0 clamp(112px, 40%, 184px);
+  width: clamp(112px, 40%, 184px);
+  min-width: 112px;
+  max-width: 184px;
+  min-height: clamp(96px, 24vw, 156px);
+  align-self: stretch;
+  margin: 0;
+  padding: 0;
+  border-radius: 0;
+  overflow: visible;
   background: transparent;
+  aspect-ratio: 1 / 1;
+  pointer-events: none;
 }
 
 .palto-ride-driver-item__vehicle-img {
+  position: absolute;
+  inset: 0;
   display: block;
   width: 100%;
   height: 100%;
+  margin: 0;
+  padding: 0;
   object-fit: contain;
-  object-position: center;
+  object-position: left center;
+  transform: scale(1.18);
+  transform-origin: left center;
 }
 
 .palto-ride-driver-item__left {
@@ -6073,13 +6089,16 @@ html[data-app-theme='dark'] .palto-ride-timing-expand__option:hover {
   flex: 1 1 auto;
   display: flex;
   flex-direction: column;
+  justify-content: center;
   gap: 2px;
+  padding: 12px 0;
 }
 
 .palto-ride-driver-item__name {
   font-family: 'Space Grotesk', sans-serif;
-  font-size: 16px;
+  font-size: 24px;
   font-weight: 700;
+  line-height: 1.15;
 }
 
 .palto-ride-driver-item__meta {
@@ -6090,11 +6109,15 @@ html[data-app-theme='dark'] .palto-ride-timing-expand__option:hover {
 }
 
 .palto-ride-driver-item__price {
-  margin-left: auto;
+  flex: 0 0 auto;
+  align-self: center;
+  margin-left: 24px;
+  margin-right: 16px;
   white-space: nowrap;
   font-family: 'Space Grotesk', sans-serif;
-  font-size: 18px;
+  font-size: 29px;
   font-weight: 800;
+  line-height: 1.1;
 }
 
 .palto-ride-map-shell {
@@ -7177,14 +7200,31 @@ html[data-app-theme='dark'] .palto-ride-timing-expand__option:hover {
   }
 
   .single-project-page:has(.palto-ride-main) .palto-ride-driver-item {
-    padding: 14px 16px;
+    padding: 0;
     border-radius: 10px;
-    gap: 12px;
+    gap: 0;
+    min-height: clamp(80px, 20vw, 132px);
     transition:
       border-color 0.18s ease,
       background 0.18s ease,
       box-shadow 0.18s ease,
       transform 0.18s ease;
+  }
+
+  .single-project-page:has(.palto-ride-main) .palto-ride-driver-item__vehicle {
+    flex: 0 0 clamp(88px, 24vw, 152px);
+    width: clamp(88px, 24vw, 152px);
+    min-width: 88px;
+    max-width: 152px;
+    min-height: clamp(80px, 20vw, 132px);
+  }
+
+  .single-project-page:has(.palto-ride-main) .palto-ride-driver-item__vehicle-img {
+    transform: scale(1.14);
+  }
+
+  .single-project-page:has(.palto-ride-main) .palto-ride-driver-item__left {
+    padding: 10px 0;
   }
 
   .single-project-page:has(.palto-ride-main) .palto-ride-driver-item--selected {
@@ -7197,15 +7237,17 @@ html[data-app-theme='dark'] .palto-ride-timing-expand__option:hover {
   }
 
   .single-project-page:has(.palto-ride-main) .palto-ride-driver-item__name {
-    font-size: 17px;
+    font-size: clamp(20px, 5.2vw, 24px);
   }
 
   .single-project-page:has(.palto-ride-main) .palto-ride-driver-item__meta {
-    font-size: 13px;
+    font-size: 12px;
   }
 
   .single-project-page:has(.palto-ride-main) .palto-ride-driver-item__price {
-    font-size: 20px;
+    margin-left: 20px;
+    margin-right: 12px;
+    font-size: clamp(22px, 6vw, 29px);
   }
 
   .single-project-page:has(.palto-ride-main) .palto-pickup-suggestions__title {
