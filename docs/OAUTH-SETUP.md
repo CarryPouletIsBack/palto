@@ -11,8 +11,8 @@ Connexion sociale **distincte** de l’OAuth Google Analytics (dashboard admin).
 ## Variables d’environnement (Vercel + `.env.local`)
 
 ```bash
-# URL publique (callbacks + redirections)
-APP_BASE_URL=https://palto-six.vercel.app
+# URL publique (callbacks + redirections) — sans slash final
+APP_BASE_URL=https://palto.re
 
 # Google — créer une app OAuth dédiée « Palto Login » (pas Analytics)
 PALTO_GOOGLE_OAUTH_CLIENT_ID=....apps.googleusercontent.com
@@ -33,12 +33,35 @@ Scopes demandés :
 
 ## URIs de redirection autorisées
 
-À enregistrer **exactement** (prod + local si besoin) :
+**`APP_BASE_URL` sur Vercel** = le domaine seul (`https://palto.re`).  
+**Google Console** = le chemin **complet** ci-dessous (pas seulement `https://palto.re`).
+
+Dans Google Cloud → **Credentials** → ton client OAuth **Web** :
+
+| Champ Google | Valeur |
+|--------------|--------|
+| **Authorized JavaScript origins** | `https://palto.re` |
+| **Authorized redirect URIs** | voir URI complète ci-dessous |
+
+URI à enregistrer **caractère par caractère** (prod) :
 
 ```text
-https://VOTRE-DOMAINE/api/auth?action=oauth-callback&provider=google
-https://VOTRE-DOMAINE/api/auth?action=oauth-callback&provider=facebook
+https://palto.re/api/auth?action=oauth-callback&provider=google
 ```
+
+Facebook (si activé plus tard) :
+
+```text
+https://palto.re/api/auth?action=oauth-callback&provider=facebook
+```
+
+**Vérifier ce que Palto envoie vraiment** (après déploiement) :
+
+```text
+GET https://palto.re/api/auth?action=oauth-providers
+```
+
+Réponse JSON : `redirectUris.google` = URI à coller dans Google Console. Si ce n’est pas `palto.re`, corrige `APP_BASE_URL` sur Vercel (Production) et redéploie.
 
 Local avec `vercel dev` (port 3000) :
 

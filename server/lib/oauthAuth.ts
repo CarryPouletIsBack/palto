@@ -3,6 +3,11 @@ import type { VercelRequest, VercelResponse } from '@vercel/node'
 import type { SupabaseClient } from '@supabase/supabase-js'
 import { getSupabaseAdmin } from './supabaseAdmin.js'
 import { createAccountSession, normalizeEmail, type AccountRole } from './accountAuth.js'
+import { mergeAccountSnapshots } from './clientProfileMerge.js'
+import {
+  sanitizeAccountSnapshot,
+  sanitizeSavedPlacesSnapshot,
+} from './clientProfileSanitize.js'
 
 export type OAuthProvider = 'google' | 'facebook'
 
@@ -19,6 +24,7 @@ export type OAuthUserProfile = {
   email: string
   emailVerified: boolean
   fullName: string
+  pictureUrl: string | null
 }
 
 const OAUTH_EXCHANGE_TTL_MS = 2 * 60 * 1000
@@ -183,6 +189,7 @@ async function exchangeGoogleCode(code: string, redirectUri: string): Promise<OA
     email?: string
     email_verified?: boolean
     name?: string
+    picture?: string
   } | null
   if (!userRes.ok || !user?.sub || !user.email) throw new Error('GOOGLE_PROFILE_FAILED')
 
@@ -191,6 +198,7 @@ async function exchangeGoogleCode(code: string, redirectUri: string): Promise<OA
     email: normalizeEmail(user.email),
     emailVerified: user.email_verified !== false,
     fullName: (user.name ?? '').trim(),
+    pictureUrl: typeof user.picture === 'string' && user.picture.trim() ? user.picture.trim() : null,
   }
 }
 
@@ -214,19 +222,27 @@ async function exchangeFacebookCode(code: string, redirectUri: string): Promise<
   }
 
   const userUrl = new URL(FACEBOOK_USER_URL)
-  userUrl.searchParams.set('fields', 'id,email,name')
+  userUrl.searchParams.set('fields', 'id,email,name,picture.type(large)')
   userUrl.searchParams.set('access_token', tokenData.access_token)
 
   const userRes = await fetch(userUrl)
-  const user = (await userRes.json().catch(() => null)) as { id?: string; email?: string; name?: string } | null
+  const user = (await userRes.json().catch(() => null)) as {
+    id?: string
+    email?: string
+    name?: string
+    picture?: { data?: { url?: string } }
+  } | null
   if (!userRes.ok || !user?.id) throw new Error('FACEBOOK_PROFILE_FAILED')
   if (!user.email?.trim()) throw new Error('FACEBOOK_EMAIL_REQUIRED')
+
+  const fbPicture = user.picture?.data?.url?.trim()
 
   return {
     providerUserId: user.id,
     email: normalizeEmail(user.email),
     emailVerified: true,
     fullName: (user.name ?? '').trim(),
+    pictureUrl: fbPicture || null,
   }
 }
 
@@ -274,6 +290,52 @@ async function linkOAuthIdentity(
     updated_at: new Date().toISOString(),
   })
   if (error && error.code !== '23505') throw error
+}
+
+function splitOAuthFullName(fullName: string): { prenom: string; nom: string } {
+  const parts = fullName.trim().split(/\s+/).filter(Boolean)
+  if (!parts.length) return { prenom: '', nom: '' }
+  return { prenom: parts[0] ?? '', nom: parts.slice(1).join(' ') }
+}
+
+async function seedClientOAuthProfile(
+  supabase: SupabaseClient,
+  account: { id: string; email: string },
+  profile: OAuthUserProfile,
+  provider: OAuthProvider
+): Promise<void> {
+  const pictureUrl = profile.pictureUrl?.trim()
+  if (!pictureUrl) return
+
+  const { prenom, nom } = splitOAuthFullName(profile.fullName)
+
+  const { data: existingRow } = await supabase
+    .from('client_profile_data')
+    .select('account_snapshot, saved_places')
+    .eq('account_id', account.id)
+    .maybeSingle()
+
+  const existingAccount = sanitizeAccountSnapshot(existingRow?.account_snapshot ?? {})
+  const existingPlaces = sanitizeSavedPlacesSnapshot(existingRow?.saved_places ?? {})
+
+  const account_snapshot = mergeAccountSnapshots(existingAccount, {
+    prenom: prenom || existingAccount.prenom,
+    nom: nom || existingAccount.nom,
+    email: account.email,
+    profilePhotoUrl: pictureUrl,
+    profilePhotoName: provider,
+  })
+
+  const { error } = await supabase.from('client_profile_data').upsert(
+    {
+      account_id: account.id,
+      account_snapshot,
+      saved_places: existingPlaces,
+      updated_at: new Date().toISOString(),
+    },
+    { onConflict: 'account_id' }
+  )
+  if (error) console.warn('[oauth] client_profile_data upsert', error)
 }
 
 async function ensureClientRow(
@@ -485,6 +547,9 @@ export async function handleOAuthCallback(req: VercelRequest, res: VercelRespons
       providerUserId: profile.providerUserId,
       providerEmail: profile.email,
     })
+    if (state.role === 'client') {
+      await seedClientOAuthProfile(supabase, account, profile, provider)
+    }
   } catch (error) {
     const code = error instanceof Error ? error.message : 'OAUTH_ACCOUNT_FAILED'
     console.error('[oauth/callback] account', error)
@@ -593,16 +658,37 @@ export async function handleOAuthExchange(req: VercelRequest, res: VercelRespons
     account.email.split('@')[0] ||
     (roleRaw === 'chauffeur' ? 'Chauffeur' : 'Passager')
 
+  let profilePhotoUrl: string | null = null
+  if (roleRaw === 'client') {
+    const { data: profRow } = await supabase
+      .from('client_profile_data')
+      .select('account_snapshot')
+      .eq('account_id', account.id)
+      .maybeSingle()
+    const snap = sanitizeAccountSnapshot(profRow?.account_snapshot ?? {})
+    profilePhotoUrl =
+      typeof snap.profilePhotoUrl === 'string' && snap.profilePhotoUrl.trim()
+        ? snap.profilePhotoUrl.trim()
+        : null
+  }
+
   res.status(200).json({
     success: true,
     token,
-    user: { email: account.email, displayName },
+    user: { email: account.email, displayName, profilePhotoUrl },
   })
 }
 
-export async function handleOAuthProviders(_req: VercelRequest, res: VercelResponse): Promise<void> {
+export async function handleOAuthProviders(req: VercelRequest, res: VercelResponse): Promise<void> {
+  const baseUrl = appBaseUrlFromRequest(req)
   res.status(200).json({
     google: isOAuthProviderConfigured('google'),
     facebook: isOAuthProviderConfigured('facebook'),
+    /** URI exacte à copier dans Google / Meta (Authorized redirect URIs). */
+    redirectUris: {
+      google: oauthCallbackUrl(baseUrl, 'google'),
+      facebook: oauthCallbackUrl(baseUrl, 'facebook'),
+    },
+    appBaseUrl: baseUrl,
   })
 }

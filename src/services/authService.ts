@@ -108,6 +108,8 @@ export interface User {
   email: string
   displayName?: string
   username?: string
+  /** URL photo profil (ex. Google OAuth). */
+  profilePhotoUrl?: string | null
 }
 
 function isDbSessionToken(token: string | null): token is string {
@@ -375,6 +377,7 @@ export function applyClientOAuthSession(token: string, user: User): void {
   persistClientSession(token, user)
   notifyClientSessionChanged()
   const emailNorm = user.email.trim().toLowerCase()
+  const photoUrl = user.profilePhotoUrl?.trim() || null
   saveClientAccountSnapshot(
     {
       ...DEFAULT_CLIENT_ACCOUNT,
@@ -384,8 +387,8 @@ export function applyClientOAuthSession(token: string, user: User): void {
       telephone: '',
       ville: '',
       preferredPayment: 'indifferent',
-      profilePhotoUrl: null,
-      profilePhotoName: '',
+      profilePhotoUrl: photoUrl,
+      profilePhotoName: photoUrl ? 'google' : '',
     },
     emailNorm
   )

@@ -62,7 +62,7 @@ export async function completeOAuthExchange(
     const data = (await response.json().catch(() => null)) as {
       success?: boolean
       token?: string
-      user?: User
+      user?: User & { profilePhotoUrl?: string | null }
       error?: string
     } | null
     if (!response.ok || !data?.success || !data.token || !data.user) {
