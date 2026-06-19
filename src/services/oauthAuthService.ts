@@ -102,7 +102,8 @@ export function startOAuthLogin(
 
 export async function completeOAuthExchange(
   exchange: string,
-  role: AccountRole
+  role: AccountRole,
+  provider: OAuthProvider = 'google'
 ): Promise<{ success: boolean; user?: User; error?: string }> {
   try {
     const response = await fetch(`${apiBaseUrl()}/auth?action=oauth-exchange`, {
@@ -156,7 +157,7 @@ export function oauthErrorMessage(code: string | null, t: (key: string) => strin
 export function stripOAuthQueryParams(): void {
   const url = new URL(window.location.href)
   let changed = false
-  for (const key of ['oauth_exchange', 'oauth_role', 'oauth_error']) {
+  for (const key of ['oauth_exchange', 'oauth_role', 'oauth_provider', 'oauth_error']) {
     if (url.searchParams.has(key)) {
       url.searchParams.delete(key)
       changed = true

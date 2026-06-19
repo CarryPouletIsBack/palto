@@ -31,10 +31,13 @@ export function useOAuthReturnHandler({ onSuccess }: UseOAuthReturnHandlerOption
 
     const exchange = params.get('oauth_exchange')
     const role = params.get('oauth_role')
+    const providerRaw = params.get('oauth_provider')
     if (!exchange || (role !== 'client' && role !== 'chauffeur')) return
 
+    const provider: 'google' | 'facebook' = providerRaw === 'facebook' ? 'facebook' : 'google'
+
     handledRef.current = true
-    void completeOAuthExchange(exchange, role).then((result) => {
+    void completeOAuthExchange(exchange, role, provider).then((result) => {
       stripOAuthQueryParams()
       if (!result.success) {
         window.alert(result.error ?? t('authOAuth.errorGeneric'))

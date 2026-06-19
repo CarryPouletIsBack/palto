@@ -593,6 +593,7 @@ export async function handleOAuthCallback(req: VercelRequest, res: VercelRespons
   const url = new URL(returnTo, 'http://local')
   url.searchParams.set('oauth_exchange', exchangeToken)
   url.searchParams.set('oauth_role', state.role)
+  url.searchParams.set('oauth_provider', provider)
   res.redirect(302, `${url.pathname}${url.search}`)
 }
 
