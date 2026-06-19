@@ -3,6 +3,7 @@ import { useLanguage } from '../contexts/LanguageContext'
 import { trackEvent } from '../services/googleAnalyticsTracking'
 import {
   fetchOAuthProviders,
+  getRememberedOAuthEmail,
   startOAuthLogin,
   type OAuthProvider,
   type OAuthProvidersAvailability,
@@ -21,6 +22,8 @@ export function AuthOAuthButtons({ role, mode }: AuthOAuthButtonsProps) {
   const { t } = useLanguage()
   const [providers, setProviders] = useState<OAuthProvidersAvailability>(EMPTY_PROVIDERS)
   const [loading, setLoading] = useState(true)
+  const [rememberedGoogle, setRememberedGoogle] = useState<string | null>(null)
+  const [rememberedFacebook, setRememberedFacebook] = useState<string | null>(null)
 
   useEffect(() => {
     let cancelled = false
@@ -35,38 +38,95 @@ export function AuthOAuthButtons({ role, mode }: AuthOAuthButtonsProps) {
     }
   }, [])
 
+  useEffect(() => {
+    if (mode !== 'login') {
+      setRememberedGoogle(null)
+      setRememberedFacebook(null)
+      return
+    }
+    setRememberedGoogle(getRememberedOAuthEmail(role, 'google'))
+    setRememberedFacebook(getRememberedOAuthEmail(role, 'facebook'))
+  }, [mode, role])
+
   if (role === 'chauffeur' && mode === 'signup') return null
   if (loading) return null
   if (!providers.google && !providers.facebook) return null
 
-  const handleClick = (provider: OAuthProvider) => {
-    trackEvent('click', 'auth_oauth', `${provider}_${role}`)
-    startOAuthLogin(provider, role)
+  const handleClick = (provider: OAuthProvider, forceAccountPicker = false) => {
+    trackEvent('click', 'auth_oauth', `${provider}_${role}${forceAccountPicker ? '_other' : ''}`)
+    startOAuthLogin(provider, role, { forceAccountPicker })
   }
+
+  const formatRememberedLabel = (providerLabel: string, email: string) =>
+    t('authOAuth.continueAs').replace('{provider}', providerLabel).replace('{email}', email)
 
   return (
     <div className="auth-page-oauth">
       <p className="auth-page-oauth__label">{t('authOAuth.continueWith')}</p>
       <div className="auth-page-oauth__buttons">
         {providers.google ? (
-          <button
-            type="button"
-            className="auth-page-oauth__btn auth-page-oauth__btn--google"
-            onClick={() => handleClick('google')}
-          >
-            <GoogleMark aria-hidden />
-            {t('authOAuth.google')}
-          </button>
+          rememberedGoogle && mode === 'login' ? (
+            <div className="auth-page-oauth__remembered">
+              <button
+                type="button"
+                className="auth-page-oauth__btn auth-page-oauth__btn--google auth-page-oauth__btn--remembered"
+                onClick={() => handleClick('google')}
+              >
+                <GoogleMark aria-hidden />
+                <span className="auth-page-oauth__btn-text">
+                  {formatRememberedLabel(t('authOAuth.google'), rememberedGoogle)}
+                </span>
+              </button>
+              <button
+                type="button"
+                className="auth-page-oauth__other-account"
+                onClick={() => handleClick('google', true)}
+              >
+                {t('authOAuth.useAnotherAccount')}
+              </button>
+            </div>
+          ) : (
+            <button
+              type="button"
+              className="auth-page-oauth__btn auth-page-oauth__btn--google"
+              onClick={() => handleClick('google')}
+            >
+              <GoogleMark aria-hidden />
+              {t('authOAuth.google')}
+            </button>
+          )
         ) : null}
         {providers.facebook ? (
-          <button
-            type="button"
-            className="auth-page-oauth__btn auth-page-oauth__btn--facebook"
-            onClick={() => handleClick('facebook')}
-          >
-            <FacebookMark aria-hidden />
-            {t('authOAuth.facebook')}
-          </button>
+          rememberedFacebook && mode === 'login' ? (
+            <div className="auth-page-oauth__remembered">
+              <button
+                type="button"
+                className="auth-page-oauth__btn auth-page-oauth__btn--facebook auth-page-oauth__btn--remembered"
+                onClick={() => handleClick('facebook')}
+              >
+                <FacebookMark aria-hidden />
+                <span className="auth-page-oauth__btn-text">
+                  {formatRememberedLabel(t('authOAuth.facebook'), rememberedFacebook)}
+                </span>
+              </button>
+              <button
+                type="button"
+                className="auth-page-oauth__other-account"
+                onClick={() => handleClick('facebook', true)}
+              >
+                {t('authOAuth.useAnotherAccount')}
+              </button>
+            </div>
+          ) : (
+            <button
+              type="button"
+              className="auth-page-oauth__btn auth-page-oauth__btn--facebook"
+              onClick={() => handleClick('facebook')}
+            >
+              <FacebookMark aria-hidden />
+              {t('authOAuth.facebook')}
+            </button>
+          )
         ) : null}
       </div>
       {role === 'chauffeur' && mode === 'login' ? (

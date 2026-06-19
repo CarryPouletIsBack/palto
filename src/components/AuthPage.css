@@ -630,6 +630,35 @@ html[data-app-theme='dark'] .auth-page-select:focus {
   gap: 8px;
 }
 
+.auth-page-oauth__remembered {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.auth-page-oauth__btn--remembered .auth-page-oauth__btn-text {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: min(100%, 260px);
+}
+
+.auth-page-oauth__other-account {
+  align-self: center;
+  padding: 0;
+  border: none;
+  background: none;
+  color: var(--app-text-secondary);
+  font-size: 12px;
+  font-weight: 500;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.auth-page-oauth__other-account:hover {
+  color: var(--app-text-primary);
+}
+
 .auth-page-oauth__btn {
   display: inline-flex;
   align-items: center;

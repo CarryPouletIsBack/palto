@@ -16,6 +16,11 @@ export const DASHBOARD_AUTH_TOKEN_KEY = 'dashboard_token'
 const CLIENT_AUTH_STORAGE_KEY = 'palto:client_auth'
 export const CLIENT_AUTH_TOKEN_KEY = 'palto:client_token'
 
+const CLIENT_AUTH_METHOD_KEY = 'palto:client_auth_method'
+const CHAUFFEUR_AUTH_METHOD_KEY = 'palto:chauffeur_auth_method'
+
+export type PaltoAuthMethod = 'password' | 'google' | 'facebook'
+
 /** @deprecated Rôle unique supprimé — conservé pour migration one-shot depuis l’auth unifiée. */
 const LEGACY_SESSION_ROLE_KEY = 'palto:account_role'
 const LEGACY_AUTH_MIGRATION_KEY = 'palto:auth-split-migration-v1'
@@ -43,6 +48,38 @@ export function consumePostPasswordResetLoginHint(): AccountRole | null {
 }
 
 export type AccountRole = 'client' | 'chauffeur'
+
+function authMethodStorageKey(role: AccountRole): string {
+  return role === 'client' ? CLIENT_AUTH_METHOD_KEY : CHAUFFEUR_AUTH_METHOD_KEY
+}
+
+export function setPaltoAuthMethod(role: AccountRole, method: PaltoAuthMethod | null): void {
+  if (typeof window === 'undefined') return
+  try {
+    const key = authMethodStorageKey(role)
+    if (!method) localStorage.removeItem(key)
+    else localStorage.setItem(key, method)
+  } catch {
+    /* ignore */
+  }
+}
+
+export function getPaltoAuthMethod(role: AccountRole): PaltoAuthMethod | null {
+  if (typeof window === 'undefined') return null
+  try {
+    const raw = localStorage.getItem(authMethodStorageKey(role))
+    if (raw === 'password' || raw === 'google' || raw === 'facebook') return raw
+  } catch {
+    /* ignore */
+  }
+  return null
+}
+
+/** Compte connecté sans mot de passe local (Google / Facebook). */
+export function isOAuthOnlyPaltoAccount(role: AccountRole): boolean {
+  const method = getPaltoAuthMethod(role)
+  return method === 'google' || method === 'facebook'
+}
 
 const API_BASE_URL = apiBaseUrl()
 
@@ -307,6 +344,7 @@ export async function loginChauffeurOnly(
   const result = await postAuth('/auth?role=chauffeur&action=login', credentials)
   if (result.success && result.token && result.user) {
     persistChauffeurSession(result.token, result.user)
+    setPaltoAuthMethod('chauffeur', 'password')
     notifyChauffeurSessionChanged()
     return { success: true, user: result.user, role: 'chauffeur' }
   }
@@ -327,6 +365,7 @@ export const login = loginChauffeurOnly
 
 export const logout = (): void => {
   clearChauffeurSession()
+  setPaltoAuthMethod('chauffeur', null)
   notifyChauffeurSessionChanged()
 }
 
@@ -373,8 +412,13 @@ function persistClientSession(token: string, user: User): void {
 }
 
 /** Session client après OAuth (échange serveur). */
-export function applyClientOAuthSession(token: string, user: User): void {
+export function applyClientOAuthSession(
+  token: string,
+  user: User,
+  provider: 'google' | 'facebook' = 'google'
+): void {
   persistClientSession(token, user)
+  setPaltoAuthMethod('client', provider)
   notifyClientSessionChanged()
   const emailNorm = user.email.trim().toLowerCase()
   const photoUrl = user.profilePhotoUrl?.trim() || null
@@ -388,7 +432,7 @@ export function applyClientOAuthSession(token: string, user: User): void {
       ville: '',
       preferredPayment: 'indifferent',
       profilePhotoUrl: photoUrl,
-      profilePhotoName: photoUrl ? 'google' : '',
+      profilePhotoName: photoUrl ? provider : '',
     },
     emailNorm
   )
@@ -396,8 +440,13 @@ export function applyClientOAuthSession(token: string, user: User): void {
 }
 
 /** Session chauffeur après OAuth (échange serveur). */
-export function applyChauffeurOAuthSession(token: string, user: User): void {
+export function applyChauffeurOAuthSession(
+  token: string,
+  user: User,
+  provider: 'google' | 'facebook' = 'google'
+): void {
   persistChauffeurSession(token, user)
+  setPaltoAuthMethod('chauffeur', provider)
   notifyChauffeurSessionChanged()
 }
 
@@ -408,6 +457,7 @@ export async function registerClient(payload: RegisterClientPayload): Promise<{ 
   )
   if (!result.success || !result.token || !result.user) return { success: false, error: result.error }
   persistClientSession(result.token, result.user)
+  setPaltoAuthMethod('client', 'password')
   notifyClientSessionChanged()
   const emailNorm = payload.email.trim().toLowerCase()
   saveClientAccountSnapshot(
@@ -433,6 +483,7 @@ export async function loginClient(
   const result = await postAuth('/auth?role=client&action=login', credentials)
   if (result.success && result.token && result.user) {
     persistClientSession(result.token, result.user)
+    setPaltoAuthMethod('client', 'password')
     notifyClientSessionChanged()
     void import('./clientProfileSync').then((m) => m.syncClientProfileWithServer(result.user.email))
     return { success: true, user: result.user, role: 'client' }
@@ -462,6 +513,7 @@ export const isClientAuthenticated = (): boolean => {
 
 export const logoutClient = (): void => {
   clearClientSession()
+  setPaltoAuthMethod('client', null)
   notifyClientSessionChanged()
 }
 
@@ -488,10 +540,18 @@ export const getCurrentClientUser = (): User | null => {
 /** Supprime le compte Palto (serveur si session API, sinon inscription chauffeur locale uniquement). */
 export async function deletePaltoAccount(
   role: AccountRole,
-  password: string
+  password: string,
+  options?: { oauthOnly?: boolean }
 ): Promise<{ success: boolean; error?: string }> {
+  const oauthOnly = options?.oauthOnly === true
   const pwd = password.trim()
-  if (!pwd) return { success: false, error: 'PASSWORD_REQUIRED' }
+  if (!oauthOnly && !pwd) {
+    const authHeader =
+      role === 'client' ? getClientAuthorizationHeader() : getDashboardAuthorizationHeader()
+    if (!authHeader) {
+      return { success: false, error: 'PASSWORD_REQUIRED' }
+    }
+  }
 
   const user = role === 'client' ? getCurrentClientUser() : getCurrentUser()
   const email = user?.email?.trim()
@@ -508,7 +568,9 @@ export async function deletePaltoAccount(
           'Content-Type': 'application/json',
           Authorization: authHeader,
         },
-        body: JSON.stringify({ password: pwd }),
+        body: JSON.stringify(
+          oauthOnly ? { confirmOAuthDelete: true } : { password: pwd }
+        ),
       })
       const data = (await response.json().catch(() => null)) as { success?: boolean; error?: string } | null
       if (!response.ok) {
@@ -525,15 +587,21 @@ export async function deletePaltoAccount(
       return { success: false, error: 'NETWORK' }
     }
   } else if (role === 'chauffeur') {
-    const emailNorm = normalizeEmail(email)
-    if (!verifyChauffeurRegistrationPassword(emailNorm, pwd)) {
-      return { success: false, error: 'WRONG_PASSWORD' }
+    if (!oauthOnly) {
+      const emailNorm = normalizeEmail(email)
+      if (!verifyChauffeurRegistrationPassword(emailNorm, pwd)) {
+        return { success: false, error: 'WRONG_PASSWORD' }
+      }
     }
   } else {
     return { success: false, error: 'API_SESSION_REQUIRED' }
   }
 
   purgeLocalPaltoAccountData(email, role)
+  void import('./oauthAuthService').then((m) => {
+    m.clearRememberedOAuthEmail(role, 'google')
+    m.clearRememberedOAuthEmail(role, 'facebook')
+  })
   if (role === 'client') {
     logoutClient()
   } else {

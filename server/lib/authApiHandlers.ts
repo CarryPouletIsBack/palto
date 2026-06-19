@@ -472,7 +472,8 @@ export async function handleAuthResetPassword(
 }
 
 const DeleteAccountBodySchema = z.object({
-  password: z.string().min(1).max(128),
+  password: z.string().max(128).optional(),
+  confirmOAuthDelete: z.boolean().optional(),
 })
 
 export async function handleAuthDeleteAccount(
@@ -483,7 +484,7 @@ export async function handleAuthDeleteAccount(
   const body = parseJsonBody(req)
   if (body === null) return res.status(400).json({ success: false, error: 'Payload JSON invalide' })
   const parsed = DeleteAccountBodySchema.safeParse(body)
-  if (!parsed.success) return res.status(400).json({ success: false, error: 'Mot de passe requis' })
+  if (!parsed.success) return res.status(400).json({ success: false, error: 'Payload invalide' })
 
   const session =
     role === 'client' ? await getVerifiedClientSession(req) : await getVerifiedChauffeurSession(req)
@@ -510,14 +511,20 @@ export async function handleAuthDeleteAccount(
     return res.status(500).json({ success: false, error: 'Lecture compte impossible' })
   }
   if (!account) return res.status(404).json({ success: false, error: 'Compte introuvable' })
-  if (!account.password_hash) {
+
+  if (account.password_hash) {
+    const pwd = (parsed.data.password ?? '').trim()
+    if (!pwd) {
+      return res.status(400).json({ success: false, error: 'Mot de passe requis' })
+    }
+    if (!verifyPassword(pwd, account.password_hash)) {
+      return res.status(401).json({ success: false, error: 'Mot de passe incorrect' })
+    }
+  } else if (parsed.data.confirmOAuthDelete !== true) {
     return res.status(400).json({
       success: false,
-      error: 'OAUTH_ACCOUNT_NO_PASSWORD',
+      error: 'OAUTH_DELETE_CONFIRM_REQUIRED',
     })
-  }
-  if (!verifyPassword(parsed.data.password, account.password_hash)) {
-    return res.status(401).json({ success: false, error: 'Mot de passe incorrect' })
   }
 
   if (role === 'client') {

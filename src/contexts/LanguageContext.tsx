@@ -441,6 +441,8 @@ const TRANSLATIONS: Record<Language, Record<string, unknown>> = {
     },
     authOAuth: {
       continueWith: 'Continuer avec',
+      continueAs: 'Continuer avec {provider} · {email}',
+      useAnotherAccount: 'Utiliser un autre compte',
       google: 'Google',
       facebook: 'Facebook',
       orEmail: 'ou par e-mail',
@@ -896,6 +898,10 @@ const TRANSLATIONS: Record<Language, Record<string, unknown>> = {
       deleteAccountModalTitle: 'Confirmer la suppression',
       deleteAccountModalBody:
         'Cette action est irréversible. Saisissez votre mot de passe pour confirmer la suppression de votre compte Palto.',
+      deleteAccountModalBodyOAuth:
+        'Cette action est irréversible. Votre compte a été créé via Google ou Facebook : confirmez la suppression sans mot de passe.',
+      deleteAccountOAuthHint:
+        'Ce compte n’utilise pas de mot de passe Palto. Confirmez à nouveau la suppression.',
       deleteAccountPasswordLabel: 'Mot de passe',
       deleteAccountPasswordRequired: 'Indiquez votre mot de passe pour confirmer.',
       deleteAccountConfirm: 'Supprimer définitivement',
@@ -1308,6 +1314,8 @@ const TRANSLATIONS: Record<Language, Record<string, unknown>> = {
     },
     authOAuth: {
       continueWith: 'Continue with',
+      continueAs: 'Continue with {provider} · {email}',
+      useAnotherAccount: 'Use another account',
       google: 'Google',
       facebook: 'Facebook',
       orEmail: 'or with email',
@@ -1759,6 +1767,10 @@ const TRANSLATIONS: Record<Language, Record<string, unknown>> = {
       deleteAccountModalTitle: 'Confirm deletion',
       deleteAccountModalBody:
         'This cannot be undone. Enter your password to confirm deletion of your Palto account.',
+      deleteAccountModalBodyOAuth:
+        'This cannot be undone. Your account was created with Google or Facebook — confirm deletion without a password.',
+      deleteAccountOAuthHint:
+        'This account has no Palto password. Confirm deletion again.',
       deleteAccountPasswordLabel: 'Password',
       deleteAccountPasswordRequired: 'Enter your password to confirm.',
       deleteAccountConfirm: 'Delete permanently',

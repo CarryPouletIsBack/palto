@@ -5,6 +5,7 @@ import { useLanguage } from '../contexts/LanguageContext'
 import {
   deletePaltoAccount,
   getPaltoHomePath,
+  isOAuthOnlyPaltoAccount,
   type AccountRole,
 } from '../services/authService'
 import { useBodyScrollLock } from '../hooks/useBodyScrollLock'
@@ -19,6 +20,7 @@ export default function PaltoAccountDeleteBlock({ role, className }: Props) {
   const [modalOpen, setModalOpen] = useState(false)
   const [password, setPassword] = useState('')
   const [submitting, setSubmitting] = useState(false)
+  const [oauthOnlyMode, setOauthOnlyMode] = useState(() => isOAuthOnlyPaltoAccount(role))
 
   useBodyScrollLock(modalOpen)
 
@@ -26,21 +28,30 @@ export default function PaltoAccountDeleteBlock({ role, className }: Props) {
     if (submitting) return
     setModalOpen(false)
     setPassword('')
-  }, [submitting])
+    setOauthOnlyMode(isOAuthOnlyPaltoAccount(role))
+  }, [role, submitting])
 
   const handleConfirmDelete = useCallback(async () => {
-    if (!password.trim()) {
-      toast.error(t('clientAccount.deleteAccountPasswordRequired'))
-      return
-    }
     setSubmitting(true)
     try {
-      const result = await deletePaltoAccount(role, password)
+      const result = await deletePaltoAccount(role, password, {
+        oauthOnly: oauthOnlyMode,
+      })
       if (!result.success) {
+        if (
+          result.error === 'OAUTH_DELETE_CONFIRM_REQUIRED' ||
+          result.error === 'OAUTH_ACCOUNT_NO_PASSWORD'
+        ) {
+          setOauthOnlyMode(true)
+          toast.message(t('clientAccount.deleteAccountOAuthHint'))
+          return
+        }
         const msg =
           result.error === 'WRONG_PASSWORD' || result.error === 'Mot de passe incorrect'
             ? t('clientAccount.deleteAccountWrongPassword')
-            : result.error === 'API_SESSION_REQUIRED'
+            : result.error === 'PASSWORD_REQUIRED' || result.error === 'Mot de passe requis'
+              ? t('clientAccount.deleteAccountPasswordRequired')
+              : result.error === 'API_SESSION_REQUIRED'
               ? t('clientAccount.deleteAccountApiRequired')
               : t('clientAccount.deleteAccountFailed')
         toast.error(msg)
@@ -55,7 +66,7 @@ export default function PaltoAccountDeleteBlock({ role, className }: Props) {
     } finally {
       setSubmitting(false)
     }
-  }, [password, role, t])
+  }, [oauthOnlyMode, password, role, t])
 
   const rootClass = ['client-compte-account-delete', className].filter(Boolean).join(' ')
 
@@ -69,7 +80,10 @@ export default function PaltoAccountDeleteBlock({ role, className }: Props) {
         <button
           type="button"
           className="dashboard-user-logout-btn client-compte-account-delete-btn"
-          onClick={() => setModalOpen(true)}
+          onClick={() => {
+            setOauthOnlyMode(isOAuthOnlyPaltoAccount(role))
+            setModalOpen(true)
+          }}
         >
           {t('clientAccount.deleteAccountBtn')}
         </button>
@@ -96,19 +110,23 @@ export default function PaltoAccountDeleteBlock({ role, className }: Props) {
                 </div>
                 <div className="client-compte-account-edit-modal-body">
                   <p className="dashboard-field-hint" style={{ margin: '0 0 12px' }}>
-                    {t('clientAccount.deleteAccountModalBody')}
+                    {oauthOnlyMode
+                      ? t('clientAccount.deleteAccountModalBodyOAuth')
+                      : t('clientAccount.deleteAccountModalBody')}
                   </p>
-                  <label className="client-compte-account-edit-modal-row">
-                    <span>{t('clientAccount.deleteAccountPasswordLabel')}</span>
-                    <input
-                      type="password"
-                      className="client-compte-account-edit-modal-input"
-                      value={password}
-                      autoComplete="current-password"
-                      disabled={submitting}
-                      onChange={(e) => setPassword(e.target.value)}
-                    />
-                  </label>
+                  {!oauthOnlyMode ? (
+                    <label className="client-compte-account-edit-modal-row">
+                      <span>{t('clientAccount.deleteAccountPasswordLabel')}</span>
+                      <input
+                        type="password"
+                        className="client-compte-account-edit-modal-input"
+                        value={password}
+                        autoComplete="current-password"
+                        disabled={submitting}
+                        onChange={(e) => setPassword(e.target.value)}
+                      />
+                    </label>
+                  ) : null}
                 </div>
                 <div className="client-compte-account-edit-modal-actions">
                   <button

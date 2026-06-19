@@ -134,7 +134,12 @@ export function isOAuthProviderConfigured(provider: OAuthProvider): boolean {
   return providerConfig(provider) != null
 }
 
-function buildProviderAuthUrl(provider: OAuthProvider, redirectUri: string, state: string): string {
+function buildProviderAuthUrl(
+  provider: OAuthProvider,
+  redirectUri: string,
+  state: string,
+  options?: { loginHint?: string; forceAccountPicker?: boolean }
+): string {
   const cfg = providerConfig(provider)
   if (!cfg) throw new Error('OAUTH_NOT_CONFIGURED')
 
@@ -145,9 +150,15 @@ function buildProviderAuthUrl(provider: OAuthProvider, redirectUri: string, stat
       response_type: 'code',
       scope: 'openid email profile',
       access_type: 'online',
-      prompt: 'select_account',
       state,
     })
+    const loginHint = options?.loginHint?.trim()
+    if (loginHint) {
+      params.set('login_hint', loginHint)
+    }
+    if (!loginHint || options?.forceAccountPicker) {
+      params.set('prompt', 'select_account')
+    }
     return `${GOOGLE_AUTH_URL}?${params.toString()}`
   }
 
@@ -451,6 +462,10 @@ export async function handleOAuthStart(req: VercelRequest, res: VercelResponse):
   const providerRaw = Array.isArray(req.query.provider) ? req.query.provider[0] : req.query.provider
   const roleRaw = Array.isArray(req.query.role) ? req.query.role[0] : req.query.role
   const returnToRaw = Array.isArray(req.query.returnTo) ? req.query.returnTo[0] : req.query.returnTo
+  const loginHintRaw = Array.isArray(req.query.loginHint) ? req.query.loginHint[0] : req.query.loginHint
+  const forcePickerRaw = Array.isArray(req.query.forceAccountPicker)
+    ? req.query.forceAccountPicker[0]
+    : req.query.forceAccountPicker
 
   const provider = typeof providerRaw === 'string' ? providerRaw.trim().toLowerCase() : ''
   const role = typeof roleRaw === 'string' ? roleRaw.trim().toLowerCase() : ''
@@ -478,8 +493,13 @@ export async function handleOAuthStart(req: VercelRequest, res: VercelResponse):
   })
 
   const redirectUri = oauthCallbackUrl(baseUrl, provider)
+  const loginHint = typeof loginHintRaw === 'string' ? loginHintRaw.trim() : ''
+  const forceAccountPicker = forcePickerRaw === '1' || forcePickerRaw === 'true'
   try {
-    const authUrl = buildProviderAuthUrl(provider, redirectUri, state)
+    const authUrl = buildProviderAuthUrl(provider, redirectUri, state, {
+      loginHint: loginHint || undefined,
+      forceAccountPicker,
+    })
     res.redirect(302, authUrl)
   } catch {
     res.status(503).json({ error: 'OAUTH_NOT_CONFIGURED' })

@@ -13,6 +13,49 @@ export type OAuthProvidersAvailability = {
   facebook: boolean
 }
 
+const LAST_OAUTH_EMAIL_PREFIX = 'palto:last_oauth_email'
+
+function lastOAuthEmailStorageKey(role: AccountRole, provider: OAuthProvider): string {
+  return `${LAST_OAUTH_EMAIL_PREFIX}:${role}:${provider}`
+}
+
+export function rememberOAuthEmail(
+  role: AccountRole,
+  provider: OAuthProvider,
+  email: string
+): void {
+  if (typeof window === 'undefined') return
+  const key = email.trim().toLowerCase()
+  if (!key) return
+  try {
+    localStorage.setItem(lastOAuthEmailStorageKey(role, provider), key)
+  } catch {
+    /* quota */
+  }
+}
+
+export function getRememberedOAuthEmail(
+  role: AccountRole,
+  provider: OAuthProvider
+): string | null {
+  if (typeof window === 'undefined') return null
+  try {
+    const raw = localStorage.getItem(lastOAuthEmailStorageKey(role, provider))?.trim()
+    return raw || null
+  } catch {
+    return null
+  }
+}
+
+export function clearRememberedOAuthEmail(role: AccountRole, provider: OAuthProvider): void {
+  if (typeof window === 'undefined') return
+  try {
+    localStorage.removeItem(lastOAuthEmailStorageKey(role, provider))
+  } catch {
+    /* ignore */
+  }
+}
+
 let providersCache: OAuthProvidersAvailability | null = null
 let providersPromise: Promise<OAuthProvidersAvailability> | null = null
 
@@ -38,7 +81,11 @@ export async function fetchOAuthProviders(): Promise<OAuthProvidersAvailability>
   return providersPromise
 }
 
-export function startOAuthLogin(provider: OAuthProvider, role: AccountRole): void {
+export function startOAuthLogin(
+  provider: OAuthProvider,
+  role: AccountRole,
+  options?: { forceAccountPicker?: boolean }
+): void {
   const returnTo = `${window.location.pathname}${window.location.search}`
   const params = new URLSearchParams({
     action: 'oauth-start',
@@ -46,6 +93,10 @@ export function startOAuthLogin(provider: OAuthProvider, role: AccountRole): voi
     role,
     returnTo,
   })
+  const loginHint =
+    options?.forceAccountPicker ? undefined : getRememberedOAuthEmail(role, provider) ?? undefined
+  if (loginHint) params.set('loginHint', loginHint)
+  if (options?.forceAccountPicker) params.set('forceAccountPicker', '1')
   window.location.assign(`${apiBaseUrl()}/auth?${params.toString()}`)
 }
 
@@ -69,10 +120,11 @@ export async function completeOAuthExchange(
       return { success: false, error: data?.error || `Erreur serveur (${response.status})` }
     }
     if (role === 'client') {
-      applyClientOAuthSession(data.token, data.user)
+      applyClientOAuthSession(data.token, data.user, provider)
     } else {
-      applyChauffeurOAuthSession(data.token, data.user)
+      applyChauffeurOAuthSession(data.token, data.user, provider)
     }
+    rememberOAuthEmail(role, provider, data.user.email)
     return { success: true, user: data.user }
   } catch (error) {
     console.error('[oauthAuthService] exchange', error)
