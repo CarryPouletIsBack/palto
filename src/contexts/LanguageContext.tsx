@@ -121,6 +121,8 @@ const TRANSLATIONS: Record<Language, Record<string, unknown>> = {
       seoDriverLink: 'Espace chauffeur',
       seoDriverDesc: 'Connexion ou inscription au tableau de bord.',
       orderRideTitle: 'Commandez une course',
+      orderRideDriversKickerBefore: 'Déjà ',
+      orderRideDriversKickerAfter: ' chauffeurs professionnels à votre service.',
       /** Titre de la barre supérieure type compte sur l’accueil */
       homeTopbarTitle: 'Palto',
       homeTopbarTitleNavAria: "Aller à l'accueil",
@@ -1000,6 +1002,8 @@ const TRANSLATIONS: Record<Language, Record<string, unknown>> = {
       seoDriverLink: 'Driver area',
       seoDriverDesc: 'Sign in or create an account for the dashboard.',
       orderRideTitle: 'Book a ride',
+      orderRideDriversKickerBefore: 'Already ',
+      orderRideDriversKickerAfter: ' professional drivers at your service.',
       homeTopbarTitle: 'Palto',
       homeTopbarTitleNavAria: 'Go to home',
       topbarSignIn: 'Sign in',

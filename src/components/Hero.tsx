@@ -201,6 +201,13 @@ const Hero = ({
                         </select>
                       </label>
                     </p>
+                    <p className="hero-home-booking__drivers-kicker">
+                      <span className="hero-home-booking__drivers-kicker-text">
+                        {t('hero.orderRideDriversKickerBefore')}
+                        <strong className="hero-home-booking__drivers-kicker-num">3</strong>
+                        {t('hero.orderRideDriversKickerAfter')}
+                      </span>
+                    </p>
                     <h2 id="hero-home-booking-title" className="hero-home-booking__title">
                       {t('hero.orderRideTitle')}
                     </h2>
