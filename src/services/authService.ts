@@ -230,7 +230,7 @@ async function postAuth<TPayload extends Record<string, unknown>>(
     return {
       success: false,
       error:
-        'Impossible de joindre l’API (/api). En local : terminal avec npm run dev:api (Vercel sur :3000), puis http://localhost:5173.',
+        'Impossible de joindre l’API (/api). En local : `npm run dev:api`, puis ouvre http://localhost:5173 (API proxifiée vers :3000).',
     }
   }
 }

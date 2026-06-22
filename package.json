@@ -6,7 +6,7 @@
   "scripts": {
     "build": "vite build",
     "dev": "vite",
-    "dev:api": "VERCEL=1 npx vercel dev --yes",
+    "dev:api": "node scripts/dev-with-api.mjs",
     "reset-password": "node scripts/reset-palto-password.mjs",
     "check:supabase": "node scripts/check-supabase-env.mjs",
     "calc-frais": "npx --yes tsx scripts/calc-frais-transport.ts",

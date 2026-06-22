@@ -1,0 +1,33 @@
+{
+  "installCommand": "npm install",
+  "rewrites": [
+    {
+      "source": "/api/auth/client/login",
+      "destination": "/api/auth?role=client&action=login"
+    },
+    {
+      "source": "/api/auth/client/register",
+      "destination": "/api/auth?role=client&action=register"
+    },
+    {
+      "source": "/api/auth/chauffeur/login",
+      "destination": "/api/auth?role=chauffeur&action=login"
+    },
+    {
+      "source": "/api/auth/chauffeur/register",
+      "destination": "/api/auth?role=chauffeur&action=register"
+    },
+    {
+      "source": "/api/auth/realtime-token",
+      "destination": "/api/auth?action=realtime-token"
+    },
+    {
+      "source": "/api/auth/oauth-providers",
+      "destination": "/api/auth?action=oauth-providers"
+    },
+    {
+      "source": "/api/cron/expire-instant-pending",
+      "destination": "/api/chauffeur?resource=cron-expire-instant"
+    }
+  ]
+}

@@ -4,7 +4,7 @@ import tailwindcss from '@tailwindcss/vite'
 import react from '@vitejs/plugin-react'
 import { VitePWA } from 'vite-plugin-pwa'
 
-/** `vercel dev` doit détecter un port fixe (évite le timeout « Detecting port … »). */
+/** Sous `vercel dev` seul (legacy) : port fixe pour la détection. `dev-with-api` lance Vite sans VERCEL=1. */
 const vercelDev = process.env.VERCEL === '1'
 
 export default defineConfig({
@@ -62,12 +62,11 @@ export default defineConfig({
     strictPort: vercelDev,
     /** Ouvre le navigateur sur l’URL réelle (important si 5173 est déjà pris : Vite passe à 5174, 5175…). */
     open: !vercelDev,
-    host: vercelDev ? false : true, // réseau local hors vercel dev (détection de port Vercel)
+    host: vercelDev ? false : true,
     watch: {
       usePolling: true, // Nécessaire sur Windows pour que les modifs soient détectées sans redémarrer
     },
     proxy: {
-      // Rediriger toutes les requêtes API vers Vercel dev (port 3000 par défaut)
       '/api': {
         target: 'http://localhost:3000',
         changeOrigin: true,

@@ -2147,19 +2147,23 @@ const Dashboard = ({
 
   /** Chauffeur : pas de topbar type accueil (Palto / langue) — bouton user fixe sauf bandeau course. */
   const showChauffeurToolbarOnly = topbarLaunchCourse == null;
-  /** Compte chauffeur : bouton utilisateur photo seule sur toutes les vues (y compris bandeau course). */
-  const isChauffeurAccountUserOnly = true;
 
   const renderChauffeurTopbarAccountControl = (options?: {
     photoAside?: boolean;
     showNameInButton?: boolean;
+    sidebarSlot?: boolean;
   }) => {
     const photoAside = options?.photoAside ?? true;
     const showNameInButton = options?.showNameInButton ?? true;
+    const sidebarSlot = options?.sidebarSlot ?? false;
     const photoOnlyInButton = !photoAside && !showNameInButton;
     return (
     <div
-      className={`dashboard-chauffeur-topbar-account-cluster${photoAside ? '' : ' dashboard-chauffeur-topbar-account-cluster--user-btn-only'}`}
+      className={
+        'dashboard-chauffeur-topbar-account-cluster' +
+        (photoAside ? '' : ' dashboard-chauffeur-topbar-account-cluster--user-btn-only') +
+        (sidebarSlot ? ' dashboard-chauffeur-topbar-account-cluster--sidebar' : '')
+      }
       ref={topbarAccountMenuRef}
     >
       {photoAside ? (
@@ -2179,7 +2183,8 @@ const Dashboard = ({
           className={
             'client-compte-topbar-user-btn' +
             (photoAside ? ' client-compte-topbar-user-btn--chauffeur-topbar' : '') +
-            (photoOnlyInButton ? ' client-compte-topbar-user-btn--photo-only' : '')
+            (photoOnlyInButton ? ' client-compte-topbar-user-btn--photo-only' : '') +
+            (sidebarSlot ? ' client-compte-topbar-user-btn--sidebar-rail' : '')
           }
           onClick={() => {
             setAlertsOpen(false);
@@ -2225,7 +2230,14 @@ const Dashboard = ({
           {showNameInButton ? <span>{paltoIdentity.fullName}</span> : null}
         </button>
         {topbarAccountMenuOpen ? (
-          <div className="client-compte-account-menu" role="menu" aria-label="Menu compte">
+          <div
+            className={
+              'client-compte-account-menu' +
+              (sidebarSlot ? ' client-compte-account-menu--sidebar-flyout' : '')
+            }
+            role="menu"
+            aria-label="Menu compte"
+          >
             <div className="client-compte-account-menu__head">
               <strong>{paltoIdentity.fullName}</strong>
               <span>{paltoIdentity.email}</span>
@@ -2760,6 +2772,15 @@ const Dashboard = ({
                 <PanelLeft size={16} />
               </button>
               </div>
+              {!isMobileViewport ? (
+                <div className="dashboard-sidebar-user">
+                  {renderChauffeurTopbarAccountControl({
+                    photoAside: false,
+                    showNameInButton: false,
+                    sidebarSlot: true,
+                  })}
+                </div>
+              ) : null}
               <nav className="dashboard-nav">
               <button
                 type="button"
@@ -2887,15 +2908,11 @@ const Dashboard = ({
                 : ''
             }`}
           >
-            {!(isMobileViewport && activeView === 'user') ? (
+            {!(isMobileViewport && activeView === 'user') && (isMobileViewport || topbarLaunchCourse) ? (
             <header
               className={`dashboard-topbar${
                 isMobileViewport || showChauffeurToolbarOnly ? ' dashboard-topbar--chauffeur-mobile-toolbar' : ''
-              }${isMobileViewport ? ' dashboard-topbar--chauffeur-mobile-split' : ''}${topbarLaunchCourse && !isMobileViewport ? ' dashboard-topbar--with-launch-ride' : ''}${
-                isChauffeurAccountUserOnly && !isMobileViewport
-                  ? ' dashboard-topbar--chauffeur-account-user-only'
-                  : ''
-              }`}
+              }${isMobileViewport ? ' dashboard-topbar--chauffeur-mobile-split' : ''}${topbarLaunchCourse && !isMobileViewport ? ' dashboard-topbar--with-launch-ride' : ''}`}
             >
               {!isMobileViewport ? renderTopbarLaunchRide() : null}
               {isMobileViewport ? (
@@ -2933,14 +2950,7 @@ const Dashboard = ({
                     </div>
                   </div>
                 </>
-              ) : (
-              <div className="dashboard-topbar-right">
-                  {renderChauffeurTopbarAccountControl({
-                    photoAside: false,
-                    showNameInButton: false,
-                  })}
-              </div>
-              )}
+              ) : null}
             </header>
             ) : null}
 

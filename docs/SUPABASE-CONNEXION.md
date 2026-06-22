@@ -36,10 +36,10 @@ Exemple (à adapter avec ta vraie service role) :
 
 ```env
 SUPABASE_URL=https://uzjplpdpbxvzhisxgwfz.supabase.co
-SUPABASE_SERVICE_ROLE_KEY=colle_ici_la_service_role
+SUPABASE_SERVICE_ROLE_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InV6anBscGRwYnh2emhpc3hnd2Z6Iiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3ODE1NjAyNSwiZXhwIjoyMDkzNzMyMDI1fQ.YYNLbtGCeRbMPi_i80XBN7DkkT81wrEcOciIW_CEvlc
 
 VITE_SUPABASE_URL=https://uzjplpdpbxvzhisxgwfz.supabase.co
-VITE_SUPABASE_ANON_KEY=colle_ici_la_cle_anon_ou_publishable
+VITE_SUPABASE_ANON_KEY=sb_publishable_j79OVGm9c3V8paiL0L6eMQ_s4QhVWC8
 
 VITE_API_BASE_URL=/api
 ```
@@ -57,7 +57,8 @@ npm run dev:api
 
 Équivalent : `npx vercel dev` (pas besoin d’installer Vercel globalement).
 
-`npm run dev` seul = **Vite uniquement** : pas de vraie connexion aux routes `/api` (proxy vers `:3000` sans serveur = profil / courses / auth cassés en local).
+`npm run dev` seul = **Vite sur :5173** (pas d’API).  
+**`npm run dev:api`** = Vite **:5173** + API Vercel **:3000** (script `scripts/dev-with-api.mjs`) → ouvre **http://localhost:5173/fr/dashboard**.
 
 Vérifier :
 

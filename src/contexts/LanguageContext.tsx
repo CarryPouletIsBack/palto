@@ -173,9 +173,8 @@ const TRANSLATIONS: Record<Language, Record<string, unknown>> = {
       clientLiveMeetCta: 'Rejoindre votre chauffeur',
       clientTopbarRidesAria: 'Courses et prise en charge',
       driverRecruitBannerAria: 'Espace chauffeurs',
-      driverRecruitBannerTitle: 'Vous êtes chauffeur à La Réunion ?',
-      driverRecruitBannerLead:
-        'Rejoignez Palto : gérez vos courses, votre planning et vos revenus depuis un seul tableau de bord.',
+      driverRecruitBannerTitle: 'Chauffeur VTC 974 ? Bloquez vos réservations à l’avance en toute liberté.',
+      driverRecruitBannerLead: '',
       driverRecruitBannerCta: "Découvrir l'espace chauffeur",
       chauffeurLandingHeadlineLead: 'Pensé pour vous faire gagner du temps,',
       chauffeurLandingHeadlineAccent: 'Palto est la plateforme des chauffeurs à La Réunion.',
@@ -1053,9 +1052,8 @@ const TRANSLATIONS: Record<Language, Record<string, unknown>> = {
       clientLiveMeetCta: 'Join your driver',
       clientTopbarRidesAria: 'Rides and pickup',
       driverRecruitBannerAria: 'Driver space',
-      driverRecruitBannerTitle: 'Are you a driver on Réunion Island?',
-      driverRecruitBannerLead:
-        'Join Palto: manage rides, your schedule and revenue from one dashboard.',
+      driverRecruitBannerTitle: 'VTC driver in 974? Block your bookings in advance, on your own terms.',
+      driverRecruitBannerLead: '',
       driverRecruitBannerCta: 'Explore the driver space',
       chauffeurLandingHeadlineLead: 'Built to save you time,',
       chauffeurLandingHeadlineAccent: 'Palto is the driver platform for Réunion.',

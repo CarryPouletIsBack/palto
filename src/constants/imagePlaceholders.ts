@@ -12,3 +12,4 @@ export const PLACEHOLDER_LOGO = publicAssetPath('/images/palto-app-icon.svg');
 export const PLACEHOLDER_PORTRAIT = publicAssetPath('/images/placeholder-portrait.svg');
 export const PLACEHOLDER_DECOR = publicAssetPath('/images/placeholder-decor.svg');
 export const PLACEHOLDER_APP_ICON = publicAssetPath('/images/palto-app-icon.svg');
+export const PLACEHOLDER_VEHICLE = publicAssetPath('/images/placeholder-vehicule.png');

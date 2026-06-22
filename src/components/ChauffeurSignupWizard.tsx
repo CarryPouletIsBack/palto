@@ -22,7 +22,6 @@ import {
 } from '../services/phoneNumber'
 import ChauffeurSignupStepIdentity from './ChauffeurSignupStepIdentity'
 import ChauffeurSignupStepVehicle from './ChauffeurSignupStepVehicle'
-import ChauffeurSignupStepDocuments from './ChauffeurSignupStepDocuments'
 
 type Props = {
   onSuccess: () => void
@@ -30,11 +29,11 @@ type Props = {
   oauthMode?: boolean
 }
 
-const TOTAL_STEPS = 3
+const TOTAL_STEPS = 2
 
 export default function ChauffeurSignupWizard({ onSuccess, initialEmail, oauthMode = false }: Props) {
   const { t } = useLanguage()
-  const [step, setStep] = useState<1 | 2 | 3>(1)
+  const [step, setStep] = useState<1 | 2>(1)
   const [draft, setDraft] = useState<ChauffeurSignupDraft>(() => ({
     ...EMPTY_CHAUFFEUR_SIGNUP_DRAFT,
     email: initialEmail?.trim() ?? '',
@@ -42,7 +41,6 @@ export default function ChauffeurSignupWizard({ onSuccess, initialEmail, oauthMo
   const [showPassword, setShowPassword] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
-  const [registeredEmailNorm, setRegisteredEmailNorm] = useState<string | null>(null)
 
   useEffect(() => {
     const email = initialEmail?.trim() || getCurrentUser()?.email?.trim()
@@ -52,7 +50,7 @@ export default function ChauffeurSignupWizard({ onSuccess, initialEmail, oauthMo
 
   const stepLabel = useMemo(
     () => t('chauffeurAuth.stepLabel').replace('{current}', String(step)).replace('{total}', String(TOTAL_STEPS)),
-    [step, t]
+    [step, t],
   )
 
   const validateStep1 = (): boolean => {
@@ -158,7 +156,6 @@ export default function ChauffeurSignupWizard({ onSuccess, initialEmail, oauthMo
     if (draft.isVtc) {
       setComplianceDoc(emailNorm, 'vtc_or_goods_capacity', true)
     }
-    setRegisteredEmailNorm(emailNorm)
     return true
   }
 
@@ -173,7 +170,7 @@ export default function ChauffeurSignupWizard({ onSuccess, initialEmail, oauthMo
       if (!validateStep2()) return
       const ok = await registerAccount()
       if (!ok) return
-      setStep(3)
+      onSuccess()
     }
   }
 
@@ -182,13 +179,22 @@ export default function ChauffeurSignupWizard({ onSuccess, initialEmail, oauthMo
     if (step === 2) setStep(1)
   }
 
+  const primaryActionLabel =
+    step === TOTAL_STEPS
+      ? loading
+        ? t('chauffeurAuth.submittingSignup')
+        : t('chauffeurAuth.finishSignup')
+      : loading
+        ? t('chauffeurAuth.submittingSignup')
+        : t('chauffeurAuth.next')
+
   return (
     <div className="auth-signup-wizard">
       <p className="auth-signup-wizard__step-label" aria-live="polite">
         {stepLabel}
       </p>
       <div className="auth-signup-wizard__progress" aria-hidden>
-        {[1, 2, 3].map((n) => (
+        {[1, 2].map((n) => (
           <span
             key={n}
             className={
@@ -208,35 +214,18 @@ export default function ChauffeurSignupWizard({ onSuccess, initialEmail, oauthMo
         />
       ) : null}
       {step === 2 ? <ChauffeurSignupStepVehicle draft={draft} setDraft={setDraft} /> : null}
-      {step === 3 && registeredEmailNorm ? (
-        <ChauffeurSignupStepDocuments
-          emailNorm={registeredEmailNorm}
-          onComplianceChange={() => undefined}
-        />
-      ) : null}
 
       {error ? <p className="auth-page-error">{error}</p> : null}
 
       <div className="auth-signup-wizard__actions">
-        {step > 1 && step < 3 ? (
+        {step > 1 ? (
           <button type="button" className="auth-page-btn auth-page-btn--ghost" onClick={goBack} disabled={loading}>
             {t('chauffeurAuth.back')}
           </button>
         ) : null}
-        {step < 3 ? (
-          <button type="button" className="auth-page-btn" onClick={() => void goNext()} disabled={loading}>
-            {loading ? t('chauffeurAuth.submittingSignup') : t('chauffeurAuth.next')}
-          </button>
-        ) : (
-          <>
-            <button type="button" className="auth-page-btn auth-page-btn--ghost" onClick={onSuccess}>
-              {t('chauffeurAuth.skipDocuments')}
-            </button>
-            <button type="button" className="auth-page-btn" onClick={onSuccess}>
-              {t('chauffeurAuth.finishSignup')}
-            </button>
-          </>
-        )}
+        <button type="button" className="auth-page-btn" onClick={() => void goNext()} disabled={loading}>
+          {primaryActionLabel}
+        </button>
       </div>
     </div>
   )

@@ -1,4 +1,4 @@
-import { CarFront } from 'lucide-react'
+import { PLACEHOLDER_VEHICLE } from '../constants/imagePlaceholders'
 import { useLanguage } from '../contexts/LanguageContext'
 import { trackEvent } from '../services/googleAnalyticsTracking'
 import './Dashboard.css'
@@ -26,11 +26,19 @@ export function DashboardHomeChauffeurBanner({
     >
       <div className="dashboard-home-chauffeur-banner__inner">
         <div className="dashboard-home-chauffeur-banner__icon-wrap" aria-hidden>
-          <CarFront size={18} className="dashboard-home-chauffeur-banner__icon" />
+          <img
+            className="dashboard-home-chauffeur-banner__icon-img"
+            src={PLACEHOLDER_VEHICLE}
+            alt=""
+            loading="lazy"
+            decoding="async"
+          />
         </div>
         <div className="dashboard-home-chauffeur-banner__copy">
           <p className="dashboard-home-chauffeur-banner__title">{t('hero.driverRecruitBannerTitle')}</p>
-          <p className="dashboard-home-chauffeur-banner__lead">{t('hero.driverRecruitBannerLead')}</p>
+          {t('hero.driverRecruitBannerLead') ? (
+            <p className="dashboard-home-chauffeur-banner__lead">{t('hero.driverRecruitBannerLead')}</p>
+          ) : null}
         </div>
         <button
           type="button"

@@ -24,6 +24,8 @@ import {
   type HeroDepartmentId,
 } from '../data/heroDepartments'
 import HeroHomePickupDateTime from './HeroHomePickupDateTime'
+import LineWaves from './LineWaves'
+import BorderGlow from './BorderGlow'
 
 interface HeroProps {
   onPageChange: (page: string, projectImage?: string, projectCategory?: string) => void
@@ -175,6 +177,34 @@ const Hero = ({
               <section className="hero-home-booking" aria-labelledby="hero-home-booking-title">
                 <div className="hero-home-booking__grid">
                   <div className="hero-home-booking__col hero-home-booking__col--left">
+                    <div className="hero-home-booking__drivers-kicker">
+                      <BorderGlow
+                        className="hero-home-booking__drivers-kicker-text"
+                        borderRadius={10}
+                        glowRadius={22}
+                        edgeSensitivity={35}
+                        glowColor="210 90 72"
+                        glowIntensity={0.85}
+                        fillOpacity={0.35}
+                        coneSpread={22}
+                        animated
+                        colors={['#7dd3fc', '#a78bfa', '#34d399']}
+                      >
+                        <LineWaves
+                          className="hero-home-booking__drivers-kicker-waves"
+                          lineColor="rgba(255, 255, 255, 0.14)"
+                          waveAmpX={22}
+                          waveAmpY={12}
+                          xGap={10}
+                          yGap={24}
+                        />
+                        <span className="hero-home-booking__drivers-kicker-label">
+                          {t('hero.orderRideDriversKickerBefore')}
+                          <strong>3</strong>
+                          {t('hero.orderRideDriversKickerAfter')}
+                        </span>
+                      </BorderGlow>
+                    </div>
                     <p className="hero-home-booking__cityline">
                       <span className="hero-home-booking__city">{homeDepartmentLabel}</span>
                       <span className="hero-home-booking__fr">{t('hero.homeCountrySuffix')}</span>
@@ -200,13 +230,6 @@ const Hero = ({
                           ))}
                         </select>
                       </label>
-                    </p>
-                    <p className="hero-home-booking__drivers-kicker">
-                      <span className="hero-home-booking__drivers-kicker-text">
-                        {t('hero.orderRideDriversKickerBefore')}
-                        <strong className="hero-home-booking__drivers-kicker-num">3</strong>
-                        {t('hero.orderRideDriversKickerAfter')}
-                      </span>
                     </p>
                     <h2 id="hero-home-booking-title" className="hero-home-booking__title">
                       {t('hero.orderRideTitle')}
