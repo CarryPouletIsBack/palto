@@ -2,6 +2,10 @@ import type {
   ChauffeurProfileRidePricingFields,
   ChauffeurProfileSnapshot,
 } from '../constants/chauffeurProfileStorage'
+import {
+  normalizeChauffeurServiceCatalog,
+  type ChauffeurServiceCatalogSnapshot,
+} from '../constants/chauffeurServiceCatalog'
 
 function pickPricingString(remote: string | undefined, local: string | undefined): string | undefined {
   const r = (remote ?? '').trim()
@@ -77,6 +81,14 @@ export function mergeChauffeurProfileSnapshots(
     profilePhotoName: pickNonEmptyString(remote.profilePhotoName, local.profilePhotoName),
     organizationPhotoName: pickNonEmptyString(remote.organizationPhotoName, local.organizationPhotoName),
     vehiclePhotoName: pickNonEmptyString(remote.vehiclePhotoName, local.vehiclePhotoName),
+    bio: pickNonEmptyString(remote.bio, local.bio),
+    websiteUrl: pickNonEmptyString(remote.websiteUrl, local.websiteUrl),
+    linkedinUrl: pickNonEmptyString(remote.linkedinUrl, local.linkedinUrl),
+    serviceCatalog: remote.serviceCatalog
+      ? normalizeChauffeurServiceCatalog(remote.serviceCatalog)
+      : local.serviceCatalog
+        ? normalizeChauffeurServiceCatalog(local.serviceCatalog)
+        : undefined,
     payment: remote.payment ?? local.payment,
     documents: remote.documents ?? local.documents,
     ridePricing: mergeRidePricing(local.ridePricing, remote.ridePricing),

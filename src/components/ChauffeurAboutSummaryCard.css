@@ -1,0 +1,174 @@
+.chauffeur-about-summary-card {
+  box-sizing: border-box;
+  width: 100%;
+  border: 1px solid #e5e7eb;
+  border-radius: 14px;
+  background: #ffffff;
+  padding: var(--ch-card-padding, 18px);
+  display: flex;
+  flex-direction: column;
+  gap: calc(var(--ch-space-4, 18px) + var(--ch-space-1, 6px));
+}
+
+.chauffeur-about-summary-card__section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ch-space-2, 10px);
+  min-width: 0;
+}
+
+.chauffeur-about-summary-card__section + .chauffeur-about-summary-card__section {
+  padding-top: calc(var(--ch-space-3, 14px) + var(--ch-space-1, 6px));
+  border-top: 1px solid #f1f5f9;
+}
+
+.chauffeur-about-summary-card__label-row {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--ch-space-1, 6px);
+}
+
+.chauffeur-about-summary-card__label {
+  margin: 0;
+  font-size: var(--ch-text-xs, 14px);
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #94a3b8;
+}
+
+.chauffeur-about-summary-card__rate {
+  margin: 0;
+  font-size: clamp(22px, 2.4vw, var(--ch-text-xl, 24px));
+  font-weight: 700;
+  line-height: 1.15;
+  color: #0f172a;
+}
+
+.chauffeur-about-summary-card__rate-hint {
+  margin: 0;
+  font-size: var(--ch-text-sm, 16px);
+  color: #64748b;
+}
+
+.chauffeur-about-summary-card__badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--ch-space-2, 10px);
+}
+
+.chauffeur-about-summary-card__badge {
+  display: inline-flex;
+  align-items: center;
+  max-width: 100%;
+  padding: 8px 14px;
+  border-radius: 999px;
+  background: #f1f5f9;
+  color: #334155;
+  font-size: var(--ch-text-sm, 16px);
+  font-weight: 500;
+  line-height: 1.25;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.chauffeur-about-summary-card__badge--overflow {
+  color: #64748b;
+}
+
+.chauffeur-about-summary-card__empty {
+  margin: 0;
+  font-size: var(--ch-text-sm, 16px);
+  color: #94a3b8;
+}
+
+.chauffeur-about-summary-card__details {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ch-space-3, 14px);
+}
+
+.chauffeur-about-summary-card__detail-row {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--ch-space-3, 14px);
+  min-width: 0;
+}
+
+.chauffeur-about-summary-card__detail-icon {
+  flex-shrink: 0;
+  width: 20px;
+  height: 20px;
+  margin-top: 4px;
+  color: #64748b;
+}
+
+.chauffeur-about-summary-card__detail-body {
+  flex: 1 1 auto;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.chauffeur-about-summary-card__detail-text {
+  margin: 0;
+  font-size: var(--ch-text-base, 16px);
+  font-weight: 600;
+  color: #0f172a;
+  line-height: 1.35;
+}
+
+.chauffeur-about-summary-card__detail-muted {
+  margin: 0;
+  font-size: var(--ch-text-sm, 16px);
+  color: #64748b;
+  line-height: 1.35;
+}
+
+.chauffeur-about-summary-card__link-input {
+  width: 100%;
+  min-width: 0;
+  border: none;
+  border-bottom: 1px solid #e2e8f0;
+  background: transparent;
+  padding: 4px 0;
+  font-size: var(--ch-text-sm, 16px);
+  color: #334155;
+  font-family: inherit;
+  outline: none;
+}
+
+.chauffeur-about-summary-card__link-input::placeholder {
+  color: #94a3b8;
+}
+
+.chauffeur-about-summary-card__link-input:focus {
+  border-bottom-color: #0ea5e9;
+}
+
+.chauffeur-about-summary-card__external-links {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--ch-space-2, 10px);
+}
+
+.chauffeur-about-summary-card__external-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 999px;
+  border: 1px solid #e2e8f0;
+  background: #f8fafc;
+  color: #475569;
+  text-decoration: none;
+}
+
+.chauffeur-about-summary-card__external-link:hover {
+  background: #f1f5f9;
+  color: #0f172a;
+}

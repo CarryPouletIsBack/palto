@@ -55,12 +55,31 @@
   flex-direction: column;
 }
 
-.dashboard-container--chauffeur .dashboard-topbar {
-  flex-shrink: 0;
-}
-
-.dashboard-container--chauffeur .dashboard-content > .chauffeur-presence-geo {
-  flex-shrink: 0;
+/* Échelle d’espacement chauffeur : pas +2px (6, 10, 14, 18… — avant 4, 8, 12, 16…). */
+.dashboard-container--chauffeur {
+  --chauffeur-pt: 4px;
+  --ch-space-1: calc(var(--chauffeur-pt) + 2px);
+  --ch-space-2: calc(var(--chauffeur-pt) * 2 + 2px);
+  --ch-space-3: calc(var(--chauffeur-pt) * 3 + 2px);
+  --ch-space-4: calc(var(--chauffeur-pt) * 4 + 2px);
+  --ch-space-5: calc(var(--chauffeur-pt) * 5 + 2px);
+  --ch-space-6: calc(var(--chauffeur-pt) * 6 + 2px);
+  --ch-space-8: calc(var(--chauffeur-pt) * 8 + 2px);
+  --ch-space-10: calc(var(--chauffeur-pt) * 10 + 2px);
+  --ch-space-16: calc(var(--chauffeur-pt) * 16 + 2px);
+  --ch-gutter: var(--ch-space-5);
+  --ch-section-gap: var(--ch-space-5);
+  --ch-card-padding: var(--ch-space-4);
+  /* Échelle typo : base nav/corps 16px (avant 13px), grille 4pt */
+  --ch-text-2xs: 12px;
+  --ch-text-xs: 14px;
+  --ch-text-sm: 16px;
+  --ch-text-base: 16px;
+  --ch-text-md: 18px;
+  --ch-text-lg: 20px;
+  --ch-text-xl: 24px;
+  --ch-text-2xl: 28px;
+  --ch-text-display: clamp(28px, 3vw, 36px);
 }
 
 .dashboard-container--chauffeur .dashboard-content {
@@ -71,6 +90,237 @@
   -webkit-overflow-scrolling: touch;
   overscroll-behavior: contain;
   touch-action: pan-y;
+  padding: var(--ch-space-3);
+  gap: var(--ch-section-gap);
+}
+
+.dashboard-container--chauffeur .dashboard-topbar {
+  flex-shrink: 0;
+}
+
+.dashboard-container--chauffeur .dashboard-content > .chauffeur-presence-geo {
+  flex-shrink: 0;
+}
+
+/* Typographie chauffeur — base nav 16px, dérivés proportionnels (×1,23 depuis l’ancienne échelle 13px) */
+.dashboard-container--chauffeur .nav-label {
+  font-size: var(--ch-text-base);
+  line-height: 1.25;
+}
+
+.dashboard-container--chauffeur .nav-icon svg {
+  width: 20px;
+  height: 20px;
+}
+
+.dashboard-container--chauffeur .dashboard-nav-item {
+  min-height: 44px;
+  height: auto;
+  padding-block: var(--ch-space-2);
+}
+
+.dashboard-container--chauffeur .dashboard-logo-title {
+  font-size: var(--ch-text-md);
+}
+
+.dashboard-container--chauffeur .sidebar-toggle-btn {
+  font-size: var(--ch-text-sm);
+}
+
+.dashboard-container--chauffeur
+  .dashboard-sidebar-user
+  .client-compte-topbar-user-btn--sidebar-rail
+  .client-compte-topbar-user-btn__name {
+  font-size: var(--ch-text-sm);
+}
+
+.dashboard-container--chauffeur .dashboard-chauffeur-main-title {
+  font-size: var(--ch-text-lg);
+}
+
+.dashboard-container--chauffeur .dashboard-chauffeur-main-subtitle {
+  font-size: var(--ch-text-xs);
+}
+
+.dashboard-container--chauffeur .dashboard-section-title h3 {
+  font-size: var(--ch-text-md);
+}
+
+.dashboard-container--chauffeur .dashboard-section-title-inline span {
+  font-size: var(--ch-text-sm);
+}
+
+.dashboard-container--chauffeur .dashboard-overview-mini-card strong {
+  font-size: var(--ch-text-lg);
+}
+
+.dashboard-container--chauffeur .dashboard-overview-mini-card span {
+  font-size: var(--ch-text-sm);
+}
+
+.dashboard-container--chauffeur .dashboard-overview-mini-card small {
+  font-size: var(--ch-text-xs);
+}
+
+.dashboard-container--chauffeur .dashboard-overview-link-inline {
+  font-size: var(--ch-text-base);
+}
+
+.dashboard-container--chauffeur .dashboard-heatmap-cell span {
+  font-size: var(--ch-text-base);
+}
+
+.dashboard-container--chauffeur .dashboard-heatmap-label {
+  font-size: var(--ch-text-xs);
+}
+
+.dashboard-container--chauffeur .dashboard-heatmap-footnote {
+  font-size: var(--ch-text-sm);
+}
+
+.dashboard-container--chauffeur .dashboard-recent-item strong {
+  font-size: var(--ch-text-base);
+}
+
+.dashboard-container--chauffeur .dashboard-recent-item p {
+  font-size: var(--ch-text-sm);
+}
+
+.dashboard-container--chauffeur .dashboard-user-card-head h4 {
+  font-size: var(--ch-text-lg);
+}
+
+.dashboard-container--chauffeur .dashboard-user-card-head p {
+  font-size: var(--ch-text-sm);
+}
+
+.dashboard-container--chauffeur .dashboard-user-grid strong,
+.dashboard-container--chauffeur .dashboard-user-edit-readonly strong,
+.dashboard-container--chauffeur .dashboard-user-media-card strong,
+.dashboard-container--chauffeur .dashboard-user-kpis strong,
+.dashboard-container--chauffeur .dashboard-doc-row strong {
+  font-size: var(--ch-text-sm);
+}
+
+.dashboard-container--chauffeur .dashboard-user-grid p,
+.dashboard-container--chauffeur .dashboard-user-edit-readonly p,
+.dashboard-container--chauffeur .dashboard-user-kpis p,
+.dashboard-container--chauffeur .dashboard-doc-row p {
+  font-size: var(--ch-text-base);
+}
+
+.dashboard-container--chauffeur .dashboard-chauffeur-profile-form label,
+.dashboard-container--chauffeur .dashboard-ride-settings-form label {
+  font-size: var(--ch-text-sm);
+}
+
+.dashboard-container--chauffeur .dashboard-chauffeur-profile-form input,
+.dashboard-container--chauffeur .dashboard-chauffeur-profile-form select,
+.dashboard-container--chauffeur .dashboard-ride-settings-form input,
+.dashboard-container--chauffeur .dashboard-ride-settings-form select,
+.dashboard-container--chauffeur .dashboard-ride-settings-form textarea {
+  font-size: var(--ch-text-base);
+}
+
+.dashboard-container--chauffeur .dashboard-field-hint,
+.dashboard-container--chauffeur .dashboard-field-error {
+  font-size: var(--ch-text-xs);
+}
+
+.dashboard-container--chauffeur .dashboard-user-subcard h4 {
+  font-size: var(--ch-text-base);
+}
+
+.dashboard-container--chauffeur .dashboard-doc-badge {
+  font-size: var(--ch-text-xs);
+}
+
+.dashboard-container--chauffeur .dashboard-user-save-btn,
+.dashboard-container--chauffeur .dashboard-user-cancel-btn,
+.dashboard-container--chauffeur .dashboard-user-edit-btn,
+.dashboard-container--chauffeur .dashboard-user-logout-btn,
+.dashboard-container--chauffeur .dashboard-doc-upload-btn,
+.dashboard-container--chauffeur .dashboard-doc-submit-btn {
+  font-size: var(--ch-text-sm);
+}
+
+.dashboard-container--chauffeur .dashboard-table thead th {
+  font-size: var(--ch-text-sm);
+}
+
+.dashboard-container--chauffeur .dashboard-table tbody td {
+  font-size: var(--ch-text-base);
+}
+
+.dashboard-container--chauffeur .dashboard-status-pill {
+  font-size: var(--ch-text-xs);
+}
+
+.dashboard-container--chauffeur .planning-month-nav span {
+  font-size: var(--ch-text-base);
+}
+
+.dashboard-container--chauffeur .planning-weekdays div {
+  font-size: var(--ch-text-sm);
+}
+
+.dashboard-container--chauffeur .planning-day-number {
+  font-size: var(--ch-text-sm);
+}
+
+.dashboard-container--chauffeur .planning-holiday-label {
+  font-size: var(--ch-text-xs);
+}
+
+.dashboard-container--chauffeur .planning-slot-chip {
+  font-size: var(--ch-text-2xs);
+}
+
+.dashboard-container--chauffeur .planning-modal-head h3 {
+  font-size: var(--ch-text-lg);
+}
+
+.dashboard-container--chauffeur .planning-modal-empty,
+.dashboard-container--chauffeur .planning-modal-item p,
+.dashboard-container--chauffeur .planning-course-details {
+  font-size: var(--ch-text-sm);
+}
+
+.dashboard-container--chauffeur .planning-modal-add-title {
+  font-size: var(--ch-text-md);
+}
+
+.dashboard-container--chauffeur .planning-modal-item strong {
+  font-size: var(--ch-text-md);
+}
+
+.dashboard-container--chauffeur .dashboard-metric-row {
+  font-size: var(--ch-text-base);
+}
+
+.dashboard-container--chauffeur .dashboard-metric-row strong {
+  font-size: var(--ch-text-md);
+}
+
+.dashboard-container--chauffeur .dashboard-mobile-tabbar__item {
+  font-size: var(--ch-text-2xs);
+}
+
+.dashboard-container--chauffeur .dashboard-mobile-pill-switch__btn,
+.dashboard-container--chauffeur .dashboard-mobile-stats-switch__btn {
+  font-size: var(--ch-text-sm);
+}
+
+.dashboard-container--chauffeur .chauffeur-presence-geo__title {
+  font-size: var(--ch-text-base);
+}
+
+.dashboard-container--chauffeur .chauffeur-presence-geo__body {
+  font-size: var(--ch-text-sm);
+}
+
+.dashboard-container--chauffeur .chauffeur-presence-geo__error {
+  font-size: var(--ch-text-sm);
 }
 
 /* Sidebar */
@@ -91,57 +341,121 @@
   z-index: 20;
 }
 
+.dashboard-sidebar-head {
+  width: 100%;
+  padding: 0;
+  position: relative;
+  z-index: 2;
+  flex-shrink: 0;
+  overflow: visible;
+  box-sizing: border-box;
+}
+
 .dashboard-logo {
+  width: 100%;
   height: 40px;
   display: flex;
   align-items: center;
   justify-content: flex-start;
   gap: 10px;
-  padding: 0 10px;
+  padding: 0;
   margin-bottom: 0;
   flex-shrink: 0;
   position: relative;
+  box-sizing: border-box;
 }
 
 .dashboard-sidebar-user {
   display: flex;
-  justify-content: center;
-  padding: 10px 10px 14px;
+  justify-content: flex-start;
+  align-items: center;
+  width: 100%;
+  padding: 0;
   flex-shrink: 0;
+  box-sizing: border-box;
 }
 
 .dashboard-sidebar-user .client-compte-topbar-menu-anchor {
-  position: relative;
+  position: static;
+  width: 100%;
+  min-width: 0;
+}
+
+.dashboard-chauffeur-topbar-account-cluster--sidebar {
+  position: static;
+  display: flex;
+  width: 100%;
+  min-width: 0;
 }
 
 .dashboard-container--chauffeur .dashboard-sidebar-user .client-compte-topbar-user-btn--sidebar-rail {
-  width: 40px;
-  height: 40px;
-  min-width: 40px;
-  max-width: 40px;
+  width: 100%;
+  min-width: 0;
+  max-width: none;
+  height: auto;
   min-height: 40px;
-  max-height: 40px;
+  max-height: none;
   padding: 0;
-  gap: 0;
-  border-radius: 50%;
-  overflow: hidden;
-  background: #e2e8f0;
-  border: 2px solid #ffffff;
-  box-shadow:
-    0 0 0 1px rgba(15, 23, 42, 0.14),
-    0 2px 12px rgba(15, 23, 42, 0.12);
+  margin: 0;
+  gap: 10px;
+  border-radius: 0;
+  overflow: visible;
+  background: transparent;
+  border: none;
+  box-shadow: none;
+  justify-content: flex-start;
+  align-items: center;
+}
+
+.dashboard-container--chauffeur
+  .dashboard-sidebar-user
+  .client-compte-topbar-user-btn--sidebar-rail:hover {
+  background: transparent;
 }
 
 .dashboard-container--chauffeur
   .dashboard-sidebar-user
   .client-compte-topbar-user-btn--sidebar-rail
-  .client-compte-topbar-user-btn__photo-shell--fill {
-  width: 100%;
-  height: 100%;
-  min-width: 0;
-  min-height: 0;
+  .client-compte-topbar-user-btn__photo-shell {
+  width: 40px;
+  height: 40px;
+  min-width: 40px;
+  min-height: 40px;
+  flex-shrink: 0;
   border-radius: 50%;
   overflow: hidden;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: #e2e8f0;
+  color: #64748b;
+}
+
+.dashboard-container--chauffeur
+  .dashboard-sidebar-user
+  .client-compte-topbar-user-btn--sidebar-rail
+  .client-compte-topbar-user-btn__photo-shell
+  .client-compte-topbar-user-btn__avatar {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.dashboard-container--chauffeur
+  .dashboard-sidebar-user
+  .client-compte-topbar-user-btn--sidebar-rail
+  .client-compte-topbar-user-btn__name {
+  font-weight: 400;
+  color: #64748b;
+  line-height: 1.35;
+  text-align: left;
+  overflow: visible;
+  text-overflow: unset;
+  white-space: normal;
+  word-break: break-word;
+  min-width: 0;
+  flex: 1 1 auto;
 }
 
 .dashboard-container--chauffeur
@@ -151,15 +465,160 @@
   display: none;
 }
 
-.dashboard-container--chauffeur .dashboard-sidebar-user .client-compte-account-menu--sidebar-flyout {
-  top: 0;
-  left: calc(100% + 10px);
-  right: auto;
-  width: min(300px, calc(100vw - 96px));
+.client-compte-account-menu.client-compte-account-menu--sidebar-portal {
+  box-sizing: border-box;
+  overflow: hidden;
+  padding: 6px;
+  border-radius: 14px;
+}
+
+.chauffeur-account-menu.client-compte-account-menu {
+  width: min(280px, 92vw);
+}
+
+.chauffeur-account-menu__head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 10px 10px;
+}
+
+.chauffeur-account-menu__avatar {
+  width: 40px;
+  height: 40px;
+  flex-shrink: 0;
+  border-radius: 50%;
+  overflow: hidden;
+  background: #e2e8f0;
+  color: #64748b;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.chauffeur-account-menu__avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.chauffeur-account-menu__identity {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.chauffeur-account-menu__identity strong {
+  font-size: var(--ch-text-md, 18px);
+  font-weight: 600;
+  color: #0f172a;
+  line-height: 1.25;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.chauffeur-account-menu__identity span {
+  font-size: var(--ch-text-sm, 16px);
+  font-weight: 400;
+  color: #64748b;
+  line-height: 1.25;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.chauffeur-account-menu__nav {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 0 4px;
+}
+
+.chauffeur-account-menu__item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  margin: 0;
+  padding: 9px 10px;
+  border: none;
+  border-radius: 10px;
+  background: transparent;
+  color: #334155;
+  font-size: var(--ch-text-md, 18px);
+  font-weight: 500;
+  line-height: 1.2;
+  text-align: left;
+  cursor: pointer;
+}
+
+.chauffeur-account-menu__item svg {
+  flex-shrink: 0;
+  color: #64748b;
+}
+
+.chauffeur-account-menu__item:hover {
+  background: #f1f5f9;
+}
+
+.chauffeur-account-menu__item--active {
+  background: #f1f5f9;
+  color: #0f172a;
+}
+
+.chauffeur-account-menu__item--active svg {
+  color: #0f172a;
+}
+
+.chauffeur-account-menu__divider {
+  height: 1px;
+  margin: 6px 12px;
+  background: #e2e8f0;
+}
+
+.chauffeur-account-menu__item--logout {
+  margin: 0 4px 4px;
+  width: calc(100% - 8px);
 }
 
 .dashboard-container.sidebar-collapsed .dashboard-sidebar-user {
-  padding-inline: 6px;
+  justify-content: center;
+  width: 100%;
+}
+
+.dashboard-container.sidebar-collapsed
+  .dashboard-sidebar-user
+  .dashboard-chauffeur-topbar-account-cluster--sidebar {
+  width: auto;
+  justify-content: center;
+  margin-inline: auto;
+}
+
+.dashboard-container.sidebar-collapsed
+  .dashboard-sidebar-user
+  .client-compte-topbar-menu-anchor {
+  width: auto;
+  display: flex;
+  justify-content: center;
+}
+
+.dashboard-container.sidebar-collapsed
+  .dashboard-sidebar-user
+  .client-compte-topbar-user-btn--sidebar-rail {
+  width: auto;
+  min-height: 40px;
+  padding: 0;
+  justify-content: center;
+}
+
+.dashboard-container.sidebar-collapsed
+  .dashboard-sidebar-user
+  .client-compte-topbar-user-btn--sidebar-rail
+  .client-compte-topbar-user-btn__name {
+  display: none;
 }
 
 .sidebar-toggle-btn {
@@ -174,6 +633,26 @@
   box-shadow: 0 0 0 2px rgba(15, 23, 42, 0.12);
 }
 
+.dashboard-logo-icon {
+  position: relative;
+  display: block;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  overflow: hidden;
+  flex-shrink: 0;
+  box-shadow: 0 0 0 2px rgba(15, 23, 42, 0.12);
+  background: #f8fafc;
+}
+
+.dashboard-logo-icon img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  transition: opacity 0.2s ease;
+}
+
 .dashboard-logo-brand {
   display: flex;
   align-items: center;
@@ -181,7 +660,7 @@
   flex: 1;
   min-width: 0;
   margin: 0;
-  padding: 6px 8px;
+  padding: 6px 0;
   border: none;
   border-radius: 10px;
   background: transparent;
@@ -206,17 +685,10 @@
   margin: 0;
 }
 
-.dashboard-logo-chevron {
-  margin-left: auto;
-  display: inline-flex;
-  align-items: center;
-  color: #64748b;
-}
-
 .dashboard-logo-menu {
   position: absolute;
   top: calc(100% + 6px);
-  left: 10px;
+  left: 0;
   right: 42px;
   z-index: 30;
   display: flex;
@@ -328,7 +800,34 @@
 }
 
 .dashboard-container.sidebar-collapsed .sidebar-toggle-btn {
-  margin-left: 0;
+  display: none;
+}
+
+.dashboard-container.sidebar-collapsed .dashboard-logo-brand {
+  flex: 0 0 auto;
+  justify-content: center;
+}
+
+.dashboard-logo-expand-overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: #eef2ff;
+  color: #0f172a;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+  pointer-events: none;
+}
+
+.dashboard-container.sidebar-collapsed .dashboard-logo-brand:hover .dashboard-logo-expand-overlay {
+  opacity: 1;
+}
+
+.dashboard-container.sidebar-collapsed .dashboard-logo-brand:hover .dashboard-logo-icon img {
+  opacity: 0;
 }
 
 .dashboard-user {
@@ -418,7 +917,7 @@
 @media (min-width: 769px) {
   .dashboard-container--chauffeur .dashboard-sidebar {
     width: 220px;
-    padding: 14px 10px;
+    padding: 16px 12px;
     display: flex;
     flex-direction: column;
     overflow: visible;
@@ -1158,7 +1657,7 @@ html[data-app-theme='dark'] .dashboard-home-topbar-upcoming-btn {
   .dashboard-container--chauffeur .dashboard-topbar--chauffeur-mobile-toolbar.dashboard-topbar--with-launch-ride {
     height: auto;
     min-height: 52px;
-    padding: 10px 20px;
+    padding: 12px 22px;
     margin: 0;
     border-bottom: 1px solid #e2e8f0;
     background: #ffffff;
@@ -1251,8 +1750,8 @@ html[data-app-theme='dark'] .dashboard-home-topbar-upcoming-btn {
   }
 }
 
-.dashboard-container--chauffeur .topbar-launch-ride-btn {
-  margin-left: 4px;
+  .dashboard-container--chauffeur .topbar-launch-ride-btn {
+  margin-left: 6px;
 }
 
 .dashboard-container--chauffeur .dashboard-topbar--with-launch-ride .dashboard-topbar-right {
@@ -1267,7 +1766,7 @@ html[data-app-theme='dark'] .dashboard-home-topbar-upcoming-btn {
 
 @media (max-width: 1180px) {
   .dashboard-container--chauffeur .dashboard-topbar {
-    gap: 6px;
+    gap: 8px;
   }
 
   .dashboard-container--chauffeur .dashboard-topbar-right {
@@ -1875,6 +2374,13 @@ html[data-app-theme='dark'] .dashboard-home-topbar-upcoming-btn {
   padding-right: max(12px, env(safe-area-inset-right, 0px));
   padding-top: max(10px, env(safe-area-inset-top, 0px));
   margin-bottom: 8px;
+}
+
+.dashboard-container--chauffeur .dashboard-content.dashboard-content--org-fullbleed > .dashboard-topbar-title-stack--in-content {
+  padding-left: max(var(--ch-gutter), env(safe-area-inset-left, 0px));
+  padding-right: max(var(--ch-gutter), env(safe-area-inset-right, 0px));
+  padding-top: max(var(--ch-space-3), env(safe-area-inset-top, 0px));
+  margin-bottom: var(--ch-space-2);
 }
 
 .dashboard-content.dashboard-content--org-fullbleed > .dashboard-org-layout {
@@ -2977,6 +3483,35 @@ button.dashboard-panel--overview-empty:focus-visible {
 
 .dashboard-ride-settings-edit-layout .dashboard-payment-edit-actions {
   margin-top: 2px;
+}
+
+.chauffeur-service-tab-form.dashboard-ride-settings-edit-layout {
+  grid-template-columns: 1fr;
+  gap: var(--ch-space-3, 14px);
+}
+
+.chauffeur-service-tab-catalog {
+  grid-column: 1 / -1;
+}
+
+.chauffeur-service-tab-actions {
+  grid-column: 1 / -1;
+}
+
+.chauffeur-instant-ride-fares-panel {
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  background: #fff;
+  padding: 14px;
+  box-sizing: border-box;
+}
+
+.chauffeur-service-tab-form .chauffeur-instant-ride-fares-panel {
+  border: 1px solid #e2e8f0 !important;
+  border-radius: 12px !important;
+  background: #fff !important;
+  padding: 14px !important;
+  box-shadow: none;
 }
 
 .dashboard-ride-slider-field {
@@ -5163,17 +5698,19 @@ button.dashboard-org-sidebar-brand--home:focus-visible {
   }
 
   .dashboard-container--chauffeur {
-    padding: 12px;
-    gap: 6px;
+    padding: var(--ch-space-2);
+    gap: var(--ch-space-3);
     box-sizing: border-box;
   }
 
   .dashboard-container--chauffeur .dashboard-sidebar {
-    min-height: calc(100vh - 24px);
-    max-height: calc(100vh - 24px);
+    min-height: calc(100vh - var(--ch-space-2) * 2);
+    max-height: calc(100vh - var(--ch-space-2) * 2);
     border: 1px solid #dbe3ee;
     border-right: 1px solid #dbe3ee;
     border-radius: 18px;
+    gap: var(--ch-space-3);
+    padding: calc(var(--ch-space-3) + var(--ch-space-1)) var(--ch-space-3);
   }
 
   .dashboard-container--chauffeur .dashboard-main {
@@ -5199,7 +5736,7 @@ button.dashboard-org-sidebar-brand--home:focus-visible {
   .dashboard-container--chauffeur .dashboard-topbar.dashboard-topbar--home-client {
     background: #ffffff;
     border-bottom: 1px solid #dbe3ee;
-    padding: 6px 16px;
+    padding: 8px 18px;
     box-shadow: 0 1px 0 rgba(15, 23, 42, 0.06);
   }
 
@@ -5211,12 +5748,12 @@ button.dashboard-org-sidebar-brand--home:focus-visible {
   .dashboard-container--chauffeur .dashboard-topbar.dashboard-topbar--home-client .dashboard-topbar-right {
     display: flex;
     align-items: center;
-    gap: 12px;
+    gap: 14px;
   }
 
   .dashboard-container--chauffeur .dashboard-topbar-title-stack--in-content {
-    padding-block: 12px 8px;
-    padding-inline: 16px;
+    padding-block: var(--ch-space-3) var(--ch-space-2);
+    padding-inline: var(--ch-space-4);
   }
 
   .dashboard-container--chauffeur .dashboard-content {
@@ -5232,7 +5769,7 @@ button.dashboard-org-sidebar-brand--home:focus-visible {
     overflow: hidden;
     display: flex;
     flex-direction: column;
-    padding-top: 20px;
+    padding-top: var(--ch-gutter);
   }
 
   .dashboard-container--chauffeur .dashboard-content.dashboard-content--org-fullbleed > .dashboard-org-layout {
@@ -5266,7 +5803,7 @@ button.dashboard-org-sidebar-brand--home:focus-visible {
     height: 100%;
     max-height: 100%;
     overflow: hidden;
-    gap: 6px;
+    gap: var(--ch-space-3);
   }
 
   .dashboard-container--chauffeur .dashboard-main {
@@ -5293,7 +5830,8 @@ button.dashboard-org-sidebar-brand--home:focus-visible {
     z-index: 50;
     isolation: isolate;
     pointer-events: auto;
-    padding: 4px max(20px, env(safe-area-inset-left, 0px)) 10px max(20px, env(safe-area-inset-right, 0px));
+    padding: var(--ch-space-1) max(var(--ch-gutter), env(safe-area-inset-left, 0px)) var(--ch-space-3)
+      max(var(--ch-gutter), env(safe-area-inset-right, 0px));
     margin: 0;
   }
 
@@ -5329,10 +5867,12 @@ button.dashboard-org-sidebar-brand--home:focus-visible {
     -webkit-overflow-scrolling: touch;
     overscroll-behavior: contain;
     touch-action: pan-y;
-    padding-top: 20px;
-    padding-bottom: 12px;
-    padding-inline: max(20px, env(safe-area-inset-left, 0px)) max(20px, env(safe-area-inset-right, 0px));
+    padding-top: var(--ch-gutter);
+    padding-bottom: var(--ch-space-3);
+    padding-inline: max(var(--ch-gutter), env(safe-area-inset-left, 0px))
+      max(var(--ch-gutter), env(safe-area-inset-right, 0px));
     box-sizing: border-box;
+    gap: var(--ch-section-gap);
   }
 
   .dashboard-container--chauffeur .dashboard-content.dashboard-content--org-fullbleed {
@@ -5403,8 +5943,8 @@ button.dashboard-org-sidebar-brand--home:focus-visible {
     .dashboard-topbar--chauffeur-mobile-toolbar
     .client-compte-topbar-user-btn:not(.client-compte-topbar-user-btn--photo-only) {
     height: 40px;
-    padding: 0 14px;
-    font-size: 16px;
+    padding: 0 16px;
+    font-size: var(--ch-text-base);
     font-weight: 600;
     border: 1px solid #cbd5e1;
     background: #ffffff;
@@ -5428,13 +5968,13 @@ button.dashboard-org-sidebar-brand--home:focus-visible {
   }
 
   .dashboard-container--chauffeur .dashboard-topbar--chauffeur-mobile-toolbar .dashboard-chauffeur-topbar-account-cluster {
-    gap: 10px;
+    gap: 12px;
   }
 
   .dashboard-container--chauffeur .dashboard-topbar--chauffeur-mobile-toolbar .client-compte-topbar-user-btn--chauffeur-topbar {
     height: 40px;
-    padding: 0 14px;
-    font-size: 16px;
+    padding: 0 16px;
+    font-size: var(--ch-text-base);
     font-weight: 600;
     border: 1px solid #cbd5e1;
     background: #ffffff;
@@ -5446,13 +5986,13 @@ button.dashboard-org-sidebar-brand--home:focus-visible {
     .client-compte-topbar-user-btn--photo-only {
     display: inline-flex;
     align-items: center;
-    gap: 2px;
+    gap: 4px;
     width: auto;
     min-width: 0;
     max-width: none;
     height: 40px;
     min-height: 40px;
-    padding: 2px 4px 2px 2px;
+    padding: 4px 6px 4px 4px;
     border-radius: 999px;
     overflow: visible;
     box-sizing: border-box;
@@ -5484,115 +6024,115 @@ button.dashboard-org-sidebar-brand--home:focus-visible {
     color: #475569;
   }
 
-  /* Typographie & espacements — valeurs hautes des plages (titres ~32px, corps ~17px, gouttières ~20px, gaps ~12px, padding cartes ~16px, sections ~32px) */
+  /* Typographie mobile — tokens partagés avec le desktop */
   .dashboard-container--chauffeur .dashboard-chauffeur-main-title {
-    font-size: clamp(28px, 7.5vw, 32px);
+    font-size: clamp(var(--ch-text-2xl), 7.5vw, 32px);
     font-weight: 700;
     line-height: 1.12;
   }
 
   .dashboard-container--chauffeur .dashboard-chauffeur-main-subtitle {
-    font-size: 17px;
+    font-size: var(--ch-text-md);
     line-height: 1.4;
     font-weight: 400;
   }
 
   .dashboard-container--chauffeur .dashboard-topbar-title-stack--in-content {
-    padding-block: 0 10px;
+    padding-block: 0 var(--ch-space-3);
     padding-inline: 0;
-    gap: 6px;
+    gap: var(--ch-space-3);
   }
 
   .dashboard-container--chauffeur .dashboard-content {
-    gap: 32px;
+    gap: var(--ch-section-gap);
   }
 
   .dashboard-container--chauffeur .dashboard-content.dashboard-content--org-fullbleed {
-    padding-top: 20px;
+    padding-top: var(--ch-gutter);
     padding-bottom: 0;
     padding-inline: 0;
     gap: 0;
   }
 
   .dashboard-container--chauffeur .dashboard-content.dashboard-content--org-fullbleed > .dashboard-topbar-title-stack--in-content {
-    padding-left: max(20px, env(safe-area-inset-left, 0px));
-    padding-right: max(20px, env(safe-area-inset-right, 0px));
+    padding-left: max(var(--ch-gutter), env(safe-area-inset-left, 0px));
+    padding-right: max(var(--ch-gutter), env(safe-area-inset-right, 0px));
     padding-top: 0;
   }
 
   .dashboard-container--chauffeur .dashboard-favorites,
   .dashboard-container--chauffeur .dashboard-recent {
-    gap: 12px;
+    gap: var(--ch-space-3);
   }
 
   .dashboard-container--chauffeur .dashboard-overview-grid {
-    gap: 12px;
+    gap: var(--ch-space-3);
   }
 
   .dashboard-container--chauffeur .dashboard-overview-mini-grid {
-    gap: 12px;
+    gap: var(--ch-space-3);
   }
 
   .dashboard-container--chauffeur .dashboard-section-title h3 {
-    font-size: 14px;
+    font-size: var(--ch-text-md);
     font-weight: 600;
   }
 
   .dashboard-container--chauffeur .dashboard-section-title-inline span {
-    font-size: 14px;
+    font-size: var(--ch-text-sm);
   }
 
   .dashboard-container--chauffeur .dashboard-overview-link-inline {
-    font-size: 16px;
-    height: 36px;
-    padding: 0 14px;
+    font-size: var(--ch-text-base);
+    height: 44px;
+    padding: 0 var(--ch-space-4);
   }
 
   .dashboard-container--chauffeur .dashboard-overview-mini-card {
-    padding: 16px;
-    gap: 4px;
+    padding: var(--ch-card-padding);
+    gap: var(--ch-space-1);
   }
 
   .dashboard-container--chauffeur .dashboard-overview-mini-card strong {
-    font-size: 24px;
+    font-size: var(--ch-text-xl);
     font-weight: 600;
   }
 
   .dashboard-container--chauffeur .dashboard-overview-mini-card span {
-    font-size: 16px;
+    font-size: var(--ch-text-base);
     font-weight: 500;
   }
 
   .dashboard-container--chauffeur .dashboard-overview-mini-card small {
-    font-size: 14px;
-    margin-top: 4px;
+    font-size: var(--ch-text-sm);
+    margin-top: var(--ch-space-1);
   }
 
   .dashboard-container--chauffeur .dashboard-heatmap-card {
-    padding: 16px;
+    padding: var(--ch-card-padding);
   }
 
   .dashboard-container--chauffeur .dashboard-heatmap-footnote {
-    font-size: 14px;
+    font-size: var(--ch-text-sm);
   }
 
   .dashboard-container--chauffeur .dashboard-panel {
-    padding: 16px;
+    padding: var(--ch-card-padding);
   }
 
   .dashboard-container--chauffeur .dashboard-overview-stack {
-    padding: 16px;
-    gap: 12px;
+    padding: var(--ch-card-padding);
+    gap: var(--ch-space-3);
   }
 
   .dashboard-container--chauffeur .dashboard-metric-list {
-    gap: 12px;
+    gap: var(--ch-space-3);
   }
 
   .dashboard-container--chauffeur .dashboard-metric-row {
-    font-size: 16px;
+    font-size: var(--ch-text-base);
     min-height: 44px;
-    gap: 14px 18px;
+    gap: calc(var(--ch-space-3) + var(--ch-space-1)) var(--ch-space-5);
   }
 
   .dashboard-container--chauffeur .dashboard-metric-row > span {
@@ -5605,12 +6145,12 @@ button.dashboard-org-sidebar-brand--home:focus-visible {
   }
 
   .dashboard-container--chauffeur .dashboard-metric-row strong {
-    font-size: 17px;
+    font-size: var(--ch-text-md);
     font-weight: 600;
   }
 
   .dashboard-container--chauffeur .dashboard-alert-item {
-    padding-block: 12px;
+    padding-block: var(--ch-space-3);
   }
 }
 

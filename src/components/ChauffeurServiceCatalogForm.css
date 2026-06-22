@@ -1,0 +1,131 @@
+.chauffeur-service-catalog__lead {
+  margin: 0 0 var(--ch-space-4, 18px);
+}
+
+.chauffeur-service-catalog__category {
+  margin-top: 18px;
+  padding-top: var(--ch-space-4, 18px);
+  border-top: 1px solid #e5e7eb;
+}
+
+.chauffeur-service-catalog__category:first-of-type {
+  margin-top: 0;
+  padding-top: 0;
+  border-top: none;
+}
+
+.chauffeur-service-catalog__category-head h4 {
+  margin: 0 0 6px;
+  font-size: var(--ch-text-md, 18px);
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.chauffeur-service-catalog__category-head .dashboard-field-hint {
+  margin: 0 0 12px;
+}
+
+.chauffeur-service-catalog__table {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.chauffeur-service-catalog__row {
+  display: grid;
+  grid-template-columns: minmax(0, 1.4fr) minmax(72px, 0.55fr) minmax(72px, 0.55fr) 52px;
+  gap: 10px;
+  align-items: center;
+  padding: 10px 12px;
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+  background: #fff;
+}
+
+.chauffeur-service-catalog__row--head {
+  padding: 0 12px;
+  border: none;
+  background: transparent;
+  font-size: var(--ch-text-xs, 14px);
+  font-weight: 600;
+  color: #64748b;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+}
+
+.chauffeur-service-catalog__row.is-disabled {
+  opacity: 0.55;
+}
+
+.chauffeur-service-catalog__label {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: var(--ch-text-sm, 16px);
+  font-weight: 600;
+  color: #1f2937;
+  min-width: 0;
+}
+
+.chauffeur-service-catalog__label small {
+  font-size: var(--ch-text-xs, 14px);
+  font-weight: 500;
+  color: #64748b;
+}
+
+.chauffeur-service-catalog__price-cell input {
+  width: 100%;
+  min-width: 0;
+  height: 34px;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  padding: 0 10px;
+  font-size: var(--ch-text-base, 16px);
+  color: #111827;
+  background: #fff;
+  box-sizing: border-box;
+}
+
+.chauffeur-service-catalog__price-cell input:disabled {
+  background: #f8fafc;
+  color: #94a3b8;
+}
+
+.chauffeur-service-catalog__toggle-cell {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.chauffeur-service-catalog__supplements-grid {
+  margin-bottom: 12px;
+}
+
+.chauffeur-service-catalog__baby-seat {
+  margin-top: 0;
+}
+
+.chauffeur-service-catalog__sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+@media (max-width: 768px) {
+  .chauffeur-service-catalog__row {
+    grid-template-columns: minmax(0, 1fr) minmax(64px, 0.5fr) minmax(64px, 0.5fr) 44px;
+    gap: 8px;
+    padding: 10px;
+  }
+
+  .chauffeur-service-catalog__row--head span:nth-child(2),
+  .chauffeur-service-catalog__row--head span:nth-child(3) {
+    font-size: var(--ch-text-2xs, 12px);
+  }
+}

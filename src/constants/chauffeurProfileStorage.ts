@@ -1,3 +1,5 @@
+import type { ChauffeurServiceCatalogSnapshot } from './chauffeurServiceCatalog'
+
 export type ChauffeurProfilePaymentFields = {
   ibanMasked?: string
   payoutFrequency?: string
@@ -39,6 +41,14 @@ export type ChauffeurProfileSnapshot = {
   profilePhotoName?: string
   organizationPhotoName?: string
   vehiclePhotoName?: string
+  /** Présentation visible par les clients (onglet À propos). */
+  bio?: string
+  /** Site web public (onglet À propos). */
+  websiteUrl?: string
+  /** Profil LinkedIn public (onglet À propos). */
+  linkedinUrl?: string
+  /** Grille d’offres de service (courses, MAD, SAM, aéroport, mariages). */
+  serviceCatalog?: ChauffeurServiceCatalogSnapshot
   payment?: ChauffeurProfilePaymentFields
   ridePricing?: ChauffeurProfileRidePricingFields
   documents?: ChauffeurProfileDocumentEntry[]

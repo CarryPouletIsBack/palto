@@ -1,3 +1,10 @@
+import {
+  areChauffeurServiceCatalogsEqual,
+  DEFAULT_CHAUFFEUR_SERVICE_CATALOG,
+  normalizeChauffeurServiceCatalog,
+  type ChauffeurServiceCatalogSnapshot,
+} from './chauffeurServiceCatalog'
+
 export interface ChauffeurRideSettingsSnapshot {
   baseFareEur: string;
   pricePerKmEur: string;
@@ -9,6 +16,8 @@ export interface ChauffeurRideSettingsSnapshot {
   petFriendly: boolean;
   luggageAssistance: boolean;
   insulatedBag: boolean;
+  /** Grille d’offres (courses, MAD, SAM, aéroport, mariages). */
+  serviceCatalog: ChauffeurServiceCatalogSnapshot;
 }
 
 export const CHAUFFEUR_RIDE_SETTINGS_KEY = 'palto.chauffeur.ride-settings.v1';
@@ -23,6 +32,7 @@ export const DEFAULT_CHAUFFEUR_RIDE_SETTINGS: ChauffeurRideSettingsSnapshot = {
   petFriendly: true,
   luggageAssistance: true,
   insulatedBag: true,
+  serviceCatalog: DEFAULT_CHAUFFEUR_SERVICE_CATALOG,
 };
 
 export function loadChauffeurRideSettingsSnapshot(): ChauffeurRideSettingsSnapshot {
@@ -55,6 +65,7 @@ export function loadChauffeurRideSettingsSnapshot(): ChauffeurRideSettingsSnapsh
           : DEFAULT_CHAUFFEUR_RIDE_SETTINGS.luggageAssistance,
       insulatedBag:
         typeof parsed.insulatedBag === 'boolean' ? parsed.insulatedBag : DEFAULT_CHAUFFEUR_RIDE_SETTINGS.insulatedBag,
+      serviceCatalog: normalizeChauffeurServiceCatalog(parsed.serviceCatalog),
     };
   } catch {
     return DEFAULT_CHAUFFEUR_RIDE_SETTINGS;
@@ -74,7 +85,8 @@ export function areChauffeurRideSettingsEqual(
     a.maxPickupKm === b.maxPickupKm &&
     a.petFriendly === b.petFriendly &&
     a.luggageAssistance === b.luggageAssistance &&
-    a.insulatedBag === b.insulatedBag
+    a.insulatedBag === b.insulatedBag &&
+    areChauffeurServiceCatalogsEqual(a.serviceCatalog, b.serviceCatalog)
   );
 }
 

@@ -1,0 +1,233 @@
+.chauffeur-jobs {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ch-space-4, 18px);
+  max-width: 720px;
+}
+
+.chauffeur-jobs__toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--ch-space-3, 14px);
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.chauffeur-jobs__tabs {
+  display: flex;
+  gap: var(--ch-space-5, 22px);
+}
+
+.chauffeur-jobs__tab {
+  margin: 0;
+  padding: 12px 0 14px;
+  border: none;
+  border-bottom: 2px solid transparent;
+  background: transparent;
+  color: #64748b;
+  font-size: var(--ch-text-md, 18px);
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.chauffeur-jobs__tab--active {
+  color: #0f172a;
+  border-bottom-color: #0f172a;
+}
+
+.chauffeur-jobs__list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ch-space-3, 14px);
+}
+
+.chauffeur-jobs__empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 48px 22px;
+  border: 1px dashed #cbd5e1;
+  border-radius: 14px;
+  color: #64748b;
+  text-align: center;
+}
+
+.chauffeur-jobs__empty p {
+  margin: 0;
+  font-size: var(--ch-text-md, 18px);
+  max-width: 320px;
+}
+
+.chauffeur-job-card {
+  border: 1px solid #e2e8f0;
+  border-radius: 14px;
+  background: #ffffff;
+  padding: var(--ch-space-4, 18px);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.chauffeur-job-card__head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+}
+
+.chauffeur-job-card__poster {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.chauffeur-job-card__avatar {
+  width: 32px;
+  height: 32px;
+  flex-shrink: 0;
+  border-radius: 50%;
+  overflow: hidden;
+  background: #e2e8f0;
+  color: #475569;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.chauffeur-job-card__avatar-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.chauffeur-job-card__avatar-fallback {
+  font-size: var(--ch-text-xs, 14px);
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  color: #475569;
+}
+
+.chauffeur-job-card__poster-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.chauffeur-job-card__poster-name {
+  font-size: var(--ch-text-base, 16px);
+  font-weight: 600;
+  color: #0f172a;
+}
+
+.chauffeur-job-card__posted {
+  font-size: var(--ch-text-sm, 16px);
+  color: #64748b;
+  line-height: 1.35;
+}
+
+.chauffeur-job-card__title {
+  margin: 0;
+  font-size: var(--ch-text-xl, 24px);
+  font-weight: 700;
+  line-height: 1.25;
+  color: #0f172a;
+}
+
+.chauffeur-job-card__route {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  width: 100%;
+  margin: 0;
+  padding: 10px 12px;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  background: #f8fafc;
+  color: #334155;
+  font-size: var(--ch-text-md, 18px);
+  line-height: 1.35;
+  text-align: left;
+  cursor: pointer;
+}
+
+.chauffeur-job-card__route:hover {
+  background: #f1f5f9;
+  border-color: #cbd5e1;
+}
+
+.chauffeur-job-card__route-text {
+  min-width: 0;
+  flex: 1 1 auto;
+}
+
+.chauffeur-job-card__route-icon {
+  flex-shrink: 0;
+  color: #64748b;
+}
+
+.chauffeur-job-card__meta {
+  margin: 0;
+  font-size: var(--ch-text-base, 16px);
+  color: #64748b;
+}
+
+.chauffeur-job-card__tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.chauffeur-job-card__tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 5px 12px;
+  border-radius: 999px;
+  border: 1px solid #e2e8f0;
+  background: #f8fafc;
+  font-size: var(--ch-text-sm, 16px);
+  font-weight: 500;
+  color: #334155;
+}
+
+.chauffeur-job-card__actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 6px;
+}
+
+.chauffeur-job-card__btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 38px;
+  padding: 0 16px;
+  border-radius: 999px;
+  font-size: var(--ch-text-md, 18px);
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.chauffeur-job-card__btn--ghost {
+  border: 1px solid #cbd5e1;
+  background: #ffffff;
+  color: #334155;
+}
+
+.chauffeur-job-card__btn--ghost:hover {
+  background: #f8fafc;
+}
+
+.chauffeur-job-card__btn--primary {
+  border: 1px solid #0f172a;
+  background: #0f172a;
+  color: #ffffff;
+}
+
+.chauffeur-job-card__btn--primary:hover {
+  background: #1e293b;
+}

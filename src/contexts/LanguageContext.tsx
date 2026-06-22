@@ -561,7 +561,9 @@ const TRANSLATIONS: Record<Language, Record<string, unknown>> = {
       axisVertical: 'Axe vertical',
     },
     driverDashboard: {
-      titleOverview: "Vue d'ensemble",
+      titleOverview: 'Accueil',
+      titleProfile: 'Profil',
+      titleJobs: 'Jobs',
       titleCourses: 'Courses',
       titleStats: 'Statistiques',
       titleClients: 'Clients',
@@ -569,7 +571,9 @@ const TRANSLATIONS: Record<Language, Record<string, unknown>> = {
       titleUser: 'Compte chauffeur',
       titleSettings: 'Réglages',
       titleHelp: 'Aide',
-      navOverview: "Vue d'ensemble",
+      navOverview: 'Accueil',
+      navProfile: 'Profil',
+      navJobs: 'Jobs',
       navCourses: 'Courses',
       navStats: 'Statistiques',
       navClients: 'Clients',
@@ -594,6 +598,14 @@ const TRANSLATIONS: Record<Language, Record<string, unknown>> = {
       settingsMoreHint:
         'Ces préférences sont les mêmes que sur le site (compte passager) : elles s’appliquent à tout Palto sur cet appareil.',
       mainSubtitle: 'Vos courses, votre planning et votre activité au même endroit.',
+      jobsSubtitle:
+        'Pré-réservations programmées sur Palto Go — berline, van, bagages, etc. Acceptez celles qui correspondent à votre véhicule.',
+      jobsLead:
+        'Les clients réservent à l’avance sur /go ; les offres compatibles avec votre véhicule apparaissent ici. Pas de limite pour le moment.',
+      jobsTabsAria: 'Filtrer les jobs',
+      jobsTabForYou: 'Pour vous',
+      jobsTabAll: 'Toutes',
+      jobsEmpty: 'Aucune offre pour le moment. Revenez plus tard ou consultez l’onglet Toutes.',
       statsSubtitle: 'Vue rapide et lisible de ton activité chauffeur.',
       statsHeatmapPlaceholder:
         'Les données annuelles détaillées s’afficheront dès que l’historique serveur sera disponible. Les indicateurs du haut restent calculés à partir des courses connues.',
@@ -1436,7 +1448,9 @@ const TRANSLATIONS: Record<Language, Record<string, unknown>> = {
       axisVertical: 'Vertical axis',
     },
     driverDashboard: {
-      titleOverview: 'Overview',
+      titleOverview: 'Home',
+      titleProfile: 'Profile',
+      titleJobs: 'Jobs',
       titleCourses: 'Rides',
       titleStats: 'Statistics',
       titleClients: 'Clients',
@@ -1444,7 +1458,9 @@ const TRANSLATIONS: Record<Language, Record<string, unknown>> = {
       titleUser: 'Driver account',
       titleSettings: 'Settings',
       titleHelp: 'Help',
-      navOverview: 'Overview',
+      navOverview: 'Home',
+      navProfile: 'Profile',
+      navJobs: 'Jobs',
       navCourses: 'Rides',
       navStats: 'Statistics',
       navClients: 'Clients',
@@ -1469,6 +1485,14 @@ const TRANSLATIONS: Record<Language, Record<string, unknown>> = {
       settingsMoreHint:
         'These preferences match the passenger site account: they apply to all of Palto on this device.',
       mainSubtitle: 'Your rides, schedule and operations in one place.',
+      jobsSubtitle:
+        'Scheduled pre-bookings from Palto Go — sedan, van, luggage, etc. Accept offers that match your vehicle.',
+      jobsLead:
+        'Clients book ahead on /go; compatible offers show up here. No daily cap for now.',
+      jobsTabsAria: 'Filter jobs',
+      jobsTabForYou: 'For you',
+      jobsTabAll: 'All',
+      jobsEmpty: 'No offers right now. Check back later or open the All tab.',
       statsSubtitle: 'A quick, readable view of your driver activity.',
       statsHeatmapPlaceholder:
         'Detailed yearly data will appear when server history is available. The KPI cards above are calculated from known rides.',

@@ -44,15 +44,15 @@ export default function ChauffeurRideSettingsForm({
 
   return (
     <>
-      <article className="dashboard-panel">
+      <article className="dashboard-panel chauffeur-instant-ride-fares-panel">
         <div className="dashboard-section-title dashboard-section-title-inline">
-          <h3>{isEn ? 'My fares' : 'Mes tarifs'}</h3>
-          <span>{isEn ? 'You set your prices' : 'Vous fixez vos prix'}</span>
+          <h3>{isEn ? 'Instant ride' : 'Course à l’instant'}</h3>
+          <span>{isEn ? 'Your fares' : 'Vos tarifs'}</span>
         </div>
         <p className="dashboard-field-hint" style={{ margin: '0 0 12px' }}>
           {isEn
-            ? 'Palto does not impose an Uber-style grid. These amounts are yours; passengers see them on Go.'
-            : 'Palto n’impose pas de grille type Uber. Ce sont vos tarifs ; les passagers les voient sur Go.'}
+            ? 'Rates for on-demand trips on Palto Go. Configure your full service offer below.'
+            : 'Tarifs appliqués aux courses immédiates sur Palto Go. Votre grille complète pour les autres prestations se configure ci-dessous.'}
         </p>
         <div className="dashboard-payment-edit-grid">
           <label>
@@ -95,8 +95,8 @@ export default function ChauffeurRideSettingsForm({
             />
             <small className="dashboard-field-hint">
               {isEn
-                ? 'Coast and mountain routes (Réunion). Estimated from the route vs. straight line on Go.'
-                : 'Côte et reliefs (La Réunion). Estimé sur Go à partir de l’écart route / ligne droite.'}
+                ? 'Coast and mountain routes (Réunion). Applied on Go from route vs. straight-line distance.'
+                : 'Côte et reliefs (La Réunion). Appliqué sur Go à partir de l’écart route / ligne droite.'}
             </small>
           </label>
         </div>

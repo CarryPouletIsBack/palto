@@ -125,6 +125,11 @@ html[data-app-theme='dark'] .dashboard-logo-brand--active {
   background: rgba(255, 255, 255, 0.1);
 }
 
+html[data-app-theme='dark'] .dashboard-logo-expand-overlay {
+  background: rgba(255, 255, 255, 0.1);
+  color: var(--app-text-primary);
+}
+
 html[data-app-theme='dark'] .dashboard-nav-item {
   color: var(--app-text-muted);
 }

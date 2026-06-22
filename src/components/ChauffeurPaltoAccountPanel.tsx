@@ -43,6 +43,8 @@ type Props = {
   afterDeleteContent?: ReactNode
   /** Hub drill mobile : nav verticale, identité dans la section perso uniquement. */
   mobileLayout?: boolean
+  /** Vue intégrée au dashboard chauffeur (sidebar compte) : sans sous-nav Compte Palto. */
+  hideAccountSidebar?: boolean
 }
 
 export default function ChauffeurPaltoAccountPanel({
@@ -50,6 +52,7 @@ export default function ChauffeurPaltoAccountPanel({
   initialSection = 'personal',
   afterDeleteContent,
   mobileLayout = false,
+  hideAccountSidebar = false,
 }: Props) {
   const { language } = useLanguage()
   const isEn = language === 'en'
@@ -369,7 +372,7 @@ export default function ChauffeurPaltoAccountPanel({
         mobileLayout ? ' chauffeur-palto-account-layout--mobile' : ''
       }`}
     >
-      {!mobileLayout ? (
+      {!mobileLayout && !hideAccountSidebar ? (
         <aside className="client-compte-account-sidebar" aria-label={isEn ? 'Palto account' : 'Compte Palto'}>
           {identityBlock}
           {sectionNav}
