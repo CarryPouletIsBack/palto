@@ -20,6 +20,7 @@ import { GeolocationPromptBanner } from './components/GeolocationPromptBanner'
 import { markNativeTouchOnDocument } from './lib/nativeTouchDevice'
 import BetaTestBanner from './components/BetaTestBanner'
 import { usesEmbeddedBetaBanner } from './constants/siteChrome'
+import { useGeolocationPromptBanner } from './constants/featureFlags'
 import { useOAuthReturnHandler } from './hooks/useOAuthReturnHandler'
 import { getDestinationById, type PopularDestination } from './data/popularDestinations'
 import { AppToaster } from './components/AppToaster'
@@ -1045,7 +1046,7 @@ function App() {
   return (
     <div className={`container ${currentPage === 'menu' ? 'menu-active' : ''}`}>
       <AnalyticsGuard />
-      <GeolocationPromptBanner />
+      {useGeolocationPromptBanner() ? <GeolocationPromptBanner /> : null}
       <AppToaster />
       {(() => {
         const showTopBeta =

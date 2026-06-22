@@ -107,3 +107,9 @@ export function supabaseRealtimeConfigured(): boolean {
   const key = (import.meta.env.VITE_SUPABASE_ANON_KEY as string | undefined)?.trim()
   return Boolean(url && key)
 }
+
+/** Bandeau « Autoriser la géolocalisation » au chargement (désactivé par défaut, mai 2026).
+ *  Voir `.cursorrules` § Bandeau géolocalisation. Réactivation : `VITE_GEO_PROMPT_BANNER=true`. */
+export function useGeolocationPromptBanner(): boolean {
+  return isEnabled(import.meta.env.VITE_GEO_PROMPT_BANNER as string | undefined)
+}

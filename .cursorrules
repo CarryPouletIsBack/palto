@@ -49,4 +49,14 @@ Pour plus d'informations, consultez : https://mui.com/x/introduction/mcp/
 - **Heartbeat chauffeur** : `POST /api/chauffeur?resource=presence` (dashboard + navigation).
 - **Mock** : `getNearbyDriversMock()` dans `src/data/nearbyDrivers.ts` — réservé aux tests / démos locales, non utilisé par la page Go.
 
+---
+
+## Bandeau géolocalisation (`palto-geo-prompt`) — DÉSACTIVÉ volontairement
+
+- **État actuel (mai 2026)** : le bandeau d’autorisation géoloc au premier chargement est **masqué et désactivé** (décision produit, pas un bug).
+- **Composant** : `GeolocationPromptBanner.tsx` (classe CSS `.palto-geo-prompt`), monté dans `App.tsx` uniquement si le flag est actif.
+- **Flag** : `useGeolocationPromptBanner()` dans `src/constants/featureFlags.ts` — retourne `false` par défaut.
+- **Pour réactiver** : définir `VITE_GEO_PROMPT_BANNER=true` (`.env.local` / Vercel), puis redéployer. Aucun autre changement de code requis tant que le composant reste branché dans `App.tsx`.
+- **Ne pas** réintroduire de demande géoloc implicite ailleurs sans demande explicite de l’utilisateur.
+
 
