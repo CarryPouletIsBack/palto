@@ -6,6 +6,7 @@ import {
 } from '../constants/chauffeurSignup'
 import type { ChauffeurVehicleType } from '../constants/chauffeurRegistrationStorage'
 import { formatFrenchPlateInput } from '../services/vehiclePlate'
+import { AuthFieldLabelText } from './AuthRequiredMark'
 
 type Props = {
   draft: ChauffeurSignupDraft
@@ -19,13 +20,14 @@ export default function ChauffeurSignupStepVehicle({ draft, setDraft }: Props) {
     <div className="auth-signup-step">
       <h2 className="auth-signup-step__title">{t('chauffeurAuth.stepVehicleTitle')}</h2>
       <label className="auth-page-field-label">
-        {t('chauffeurAuth.vehicleTypeLabel')}
+        <AuthFieldLabelText required>{t('chauffeurAuth.vehicleTypeLabel')}</AuthFieldLabelText>
         <select
           className="auth-page-select"
           value={draft.vehicleType}
           onChange={(e) =>
             setDraft((d) => ({ ...d, vehicleType: e.target.value as ChauffeurVehicleType }))
           }
+          required
         >
           <option value="berline">{t('chauffeurAuth.vehicleBerline')}</option>
           <option value="utilitaire">{t('chauffeurAuth.vehicleUtilitaire')}</option>
@@ -34,7 +36,7 @@ export default function ChauffeurSignupStepVehicle({ draft, setDraft }: Props) {
         </select>
       </label>
       <label className="auth-page-field-label">
-        {t('chauffeurAuth.motorisationLabel')}
+        <AuthFieldLabelText required>{t('chauffeurAuth.motorisationLabel')}</AuthFieldLabelText>
         <select
           className="auth-page-select"
           value={draft.motorisation}
@@ -44,6 +46,7 @@ export default function ChauffeurSignupStepVehicle({ draft, setDraft }: Props) {
               motorisation: e.target.value as ChauffeurSignupDraft['motorisation'],
             }))
           }
+          required
         >
           {CHAUFFEUR_SIGNUP_MOTORISATIONS.map((m) => (
             <option key={m} value={m}>
@@ -55,7 +58,7 @@ export default function ChauffeurSignupStepVehicle({ draft, setDraft }: Props) {
         </select>
       </label>
       <label className="auth-page-field-label">
-        {t('chauffeurAuth.plateLabel')}
+        <AuthFieldLabelText required>{t('chauffeurAuth.plateLabel')}</AuthFieldLabelText>
         <input
           className="auth-page-input"
           type="text"
@@ -67,7 +70,7 @@ export default function ChauffeurSignupStepVehicle({ draft, setDraft }: Props) {
         />
       </label>
       <label className="auth-page-field-label">
-        {t('chauffeurAuth.licenseYearLabel')}
+        <AuthFieldLabelText required>{t('chauffeurAuth.licenseYearLabel')}</AuthFieldLabelText>
         <input
           className="auth-page-input"
           type="text"

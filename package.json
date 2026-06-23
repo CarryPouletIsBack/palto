@@ -15,7 +15,7 @@
     "typecheck": "tsc -p tsconfig.node.json --noEmit",
     "typecheck:full": "tsc -p tsconfig.app.json --noEmit && tsc -p tsconfig.node.json --noEmit",
     "test:smoke": "npm run build",
-    "test:unit": "npx --yes tsx --test src/constants/chauffeurVehicleType.node.test.ts src/constants/chauffeurSignup.node.test.ts src/lib/chauffeurFareEstimate.node.test.ts server/lib/chauffeurFareEstimate.node.test.ts server/lib/chauffeurDocumentValidation.node.test.ts server/lib/chauffeurCarteGriseExtract.node.test.ts",
+    "test:unit": "npx --yes tsx --test src/constants/chauffeurVehicleType.node.test.ts src/constants/chauffeurSignup.node.test.ts src/data/reunionCommunes.node.test.ts src/lib/chauffeurFareEstimate.node.test.ts server/lib/chauffeurFareEstimate.node.test.ts server/lib/chauffeurDocumentValidation.node.test.ts server/lib/chauffeurCarteGriseExtract.node.test.ts",
     "verify": "npm run lint && npm run typecheck && npm run build"
   },
   "dependencies": {

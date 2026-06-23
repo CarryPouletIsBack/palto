@@ -58,3 +58,32 @@ export function normalizeReunionCommuneForSelect(value: string | null | undefine
   if (insensitive) return insensitive
   return LEGACY_COMMUNE_ALIASES[raw] ?? ''
 }
+
+function foldAccents(value: string): string {
+  return value
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+}
+
+/** Extrait une commune réunionnaise connue depuis un libellé BAN / géocodage. */
+export function extractReunionCommuneFromAddressLabel(label: string): string {
+  const trimmed = label.trim()
+  if (!trimmed) return ''
+
+  const afterPostcode = trimmed.match(/\b97\d{3}\s+([^,]+)/)
+  if (afterPostcode?.[1]) {
+    const fromPostcode = normalizeReunionCommuneForSelect(afterPostcode[1].trim())
+    if (fromPostcode) return fromPostcode
+  }
+
+  const foldedLabel = foldAccents(trimmed)
+  const byLength = [...REUNION_COMMUNES_FR].sort((a, b) => b.length - a.length)
+  for (const commune of byLength) {
+    if (foldedLabel.includes(foldAccents(commune))) {
+      return commune
+    }
+  }
+
+  return ''
+}
