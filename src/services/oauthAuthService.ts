@@ -149,6 +149,8 @@ export function oauthErrorMessage(code: string | null, t: (key: string) => strin
       return t('authOAuth.errorUnavailable')
     case 'CHAUFFEUR_ACCOUNT_REQUIRED':
       return t('authOAuth.errorChauffeurRequired')
+    case 'CHAUFFEUR_SIGNUP_PASSWORD_REQUIRED':
+      return t('authOAuth.errorChauffeurSignupPassword')
     case 'FACEBOOK_EMAIL_REQUIRED':
       return t('authOAuth.errorFacebookEmail')
     case 'EMAIL_EXISTS':

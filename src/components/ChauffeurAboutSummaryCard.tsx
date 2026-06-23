@@ -1,15 +1,14 @@
-import { Globe, Info, Linkedin, MapPin } from 'lucide-react'
+import { Globe, Linkedin, MapPin, Sparkles, Zap } from 'lucide-react'
 import type { ChauffeurRideSettingsSnapshot } from '../constants/chauffeurRideSettingsStorage'
 import type { ChauffeurServiceCatalogSnapshot } from '../constants/chauffeurServiceCatalog'
 import {
+  buildChauffeurCatalogCategoryRates,
   buildChauffeurServiceBadges,
-  formatChauffeurCatalogPriceRange,
   normalizeExternalUrl,
-  summarizeChauffeurCatalogPrices,
 } from '../utils/chauffeurAboutSummary'
 import './ChauffeurAboutSummaryCard.css'
 
-const MAX_VISIBLE_BADGES = 5
+const MAX_VISIBLE_BADGES = 6
 
 type Props = {
   language: 'fr' | 'en'
@@ -25,6 +24,17 @@ type Props = {
   onLinkedinUrlChange?: (value: string) => void
 }
 
+function displayWebsiteLabel(url: string): string {
+  const trimmed = url.trim()
+  if (!trimmed) return ''
+  try {
+    const parsed = new URL(normalizeExternalUrl(trimmed))
+    return parsed.hostname.replace(/^www\./, '')
+  } catch {
+    return trimmed
+  }
+}
+
 export default function ChauffeurAboutSummaryCard({
   language,
   commune,
@@ -36,8 +46,8 @@ export default function ChauffeurAboutSummaryCard({
   onLinkedinUrlChange,
 }: Props) {
   const isEn = language === 'en'
-  const priceSummary = summarizeChauffeurCatalogPrices(catalog)
-  const priceLabel = formatChauffeurCatalogPriceRange(priceSummary, language)
+  const isEditMode = Boolean(onWebsiteUrlChange || onLinkedinUrlChange)
+  const categoryRates = buildChauffeurCatalogCategoryRates(catalog, language)
   const badges = buildChauffeurServiceBadges(catalog, language, {
     petFriendly: rideSettings.petFriendly,
     luggageAssistance: rideSettings.luggageAssistance,
@@ -46,30 +56,83 @@ export default function ChauffeurAboutSummaryCard({
   const visibleBadges = badges.slice(0, MAX_VISIBLE_BADGES)
   const overflowCount = badges.length - visibleBadges.length
 
-  const instantHint =
-    rideSettings.pricePerKmEur.trim() || rideSettings.baseFareEur.trim()
-      ? isEn
-        ? `Instant ride: ${rideSettings.baseFareEur.trim() || '—'} € base · ${rideSettings.pricePerKmEur.trim() || '—'} €/km`
-        : `Course à l’instant : ${rideSettings.baseFareEur.trim() || '—'} € prise en charge · ${rideSettings.pricePerKmEur.trim() || '—'} €/km`
-      : null
+  const hasInstantFare =
+    rideSettings.pricePerKmEur.trim().length > 0 || rideSettings.baseFareEur.trim().length > 0
 
   const websiteHref = normalizeExternalUrl(websiteUrl)
   const linkedinHref = normalizeExternalUrl(linkedinUrl)
+  const communeLabel = commune.trim()
 
   return (
     <aside className="chauffeur-about-summary-card" aria-label={isEn ? 'Public profile summary' : 'Résumé public'}>
-      <section className="chauffeur-about-summary-card__section">
-        <h3 className="chauffeur-about-summary-card__label">{isEn ? 'Rate' : 'Tarif'}</h3>
-        <p className="chauffeur-about-summary-card__rate">{priceLabel}</p>
-        {instantHint ? <p className="chauffeur-about-summary-card__rate-hint">{instantHint}</p> : null}
+      <header className="chauffeur-about-summary-card__header">
+        <p className="chauffeur-about-summary-card__eyebrow">
+          {isEn ? 'Client preview' : 'Aperçu client'}
+        </p>
+        <h3 className="chauffeur-about-summary-card__title">
+          {isEn ? 'What passengers see' : 'Ce que voient les clients'}
+        </h3>
+      </header>
+
+      <section className="chauffeur-about-summary-card__block">
+        <h4 className="chauffeur-about-summary-card__block-title">
+          {isEn ? 'Rates' : 'Tarifs'}
+        </h4>
+        {categoryRates.length > 0 ? (
+          <ul className="chauffeur-about-summary-card__rate-list">
+            {categoryRates.map((row) => (
+              <li key={row.id} className="chauffeur-about-summary-card__rate-item">
+                <span className="chauffeur-about-summary-card__rate-name">{row.categoryLabel}</span>
+                <div className="chauffeur-about-summary-card__rate-prices">
+                  <span className="chauffeur-about-summary-card__rate-amount" aria-label={row.priceLabel}>
+                    {row.priceText}
+                  </span>
+                  {row.hasQuoteAddon ? (
+                    <span className="chauffeur-about-summary-card__rate-quote">
+                      {isEn ? '+ on quote' : '+ sur devis'}
+                    </span>
+                  ) : null}
+                </div>
+              </li>
+            ))}
+          </ul>
+        ) : (
+          <p className="chauffeur-about-summary-card__placeholder">
+            {isEditMode
+              ? isEn
+                ? 'Enable offers in the Service tab.'
+                : 'Activez vos offres dans l’onglet Service.'
+              : isEn
+                ? 'Rates not available.'
+                : 'Tarifs non renseignés.'}
+          </p>
+        )}
+
+        {hasInstantFare ? (
+          <div className="chauffeur-about-summary-card__instant">
+            <Zap size={16} strokeWidth={2.25} className="chauffeur-about-summary-card__instant-icon" aria-hidden />
+            <div className="chauffeur-about-summary-card__instant-body">
+              <p className="chauffeur-about-summary-card__instant-label">
+                {isEn ? 'Instant ride on Palto Go' : 'Course à l’instant sur Palto Go'}
+              </p>
+              <p className="chauffeur-about-summary-card__instant-value">
+                {rideSettings.baseFareEur.trim() || '—'} €
+                <span className="chauffeur-about-summary-card__instant-sep" aria-hidden>
+                  ·
+                </span>
+                {rideSettings.pricePerKmEur.trim() || '—'} €/km
+              </p>
+            </div>
+          </div>
+        ) : null}
       </section>
 
-      <section className="chauffeur-about-summary-card__section">
-        <div className="chauffeur-about-summary-card__label-row">
-          <h3 className="chauffeur-about-summary-card__label">
+      <section className="chauffeur-about-summary-card__block">
+        <div className="chauffeur-about-summary-card__block-title-row">
+          <h4 className="chauffeur-about-summary-card__block-title">
             {isEn ? 'Services' : 'Services'}
-          </h3>
-          <Info size={14} strokeWidth={2} aria-hidden />
+          </h4>
+          <Sparkles size={15} strokeWidth={2} className="chauffeur-about-summary-card__block-icon" aria-hidden />
         </div>
         {badges.length > 0 ? (
           <div className="chauffeur-about-summary-card__badges">
@@ -85,109 +148,98 @@ export default function ChauffeurAboutSummaryCard({
             ) : null}
           </div>
         ) : (
-          <p className="chauffeur-about-summary-card__empty">
-            {isEn ? 'Enable offers in the Service tab.' : 'Activez vos offres dans l’onglet Service.'}
+          <p className="chauffeur-about-summary-card__placeholder">
+            {isEditMode
+              ? isEn
+                ? 'Your service badges will appear here.'
+                : 'Vos prestations apparaîtront ici.'
+              : isEn
+                ? 'No services listed.'
+                : 'Aucune prestation listée.'}
           </p>
         )}
       </section>
 
-      <section className="chauffeur-about-summary-card__section">
-        <h3 className="chauffeur-about-summary-card__label">{isEn ? 'Details' : 'Détails'}</h3>
+      <section className="chauffeur-about-summary-card__block chauffeur-about-summary-card__block--details">
+        <h4 className="chauffeur-about-summary-card__block-title">{isEn ? 'Details' : 'Détails'}</h4>
         <div className="chauffeur-about-summary-card__details">
-          <div className="chauffeur-about-summary-card__detail-row">
-            <MapPin size={20} strokeWidth={2} className="chauffeur-about-summary-card__detail-icon" aria-hidden />
-            <div className="chauffeur-about-summary-card__detail-body">
-              <p className="chauffeur-about-summary-card__detail-text">
-                {commune.trim() || (isEn ? 'Add your commune' : 'Ajoutez votre commune')}
+          <div className="chauffeur-about-summary-card__detail">
+            <span className="chauffeur-about-summary-card__detail-icon-wrap" aria-hidden>
+              <MapPin size={18} strokeWidth={2} />
+            </span>
+            <div className="chauffeur-about-summary-card__detail-content">
+              <p
+                className={`chauffeur-about-summary-card__detail-primary${
+                  communeLabel ? '' : ' chauffeur-about-summary-card__detail-primary--muted'
+                }`}
+              >
+                {communeLabel || (isEn ? 'Commune not set' : 'Commune à préciser')}
               </p>
-              <p className="chauffeur-about-summary-card__detail-muted">La Réunion</p>
+              <p className="chauffeur-about-summary-card__detail-secondary">La Réunion</p>
             </div>
           </div>
 
-          <div className="chauffeur-about-summary-card__detail-row">
-            <Globe size={20} strokeWidth={2} className="chauffeur-about-summary-card__detail-icon" aria-hidden />
-            <div className="chauffeur-about-summary-card__detail-body">
+          <div className="chauffeur-about-summary-card__detail">
+            <span className="chauffeur-about-summary-card__detail-icon-wrap" aria-hidden>
+              <Globe size={18} strokeWidth={2} />
+            </span>
+            <div className="chauffeur-about-summary-card__detail-content">
               {onWebsiteUrlChange ? (
                 <input
                   type="url"
                   className="chauffeur-about-summary-card__link-input"
                   value={websiteUrl}
                   onChange={(e) => onWebsiteUrlChange(e.target.value)}
-                  placeholder={isEn ? 'Add website' : 'Ajouter un site web'}
+                  placeholder={isEn ? 'Website (optional)' : 'Site web (facultatif)'}
                   aria-label={isEn ? 'Website URL' : 'URL du site web'}
                 />
               ) : websiteHref ? (
                 <a
                   href={websiteHref}
-                  className="chauffeur-about-summary-card__detail-text"
+                  className="chauffeur-about-summary-card__detail-link"
                   target="_blank"
                   rel="noopener noreferrer"
                 >
-                  {websiteUrl.trim()}
+                  {displayWebsiteLabel(websiteUrl)}
                 </a>
               ) : (
-                <p className="chauffeur-about-summary-card__detail-muted">
-                  {isEn ? 'No website' : 'Aucun site web'}
+                <p className="chauffeur-about-summary-card__detail-secondary">
+                  {isEn ? 'No website' : 'Pas de site web'}
                 </p>
               )}
             </div>
           </div>
 
-          <div className="chauffeur-about-summary-card__detail-row">
-            <Linkedin size={20} strokeWidth={2} className="chauffeur-about-summary-card__detail-icon" aria-hidden />
-            <div className="chauffeur-about-summary-card__detail-body">
+          <div className="chauffeur-about-summary-card__detail">
+            <span className="chauffeur-about-summary-card__detail-icon-wrap" aria-hidden>
+              <Linkedin size={18} strokeWidth={2} />
+            </span>
+            <div className="chauffeur-about-summary-card__detail-content">
               {onLinkedinUrlChange ? (
                 <input
                   type="url"
                   className="chauffeur-about-summary-card__link-input"
                   value={linkedinUrl}
                   onChange={(e) => onLinkedinUrlChange(e.target.value)}
-                  placeholder={isEn ? 'Add LinkedIn profile' : 'Ajouter un profil LinkedIn'}
+                  placeholder={isEn ? 'LinkedIn (optional)' : 'LinkedIn (facultatif)'}
                   aria-label={isEn ? 'LinkedIn URL' : 'URL LinkedIn'}
                 />
               ) : linkedinHref ? (
                 <a
                   href={linkedinHref}
-                  className="chauffeur-about-summary-card__detail-text"
+                  className="chauffeur-about-summary-card__detail-link"
                   target="_blank"
                   rel="noopener noreferrer"
                 >
                   LinkedIn
                 </a>
               ) : (
-                <p className="chauffeur-about-summary-card__detail-muted">
-                  {isEn ? 'No LinkedIn profile' : 'Aucun profil LinkedIn'}
+                <p className="chauffeur-about-summary-card__detail-secondary">
+                  {isEn ? 'No LinkedIn profile' : 'Pas de profil LinkedIn'}
                 </p>
               )}
             </div>
           </div>
-
-          {(websiteHref || linkedinHref) && !onWebsiteUrlChange ? (
-            <div className="chauffeur-about-summary-card__external-links">
-              {websiteHref ? (
-                <a
-                  href={websiteHref}
-                  className="chauffeur-about-summary-card__external-link"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  aria-label={isEn ? 'Open website' : 'Ouvrir le site web'}
-                >
-                  <Globe size={16} strokeWidth={2} aria-hidden />
-                </a>
-              ) : null}
-              {linkedinHref ? (
-                <a
-                  href={linkedinHref}
-                  className="chauffeur-about-summary-card__external-link"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  aria-label={isEn ? 'Open LinkedIn profile' : 'Ouvrir le profil LinkedIn'}
-                >
-                  <Linkedin size={16} strokeWidth={2} aria-hidden />
-                </a>
-              ) : null}
-            </div>
-          ) : null}
         </div>
       </section>
     </aside>

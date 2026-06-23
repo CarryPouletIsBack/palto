@@ -41,6 +41,7 @@ import {
   type CoursePaymentRow,
 } from '../../server/lib/rideStripePayments.js'
 import { queryChauffeurCoursesList } from '../../server/lib/coursePaymentMethod.js'
+import { validateChauffeurDocument } from '../../server/lib/chauffeurDocumentValidation.js'
 
 const ComplianceQuerySchema = z.object({ email: z.string().email() })
 const ComplianceBodySchema = z.object({
@@ -549,6 +550,56 @@ async function handleCompliancePost(req: VercelRequest, res: VercelResponse, das
   return res.status(200).json({ snapshot: current })
 }
 
+const DocumentValidateBodySchema = z.object({
+  docType: z.enum(['permis', 'assurance', 'carte-grise', 'controle-technique']),
+  fileName: z.string().min(1).max(256),
+  mimeType: z.string().min(1).max(128),
+  dataBase64: z.string().min(1).max(20_000_000),
+  expectedPlate: z.string().max(20).optional(),
+})
+
+async function handleDocumentValidatePost(req: VercelRequest, res: VercelResponse, accountId: string) {
+  let body: unknown = req.body
+  if (typeof req.body === 'string') {
+    try {
+      body = JSON.parse(req.body)
+    } catch {
+      return res.status(400).json({ error: 'Payload JSON invalide' })
+    }
+  }
+  const parsed = DocumentValidateBodySchema.safeParse(body)
+  if (!parsed.success) return res.status(400).json({ error: 'Payload invalide', details: parsed.error.flatten() })
+
+  let buffer: Buffer
+  try {
+    buffer = Buffer.from(parsed.data.dataBase64, 'base64')
+  } catch {
+    return res.status(400).json({ error: 'Fichier invalide' })
+  }
+
+  let expectedPlate = parsed.data.expectedPlate?.trim()
+  if (!expectedPlate) {
+    const supabase = getSupabaseAdmin()
+    const { data } = await supabase
+      .from('chauffeur_profile_data')
+      .select('account_snapshot')
+      .eq('account_id', accountId)
+      .maybeSingle()
+    const snap = sanitizeChauffeurProfileSnapshot(data?.account_snapshot ?? {})
+    expectedPlate = (snap.plaque ?? '').trim() || undefined
+  }
+
+  const result = validateChauffeurDocument({
+    docType: parsed.data.docType,
+    fileName: parsed.data.fileName,
+    mimeType: parsed.data.mimeType,
+    buffer,
+    expectedPlate,
+  })
+
+  return res.status(200).json({ success: true, result })
+}
+
 const ChauffeurVehicleTypeSchema = z.enum(['berline', 'utilitaire', 'moto', 'scooter'])
 
 const RideProfileBodySchema = z.object({
@@ -828,6 +879,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (req.method === 'PUT' && resource === 'organization') return handleOrganizationPut(req, res, dashboardEmail)
   if (req.method === 'GET' && resource === 'compliance') return handleComplianceGet(req, res, dashboardEmail)
   if (req.method === 'POST' && resource === 'compliance') return handleCompliancePost(req, res, dashboardEmail)
+  if (req.method === 'POST' && resource === 'document-validate')
+    return handleDocumentValidatePost(req, res, driverKey)
 
   return res.status(405).json({ error: 'Method not allowed' })
 }

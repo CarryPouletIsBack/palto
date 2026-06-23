@@ -20,6 +20,7 @@ const ChauffeurProfileSnapshotSchema = z
     adresse: z.string().max(200).optional(),
     ville: z.string().max(200).optional(),
     vehicule: z.string().max(80).optional(),
+    vehicleModel: z.string().max(120).optional(),
     plaque: z.string().max(20).optional(),
     motorisation: z.enum(['thermique_hydrogene_hybride', 'electrique_100']).optional(),
     licenseYear: z.number().int().min(1970).max(2100).optional(),

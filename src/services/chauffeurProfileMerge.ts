@@ -74,6 +74,7 @@ export function mergeChauffeurProfileSnapshots(
     telephone: pickNonEmptyString(remote.telephone, local.telephone),
     ville: pickNonEmptyString(remote.ville, local.ville),
     vehicule: pickNonEmptyString(remote.vehicule, local.vehicule),
+    vehicleModel: pickNonEmptyString(remote.vehicleModel, local.vehicleModel),
     plaque: pickNonEmptyString(remote.plaque, local.plaque),
     profilePhotoUrl: pickPhoto(remote.profilePhotoUrl, local.profilePhotoUrl),
     organizationPhotoUrl: pickPhoto(remote.organizationPhotoUrl, local.organizationPhotoUrl),

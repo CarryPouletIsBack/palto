@@ -1,6 +1,6 @@
 /**
  * Plaque d’immatriculation française (format SIV courant : AA-123-BB).
- * Validation locale ; la recherche véhicule peut être branchée sur une API plus tard.
+ * Validation locale ; marque / modèle via extraction carte grise (PDF).
  */
 
 const SIV_PLATE_RE = /^[A-HJ-NPR-TV-Z]{2}-\d{3}-[A-HJ-NPR-TV-Z]{2}$/

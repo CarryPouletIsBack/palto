@@ -1,6 +1,8 @@
 import type { SupabaseClient } from '@supabase/supabase-js'
 import { Resend } from 'resend'
 
+import { accountAcceptsEmailNotifications } from './accountNotificationPrefs.js'
+
 const REUNION_TIME_ZONE = 'Indian/Reunion'
 const FROM_FALLBACK = 'Palto <onboarding@resend.dev>'
 
@@ -111,6 +113,7 @@ async function sendClaimedEmail(
     courseId: string
     type: NotificationType
     to: string
+    recipientRole: 'client' | 'chauffeur'
     subject: string
     lines: string[]
     scheduledFor?: string | null
@@ -127,6 +130,12 @@ async function sendClaimedEmail(
   if (!to) {
     console.warn('[rideEmailNotifications] skip', input.type, 'email destinataire manquant')
     return { sent: false, skipped: true, reason: 'Email destinataire manquant' }
+  }
+
+  const acceptsEmail = await accountAcceptsEmailNotifications(supabase, to, input.recipientRole)
+  if (!acceptsEmail) {
+    console.info('[rideEmailNotifications] skip', input.type, to, 'notify_email desactive')
+    return { sent: false, skipped: true, reason: 'Notifications email desactivees' }
   }
 
   const fromEmail = process.env.RESEND_FROM?.trim() || FROM_FALLBACK
@@ -175,6 +184,7 @@ export async function notifyDriverNewRideRequest(params: {
     courseId: params.courseId,
     type: scheduled ? 'driver_scheduled_new_ride' : 'driver_new_ride_request',
     to: params.driverEmail,
+    recipientRole: 'chauffeur',
     subject: scheduled
       ? `Reservation programmee (${params.externalCode})`
       : `Nouvelle demande de course (${params.externalCode})`,
@@ -211,6 +221,7 @@ export async function notifyClientRideStartsSoon(params: {
     courseId: params.courseId,
     type: 'client_ride_starts_soon',
     to: params.clientEmail,
+    recipientRole: 'client',
     subject: `Rappel: votre course ${params.externalCode} commence bientot`,
     scheduledFor: params.scheduledAtIso,
     metadata: { external_code: params.externalCode },
@@ -335,6 +346,7 @@ export async function notifyRideStatusChange(params: {
       courseId: course.id,
       type: `status_${params.newStatus}_client`,
       to: client.email,
+      recipientRole: 'client',
       subject: `Course ${code} — ${statusLabel}`,
       metadata: { external_code: code, new_status: params.newStatus, actor: params.actor },
       lines: [
@@ -359,6 +371,7 @@ export async function notifyRideStatusChange(params: {
       courseId: course.id,
       type: `status_${params.newStatus}_driver`,
       to: driver.email,
+      recipientRole: 'chauffeur',
       subject: `Course ${code} — ${statusLabel}`,
       metadata: { external_code: code, new_status: params.newStatus, actor: params.actor },
       lines: [

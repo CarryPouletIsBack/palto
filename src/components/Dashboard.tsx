@@ -29,6 +29,8 @@ import DashboardStats, {
 } from './DashboardStats';
 import DashboardMobileTabBar from './DashboardMobileTabBar';
 import DashboardMobilePillSwitch from './DashboardMobilePillSwitch';
+import ChauffeurAccountSecurityPanel from './ChauffeurAccountSecurityPanel';
+import PaltoNotificationPrefsPanel from './PaltoNotificationPrefsPanel';
 import ChauffeurMobileAccountHub, {
   type ChauffeurMobileAccountDestination,
 } from './ChauffeurMobileAccountHub';
@@ -37,6 +39,7 @@ import './DashboardMobileTabBar.css';
 import './MobileAccountHub.css';
 import {
   formatFrenchPlateInput,
+  isValidFrenchPlate,
   normalizeFrenchPlate,
 } from '../services/vehiclePlate';
 import {
@@ -72,7 +75,10 @@ import {
   Star,
   ChevronLeft,
   ChevronRight,
-  ChevronDown,
+  Languages,
+  Palette,
+  Type,
+  Shield,
 } from 'lucide-react';
 import { useLanguage, type Language } from '../contexts/LanguageContext';
 import LanguageSwitcher from './LanguageSwitcher';
@@ -88,22 +94,37 @@ import {
 import { trackEvent } from '../services/googleAnalyticsTracking';
 import { useChauffeurPresenceHeartbeat } from '../hooks/useChauffeurPresenceHeartbeat';
 import { ChauffeurPresenceGeoBar } from './ChauffeurPresenceGeoBar';
-import ChauffeurPaltoAccountPanel, {
-  type ChauffeurPaltoAccountSection,
-} from './ChauffeurPaltoAccountPanel';
+import ChauffeurPaltoAccountPanel from './ChauffeurPaltoAccountPanel';
 import ChauffeurJobsPanel from './ChauffeurJobsPanel';
 import ChauffeurOverviewProfile, { type OverviewProfileTab } from './ChauffeurOverviewProfile';
+import ChauffeurProfileOnboardingRail from './ChauffeurProfileOnboardingRail';
+import './ChauffeurProfileOnboardingRail.css';
+import ChauffeurDocumentsPanel, {
+  type ChauffeurDocument,
+  type ChauffeurDocumentStatus,
+} from './ChauffeurDocumentsPanel';
 import './ChauffeurOverviewProfile.css';
 import ChauffeurAboutSummaryCard from './ChauffeurAboutSummaryCard';
 import './ChauffeurAboutSummaryCard.css';
-import { chauffeurJobToCourseRow, type ChauffeurJobOffer } from '../data/chauffeurJobs';
-import { fileToCompressedProfilePhotoDataUrl } from '../utils/clientProfilePhotoDataUrl';
+import { chauffeurJobToCourseRow, countChauffeurJobsForDriver, type ChauffeurJobOffer } from '../data/chauffeurJobs';
+import {
+  fileToCompressedProfilePhotoDataUrl,
+  fileToCompressedVehiclePhotoDataUrl,
+} from '../utils/clientProfilePhotoDataUrl';
 import ChauffeurRideSettingsForm from './ChauffeurRideSettingsForm';
 import ChauffeurServiceCatalogForm from './ChauffeurServiceCatalogForm';
 import { normalizeChauffeurServiceCatalog } from '../constants/chauffeurServiceCatalog';
 import { toast } from 'sonner';
 import { chauffeurCancelledPaymentLabel } from '../lib/chauffeurPaymentStatusLabel';
 import { simplifyAddressDisplay } from '../services/addressDisplay';
+import {
+  evaluateChauffeurProfileOnboarding,
+  markProfileOnboardingIntroSeen,
+  markProfileOnboardingTabVisited,
+  readProfileOnboardingIntroSeen,
+  writeProfileOnboardingRailMinimized,
+  type ChauffeurProfileOnboardingStepId,
+} from '../utils/chauffeurProfileOnboarding';
 import './Dashboard.css';
 import './Dashboard.app-theme.css';
 import './ClientCompteDashboard.css';
@@ -140,7 +161,7 @@ import {
   saveChauffeurOrganizationToApi,
 } from '../services/chauffeurOrganizationApi';
 import { fetchChauffeurStatsFromApi, statsApiEnabled } from '../services/chauffeurStatsApi';
-import { supabaseRealtimeConfigured } from '../constants/featureFlags';
+import { supabaseRealtimeConfigured, chauffeurComplianceBlocksRides } from '../constants/featureFlags';
 import {
   CHAUFFEUR_COMPLIANCE_KEY,
   CHAUFFEUR_COMPLIANCE_CHANGED_EVENT,
@@ -186,7 +207,9 @@ import {
 import { loadClientAccountSnapshot, saveClientAccountSnapshot } from '../constants/clientAccountStorage';
 import { PLACEHOLDER_LOGO } from '../constants/imagePlaceholders';
 import { syncChauffeurProfileWithServer } from '../services/chauffeurProfileSync';
+import { validateChauffeurDocumentUpload } from '../services/chauffeurDocumentsApi';
 import ChauffeurDocumentsChecklist from './ChauffeurDocumentsChecklist';
+import ChauffeurGoDriverCardPreview from './ChauffeurGoDriverCardPreview';
 import { ButtonLoadingLabel } from './ButtonLoadingLabel';
 import { DashboardCoursesTableSkeleton } from './skeletons/ApiSkeletonLayouts';
 
@@ -288,13 +311,16 @@ type DashboardView =
 
 type OrganizationSubView = 'profile' | 'team' | 'fleet' | 'invites' | 'settings';
 type UserSubView =
-  | 'palto-account'
   | 'profile'
-  | 'documents'
   | 'payment'
   | 'ride-settings'
   | 'organization'
-  | 'preferences'
+  | 'pref-location'
+  | 'pref-language'
+  | 'pref-appearance'
+  | 'pref-display'
+  | 'pref-notifications'
+  | 'pref-security'
   | 'help';
 
 type ChauffeurProfile = ChauffeurProfileSnapshot;
@@ -306,14 +332,6 @@ type ChauffeurPayment = {
 };
 
 type ChauffeurRideSettings = ChauffeurRideSettingsSnapshot;
-
-type ChauffeurDocument = {
-  key: 'permis' | 'assurance' | 'carte-grise' | 'controle-technique';
-  label: string;
-  expiry: string;
-  status: 'ok' | 'soon' | 'pending';
-  uploadedFileName?: string;
-};
 
 /** Évite `e.target` null (autocomplete iOS / inspecteur) lors de la saisie profil. */
 function readFormControlValue(
@@ -609,7 +627,6 @@ const Dashboard = ({
   const [isCreating, setIsCreating] = useState(false);
   const [activeView, setActiveView] = useState<DashboardView>('overview');
   const [overviewProfileTab, setOverviewProfileTab] = useState<OverviewProfileTab>('vehicle');
-  const [profileMessagesEnabled, setProfileMessagesEnabled] = useState(true);
   const [appPrefs, setAppPrefs] = useState<ClientAppPreferencesSnapshot>(() => loadClientAppPreferences());
   const [planningMonth, setPlanningMonth] = useState(() => new Date());
   const [planningModalDate, setPlanningModalDate] = useState<string | null>(null);
@@ -623,10 +640,11 @@ const Dashboard = ({
   const [bugSubmitting, setBugSubmitting] = useState(false);
   const [inboxTick, setInboxTick] = useState(0);
   const [complianceUiTick, setComplianceUiTick] = useState(0);
+  const [onboardingUiTick, setOnboardingUiTick] = useState(0);
+  const [onboardingRailExpandNonce, setOnboardingRailExpandNonce] = useState(0);
   const [orgSubView, setOrgSubView] = useState<OrganizationSubView>('profile');
-  const [userSubView, setUserSubView] = useState<UserSubView>('documents');
+  const [userSubView, setUserSubView] = useState<UserSubView>('payment');
   const [chauffeurAccountMobileScreen, setChauffeurAccountMobileScreen] = useState<'hub' | UserSubView>('hub');
-  const [paltoAccountSection, setPaltoAccountSection] = useState<ChauffeurPaltoAccountSection>('personal');
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [isMobileViewport, setIsMobileViewport] = useState(() =>
     typeof window !== 'undefined' ? window.innerWidth <= 768 : false
@@ -658,6 +676,7 @@ const Dashboard = ({
     return [];
   });
   const [acceptedJobIds, setAcceptedJobIds] = useState<Set<string>>(() => new Set());
+  const [dismissedJobIds, setDismissedJobIds] = useState<Set<string>>(() => new Set());
   const rideActionLockRef = useRef(false);
   const [rideActionPending, setRideActionPending] = useState<{
     courseId: string;
@@ -853,16 +872,36 @@ const Dashboard = ({
   );
   const [rideSettingsDraft, setRideSettingsDraft] = useState<ChauffeurRideSettings>(chauffeurRideSettings);
   const [chauffeurDocuments, setChauffeurDocuments] = useState<ChauffeurDocument[]>([
-    { key: 'permis', label: 'Permis', expiry: '', status: 'pending' },
-    { key: 'assurance', label: 'Assurance', expiry: '', status: 'pending' },
-    { key: 'carte-grise', label: 'Carte grise', expiry: '', status: 'pending' },
-    { key: 'controle-technique', label: 'Contrôle technique', expiry: '', status: 'pending' },
+    { key: 'permis', label: 'Permis', expiry: '', status: 'missing' },
+    { key: 'assurance', label: 'Assurance', expiry: '', status: 'missing' },
+    { key: 'carte-grise', label: 'Carte grise', expiry: '', status: 'missing' },
+    { key: 'controle-technique', label: 'Contrôle technique', expiry: '', status: 'missing' },
   ]);
   const [documentUploadDraft, setDocumentUploadDraft] = useState<Record<ChauffeurDocument['key'], string>>({
     permis: '',
     assurance: '',
     'carte-grise': '',
     'controle-technique': '',
+  });
+  const [documentFileDraft, setDocumentFileDraft] = useState<Record<ChauffeurDocument['key'], File | null>>({
+    permis: null,
+    assurance: null,
+    'carte-grise': null,
+    'controle-technique': null,
+  });
+  const [documentValidationError, setDocumentValidationError] = useState<
+    Record<ChauffeurDocument['key'], string | null>
+  >({
+    permis: null,
+    assurance: null,
+    'carte-grise': null,
+    'controle-technique': null,
+  });
+  const [documentSubmitting, setDocumentSubmitting] = useState<Record<ChauffeurDocument['key'], boolean>>({
+    permis: false,
+    assurance: false,
+    'carte-grise': false,
+    'controle-technique': false,
   });
   const [chauffeurOrg, setChauffeurOrg] = useState<ChauffeurOrgSnapshot | null>(() => loadChauffeurOrg());
   const [orgInviteEmail, setOrgInviteEmail] = useState('');
@@ -891,6 +930,7 @@ const Dashboard = ({
   const profileFormDirtyRef = useRef(false);
   const rideSettingsFormDirtyRef = useRef(false);
   const profileHydratedEmailRef = useRef<string | null>(null);
+  const profileIntroLaunchedRef = useRef<string | null>(null);
   const [complianceApiSnapshot, setComplianceApiSnapshot] = useState<ChauffeurComplianceSnapshot | null>(null);
   const [apiChauffeurStats, setApiChauffeurStats] = useState<ChauffeurActivityStatsForView | null>(null);
   const [apiHeatmapStats, setApiHeatmapStats] = useState<ChauffeurHeatmapStatsForView | null>(null);
@@ -1074,12 +1114,24 @@ const Dashboard = ({
       }
       if (profile.documents?.length) {
         setChauffeurDocuments(
-          profile.documents.map((d) => ({
-            key: d.key as ChauffeurDocument['key'],
-            label: d.label,
-            expiry: d.expiry,
-            status: d.status,
-          }))
+          profile.documents.map((d) => {
+            const rawStatus = d.status as ChauffeurDocumentStatus | 'expired';
+            let status: ChauffeurDocumentStatus =
+              rawStatus === 'expired'
+                ? 'soon'
+                : rawStatus === 'ok' || rawStatus === 'soon' || rawStatus === 'pending' || rawStatus === 'missing'
+                  ? rawStatus
+                  : 'missing';
+            if (status === 'pending' && !String(d.expiry ?? '').trim()) {
+              status = 'missing';
+            }
+            return {
+              key: d.key as ChauffeurDocument['key'],
+              label: d.label,
+              expiry: d.expiry,
+              status,
+            };
+          })
         );
       }
     },
@@ -1184,7 +1236,7 @@ const Dashboard = ({
       setUserSubView('ride-settings');
     } else if (activeView === 'settings') {
       setActiveView('user');
-      setUserSubView('preferences');
+      setUserSubView('pref-language');
     } else if (activeView === 'help') {
       setActiveView('user');
       setUserSubView('help');
@@ -1392,18 +1444,15 @@ const Dashboard = ({
     };
   }, [planningModalDate, isMobileViewport]);
 
-  const openChauffeurPaltoAccount = useCallback(
-    (section: ChauffeurPaltoAccountSection = 'personal') => {
-      setPaltoAccountSection(section);
-      setUserSubView('palto-account');
-      setActiveView('user');
-      setTopbarAccountMenuOpen(false);
-      if (isMobileViewport) {
-        setMobileSidebarOpen(false);
-      }
-    },
-    [isMobileViewport]
-  );
+  const openChauffeurSettings = useCallback(() => {
+    setUserSubView('payment');
+    setActiveView('user');
+    setTopbarAccountMenuOpen(false);
+    if (isMobileViewport) {
+      setMobileSidebarOpen(false);
+      setChauffeurAccountMobileScreen('hub');
+    }
+  }, [isMobileViewport]);
 
   const handleNavSelect = useCallback(
     (view: DashboardView) => {
@@ -1411,8 +1460,8 @@ const Dashboard = ({
       if (view === 'organization') {
         setOrgSubView('profile');
       }
-      if (view === 'user' && userSubView !== 'palto-account' && userSubView !== 'payment') {
-        setUserSubView('documents');
+      if (view === 'user' && userSubView !== 'payment') {
+        setUserSubView('payment');
       }
       setActiveView(view);
       if (isMobileViewport) {
@@ -1461,13 +1510,28 @@ const Dashboard = ({
         }
         return;
       }
-      if (dest === 'palto-account') {
-        openChauffeurPaltoAccount('personal');
-        setChauffeurAccountMobileScreen('palto-account');
+      if (dest === 'overview-profile') {
+        setActiveView('profile');
+        setTopbarAccountMenuOpen(false);
+        setChauffeurAccountMobileScreen('hub');
+        if (isMobileViewport) {
+          setMobileSidebarOpen(false);
+        }
+        return;
+      }
+      if (dest === 'documents') {
+        setOverviewProfileTab('documents');
+        setActiveView('profile');
+        setTopbarAccountMenuOpen(false);
+        setChauffeurAccountMobileScreen('hub');
+        if (isMobileViewport) {
+          setMobileSidebarOpen(false);
+        }
         return;
       }
       const view: UserSubView =
         dest === 'about' ? 'help' : dest;
+      setActiveView('user');
       setUserSubView(view);
       if (view === 'organization') {
         setOrgSubView('profile');
@@ -1477,7 +1541,7 @@ const Dashboard = ({
         setMobileSidebarOpen(false);
       }
     },
-    [isMobileViewport, openChauffeurPaltoAccount]
+    [isMobileViewport]
   );
 
   const chauffeurAccountDrillTitle = useMemo(() => {
@@ -1488,26 +1552,26 @@ const Dashboard = ({
         return language === 'en' ? 'My pricing' : 'Mes tarifs';
       case 'help':
         return t('driverDashboard.navHelp');
-      case 'palto-account':
-        return paltoAccountSection === 'payment'
-          ? language === 'en'
-            ? 'Payment'
-            : 'Paiement'
-          : language === 'en'
-            ? 'Personal information'
-            : 'Informations personnelles';
       case 'payment':
         return language === 'en' ? 'Payment' : 'Paiement';
-      case 'documents':
-        return language === 'en' ? 'Documents' : 'Documents et factures';
-      case 'preferences':
-        return language === 'en' ? 'Preferences' : 'Preferences';
+      case 'pref-location':
+        return language === 'en' ? 'Location' : 'Localisation';
+      case 'pref-language':
+        return language === 'en' ? 'Language' : 'Langue';
+      case 'pref-appearance':
+        return language === 'en' ? 'Appearance' : 'Apparence';
+      case 'pref-display':
+        return language === 'en' ? 'Text size' : 'Taille du texte';
+      case 'pref-notifications':
+        return language === 'en' ? 'Notifications' : 'Notifications';
+      case 'pref-security':
+        return t('driverDashboard.navSecurity');
       case 'organization':
         return t('driverDashboard.titleOrganization');
       default:
         return t('driverDashboard.titleUser');
     }
-  }, [language, paltoAccountSection, t, userSubView]);
+  }, [language, t, userSubView]);
 
   const chauffeurStatsPillItems = useMemo(
     () => [
@@ -1786,13 +1850,8 @@ const Dashboard = ({
     });
   }, []);
 
-  const toggleAppNotify = useCallback((key: 'notifyEmail' | 'notifySms' | 'notifyPush') => {
-    setAppPrefs((prev) => {
-      const next = { ...prev, [key]: !prev[key] };
-      saveClientAppPreferences(next);
-      trackEvent('click', 'chauffeur_dashboard', `notify_${key}_${next[key] ? 'on' : 'off'}`);
-      return next;
-    });
+  const handleAppPrefsChange = useCallback((next: ClientAppPreferencesSnapshot) => {
+    setAppPrefs(next);
   }, []);
 
   useEffect(() => {
@@ -2012,7 +2071,7 @@ const Dashboard = ({
       .map((c) => ({ id: c.id, heure: c.heure, statut: c.statut, bookingKind: c.bookingKind }));
   }, [planningModalDate, courseRows, planningStatusFilter]);
 
-  const coursesBlockedByCompliance = useMemo(() => {
+  const complianceIncomplete = useMemo(() => {
     void complianceUiTick;
     const email = getChauffeurSessionEmail();
     if (!email?.trim()) return false;
@@ -2024,6 +2083,8 @@ const Dashboard = ({
     }
     return !complianceFullySatisfied(loadComplianceSnapshot(norm));
   }, [complianceUiTick, useComplianceApi, complianceApiSnapshot]);
+
+  const coursesBlockedByCompliance = complianceIncomplete && chauffeurComplianceBlocksRides();
 
   const handleDemandAlertAction = useCallback(
     async (courseId: string, action: 'accept' | 'decline') => {
@@ -2275,6 +2336,101 @@ const Dashboard = ({
     [coursesBlockedByCompliance, language]
   );
 
+  const handleDismissChauffeurJob = useCallback((jobId: string) => {
+    setDismissedJobIds((prev) => new Set(prev).add(jobId));
+  }, []);
+
+  const chauffeurJobsNavCount = useMemo(
+    () =>
+      countChauffeurJobsForDriver({
+        acceptedJobIds,
+        dismissedJobIds,
+        chauffeurVehicleType: chauffeurProfile.vehicule,
+      }),
+    [acceptedJobIds, dismissedJobIds, chauffeurProfile.vehicule]
+  );
+
+  const chauffeurJobsNavBadgeLabel =
+    chauffeurJobsNavCount > 0
+      ? chauffeurJobsNavCount > 99
+        ? '99+'
+        : String(chauffeurJobsNavCount)
+      : null;
+
+  const profileOnboarding = useMemo(() => {
+    void onboardingUiTick;
+    return evaluateChauffeurProfileOnboarding({
+      profile: chauffeurProfile,
+      documents: chauffeurDocuments.map((doc) => ({ key: doc.key, status: doc.status })),
+      rideSettings: chauffeurRideSettings,
+      phoneCountry: phoneCountryDraft,
+      phoneNational: phoneNationalDraft,
+      hasOrganization: Boolean(chauffeurOrg),
+    });
+  }, [
+    chauffeurDocuments,
+    chauffeurOrg,
+    chauffeurProfile,
+    chauffeurRideSettings,
+    onboardingUiTick,
+    phoneCountryDraft,
+    phoneNationalDraft,
+  ]);
+
+  const profileOnboardingBadgeLabel =
+    !profileOnboarding.allDone
+      ? `${profileOnboarding.completedCount}/${profileOnboarding.totalCount}`
+      : null;
+
+  const openProfileOnboardingStep = useCallback(
+    (stepId: ChauffeurProfileOnboardingStepId) => {
+      markProfileOnboardingTabVisited(stepId);
+      setOnboardingUiTick((n) => n + 1);
+      handleNavSelect('profile');
+      setOverviewProfileTab(stepId);
+    },
+    [handleNavSelect]
+  );
+
+  useEffect(() => {
+    const sessionEmail = getChauffeurSessionEmail().trim().toLowerCase();
+    if (!sessionEmail) return;
+
+    const emailNorm = normalizeChauffeurEmail(sessionEmail);
+    if (profileIntroLaunchedRef.current === emailNorm) return;
+    if (profileOnboarding.allDone) return;
+
+    const signupFromUrl = new URLSearchParams(window.location.search).get('chauffeurSignup') === '1';
+    const introSeen = readProfileOnboardingIntroSeen(emailNorm);
+    if (introSeen && !signupFromUrl) return;
+
+    profileIntroLaunchedRef.current = emailNorm;
+    const stepId = profileOnboarding.nextStepId ?? 'vehicle';
+
+    writeProfileOnboardingRailMinimized(false);
+    setOnboardingRailExpandNonce((n) => n + 1);
+    openProfileOnboardingStep(stepId);
+    markProfileOnboardingIntroSeen(emailNorm);
+
+    if (signupFromUrl) {
+      const url = new URL(window.location.href);
+      url.searchParams.delete('chauffeurSignup');
+      const nextSearch = url.searchParams.toString();
+      window.history.replaceState({}, '', `${url.pathname}${nextSearch ? `?${nextSearch}` : ''}`);
+    }
+  }, [
+    authSessionTick,
+    openProfileOnboardingStep,
+    profileOnboarding.allDone,
+    profileOnboarding.nextStepId,
+  ]);
+
+  useEffect(() => {
+    if (activeView !== 'profile') return;
+    markProfileOnboardingTabVisited(overviewProfileTab);
+    setOnboardingUiTick((n) => n + 1);
+  }, [activeView, overviewProfileTab]);
+
   /** Chauffeur : pas de topbar type accueil (Palto / langue) — bouton user fixe sauf bandeau course. */
   const showChauffeurToolbarOnly = topbarLaunchCourse == null;
 
@@ -2347,7 +2503,7 @@ const Dashboard = ({
             'chauffeur-account-menu__item' +
             (activeView === 'user' ? ' chauffeur-account-menu__item--active' : '')
           }
-          onClick={() => openChauffeurPaltoAccount('personal')}
+          onClick={() => openChauffeurSettings()}
         >
           <Settings size={18} strokeWidth={2} aria-hidden />
           <span>{language === 'en' ? 'Settings' : 'Paramètres'}</span>
@@ -2608,6 +2764,17 @@ const Dashboard = ({
     setOverviewProfileTab('organization');
   }, [handleNavSelect]);
 
+  const handleOverviewVisibilityChange = useCallback(
+    (enabled: boolean) => {
+      if (enabled) {
+        chauffeurPresence.startTracking();
+      } else {
+        chauffeurPresence.stopTracking();
+      }
+    },
+    [chauffeurPresence.startTracking, chauffeurPresence.stopTracking]
+  );
+
   const handleShareOverviewProfile = useCallback(async () => {
     const url = window.location.href;
     try {
@@ -2651,7 +2818,7 @@ const Dashboard = ({
         return;
       }
       try {
-        const dataUrl = await fileToCompressedProfilePhotoDataUrl(file);
+        const dataUrl = await fileToCompressedVehiclePhotoDataUrl(file);
         markProfileFormDirty();
         setVehiclePhotoDraftUrl(dataUrl);
         setVehiclePhotoDraftName(file.name);
@@ -2879,9 +3046,60 @@ const Dashboard = ({
     }
     setUserProfileDraft((prev) => ({ ...prev, plaque: normalizedPlate }));
     setPlateError(null);
-    setPlateLookupHint(null);
     setIsPlateLookupLoading(false);
-  }, [markProfileFormDirty, userProfileDraft.plaque]);
+
+    if (!isValidFrenchPlate(normalizedPlate)) {
+      setPlateLookupHint(null);
+      return;
+    }
+
+    setPlateLookupHint(
+      language === 'en'
+        ? 'Upload your registration certificate (PDF) to auto-detect make and model.'
+        : 'Téléversez la carte grise (PDF) pour identifier automatiquement le véhicule.'
+    );
+  }, [language, markProfileFormDirty, userProfileDraft.plaque]);
+
+  const applyExtractedVehicleToProfile = useCallback(
+    (
+      extractedPlate: string | null | undefined,
+      extractedVehicle: {
+        label: string | null
+        vehicleTypeSlug: 'berline' | 'utilitaire' | 'moto' | 'scooter' | null
+        motorisation: 'thermique_hydrogene_hybride' | 'electrique_100' | null
+      } | null
+    ) => {
+      if (!extractedPlate && !extractedVehicle?.label && !extractedVehicle?.vehicleTypeSlug) return;
+
+      const patch = (prev: ChauffeurProfile): ChauffeurProfile => {
+        const next: ChauffeurProfile = { ...prev };
+        const plate = extractedPlate ? normalizeFrenchPlate(extractedPlate) : '';
+        if (plate && isValidFrenchPlate(plate) && !prev.plaque.trim()) {
+          next.plaque = plate;
+        }
+        if (extractedVehicle?.vehicleTypeSlug && !normalizeVehicleSlugForSelect(prev.vehicule)) {
+          next.vehicule = extractedVehicle.vehicleTypeSlug;
+        }
+        if (extractedVehicle?.label && !prev.vehicleModel?.trim()) {
+          next.vehicleModel = extractedVehicle.label;
+        }
+        if (extractedVehicle?.motorisation && !prev.motorisation) {
+          next.motorisation = extractedVehicle.motorisation;
+        }
+        return next;
+      };
+
+      markProfileFormDirty();
+      setUserProfileDraft((prev) => patch(prev));
+      setChauffeurProfile((prev) => {
+        const next = patch(prev);
+        persistStoredChauffeurProfile(next);
+        void syncChauffeurProfileWithServer(next.email);
+        return next;
+      });
+    },
+    [markProfileFormDirty]
+  );
 
   const cancelPaymentEdit = useCallback(() => {
     setPaymentDraft(chauffeurPayment);
@@ -2997,49 +3215,132 @@ const Dashboard = ({
     [rideSettingsDraft, chauffeurRideSettings]
   );
 
-  const handleDocumentFilePick = useCallback((docKey: ChauffeurDocument['key'], fileName: string) => {
-    setDocumentUploadDraft((prev) => ({ ...prev, [docKey]: fileName }));
+  const persistChauffeurDocumentsToProfile = useCallback((next: ChauffeurDocument[]) => {
+    setChauffeurProfile((prof) => {
+      const nextProfile: ChauffeurProfile = {
+        ...prof,
+        documents: next.map((d) => ({
+          key: d.key,
+          label: d.label,
+          expiry: d.expiry,
+          status:
+            d.status === 'missing'
+              ? 'pending'
+              : d.status === 'soon'
+                ? 'expired'
+                : d.status,
+        })),
+      };
+      persistStoredChauffeurProfile(nextProfile);
+      void syncChauffeurProfileWithServer(nextProfile.email);
+      return nextProfile;
+    });
   }, []);
 
-  const submitDocumentRenewal = useCallback((docKey: ChauffeurDocument['key']) => {
-    const selectedName = documentUploadDraft[docKey];
-    if (!selectedName) return;
+  const handleDocumentFilePick = useCallback((docKey: ChauffeurDocument['key'], file: File | null) => {
+    if (!file) return;
+    setDocumentUploadDraft((prev) => ({ ...prev, [docKey]: file.name }));
+    setDocumentFileDraft((prev) => ({ ...prev, [docKey]: file }));
+    setDocumentValidationError((prev) => ({ ...prev, [docKey]: null }));
+  }, []);
 
-    setChauffeurDocuments((prev) =>
-      prev.map((doc) =>
-        doc.key === docKey
-          ? { ...doc, status: 'pending', uploadedFileName: selectedName }
-          : doc
-      )
-    );
-    setDocumentUploadDraft((prev) => ({ ...prev, [docKey]: '' }));
+  const submitDocumentRenewal = useCallback(
+    async (docKey: ChauffeurDocument['key']) => {
+      const file = documentFileDraft[docKey];
+      if (!file) return;
 
-    // Simulation de validation backend.
-    window.setTimeout(() => {
+      const isEn = language === 'en';
+      setDocumentSubmitting((prev) => ({ ...prev, [docKey]: true }));
+      setDocumentValidationError((prev) => ({ ...prev, [docKey]: null }));
+      setChauffeurDocuments((prev) =>
+        prev.map((doc) =>
+          doc.key === docKey ? { ...doc, status: 'pending', uploadedFileName: file.name } : doc
+        )
+      );
+
+      const response = await validateChauffeurDocumentUpload({
+        docType: docKey,
+        file,
+        expectedPlate: userProfileDraft.plaque,
+      });
+
+      setDocumentSubmitting((prev) => ({ ...prev, [docKey]: false }));
+
+      if (!response.success || !response.result) {
+        const message =
+          response.error === 'SESSION_REQUIRED'
+            ? isEn
+              ? 'Session expired — sign in again.'
+              : 'Session expirée — reconnectez-vous.'
+            : response.error === 'NETWORK_ERROR'
+              ? isEn
+                ? 'Network error. Try again.'
+                : 'Erreur réseau. Réessayez.'
+              : isEn
+                ? 'Validation failed. Try again.'
+                : 'Échec de la validation. Réessayez.';
+        setDocumentValidationError((prev) => ({ ...prev, [docKey]: message }));
+        setChauffeurDocuments((prev) =>
+          prev.map((doc) =>
+            doc.key === docKey ? { ...doc, status: 'missing', uploadedFileName: undefined } : doc
+          )
+        );
+        return;
+      }
+
+      const { result } = response;
+
+      if (!result.valid) {
+        setDocumentValidationError((prev) => ({ ...prev, [docKey]: result.summary }));
+        setChauffeurDocuments((prev) =>
+          prev.map((doc) =>
+            doc.key === docKey ? { ...doc, status: 'missing', uploadedFileName: undefined } : doc
+          )
+        );
+        return;
+      }
+
+      const expiryLabel = result.expiry?.trim()
+        ? result.expiry.trim()
+        : isEn
+          ? 'Validated'
+          : 'Validé';
+
       setChauffeurDocuments((prev) => {
         const next = prev.map((doc) =>
           doc.key === docKey
-            ? { ...doc, status: 'ok' as const, expiry: 'Renouvelé · validé' }
+            ? { ...doc, status: 'ok' as const, expiry: expiryLabel, uploadedFileName: file.name }
             : doc
         );
-        setChauffeurProfile((prof) => {
-          const nextProfile: ChauffeurProfile = {
-            ...prof,
-            documents: next.map((d) => ({
-              key: d.key,
-              label: d.label,
-              expiry: d.expiry,
-              status: d.status,
-            })),
-          };
-          persistStoredChauffeurProfile(nextProfile);
-          void syncChauffeurProfileWithServer(nextProfile.email);
-          return nextProfile;
-        });
+        persistChauffeurDocumentsToProfile(next);
         return next;
       });
-    }, 1600);
-  }, [documentUploadDraft]);
+      setDocumentUploadDraft((prev) => ({ ...prev, [docKey]: '' }));
+      setDocumentFileDraft((prev) => ({ ...prev, [docKey]: null }));
+
+      if (docKey === 'carte-grise') {
+        applyExtractedVehicleToProfile(result.extractedPlate, result.extractedVehicle);
+      }
+
+      const vehicleDetected = result.extractedVehicle?.label?.trim();
+      toast.success(
+        vehicleDetected
+          ? isEn
+            ? `Document validated — vehicle: ${vehicleDetected}.`
+            : `Document validé — véhicule : ${vehicleDetected}.`
+          : isEn
+            ? 'Document validated successfully.'
+            : 'Document validé avec succès.'
+      );
+    },
+    [
+      applyExtractedVehicleToProfile,
+      documentFileDraft,
+      language,
+      persistChauffeurDocumentsToProfile,
+      userProfileDraft.plaque,
+    ]
+  );
 
   const handleImageUpload = useCallback(
     async (
@@ -3153,6 +3454,25 @@ const Dashboard = ({
                     showNameInButton: true,
                     sidebarSlot: true,
                   })}
+                  {!profileOnboarding.allDone ? (
+                    <ChauffeurProfileOnboardingRail
+                      language={language}
+                      completedCount={profileOnboarding.completedCount}
+                      totalCount={profileOnboarding.totalCount}
+                      steps={profileOnboarding.steps}
+                      nextStepId={profileOnboarding.nextStepId}
+                      sidebarCollapsed={sidebarCollapsed}
+                      expandNonce={onboardingRailExpandNonce}
+                      onContinue={() => {
+                        if (profileOnboarding.nextStepId) {
+                          openProfileOnboardingStep(profileOnboarding.nextStepId);
+                        } else {
+                          handleNavSelect('profile');
+                        }
+                      }}
+                      onStepSelect={openProfileOnboardingStep}
+                    />
+                  ) : null}
                 </div>
               ) : null}
               <nav className="dashboard-nav">
@@ -3170,9 +3490,19 @@ const Dashboard = ({
                 className={`dashboard-nav-item ${activeView === 'profile' ? 'active' : ''}`}
                 onClick={() => handleNavSelect('profile')}
                 aria-pressed={activeView === 'profile'}
+                aria-label={
+                  profileOnboardingBadgeLabel
+                    ? `${t('driverDashboard.navProfile')} (${profileOnboardingBadgeLabel})`
+                    : t('driverDashboard.navProfile')
+                }
               >
                 <span className="nav-icon"><User size={18} /></span>
                 <span className="nav-label">{t('driverDashboard.navProfile')}</span>
+                {profileOnboardingBadgeLabel ? (
+                  <span className="dashboard-nav-badge dashboard-nav-badge--onboarding" aria-hidden>
+                    {profileOnboardingBadgeLabel}
+                  </span>
+                ) : null}
               </button>
               <button
                 type="button"
@@ -3188,9 +3518,19 @@ const Dashboard = ({
                 className={`dashboard-nav-item ${activeView === 'jobs' ? 'active' : ''}`}
                 onClick={() => handleNavSelect('jobs')}
                 aria-pressed={activeView === 'jobs'}
+                aria-label={
+                  chauffeurJobsNavCount > 0
+                    ? `${t('driverDashboard.navJobs')} (${chauffeurJobsNavCount})`
+                    : t('driverDashboard.navJobs')
+                }
               >
                 <span className="nav-icon"><Briefcase size={18} /></span>
                 <span className="nav-label">{t('driverDashboard.navJobs')}</span>
+                {chauffeurJobsNavBadgeLabel ? (
+                  <span className="dashboard-nav-badge" aria-hidden="true">
+                    {chauffeurJobsNavBadgeLabel}
+                  </span>
+                ) : null}
               </button>
               {isMobileViewport ? (
                 <button
@@ -3318,6 +3658,8 @@ const Dashboard = ({
                     <ChauffeurJobsPanel
                       chauffeurVehicleType={chauffeurProfile.vehicule}
                       acceptedJobIds={acceptedJobIds}
+                      dismissedJobIds={dismissedJobIds}
+                      onDismissJob={handleDismissChauffeurJob}
                       onAcceptJob={handleAcceptChauffeurJob}
                     />
                   )}
@@ -3342,8 +3684,8 @@ const Dashboard = ({
                       availability={overviewAvailability}
                       availabilityLabel={tFleetAvail(overviewAvailability)}
                       onAvailabilityClick={handleOverviewAvailabilityClick}
-                      messagesEnabled={profileMessagesEnabled}
-                      onMessagesEnabledChange={setProfileMessagesEnabled}
+                      visibilityEnabled={chauffeurPresence.sharing}
+                      onVisibilityEnabledChange={handleOverviewVisibilityChange}
                       onStatsClick={() => handleNavSelect('stats')}
                       onShareClick={() => void handleShareOverviewProfile()}
                       commune={normalizeReunionCommuneForSelect(userProfileDraft.ville)}
@@ -3355,9 +3697,11 @@ const Dashboard = ({
                       showHeroImagePicker={overviewProfileTab === 'vehicle'}
                       activeTab={overviewProfileTab}
                       onTabChange={setOverviewProfileTab}
+                      tabCompletion={profileOnboarding.tabCompletion}
                     >
                       {overviewProfileTab === 'vehicle' ? (
-                        <article className="dashboard-user-card">
+                        <div className="chauffeur-overview-profile__vehicle-layout">
+                          <article className="dashboard-user-card chauffeur-overview-profile__vehicle-form-card">
                           <form
                             className="dashboard-user-edit-grid dashboard-chauffeur-profile-form"
                             onSubmit={(e) => {
@@ -3383,6 +3727,12 @@ const Dashboard = ({
                                   </option>
                                 ))}
                               </select>
+                              {userProfileDraft.vehicleModel?.trim() ? (
+                                <small className="dashboard-field-hint">
+                                  {language === 'en' ? 'Detected model' : 'Modèle détecté'} :{' '}
+                                  {userProfileDraft.vehicleModel}
+                                </small>
+                              ) : null}
                             </label>
                             <label>
                               Plaque
@@ -3471,7 +3821,50 @@ const Dashboard = ({
                               </div>
                             ) : null}
                           </form>
-                        </article>
+                          </article>
+                          <aside
+                            className="chauffeur-overview-profile__vehicle-preview"
+                            aria-label={language === 'en' ? 'Go page preview' : 'Aperçu page Go'}
+                          >
+                            <ChauffeurGoDriverCardPreview
+                              language={language}
+                              prenom={overviewPersonalDraft.prenom}
+                              nom={overviewPersonalDraft.nom}
+                              vehicleLabel={
+                                (() => {
+                                  const slug = normalizeVehicleSlugForSelect(userProfileDraft.vehicule);
+                                  if (!slug) {
+                                    return language === 'en' ? 'Vehicle not set' : 'Véhicule non renseigné';
+                                  }
+                                  return CHAUFFEUR_VEHICLE_TYPE_LABELS[slug];
+                                })()
+                              }
+                              petFriendly={rideSettingsDraft.petFriendly}
+                              luggageAssistance={rideSettingsDraft.luggageAssistance}
+                              insulatedBag={rideSettingsDraft.insulatedBag}
+                              ridePricing={{
+                                baseFareEur: rideSettingsDraft.baseFareEur,
+                                pricePerKmEur: rideSettingsDraft.pricePerKmEur,
+                                nightSurchargePercent: rideSettingsDraft.nightSurchargePercent,
+                                elevationSurchargeEurPer100m: rideSettingsDraft.elevationSurchargeEurPer100m,
+                                pricingMultiplierPercent: rideSettingsDraft.pricingMultiplierPercent,
+                                maxPickupKm: rideSettingsDraft.maxPickupKm,
+                              }}
+                            />
+                          </aside>
+                        </div>
+                      ) : null}
+
+                      {overviewProfileTab === 'documents' ? (
+                        <ChauffeurDocumentsPanel
+                          documents={chauffeurDocuments}
+                          uploadDraft={documentUploadDraft}
+                          onFilePick={handleDocumentFilePick}
+                          onSubmitRenewal={submitDocumentRenewal}
+                          validationErrors={documentValidationError}
+                          submitting={documentSubmitting}
+                          language={language === 'en' ? 'en' : 'fr'}
+                        />
                       ) : null}
 
                       {overviewProfileTab === 'service' ? (
@@ -3518,16 +3911,7 @@ const Dashboard = ({
                       {overviewProfileTab === 'organization' ? (
                         <article className="dashboard-user-card">
                           {!chauffeurOrg ? (
-                            <>
-                              <p className="dashboard-field-hint">{t('driverDashboard.orgNoOrgHint')}</p>
-                              <button
-                                type="button"
-                                className="dashboard-user-save-btn"
-                                onClick={() => handleNavSelect('organization')}
-                              >
-                                {language === 'en' ? 'Set up organization' : 'Configurer une organisation'}
-                              </button>
-                            </>
+                            <p className="dashboard-field-hint">{t('driverDashboard.orgNoOrgHint')}</p>
                           ) : (
                             <>
                               <h4 className="client-compte-section-title">{chauffeurOrg.name}</h4>
@@ -4705,14 +5089,6 @@ const Dashboard = ({
                         <nav className="dashboard-org-nav">
                           <button
                             type="button"
-                            className={`dashboard-org-nav-item${userSubView === 'documents' ? ' active' : ''}`}
-                            onClick={() => setUserSubView('documents')}
-                          >
-                            <Mail size={16} aria-hidden />
-                            <span>Documents & conformite</span>
-                          </button>
-                          <button
-                            type="button"
                             className={`dashboard-org-nav-item${userSubView === 'payment' ? ' active' : ''}`}
                             onClick={() => setUserSubView('payment')}
                           >
@@ -4721,11 +5097,51 @@ const Dashboard = ({
                           </button>
                           <button
                             type="button"
-                            className={`dashboard-org-nav-item${userSubView === 'preferences' ? ' active' : ''}`}
-                            onClick={() => setUserSubView('preferences')}
+                            className={`dashboard-org-nav-item${userSubView === 'pref-security' ? ' active' : ''}`}
+                            onClick={() => setUserSubView('pref-security')}
                           >
-                            <Settings size={16} aria-hidden />
-                            <span>Préférences</span>
+                            <Shield size={16} aria-hidden />
+                            <span>{t('driverDashboard.navSecurity')}</span>
+                          </button>
+                          <button
+                            type="button"
+                            className={`dashboard-org-nav-item${userSubView === 'pref-location' ? ' active' : ''}`}
+                            onClick={() => setUserSubView('pref-location')}
+                          >
+                            <MapPin size={16} aria-hidden />
+                            <span>{language === 'en' ? 'Location' : 'Localisation'}</span>
+                          </button>
+                          <button
+                            type="button"
+                            className={`dashboard-org-nav-item${userSubView === 'pref-language' ? ' active' : ''}`}
+                            onClick={() => setUserSubView('pref-language')}
+                          >
+                            <Languages size={16} aria-hidden />
+                            <span>{language === 'en' ? 'Language' : 'Langue'}</span>
+                          </button>
+                          <button
+                            type="button"
+                            className={`dashboard-org-nav-item${userSubView === 'pref-appearance' ? ' active' : ''}`}
+                            onClick={() => setUserSubView('pref-appearance')}
+                          >
+                            <Palette size={16} aria-hidden />
+                            <span>{language === 'en' ? 'Appearance' : 'Apparence'}</span>
+                          </button>
+                          <button
+                            type="button"
+                            className={`dashboard-org-nav-item${userSubView === 'pref-display' ? ' active' : ''}`}
+                            onClick={() => setUserSubView('pref-display')}
+                          >
+                            <Type size={16} aria-hidden />
+                            <span>{language === 'en' ? 'Text size' : 'Taille du texte'}</span>
+                          </button>
+                          <button
+                            type="button"
+                            className={`dashboard-org-nav-item${userSubView === 'pref-notifications' ? ' active' : ''}`}
+                            onClick={() => setUserSubView('pref-notifications')}
+                          >
+                            <Bell size={16} aria-hidden />
+                            <span>{language === 'en' ? 'Notifications' : 'Notifications'}</span>
                           </button>
                           <button
                             type="button"
@@ -4749,125 +5165,15 @@ const Dashboard = ({
                           />
                         </section>
                       ) : null}
-                      {userSubView === 'palto-account' ? (
-                        <section className="dashboard-table-section dashboard-table-section--palto-account">
-                          <ChauffeurPaltoAccountPanel
-                            sessionEmail={getChauffeurSessionEmail()}
-                            initialSection={paltoAccountSection}
-                            mobileLayout={isMobileViewport}
-                            afterDeleteContent={
-                              <article
-                                className={`dashboard-user-card chauffeur-palto-account-card${
-                                  isMobileViewport ? '' : ''
-                                }`}
-                                style={{ marginTop: isMobileViewport ? 0 : 20 }}
-                              >
-                                {isMobileViewport ? (
-                                  <h4 className="client-compte-section-title">Contact</h4>
-                                ) : (
-                                  <div className="dashboard-user-card-head">
-                                    <div>
-                                      <h4>{language === 'en' ? 'Driver contact' : 'Contact chauffeur'}</h4>
-                                      <p className="dashboard-field-hint">
-                                        {language === 'en'
-                                          ? 'Phone and Reunion commune used for Palto rides.'
-                                          : 'Téléphone et commune réunionnaise utilisés pour vos courses Palto.'}
-                                      </p>
-                                    </div>
-                                  </div>
-                                )}
-                                <form
-                                  className="dashboard-user-edit-grid dashboard-chauffeur-profile-form"
-                                  onSubmit={(e) => {
-                                    e.preventDefault();
-                                    saveUserProfileEdit();
-                                    if (isRideSettingsDirty) saveRideSettingsEdit();
-                                  }}
-                                >
-                                  <label className="dashboard-chauffeur-profile-form__phone">
-                                    Téléphone
-                                    <div className="dashboard-phone-input-row">
-                                      <select
-                                        value={phoneCountryDraft}
-                                        onChange={(e) => {
-                                          markProfileFormDirty();
-                                          setPhoneCountryDraft(readFormControlValue(e) as SupportedPhoneCountry);
-                                        }}
-                                      >
-                                        {PHONE_COUNTRIES.map((country) => (
-                                          <option key={country.code} value={country.code}>
-                                            {country.flag} {country.label} ({country.dialCode})
-                                          </option>
-                                        ))}
-                                      </select>
-                                      <input
-                                        type="text"
-                                        value={phoneNationalDraft}
-                                        onChange={(e) => {
-                                          markProfileFormDirty();
-                                          setPhoneNationalDraft(readFormControlValue(e));
-                                          if (phoneError) setPhoneError(null);
-                                        }}
-                                        placeholder={phoneCountryDraft === 'FR' ? '612345678' : '692123456'}
-                                        required
-                                      />
-                                    </div>
-                                    {phoneError ? (
-                                      <small className="dashboard-field-error">{phoneError}</small>
-                                    ) : (
-                                      <small className="dashboard-field-hint">
-                                        Format: {phoneCountryDraft === 'FR' ? '+33 612345678' : '+262 692123456'}
-                                      </small>
-                                    )}
-                                  </label>
-                                  {!isMobileViewport ? (
-                                  <label>
-                                    Commune (La Réunion)
-                                    <select
-                                      name="chauffeur-ville"
-                                      autoComplete="address-level2"
-                                      value={normalizeReunionCommuneForSelect(userProfileDraft.ville)}
-                                      onChange={(e) => {
-                                        markProfileFormDirty();
-                                        const ville = normalizeReunionCommuneForSelect(readFormControlValue(e));
-                                        setUserProfileDraft((prev) => ({ ...prev, ville }));
-                                      }}
-                                      required
-                                    >
-                                      <option value="">Choisir une commune</option>
-                                      {REUNION_COMMUNES_SORTED.map((commune) => (
-                                        <option key={commune} value={commune}>
-                                          {commune}
-                                        </option>
-                                      ))}
-                                    </select>
-                                  </label>
-                                  ) : null}
-                                  {isChauffeurProfileFormDirty ? (
-                                    <div className="dashboard-user-edit-actions">
-                                      <button type="submit" className="dashboard-user-save-btn">
-                                        Enregistrer
-                                      </button>
-                                      <button
-                                        type="button"
-                                        className="dashboard-user-cancel-btn"
-                                        onClick={cancelUserProfileEdit}
-                                      >
-                                        Annuler
-                                      </button>
-                                    </div>
-                                  ) : null}
-                                </form>
-                              </article>
-                            }
-                          />
-                        </section>
-                      ) : null}
                       {(userSubView === 'profile' ||
-                        userSubView === 'documents' ||
                         userSubView === 'ride-settings' ||
                         userSubView === 'organization' ||
-                        userSubView === 'preferences' ||
+                        userSubView === 'pref-location' ||
+                        userSubView === 'pref-language' ||
+                        userSubView === 'pref-appearance' ||
+                        userSubView === 'pref-display' ||
+                        userSubView === 'pref-notifications' ||
+                        userSubView === 'pref-security' ||
                         userSubView === 'help') && (
                     <section className="dashboard-table-section">
                       <article className="dashboard-user-card">
@@ -4881,9 +5187,9 @@ const Dashboard = ({
                                   <button
                                     type="button"
                                     className="dashboard-inline-link-btn"
-                                    onClick={() => openChauffeurPaltoAccount('personal')}
+                                    onClick={() => handleNavSelect('profile')}
                                   >
-                                    Compte Palto
+                                    {language === 'en' ? 'Profile tab' : 'Onglet Profil'}
                                   </button>
                                   .
                                 </p>
@@ -5006,64 +5312,6 @@ const Dashboard = ({
                                   </div>
                                 ) : null}
                               </form>
-                          </>
-                        ) : null}
-                        {userSubView === 'documents' ? (
-                          <>
-                            <div className="dashboard-user-card-head">
-                              <div>
-                                <h4>Documents & conformité</h4>
-                                <p className="dashboard-field-hint">
-                                  Pièces légales et statut de vérification pour accepter des courses.
-                                </p>
-                              </div>
-                            </div>
-                              <div className="dashboard-doc-list">
-                                {chauffeurDocuments.map((doc) => (
-                                  <div key={doc.key} className="dashboard-doc-row">
-                                    <div>
-                                      <strong>{doc.label}</strong>
-                                      <p>Expiration: {doc.expiry}</p>
-                                      {doc.uploadedFileName ? <p>Dernier upload: {doc.uploadedFileName}</p> : null}
-                                    </div>
-                                    <div className="dashboard-doc-actions">
-                                      <span
-                                        className={`dashboard-doc-badge ${
-                                          doc.status === 'pending'
-                                            ? 'dashboard-doc-badge--pending'
-                                            : doc.status === 'soon'
-                                              ? 'dashboard-doc-badge--soon'
-                                              : 'dashboard-doc-badge--ok'
-                                        }`}
-                                      >
-                                        {doc.status === 'pending'
-                                          ? 'Vérification en cours'
-                                          : doc.status === 'soon'
-                                            ? 'À renouveler'
-                                            : 'Validé'}
-                                      </span>
-                                      <label className="dashboard-doc-upload-btn">
-                                        Choisir
-                                        <input
-                                          type="file"
-                                          accept=".pdf,.jpg,.jpeg,.png,.webp"
-                                          onChange={(e) =>
-                                            handleDocumentFilePick(doc.key, e.target.files?.[0]?.name ?? '')
-                                          }
-                                        />
-                                      </label>
-                                      <button
-                                        type="button"
-                                        className="dashboard-doc-submit-btn"
-                                        disabled={!documentUploadDraft[doc.key] || doc.status === 'pending'}
-                                        onClick={() => submitDocumentRenewal(doc.key)}
-                                      >
-                                        Uploader
-                                      </button>
-                                    </div>
-                                  </div>
-                                ))}
-                              </div>
                           </>
                         ) : null}
 
@@ -5288,124 +5536,141 @@ const Dashboard = ({
                             </section>
                           </div>
                         ) : null}
-                        {userSubView === 'preferences' ? (
+                        {userSubView === 'pref-location' ? (
                           <>
                             <div className="dashboard-user-card-head">
                               <div>
-                                <h4>Préférences</h4>
+                                <h4>{language === 'en' ? 'Location' : 'Localisation'}</h4>
                                 <p className="dashboard-field-hint">
-                                  Langue, apparence, localisation et visibilité sur les courses (page Go).
+                                  {language === 'en'
+                                    ? 'Allow Palto to show your position on the Go page.'
+                                    : 'Autorisez Palto à afficher votre position sur la page Go.'}
                                 </p>
                               </div>
                             </div>
-                              <h3 className="client-compte-section-title">
-                                {language === 'en' ? 'Location' : 'Localisation'}
-                              </h3>
-                              <p className="dashboard-field-hint" style={{ margin: '0 0 12px' }}>
-                                {language === 'en'
-                                  ? 'Allow Palto to show your position on the Go page.'
-                                  : 'Autorisez Palto a afficher votre position sur la page Go.'}
-                              </p>
-                              <div className="dashboard-preferences-geo">
-                                <ChauffeurPresenceGeoBar
-                                  onActivate={chauffeurPresence.startTracking}
-                                  onRefresh={chauffeurPresence.refreshLocation}
-                                  error={chauffeurPresence.geoError}
-                                  tracking={chauffeurPresence.tracking}
-                                />
+                            <div className="dashboard-preferences-geo">
+                              <ChauffeurPresenceGeoBar
+                                onActivate={chauffeurPresence.startTracking}
+                                onRefresh={chauffeurPresence.refreshLocation}
+                                error={chauffeurPresence.geoError}
+                                tracking={chauffeurPresence.tracking}
+                              />
+                            </div>
+                          </>
+                        ) : null}
+                        {userSubView === 'pref-language' ? (
+                          <>
+                            <div className="dashboard-user-card-head">
+                              <div>
+                                <h4>{language === 'en' ? 'Language' : 'Langue'}</h4>
+                                <p className="dashboard-field-hint">{t('clientAccount.settingsLanguageHint')}</p>
                               </div>
-                              <h3 className="client-compte-section-title">{t('clientAccount.settingsLanguageTitle')}</h3>
-                              <p className="dashboard-field-hint" style={{ margin: '0 0 12px' }}>
-                                {t('clientAccount.settingsLanguageHint')}
-                              </p>
-                              <div className="client-compte-settings-lang-row" style={{ marginBottom: 16 }}>
-                                <LanguageSwitcher />
+                            </div>
+                            <div className="client-compte-settings-lang-row">
+                              <LanguageSwitcher />
+                            </div>
+                          </>
+                        ) : null}
+                        {userSubView === 'pref-appearance' ? (
+                          <>
+                            <div className="dashboard-user-card-head">
+                              <div>
+                                <h4>{language === 'en' ? 'Appearance' : 'Apparence'}</h4>
+                                <p className="dashboard-field-hint">{t('clientAccount.settingsAppearanceHint')}</p>
                               </div>
-
-                              <h3 className="client-compte-section-title">{t('clientAccount.settingsAppearanceTitle')}</h3>
-                              <p className="dashboard-field-hint" style={{ margin: '0 0 8px' }}>
-                                {t('clientAccount.settingsAppearanceHint')}
-                              </p>
-                              <label className="client-compte-settings-toggle-row">
-                                <span>{language === 'en' ? 'Theme' : 'Theme'}</span>
-                                <select
-                                  value={appPrefs.theme}
-                                  onChange={(e) => setAppTheme(e.target.value as AppTheme)}
-                                >
-                                  <option value="light">{language === 'en' ? 'Light' : 'Clair'}</option>
-                                  <option value="dark">{language === 'en' ? 'Dark' : 'Sombre'}</option>
-                                  <option value="contrast">{language === 'en' ? 'High contrast' : 'Contraste eleve'}</option>
-                                </select>
-                              </label>
-
-                              <h3 className="client-compte-section-title" style={{ marginTop: 20 }}>
-                                {t('clientAccount.settingsTextSizeTitle')}
-                              </h3>
-                              <p className="dashboard-field-hint" style={{ margin: '0 0 12px' }}>
-                                {t('clientAccount.settingsTextSizeHint')}
-                              </p>
-                              <div className="client-compte-font-scale-row">
-                                <span className="client-compte-font-scale-end" aria-hidden="true">
-                                  {FONT_SCALE_PERCENT_MIN} %
-                                </span>
-                                <input
-                                  type="range"
-                                  className="client-compte-font-scale-range"
-                                  min={FONT_SCALE_PERCENT_MIN}
-                                  max={FONT_SCALE_PERCENT_MAX}
-                                  step={1}
-                                  value={appPrefs.fontScalePercent}
-                                  onChange={(e) => setFontScalePercent(Number(e.target.value))}
-                                  aria-label={t('clientAccount.settingsTextSizeAria')}
-                                  aria-valuemin={FONT_SCALE_PERCENT_MIN}
-                                  aria-valuemax={FONT_SCALE_PERCENT_MAX}
-                                  aria-valuenow={appPrefs.fontScalePercent}
-                                  aria-valuetext={t('clientAccount.settingsTextSizeValue', {
-                                    n: String(appPrefs.fontScalePercent),
-                                  })}
-                                />
-                                <span
-                                  className="client-compte-font-scale-end client-compte-font-scale-end--max"
-                                  aria-hidden="true"
-                                >
-                                  {FONT_SCALE_PERCENT_MAX} %
-                                </span>
+                            </div>
+                            <label className="client-compte-settings-toggle-row">
+                              <span>{language === 'en' ? 'Theme' : 'Thème'}</span>
+                              <select
+                                value={appPrefs.theme}
+                                onChange={(e) => setAppTheme(e.target.value as AppTheme)}
+                              >
+                                <option value="light">{language === 'en' ? 'Light' : 'Clair'}</option>
+                                <option value="dark">{language === 'en' ? 'Dark' : 'Sombre'}</option>
+                                <option value="contrast">
+                                  {language === 'en' ? 'High contrast' : 'Contraste élevé'}
+                                </option>
+                              </select>
+                              {userProfileDraft.vehicleModel?.trim() ? (
+                                <small className="dashboard-field-hint">
+                                  {language === 'en' ? 'Detected model' : 'Modèle détecté'} :{' '}
+                                  {userProfileDraft.vehicleModel}
+                                </small>
+                              ) : null}
+                            </label>
+                          </>
+                        ) : null}
+                        {userSubView === 'pref-display' ? (
+                          <>
+                            <div className="dashboard-user-card-head">
+                              <div>
+                                <h4>{language === 'en' ? 'Text size' : 'Taille du texte'}</h4>
+                                <p className="dashboard-field-hint">{t('clientAccount.settingsTextSizeHint')}</p>
                               </div>
-                              <p className="client-compte-font-scale-value" aria-live="polite">
-                                {t('clientAccount.settingsTextSizeValue', { n: String(appPrefs.fontScalePercent) })}
-                              </p>
-
-                              <h3 className="client-compte-section-title" style={{ marginTop: 20 }}>
-                                {t('clientAccount.settingsNotificationsTitle')}
-                              </h3>
-                              <p className="dashboard-field-hint" style={{ margin: '0 0 8px' }}>
-                                {t('clientAccount.settingsNotificationsHint')}
-                              </p>
-                              <label className="client-compte-settings-toggle-row">
-                                <span>{t('clientAccount.settingsNotifyEmail')}</span>
-                                <input
-                                  type="checkbox"
-                                  checked={appPrefs.notifyEmail}
-                                  onChange={() => toggleAppNotify('notifyEmail')}
-                                />
-                              </label>
-                              <label className="client-compte-settings-toggle-row">
-                                <span>{t('clientAccount.settingsNotifySms')}</span>
-                                <input
-                                  type="checkbox"
-                                  checked={appPrefs.notifySms}
-                                  onChange={() => toggleAppNotify('notifySms')}
-                                />
-                              </label>
-                              <label className="client-compte-settings-toggle-row">
-                                <span>{t('clientAccount.settingsNotifyPush')}</span>
-                                <input
-                                  type="checkbox"
-                                  checked={appPrefs.notifyPush}
-                                  onChange={() => toggleAppNotify('notifyPush')}
-                                />
-                              </label>
-
+                            </div>
+                            <div className="client-compte-font-scale-row">
+                              <span className="client-compte-font-scale-end" aria-hidden="true">
+                                {FONT_SCALE_PERCENT_MIN} %
+                              </span>
+                              <input
+                                type="range"
+                                className="client-compte-font-scale-range"
+                                min={FONT_SCALE_PERCENT_MIN}
+                                max={FONT_SCALE_PERCENT_MAX}
+                                step={1}
+                                value={appPrefs.fontScalePercent}
+                                onChange={(e) => setFontScalePercent(Number(e.target.value))}
+                                aria-label={t('clientAccount.settingsTextSizeAria')}
+                                aria-valuemin={FONT_SCALE_PERCENT_MIN}
+                                aria-valuemax={FONT_SCALE_PERCENT_MAX}
+                                aria-valuenow={appPrefs.fontScalePercent}
+                                aria-valuetext={t('clientAccount.settingsTextSizeValue', {
+                                  n: String(appPrefs.fontScalePercent),
+                                })}
+                              />
+                              <span
+                                className="client-compte-font-scale-end client-compte-font-scale-end--max"
+                                aria-hidden="true"
+                              >
+                                {FONT_SCALE_PERCENT_MAX} %
+                              </span>
+                            </div>
+                            <p className="client-compte-font-scale-value" aria-live="polite">
+                              {t('clientAccount.settingsTextSizeValue', { n: String(appPrefs.fontScalePercent) })}
+                            </p>
+                          </>
+                        ) : null}
+                        {userSubView === 'pref-notifications' ? (
+                          <>
+                            <div className="dashboard-user-card-head">
+                              <div>
+                                <h4>{language === 'en' ? 'Notifications' : 'Notifications'}</h4>
+                                <p className="dashboard-field-hint">
+                                  {t('clientAccount.settingsNotificationsHint')}
+                                </p>
+                              </div>
+                            </div>
+                            <PaltoNotificationPrefsPanel
+                              role="chauffeur"
+                              fallbackEmail={getChauffeurSessionEmail()}
+                              appPrefs={appPrefs}
+                              onAppPrefsChange={handleAppPrefsChange}
+                            />
+                          </>
+                        ) : null}
+                        {userSubView === 'pref-security' ? (
+                          <>
+                            <div className="dashboard-user-card-head">
+                              <div>
+                                <h4>{t('driverDashboard.navSecurity')}</h4>
+                                <p className="dashboard-field-hint">
+                                  {language === 'en'
+                                    ? 'Manage your password and link Google for faster sign-in.'
+                                    : 'Gérez votre mot de passe et liez Google pour une connexion plus rapide.'}
+                                </p>
+                              </div>
+                            </div>
+                            <ChauffeurAccountSecurityPanel isEn={language === 'en'} />
                           </>
                         ) : null}
                         {userSubView === 'help' ? (
@@ -5520,30 +5785,12 @@ const Dashboard = ({
                         <p className="dashboard-field-hint" style={{ margin: '0 0 8px' }}>
                           {t('clientAccount.settingsNotificationsHint')}
                         </p>
-                        <label className="client-compte-settings-toggle-row">
-                          <span>{t('clientAccount.settingsNotifyEmail')}</span>
-                          <input
-                            type="checkbox"
-                            checked={appPrefs.notifyEmail}
-                            onChange={() => toggleAppNotify('notifyEmail')}
-                          />
-                        </label>
-                        <label className="client-compte-settings-toggle-row">
-                          <span>{t('clientAccount.settingsNotifySms')}</span>
-                          <input
-                            type="checkbox"
-                            checked={appPrefs.notifySms}
-                            onChange={() => toggleAppNotify('notifySms')}
-                          />
-                        </label>
-                        <label className="client-compte-settings-toggle-row">
-                          <span>{t('clientAccount.settingsNotifyPush')}</span>
-                          <input
-                            type="checkbox"
-                            checked={appPrefs.notifyPush}
-                            onChange={() => toggleAppNotify('notifyPush')}
-                          />
-                        </label>
+                        <PaltoNotificationPrefsPanel
+                          role="chauffeur"
+                          fallbackEmail={getChauffeurSessionEmail()}
+                          appPrefs={appPrefs}
+                          onAppPrefsChange={handleAppPrefsChange}
+                        />
                       </article>
 
                       <p className="dashboard-field-hint" style={{ marginTop: 20 }}>
@@ -6124,6 +6371,10 @@ const Dashboard = ({
                   icon: <User size={20} strokeWidth={2} />,
                   active: chauffeurMobileTabId === 'profile',
                   onClick: () => handleChauffeurMobileTab('profile'),
+                  badge:
+                    !profileOnboarding.allDone
+                      ? profileOnboarding.totalCount - profileOnboarding.completedCount
+                      : undefined,
                 },
                 {
                   id: 'planning',
@@ -6138,6 +6389,7 @@ const Dashboard = ({
                   icon: <Briefcase size={20} strokeWidth={2} />,
                   active: chauffeurMobileTabId === 'jobs',
                   onClick: () => handleChauffeurMobileTab('jobs'),
+                  badge: chauffeurJobsNavCount > 0 ? chauffeurJobsNavCount : undefined,
                 },
               ]}
             />

@@ -4,6 +4,7 @@ import { useLanguage } from '../contexts/LanguageContext'
 import type { ChauffeurVehicleType } from '../constants/chauffeurRegistrationStorage'
 import {
   CHAUFFEUR_JOBS_MOCK,
+  countChauffeurJobsForDriver,
   jobMatchesChauffeurVehicle,
   vehicleTypeLabel,
   type ChauffeurJobOffer,
@@ -16,6 +17,8 @@ type JobsTab = 'forYou' | 'all'
 export type ChauffeurJobsPanelProps = {
   chauffeurVehicleType?: ChauffeurVehicleType | string | null
   acceptedJobIds: ReadonlySet<string>
+  dismissedJobIds: ReadonlySet<string>
+  onDismissJob: (jobId: string) => void
   onAcceptJob: (job: ChauffeurJobOffer) => void
 }
 
@@ -140,40 +143,40 @@ function JobCard({
 export default function ChauffeurJobsPanel({
   chauffeurVehicleType,
   acceptedJobIds,
+  dismissedJobIds,
+  onDismissJob,
   onAcceptJob,
 }: ChauffeurJobsPanelProps) {
   const { t, language } = useLanguage()
   const lang = language === 'en' ? 'en' : 'fr'
   const [tab, setTab] = useState<JobsTab>('forYou')
-  const [dismissedIds, setDismissedIds] = useState<Set<string>>(() => new Set())
   const [routePreviewJob, setRoutePreviewJob] = useState<ChauffeurJobOffer | null>(null)
 
   const visibleJobs = useMemo(() => {
     const base = CHAUFFEUR_JOBS_MOCK.filter(
-      (j) => !dismissedIds.has(j.id) && !acceptedJobIds.has(j.id)
+      (j) => !dismissedJobIds.has(j.id) && !acceptedJobIds.has(j.id)
     ).sort((a, b) => new Date(b.postedAt).getTime() - new Date(a.postedAt).getTime())
     if (tab === 'all') return base
     return base.filter((j) => jobMatchesChauffeurVehicle(j, chauffeurVehicleType))
-  }, [tab, dismissedIds, acceptedJobIds, chauffeurVehicleType])
+  }, [tab, dismissedJobIds, acceptedJobIds, chauffeurVehicleType])
 
   const forYouCount = useMemo(
     () =>
-      CHAUFFEUR_JOBS_MOCK.filter(
-        (j) =>
-          !dismissedIds.has(j.id) &&
-          !acceptedJobIds.has(j.id) &&
-          jobMatchesChauffeurVehicle(j, chauffeurVehicleType)
-      ).length,
-    [dismissedIds, acceptedJobIds, chauffeurVehicleType]
+      countChauffeurJobsForDriver({
+        acceptedJobIds,
+        dismissedJobIds,
+        chauffeurVehicleType,
+      }),
+    [dismissedJobIds, acceptedJobIds, chauffeurVehicleType]
   )
 
   const allCount = useMemo(
-    () => CHAUFFEUR_JOBS_MOCK.filter((j) => !dismissedIds.has(j.id) && !acceptedJobIds.has(j.id)).length,
-    [dismissedIds, acceptedJobIds]
+    () => CHAUFFEUR_JOBS_MOCK.filter((j) => !dismissedJobIds.has(j.id) && !acceptedJobIds.has(j.id)).length,
+    [dismissedJobIds, acceptedJobIds]
   )
 
   const handleDismiss = (id: string) => {
-    setDismissedIds((prev) => new Set(prev).add(id))
+    onDismissJob(id)
   }
 
   const handleApply = (job: ChauffeurJobOffer) => {

@@ -5,14 +5,14 @@ import {
   FileText,
   Info,
   LogOut,
-  Settings,
-  Shield,
-  Eye,
+  MapPin,
   Palette,
-  Accessibility,
+  Shield,
+  Settings,
+  Type,
   Building2,
   IdCard,
-  MapPin,
+  Languages,
   Wallet,
 } from 'lucide-react';
 import type { ReactNode } from 'react';
@@ -28,10 +28,15 @@ export type ChauffeurMobileAccountDestination =
   | 'profile'
   | 'ride-settings'
   | 'help'
-  | 'palto-account'
+  | 'overview-profile'
   | 'palto-payment'
   | 'documents'
-  | 'preferences'
+  | 'pref-location'
+  | 'pref-language'
+  | 'pref-appearance'
+  | 'pref-display'
+  | 'pref-notifications'
+  | 'pref-security'
   | 'organization'
   | 'about';
 
@@ -71,7 +76,7 @@ export default function ChauffeurMobileAccountHub({
       id: 'personal',
       label: isEn ? 'Personal information' : 'Informations personnelles',
       icon: <IdCard size={18} />,
-      onClick: () => onOpen('palto-account'),
+      onClick: () => onOpen('overview-profile'),
     },
     {
       id: 'payment',
@@ -81,54 +86,48 @@ export default function ChauffeurMobileAccountHub({
     },
     {
       id: 'documents',
-      label: isEn ? 'Documents & invoices' : 'Documents et factures',
+      label: isEn ? 'Documents & compliance' : 'Documents & conformite',
       icon: <FileText size={18} />,
       onClick: () => onOpen('documents'),
     },
     {
-      id: 'notifications',
-      label: isEn ? 'Notifications' : 'Notifications',
-      icon: <Bell size={18} />,
-      onClick: () => onOpen('preferences'),
-    },
-  ];
-
-  const menuSettings: MobileAccountHubMenuRow[] = [
-    {
       id: 'security',
-      label: isEn ? 'Security' : 'Securite',
+      label: isEn ? 'Security & password' : 'Securite & mot de passe',
       icon: <Shield size={18} />,
-      onClick: () => onOpen('palto-account'),
-    },
-    {
-      id: 'privacy',
-      label: isEn ? 'Privacy' : 'Confidentialite',
-      icon: <Eye size={18} />,
-      disabled: true,
-    },
-    {
-      id: 'notif-settings',
-      label: isEn ? 'Notification settings' : 'Parametres de notification',
-      icon: <Settings size={18} />,
-      onClick: () => onOpen('preferences'),
-    },
-    {
-      id: 'appearance',
-      label: isEn ? 'Appearance' : 'Apparence',
-      icon: <Palette size={18} />,
-      onClick: () => onOpen('preferences'),
+      onClick: () => onOpen('pref-security'),
     },
     {
       id: 'location',
       label: isEn ? 'Location' : 'Localisation',
       icon: <MapPin size={18} />,
-      onClick: () => onOpen('preferences'),
+      onClick: () => onOpen('pref-location'),
     },
     {
-      id: 'accessibility',
-      label: isEn ? 'Accessibility' : 'Accessibilite',
-      icon: <Accessibility size={18} />,
-      onClick: () => onOpen('preferences'),
+      id: 'notifications',
+      label: isEn ? 'Notifications' : 'Notifications',
+      icon: <Bell size={18} />,
+      onClick: () => onOpen('pref-notifications'),
+    },
+  ];
+
+  const menuSettings: MobileAccountHubMenuRow[] = [
+    {
+      id: 'language',
+      label: isEn ? 'Language' : 'Langue',
+      icon: <Languages size={18} />,
+      onClick: () => onOpen('pref-language'),
+    },
+    {
+      id: 'appearance',
+      label: isEn ? 'Appearance' : 'Apparence',
+      icon: <Palette size={18} />,
+      onClick: () => onOpen('pref-appearance'),
+    },
+    {
+      id: 'text-size',
+      label: isEn ? 'Text size' : 'Taille du texte',
+      icon: <Type size={18} />,
+      onClick: () => onOpen('pref-display'),
     },
   ];
 

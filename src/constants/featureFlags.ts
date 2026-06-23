@@ -113,3 +113,8 @@ export function supabaseRealtimeConfigured(): boolean {
 export function useGeolocationPromptBanner(): boolean {
   return isEnabled(import.meta.env.VITE_GEO_PROMPT_BANNER as string | undefined)
 }
+
+/** Bloque acceptation / lancement de courses si conformité incomplète (désactivé en bêta par défaut). */
+export function chauffeurComplianceBlocksRides(): boolean {
+  return isEnabled(import.meta.env.VITE_CHAUFFEUR_COMPLIANCE_BLOCKS_RIDES as string | undefined)
+}

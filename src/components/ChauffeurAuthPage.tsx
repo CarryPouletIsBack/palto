@@ -141,16 +141,11 @@ export default function ChauffeurAuthPage({ onAuthSuccess, onClose, onSwitchToCl
         </p>
 
         {mode === 'signup' ? (
-          <>
-            {!oauthSignupResume ? (
-              <AuthOAuthButtons role="chauffeur" mode="signup" />
-            ) : null}
-            <ChauffeurSignupWizard
-              initialEmail={email}
-              oauthMode={oauthSignupResume}
-              onSuccess={finishSignup}
-            />
-          </>
+          <ChauffeurSignupWizard
+            initialEmail={email}
+            oauthMode={oauthSignupResume}
+            onSuccess={finishSignup}
+          />
         ) : (
           <form className="auth-page-grid" onSubmit={handleSubmit}>
             <AuthOAuthButtons role="chauffeur" mode="login" />

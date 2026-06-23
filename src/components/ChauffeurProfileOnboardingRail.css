@@ -1,0 +1,196 @@
+.chauffeur-profile-onboarding-rail {
+  margin-top: var(--ch-space-2, 10px);
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+  padding: 10px 12px;
+  border-radius: 12px;
+  border: 1px solid #dbeafe;
+  background: linear-gradient(180deg, #f8fbff 0%, #f1f5f9 100%);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.chauffeur-profile-onboarding-rail--minimized {
+  padding: 8px 10px;
+  gap: 6px;
+}
+
+.chauffeur-profile-onboarding-rail__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+  min-width: 0;
+}
+
+.chauffeur-profile-onboarding-rail__head-main {
+  flex: 1 1 auto;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.chauffeur-profile-onboarding-rail__toggle {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  color: #64748b;
+  cursor: pointer;
+}
+
+.chauffeur-profile-onboarding-rail__toggle:hover {
+  background: rgba(255, 255, 255, 0.72);
+  color: #334155;
+}
+
+.chauffeur-profile-onboarding-rail__title {
+  font-size: 12px;
+  font-weight: 700;
+  color: #0f172a;
+  line-height: 1.2;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.chauffeur-profile-onboarding-rail__count {
+  flex: 0 0 auto;
+  min-width: 34px;
+  height: 22px;
+  padding: 0 8px;
+  border-radius: 999px;
+  background: #2563eb;
+  color: #ffffff;
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 22px;
+  text-align: center;
+}
+
+.chauffeur-profile-onboarding-rail__track {
+  height: 6px;
+  border-radius: 999px;
+  background: #e2e8f0;
+  overflow: hidden;
+}
+
+.chauffeur-profile-onboarding-rail__fill {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, #3b82f6 0%, #2563eb 100%);
+  transition: width 0.2s ease;
+}
+
+.chauffeur-profile-onboarding-rail__beta {
+  margin: 0;
+  font-size: 11px;
+  line-height: 1.35;
+  color: #64748b;
+}
+
+.chauffeur-profile-onboarding-rail__cta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  width: 100%;
+  padding: 8px 10px;
+  border: 1px solid #bfdbfe;
+  border-radius: 10px;
+  background: #ffffff;
+  color: #1d4ed8;
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.25;
+  text-align: left;
+  cursor: pointer;
+}
+
+.chauffeur-profile-onboarding-rail__cta:hover {
+  background: #eff6ff;
+}
+
+.chauffeur-profile-onboarding-rail__steps {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.chauffeur-profile-onboarding-rail__step {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 8px;
+  border: none;
+  border-radius: 8px;
+  background: transparent;
+  color: #334155;
+  font-size: 12px;
+  line-height: 1.25;
+  text-align: left;
+  cursor: pointer;
+}
+
+.chauffeur-profile-onboarding-rail__step:hover {
+  background: rgba(255, 255, 255, 0.72);
+}
+
+.chauffeur-profile-onboarding-rail__step--done .chauffeur-profile-onboarding-rail__step-index {
+  background: #16a34a;
+}
+
+.chauffeur-profile-onboarding-rail__step-index {
+  flex: 0 0 auto;
+  width: 20px;
+  height: 20px;
+  border-radius: 999px;
+  background: #94a3b8;
+  color: #ffffff;
+  font-size: 10px;
+  font-weight: 700;
+  line-height: 20px;
+  text-align: center;
+}
+
+.chauffeur-profile-onboarding-rail__step-label {
+  min-width: 0;
+}
+
+.chauffeur-profile-onboarding-rail__step-optional {
+  color: #94a3b8;
+  font-weight: 500;
+}
+
+.dashboard-container.sidebar-collapsed .chauffeur-profile-onboarding-rail__title,
+.dashboard-container.sidebar-collapsed .chauffeur-profile-onboarding-rail__beta,
+.dashboard-container.sidebar-collapsed .chauffeur-profile-onboarding-rail__cta,
+.dashboard-container.sidebar-collapsed .chauffeur-profile-onboarding-rail__steps,
+.dashboard-container.sidebar-collapsed .chauffeur-profile-onboarding-rail__track,
+.dashboard-container.sidebar-collapsed .chauffeur-profile-onboarding-rail__toggle {
+  display: none;
+}
+
+.dashboard-container.sidebar-collapsed .chauffeur-profile-onboarding-rail {
+  padding: 6px;
+}
+
+.dashboard-container.sidebar-collapsed .chauffeur-profile-onboarding-rail__head-main {
+  justify-content: center;
+}

@@ -2148,6 +2148,24 @@ html[data-app-theme='dark'] .palto-checkout-stripe--setup .palto-checkout-stripe
   margin-top: 12px;
 }
 
+.client-compte-pwd-form .dashboard-user-edit-actions {
+  flex-direction: column;
+  align-items: stretch;
+  gap: 10px;
+}
+
+.client-compte-pwd-form .dashboard-user-save-btn,
+.client-compte-pwd-form .dashboard-user-cancel-btn {
+  width: 100%;
+  min-height: 36px;
+  height: auto;
+  white-space: normal;
+  line-height: 1.35;
+  padding: 8px 14px;
+  box-sizing: border-box;
+  text-align: center;
+}
+
 .client-compte-oauth-list {
   list-style: none;
   padding: 0;
@@ -2436,6 +2454,41 @@ html[data-app-theme='dark'] .palto-checkout-stripe--setup .palto-checkout-stripe
   font-size: 13px;
   background: var(--app-bg-alt, #ffffff);
   color: var(--app-text-primary, #0f172a);
+}
+
+.client-compte-settings-notify-block {
+  margin-top: 0;
+}
+
+.client-compte-settings-notify-email-hint {
+  margin: 6px 0 0;
+  font-size: 12px;
+  line-height: 1.4;
+  color: var(--app-text-muted, #64748b);
+  word-break: break-word;
+}
+
+.client-compte-settings-toggle-row--disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.client-compte-settings-toggle-row--disabled span {
+  color: var(--app-text-muted, #64748b);
+}
+
+.client-compte-settings-toggle-row--disabled input[type='checkbox'] {
+  cursor: not-allowed;
+  pointer-events: none;
+  accent-color: #94a3b8;
+}
+
+.client-compte-settings-toggle-row__soon {
+  display: inline-block;
+  margin-left: 8px;
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--app-text-muted, #94a3b8);
 }
 
 .client-compte-help-faq {

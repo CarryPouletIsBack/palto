@@ -119,6 +119,20 @@ export function jobMatchesChauffeurVehicle(
   return false
 }
 
+/** Nombre de jobs visibles pour le chauffeur (onglet « Pour vous »). */
+export function countChauffeurJobsForDriver(input: {
+  acceptedJobIds: ReadonlySet<string>
+  dismissedJobIds: ReadonlySet<string>
+  chauffeurVehicleType?: ChauffeurVehicleType | string | null
+}): number {
+  return CHAUFFEUR_JOBS_MOCK.filter(
+    (job) =>
+      !input.dismissedJobIds.has(job.id) &&
+      !input.acceptedJobIds.has(job.id) &&
+      jobMatchesChauffeurVehicle(job, input.chauffeurVehicleType)
+  ).length
+}
+
 export function vehicleTypeLabel(
   type: ChauffeurVehicleType,
   language: 'fr' | 'en'

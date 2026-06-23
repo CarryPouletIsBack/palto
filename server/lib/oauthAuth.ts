@@ -502,7 +502,7 @@ async function resolveOrCreateOAuthAccount(
         })
         return emailAccount
       }
-      return createOAuthChauffeurAccount(supabase, profile)
+      throw new Error('CHAUFFEUR_SIGNUP_PASSWORD_REQUIRED')
     }
     throw new Error('CHAUFFEUR_ACCOUNT_REQUIRED')
   }

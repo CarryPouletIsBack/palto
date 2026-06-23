@@ -650,3 +650,263 @@ export async function handleAuthRealtimeToken(req: VercelRequest, res: VercelRes
     return res.status(503).json({ error: 'Configuration JWT Supabase manquante (SUPABASE_JWT_SECRET)' })
   }
 }
+
+const ChangePasswordBodySchema = z.object({
+  currentPassword: z.string().max(128).optional(),
+  newPassword: z.string().min(6).max(128),
+})
+
+const UnlinkOAuthBodySchema = z.object({
+  provider: z.enum(['google', 'facebook']),
+})
+
+async function readAccountSecurity(
+  supabase: ReturnType<typeof getSupabaseAdmin>,
+  accountId: string
+): Promise<{
+  hasPassword: boolean
+  oauthGoogle: boolean
+  oauthFacebook: boolean
+  passwordUpdatedAt: string | null
+}> {
+  const { data: account, error: accountErr } = await supabase
+    .from('app_accounts')
+    .select('password_hash,updated_at')
+    .eq('id', accountId)
+    .maybeSingle()
+
+  if (accountErr) throw accountErr
+  if (!account) throw new Error('ACCOUNT_NOT_FOUND')
+
+  const { data: identities, error: identitiesErr } = await supabase
+    .from('app_oauth_identities')
+    .select('provider')
+    .eq('account_id', accountId)
+
+  if (identitiesErr) throw identitiesErr
+
+  const providers = new Set((identities ?? []).map((row) => row.provider))
+  const hasPassword = Boolean(account.password_hash)
+
+  return {
+    hasPassword,
+    oauthGoogle: providers.has('google'),
+    oauthFacebook: providers.has('facebook'),
+    passwordUpdatedAt: hasPassword && typeof account.updated_at === 'string' ? account.updated_at : null,
+  }
+}
+
+export async function handleAuthSecurityStatus(
+  req: VercelRequest,
+  res: VercelResponse,
+  role: 'client' | 'chauffeur'
+) {
+  const session =
+    role === 'client' ? await getVerifiedClientSession(req) : await getVerifiedChauffeurSession(req)
+  if (!session) {
+    return res.status(401).json({ success: false, error: 'SESSION_REQUIRED' })
+  }
+
+  let supabase
+  try {
+    supabase = getSupabaseAdmin()
+  } catch {
+    return res.status(503).json({ success: false, error: 'Service indisponible' })
+  }
+
+  try {
+    const status = await readAccountSecurity(supabase, session.accountId)
+    return res.status(200).json({ success: true, ...status })
+  } catch (error) {
+    console.error(`[auth/${role}/security-status]`, error)
+    return res.status(500).json({ success: false, error: 'Lecture securite impossible' })
+  }
+}
+
+export async function handleAuthChangePassword(
+  req: VercelRequest,
+  res: VercelResponse,
+  role: 'client' | 'chauffeur'
+) {
+  const body = parseJsonBody(req)
+  if (body === null) return res.status(400).json({ success: false, error: 'Payload JSON invalide' })
+  const parsed = ChangePasswordBodySchema.safeParse(body)
+  if (!parsed.success) return res.status(400).json({ success: false, error: 'Payload invalide' })
+
+  const session =
+    role === 'client' ? await getVerifiedClientSession(req) : await getVerifiedChauffeurSession(req)
+  if (!session) {
+    return res.status(401).json({ success: false, error: 'SESSION_REQUIRED' })
+  }
+
+  let supabase
+  try {
+    supabase = getSupabaseAdmin()
+  } catch {
+    return res.status(503).json({ success: false, error: 'Service indisponible' })
+  }
+
+  const { data: account, error: readErr } = await supabase
+    .from('app_accounts')
+    .select('id,password_hash')
+    .eq('id', session.accountId)
+    .eq('role', role)
+    .maybeSingle()
+
+  if (readErr) {
+    console.error(`[auth/${role}/change-password] read`, readErr)
+    return res.status(500).json({ success: false, error: 'Lecture compte impossible' })
+  }
+  if (!account) return res.status(404).json({ success: false, error: 'Compte introuvable' })
+
+  if (account.password_hash) {
+    const current = (parsed.data.currentPassword ?? '').trim()
+    if (!current) {
+      return res.status(400).json({ success: false, error: 'CURRENT_PASSWORD_REQUIRED' })
+    }
+    if (!verifyPassword(current, account.password_hash)) {
+      return res.status(401).json({ success: false, error: 'WRONG_PASSWORD' })
+    }
+  }
+
+  const passwordUpdatedAt = new Date().toISOString()
+  const passwordHash = hashPassword(parsed.data.newPassword)
+  const { error: updateErr } = await supabase
+    .from('app_accounts')
+    .update({ password_hash: passwordHash, updated_at: passwordUpdatedAt })
+    .eq('id', account.id)
+    .eq('role', role)
+
+  if (updateErr) {
+    console.error(`[auth/${role}/change-password] update`, updateErr)
+    return res.status(500).json({ success: false, error: 'Modification impossible' })
+  }
+
+  return res.status(200).json({ success: true, passwordUpdatedAt })
+}
+
+export async function handleAuthUnlinkOAuth(
+  req: VercelRequest,
+  res: VercelResponse,
+  role: 'client' | 'chauffeur'
+) {
+  const body = parseJsonBody(req)
+  if (body === null) return res.status(400).json({ success: false, error: 'Payload JSON invalide' })
+  const parsed = UnlinkOAuthBodySchema.safeParse(body)
+  if (!parsed.success) return res.status(400).json({ success: false, error: 'Payload invalide' })
+
+  const session =
+    role === 'client' ? await getVerifiedClientSession(req) : await getVerifiedChauffeurSession(req)
+  if (!session) {
+    return res.status(401).json({ success: false, error: 'SESSION_REQUIRED' })
+  }
+
+  let supabase
+  try {
+    supabase = getSupabaseAdmin()
+  } catch {
+    return res.status(503).json({ success: false, error: 'Service indisponible' })
+  }
+
+  const { data: account, error: readErr } = await supabase
+    .from('app_accounts')
+    .select('id,password_hash')
+    .eq('id', session.accountId)
+    .eq('role', role)
+    .maybeSingle()
+
+  if (readErr) {
+    console.error(`[auth/${role}/unlink-oauth] read`, readErr)
+    return res.status(500).json({ success: false, error: 'Lecture compte impossible' })
+  }
+  if (!account) return res.status(404).json({ success: false, error: 'Compte introuvable' })
+  if (!account.password_hash) {
+    return res.status(400).json({ success: false, error: 'OAUTH_UNLINK_PASSWORD_REQUIRED' })
+  }
+
+  const { error: delErr } = await supabase
+    .from('app_oauth_identities')
+    .delete()
+    .eq('account_id', account.id)
+    .eq('provider', parsed.data.provider)
+
+  if (delErr) {
+    console.error(`[auth/${role}/unlink-oauth] delete`, delErr)
+    return res.status(500).json({ success: false, error: 'Deconnexion impossible' })
+  }
+
+  return res.status(200).json({ success: true })
+}
+
+const NotificationPrefsBodySchema = z.object({
+  notifyEmail: z.boolean(),
+})
+
+export async function handleAuthNotificationPrefs(
+  req: VercelRequest,
+  res: VercelResponse,
+  role: 'client' | 'chauffeur'
+) {
+  const session =
+    role === 'client' ? await getVerifiedClientSession(req) : await getVerifiedChauffeurSession(req)
+  if (!session) {
+    return res.status(401).json({ success: false, error: 'SESSION_REQUIRED' })
+  }
+
+  let supabase
+  try {
+    supabase = getSupabaseAdmin()
+  } catch {
+    return res.status(503).json({ success: false, error: 'Service indisponible' })
+  }
+
+  if (req.method === 'GET') {
+    const { data, error } = await supabase
+      .from('app_accounts')
+      .select('email,notify_email')
+      .eq('id', session.accountId)
+      .eq('role', role)
+      .maybeSingle()
+
+    if (error) {
+      console.error(`[auth/${role}/notification-prefs] read`, error)
+      return res.status(500).json({ success: false, error: 'Lecture preferences impossible' })
+    }
+    if (!data) return res.status(404).json({ success: false, error: 'Compte introuvable' })
+
+    return res.status(200).json({
+      success: true,
+      email: data.email,
+      notifyEmail: data.notify_email !== false,
+    })
+  }
+
+  if (req.method !== 'POST') {
+    return res.status(405).json({ success: false, error: 'Method not allowed' })
+  }
+
+  const body = parseJsonBody(req)
+  if (body === null) return res.status(400).json({ success: false, error: 'Payload JSON invalide' })
+  const parsed = NotificationPrefsBodySchema.safeParse(body)
+  if (!parsed.success) return res.status(400).json({ success: false, error: 'Payload invalide' })
+
+  const { error: updateErr } = await supabase
+    .from('app_accounts')
+    .update({
+      notify_email: parsed.data.notifyEmail,
+      updated_at: new Date().toISOString(),
+    })
+    .eq('id', session.accountId)
+    .eq('role', role)
+
+  if (updateErr) {
+    console.error(`[auth/${role}/notification-prefs] update`, updateErr)
+    return res.status(500).json({ success: false, error: 'Enregistrement impossible' })
+  }
+
+  return res.status(200).json({
+    success: true,
+    email: session.email,
+    notifyEmail: parsed.data.notifyEmail,
+  })
+}

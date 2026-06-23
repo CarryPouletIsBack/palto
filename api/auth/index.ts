@@ -9,6 +9,10 @@ import {
   handleAuthResetPassword,
   handleAuthDeleteAccount,
   handleAuthRealtimeToken,
+  handleAuthSecurityStatus,
+  handleAuthChangePassword,
+  handleAuthUnlinkOAuth,
+  handleAuthNotificationPrefs,
 } from '../../server/lib/authApiHandlers.js'
 import {
   handleOAuthCallback,
@@ -58,6 +62,19 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     return handleOAuthExchange(req, res)
   }
 
+  if (action === 'security-status') {
+    if (req.method !== 'GET') return res.status(405).json({ error: 'Method not allowed' })
+    if (role === 'client') return handleAuthSecurityStatus(req, res, 'client')
+    if (role === 'chauffeur') return handleAuthSecurityStatus(req, res, 'chauffeur')
+    return res.status(400).json({ error: 'Parametre role invalide' })
+  }
+
+  if (action === 'notification-prefs') {
+    if (role === 'client') return handleAuthNotificationPrefs(req, res, 'client')
+    if (role === 'chauffeur') return handleAuthNotificationPrefs(req, res, 'chauffeur')
+    return res.status(400).json({ error: 'Parametre role invalide' })
+  }
+
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' })
   if (role === 'client' && action === 'login') return handleAuthClientLogin(req, res)
   if (role === 'client' && action === 'register') return handleAuthClientRegister(req, res)
@@ -72,6 +89,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (role === 'chauffeur' && action === 'reset-password') return handleAuthResetPassword(req, res, 'chauffeur')
   if (role === 'client' && action === 'delete') return handleAuthDeleteAccount(req, res, 'client')
   if (role === 'chauffeur' && action === 'delete') return handleAuthDeleteAccount(req, res, 'chauffeur')
+  if (role === 'client' && action === 'change-password') return handleAuthChangePassword(req, res, 'client')
+  if (role === 'chauffeur' && action === 'change-password')
+    return handleAuthChangePassword(req, res, 'chauffeur')
+  if (role === 'client' && action === 'unlink-oauth') return handleAuthUnlinkOAuth(req, res, 'client')
+  if (role === 'chauffeur' && action === 'unlink-oauth') return handleAuthUnlinkOAuth(req, res, 'chauffeur')
 
   return res.status(400).json({ error: 'Parametres role et action invalides' })
 }

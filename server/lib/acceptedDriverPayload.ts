@@ -68,7 +68,8 @@ export function buildAcceptedDriverPayload(input: {
 
   const vehiculeRaw = (snap.vehicule ?? '').trim()
   const vehicleModel =
-    vehiculeRaw && !isVehicleTypeSlug(vehiculeRaw) ? vehiculeRaw : undefined
+    (typeof snap.vehicleModel === 'string' ? snap.vehicleModel.trim() : '') ||
+    (vehiculeRaw && !isVehicleTypeSlug(vehiculeRaw) ? vehiculeRaw : undefined)
 
   const lineParts = [typeLabel, vehicleModel].filter(Boolean)
   const vehicleLabel =

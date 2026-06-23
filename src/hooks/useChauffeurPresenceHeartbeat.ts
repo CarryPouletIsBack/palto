@@ -15,7 +15,11 @@ const MIN_PUSH_INTERVAL_MS = 8_000
 export type ChauffeurPresenceHeartbeat = {
   /** Au moins une position a été lue et envoyée au serveur. */
   tracking: boolean
+  /** Partage activé par le chauffeur (intent, réagit tout de suite au toggle). */
+  sharing: boolean
   startTracking: () => void
+  /** Arrête le suivi GPS et signale l’indisponibilité sur la page Go. */
+  stopTracking: () => void
   /** Repousse la position enregistrée (geste explicite, sans réactiver le suivi continu). */
   refreshLocation: () => void
   geoError: string | null
@@ -46,17 +50,37 @@ export function useChauffeurPresenceHeartbeat(enabled = true): ChauffeurPresence
     enabled && chauffeurPresenceApiEnabled() && isChauffeurSession() && typeof navigator !== 'undefined'
 
   const push = useCallback(
-    async (lng: number, lat: number, force = false): Promise<boolean> => {
+    async (lng: number, lat: number, force = false, isAvailable = true): Promise<boolean> => {
       lastPosRef.current = { lng, lat }
       const now = Date.now()
       if (!force && now - lastPushRef.current < MIN_PUSH_INTERVAL_MS) return true
       lastPushRef.current = now
-      const ok = await pushChauffeurPresence({ lng, lat, isAvailable: true })
-      if (ok) setPositionOk(true)
+      const ok = await pushChauffeurPresence({ lng, lat, isAvailable })
+      if (ok && isAvailable) setPositionOk(true)
+      if (ok && !isAvailable) setPositionOk(false)
       return ok
     },
     []
   )
+
+  const clearWatchers = useCallback(() => {
+    if (watchIdRef.current != null) navigator.geolocation.clearWatch(watchIdRef.current)
+    watchIdRef.current = null
+    if (intervalIdRef.current != null) window.clearInterval(intervalIdRef.current)
+    intervalIdRef.current = null
+    setWatching(false)
+  }, [])
+
+  const stopTracking = useCallback(() => {
+    clearWatchers()
+    setGeoError(null)
+    const last = lastPosRef.current
+    if (last && canRun) {
+      void push(last.lng, last.lat, true, false)
+    } else {
+      setPositionOk(false)
+    }
+  }, [canRun, clearWatchers, push])
 
   const refreshLocation = useCallback(() => {
     if (!canRun || !navigator.geolocation) {
@@ -98,11 +122,13 @@ export function useChauffeurPresenceHeartbeat(enabled = true): ChauffeurPresence
       return
     }
     setGeoError(null)
+    setWatching(true)
     navigator.geolocation.getCurrentPosition(
       (pos) => {
         void push(pos.coords.longitude, pos.coords.latitude, true).then((ok) => {
           if (ok) setWatching(true)
           else {
+            setWatching(false)
             setGeoError(
               language === 'en'
                 ? 'Could not save position on server.'
@@ -223,7 +249,9 @@ export function useChauffeurPresenceHeartbeat(enabled = true): ChauffeurPresence
 
   return {
     tracking: positionOk,
+    sharing: watching,
     startTracking,
+    stopTracking,
     refreshLocation,
     geoError,
     needsActivationPrompt,

@@ -1,0 +1,127 @@
+.chauffeur-go-driver-card-preview {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ch-space-2, 10px);
+  min-width: 0;
+}
+
+.chauffeur-go-driver-card-preview__lead {
+  margin: 0;
+  font-size: var(--ch-text-sm, 16px);
+  font-weight: 600;
+  color: #0f172a;
+}
+
+.chauffeur-go-driver-card-preview__hint {
+  margin: 0;
+  font-size: var(--ch-text-xs, 14px);
+  line-height: 1.4;
+  color: #64748b;
+}
+
+.chauffeur-go-driver-card-preview__card {
+  width: 100%;
+  max-width: 400px;
+  min-width: 0;
+  margin-inline: auto;
+}
+
+/* Reprise visuelle de `.palto-ride-driver-item` (page Go) */
+.chauffeur-go-driver-card-preview__item {
+  width: 100%;
+  max-width: 400px;
+  margin-inline: auto;
+  border: 1px solid #e2e8f0;
+  background: #f8fafc;
+  border-radius: 8px;
+  padding: 0;
+  color: #0f172a;
+  text-align: left;
+  display: flex;
+  align-items: stretch;
+  justify-content: flex-start;
+  gap: 0;
+  overflow: hidden;
+  min-height: clamp(96px, 24vw, 156px);
+  box-sizing: border-box;
+}
+
+.chauffeur-go-driver-card-preview__vehicle {
+  position: relative;
+  flex: 0 0 clamp(112px, 40%, 184px);
+  width: clamp(112px, 40%, 184px);
+  min-width: 112px;
+  max-width: 184px;
+  min-height: clamp(96px, 24vw, 156px);
+  align-self: stretch;
+  margin: 0;
+  padding: 0;
+  overflow: visible;
+  background: transparent;
+  aspect-ratio: 1 / 1;
+  pointer-events: none;
+}
+
+.chauffeur-go-driver-card-preview__vehicle-img {
+  position: absolute;
+  inset: 0;
+  display: block;
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  object-fit: contain;
+  object-position: left center;
+  transform: scale(1.18);
+  transform-origin: left center;
+}
+
+.chauffeur-go-driver-card-preview__body {
+  min-width: 0;
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 2px;
+  padding: 12px 0;
+}
+
+.chauffeur-go-driver-card-preview__name {
+  font-family: 'Space Grotesk', 'Inter', sans-serif;
+  font-size: clamp(20px, 2.4vw, 24px);
+  font-weight: 700;
+  line-height: 1.15;
+}
+
+.chauffeur-go-driver-card-preview__meta {
+  font-family: 'DM Mono', ui-monospace, monospace;
+  font-size: 12px;
+  color: #64748b;
+  line-height: 1.35;
+  overflow-wrap: break-word;
+  word-break: normal;
+}
+
+.chauffeur-go-driver-card-preview__price {
+  flex: 0 0 auto;
+  align-self: center;
+  margin-left: 16px;
+  margin-right: 12px;
+  white-space: nowrap;
+  font-family: 'Space Grotesk', 'Inter', sans-serif;
+  font-size: clamp(22px, 3vw, 29px);
+  font-weight: 800;
+  line-height: 1.1;
+}
+
+@media (max-width: 480px) {
+  .chauffeur-go-driver-card-preview__item {
+    min-height: 96px;
+  }
+
+  .chauffeur-go-driver-card-preview__price {
+    margin-left: 8px;
+    margin-right: 8px;
+    font-size: 22px;
+  }
+}

@@ -32,6 +32,8 @@ export type ChauffeurProfileSnapshot = {
   ville: string
   vehicule: string
   plaque: string
+  /** Marque / modèle détectés (carte grise) ou saisis manuellement. */
+  vehicleModel?: string
   motorisation?: 'thermique_hydrogene_hybride' | 'electrique_100'
   licenseYear?: number
   isVtc?: boolean

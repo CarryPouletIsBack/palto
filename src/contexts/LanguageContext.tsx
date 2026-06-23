@@ -450,7 +450,7 @@ const TRANSLATIONS: Record<Language, Record<string, unknown>> = {
       chauffeurLoginHint:
         'Connexion chauffeur uniquement si votre compte pro est déjà créé. Même Google qu’en passager = compte séparé.',
       chauffeurSignupHint:
-        'Connectez-vous avec Google pour créer votre compte chauffeur, puis complétez les étapes ci-dessous.',
+        'Inscrivez-vous avec e-mail et mot de passe. Vous pourrez lier Google ensuite depuis Compte → Sécurité.',
       errorDenied: 'Connexion annulée ou refusée.',
       errorUnavailable: 'Connexion sociale indisponible pour le moment.',
       errorChauffeurRequired:
@@ -458,6 +458,8 @@ const TRANSLATIONS: Record<Language, Record<string, unknown>> = {
       errorFacebookEmail: 'Facebook n’a pas partagé votre e-mail. Autorisez l’e-mail ou utilisez Google.',
       errorEmailExists: 'Un compte existe déjà avec cet e-mail pour ce rôle.',
       errorUseSocial: 'Ce compte utilise Google ou Facebook. Utilisez le bouton correspondant.',
+      errorChauffeurSignupPassword:
+        'Inscription chauffeur par e-mail et mot de passe uniquement. Liez Google ensuite depuis Compte → Sécurité.',
       errorGeneric: 'Connexion sociale impossible. Réessayez ou utilisez l’e-mail.',
     },
     error: {
@@ -592,6 +594,7 @@ const TRANSLATIONS: Record<Language, Record<string, unknown>> = {
       mobileClientsTab: 'Clients',
       navSettings: 'Réglages',
       navHelp: 'Aide',
+      navSecurity: 'Sécurité & mot de passe',
       navOrganization: 'Organisation',
       titleOrganization: 'Mon organisation',
       helpLead: 'Raccourcis et réponses courantes pour le tableau de bord chauffeur.',
@@ -889,8 +892,12 @@ const TRANSLATIONS: Record<Language, Record<string, unknown>> = {
       settingsTextSizeValue: '{n} %',
       settingsNotificationsTitle: 'Notifications',
       settingsNotificationsHint:
-        'Canaux pour rappels et messages liés à vos courses.',
+        'E-mails de rappel et de suivi de course (envoyés via Resend). Décochez pour ne plus les recevoir.',
       settingsNotifyEmail: 'E-mail',
+      settingsNotifyEmailDestination: 'Envoi vers {email}',
+      settingsNotifyEmailOffHint:
+        'Vous ne recevrez plus d’e-mails de course sur cette adresse. Les e-mails de sécurité (mot de passe) restent envoyés si nécessaire.',
+      settingsNotifyChannelSoon: 'Bientôt disponible',
       settingsNotifySms: 'SMS',
       settingsNotifyPush: 'Notifications push',
       settingsMoreHint: 'D’autres réglages (accessibilité, etc.) pourront compléter cette page.',
@@ -1338,7 +1345,7 @@ const TRANSLATIONS: Record<Language, Record<string, unknown>> = {
       chauffeurLoginHint:
         'Driver sign-in only if your pro account already exists. Same Google as passenger = separate account.',
       chauffeurSignupHint:
-        'Sign in with Google to create your driver account, then complete the steps below.',
+        'Sign up with email and password. You can link Google later from Account → Security.',
       errorDenied: 'Sign-in cancelled or denied.',
       errorUnavailable: 'Social sign-in is unavailable right now.',
       errorChauffeurRequired:
@@ -1346,6 +1353,8 @@ const TRANSLATIONS: Record<Language, Record<string, unknown>> = {
       errorFacebookEmail: 'Facebook did not share your email. Allow email access or use Google.',
       errorEmailExists: 'An account already exists with this email for this role.',
       errorUseSocial: 'This account uses Google or Facebook. Use the matching button.',
+      errorChauffeurSignupPassword:
+        'Driver sign-up is email and password only. Link Google later from Account → Security.',
       errorGeneric: 'Social sign-in failed. Try again or use email.',
     },
     error: {
@@ -1479,6 +1488,7 @@ const TRANSLATIONS: Record<Language, Record<string, unknown>> = {
       mobileClientsTab: 'Clients',
       navSettings: 'Settings',
       navHelp: 'Help',
+      navSecurity: 'Security & password',
       navOrganization: 'Organization',
       titleOrganization: 'My organization',
       helpLead: 'Shortcuts and common answers for the driver dashboard.',
@@ -1774,8 +1784,12 @@ const TRANSLATIONS: Record<Language, Record<string, unknown>> = {
       settingsTextSizeValue: '{n}%',
       settingsNotificationsTitle: 'Notifications',
       settingsNotificationsHint:
-        'Channels for ride reminders and messages.',
+        'Ride reminder and status emails (sent via Resend). Uncheck to stop receiving them.',
       settingsNotifyEmail: 'Email',
+      settingsNotifyEmailDestination: 'Sent to {email}',
+      settingsNotifyEmailOffHint:
+        'You will no longer receive ride emails at this address. Security emails (password reset) may still be sent when needed.',
+      settingsNotifyChannelSoon: 'Coming soon',
       settingsNotifySms: 'SMS',
       settingsNotifyPush: 'Push notifications',
       settingsMoreHint: 'Additional controls (accessibility, etc.) can be added here later.',

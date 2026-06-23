@@ -67,9 +67,10 @@
   --ch-space-8: calc(var(--chauffeur-pt) * 8 + 2px);
   --ch-space-10: calc(var(--chauffeur-pt) * 10 + 2px);
   --ch-space-16: calc(var(--chauffeur-pt) * 16 + 2px);
-  --ch-gutter: var(--ch-space-5);
-  --ch-section-gap: var(--ch-space-5);
-  --ch-card-padding: var(--ch-space-4);
+  --ch-gutter: var(--ch-space-6);
+  --ch-section-gap: var(--ch-space-6);
+  --ch-card-padding: var(--ch-space-5);
+  --ch-sidebar-width: 248px;
   /* Échelle typo : base nav/corps 16px (avant 13px), grille 4pt */
   --ch-text-2xs: 12px;
   --ch-text-xs: 14px;
@@ -80,6 +81,10 @@
   --ch-text-xl: 24px;
   --ch-text-2xl: 28px;
   --ch-text-display: clamp(28px, 3vw, 36px);
+  --ch-font-headline: 'Inter', sans-serif;
+  --ch-text-display-lg: 48px;
+  --ch-text-display-lg-lh: 52.8px;
+  --ch-text-display-tracking: -0.02em;
 }
 
 .dashboard-container--chauffeur .dashboard-content {
@@ -90,8 +95,14 @@
   -webkit-overflow-scrolling: touch;
   overscroll-behavior: contain;
   touch-action: pan-y;
-  padding: var(--ch-space-3);
+  padding: var(--ch-gutter);
   gap: var(--ch-section-gap);
+}
+
+.dashboard-container--chauffeur .dashboard-panel,
+.dashboard-container--chauffeur .dashboard-user-card,
+.dashboard-container--chauffeur .dashboard-user-subcard {
+  padding: var(--ch-card-padding);
 }
 
 .dashboard-container--chauffeur .dashboard-topbar {
@@ -367,12 +378,20 @@
 
 .dashboard-sidebar-user {
   display: flex;
+  flex-direction: column;
+  align-items: stretch;
   justify-content: flex-start;
-  align-items: center;
+  gap: 0;
   width: 100%;
   padding: 0;
   flex-shrink: 0;
   box-sizing: border-box;
+}
+
+.dashboard-sidebar-user > .dashboard-chauffeur-topbar-account-cluster,
+.dashboard-sidebar-user > .chauffeur-profile-onboarding-rail {
+  width: 100%;
+  min-width: 0;
 }
 
 .dashboard-sidebar-user .client-compte-topbar-menu-anchor {
@@ -399,7 +418,7 @@
   margin: 0;
   gap: 10px;
   border-radius: 0;
-  overflow: visible;
+  overflow: hidden;
   background: transparent;
   border: none;
   box-shadow: none;
@@ -450,10 +469,9 @@
   color: #64748b;
   line-height: 1.35;
   text-align: left;
-  overflow: visible;
-  text-overflow: unset;
-  white-space: normal;
-  word-break: break-word;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
   min-width: 0;
   flex: 1 1 auto;
 }
@@ -585,7 +603,7 @@
 }
 
 .dashboard-container.sidebar-collapsed .dashboard-sidebar-user {
-  justify-content: center;
+  align-items: center;
   width: 100%;
 }
 
@@ -777,6 +795,52 @@
   font-weight: 500;
   line-height: 1;
   text-align: left;
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.dashboard-nav-item {
+  position: relative;
+}
+
+.dashboard-nav-badge {
+  flex: 0 0 auto;
+  margin-left: auto;
+  min-width: 20px;
+  height: 20px;
+  padding: 0 6px;
+  border-radius: 999px;
+  background: #2563eb;
+  color: #ffffff;
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 20px;
+  text-align: center;
+  box-sizing: border-box;
+}
+
+.dashboard-nav-item.active .dashboard-nav-badge {
+  background: #1d4ed8;
+}
+
+.dashboard-nav-badge--onboarding {
+  background: #0f766e;
+}
+
+.dashboard-nav-item.active .dashboard-nav-badge--onboarding {
+  background: #0d9488;
+}
+
+.dashboard-container.sidebar-collapsed .dashboard-nav-badge {
+  position: absolute;
+  top: 4px;
+  right: 8px;
+  margin-left: 0;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 5px;
+  font-size: 10px;
+  line-height: 18px;
 }
 
 .dashboard-container.sidebar-collapsed .dashboard-sidebar {
@@ -916,7 +980,7 @@
 
 @media (min-width: 769px) {
   .dashboard-container--chauffeur .dashboard-sidebar {
-    width: 220px;
+    width: var(--ch-sidebar-width);
     padding: 16px 12px;
     display: flex;
     flex-direction: column;
@@ -2941,6 +3005,19 @@ button.dashboard-panel--overview-empty:focus-visible {
   grid-template-columns: minmax(140px, 175px) minmax(160px, 1fr);
 }
 
+.dashboard-container--chauffeur .chauffeur-overview-profile__name-field-input {
+  border: none !important;
+  border-bottom: 1px solid #d1d5db !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+}
+
+.dashboard-container--chauffeur .chauffeur-overview-profile__name-field-input:focus {
+  border-bottom-color: #0f172a !important;
+  box-shadow: none !important;
+}
+
 .dashboard-container--chauffeur .dashboard-chauffeur-profile-form input,
 .dashboard-container--chauffeur .dashboard-chauffeur-profile-form select {
   border: 1px solid #d1d5db !important;
@@ -3188,9 +3265,40 @@ button.dashboard-panel--overview-empty:focus-visible {
 
 .dashboard-doc-row {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: space-between;
-  gap: 10px;
+  gap: 12px;
+  padding: 12px 0;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.dashboard-doc-row:last-child {
+  border-bottom: none;
+  padding-bottom: 0;
+}
+
+.dashboard-doc-row__meta {
+  min-width: 0;
+  flex: 1 1 auto;
+}
+
+.dashboard-doc-row__file {
+  margin: 4px 0 0;
+  font-size: 12px;
+  color: #64748b;
+  word-break: break-word;
+}
+
+.dashboard-doc-row__file--draft {
+  color: #0f766e;
+}
+
+.dashboard-doc-row__error {
+  margin: 4px 0 0;
+  font-size: 12px;
+  line-height: 1.4;
+  color: #b91c1c;
+  word-break: break-word;
 }
 
 .dashboard-doc-actions {
@@ -3238,19 +3346,27 @@ button.dashboard-panel--overview-empty:focus-visible {
   border: 1px solid #93c5fd;
 }
 
+.dashboard-doc-badge--missing {
+  color: #475569;
+  background: #f1f5f9;
+  border: 1px solid #e2e8f0;
+}
+
 .dashboard-doc-upload-btn {
   position: relative;
-  height: 28px;
+  min-height: 32px;
   border-radius: 8px;
   border: 1px solid #d1d5db;
   background: #ffffff;
-  color: #374151;
-  font-size: 11px;
+  color: #111827;
+  font-size: 12px;
   font-weight: 600;
-  padding: 0 9px;
+  padding: 0 12px;
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   cursor: pointer;
+  white-space: nowrap;
 }
 
 .dashboard-doc-upload-btn input {
@@ -3261,15 +3377,16 @@ button.dashboard-panel--overview-empty:focus-visible {
 }
 
 .dashboard-doc-submit-btn {
-  height: 28px;
+  min-height: 32px;
   border-radius: 8px;
   border: 1px solid #111827;
   background: #111827;
   color: #ffffff;
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 600;
-  padding: 0 9px;
+  padding: 0 12px;
   cursor: pointer;
+  white-space: nowrap;
 }
 
 .dashboard-doc-submit-btn:disabled {
@@ -5868,7 +5985,7 @@ button.dashboard-org-sidebar-brand--home:focus-visible {
     overscroll-behavior: contain;
     touch-action: pan-y;
     padding-top: var(--ch-gutter);
-    padding-bottom: var(--ch-space-3);
+    padding-bottom: var(--ch-space-4);
     padding-inline: max(var(--ch-gutter), env(safe-area-inset-left, 0px))
       max(var(--ch-gutter), env(safe-area-inset-right, 0px));
     box-sizing: border-box;
@@ -6232,6 +6349,49 @@ html[data-app-theme='dark']
   .dashboard-container--chauffeur
   .client-compte-topbar-user-btn__chevron {
   color: var(--app-text-muted, #94a3b8);
+}
+
+/* Boutons documents : visibles malgré le reset sans bordure du thème chauffeur */
+.dashboard-container--chauffeur .dashboard-doc-upload-btn,
+.dashboard-container--chauffeur .dashboard-doc-submit-btn {
+  border-style: solid !important;
+  box-shadow: none !important;
+}
+
+.dashboard-container--chauffeur .dashboard-doc-upload-btn {
+  border: 1px solid #cbd5e1 !important;
+  background: #ffffff !important;
+  color: #0f172a !important;
+}
+
+.dashboard-container--chauffeur .dashboard-doc-submit-btn:not(:disabled) {
+  border: 1px solid #111827 !important;
+  background: #111827 !important;
+  color: #ffffff !important;
+}
+
+.dashboard-container--chauffeur .dashboard-doc-badge {
+  border-style: solid !important;
+}
+
+.dashboard-container--chauffeur .dashboard-doc-badge--missing {
+  border-color: #e2e8f0 !important;
+  background: #f8fafc !important;
+  color: #475569 !important;
+}
+
+.dashboard-container--chauffeur .dashboard-doc-badge--pending {
+  border-color: #93c5fd !important;
+  background: #eff6ff !important;
+  color: #1d4ed8 !important;
+}
+
+.dashboard-container--chauffeur .dashboard-doc-badge--soon {
+  border-color: #fdba74 !important;
+}
+
+.dashboard-container--chauffeur .dashboard-doc-badge--ok {
+  border-color: #86efac !important;
 }
 
 /* Menu mobile chauffeur : bordure visible malgré le reset global */

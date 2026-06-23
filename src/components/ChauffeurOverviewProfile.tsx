@@ -1,14 +1,15 @@
-import type { DragEvent, ReactNode } from 'react';
-import { BarChart3, Camera, ChevronRight, Image, MapPin, Pencil, Share2, User } from 'lucide-react';
+import { useEffect, useRef, useState, type DragEvent, type ReactNode } from 'react';
+import { BarChart3, Camera, Check, ChevronRight, Image, MapPin, Pencil, Share2, User } from 'lucide-react';
 import type { Language } from '../contexts/LanguageContext';
 import type { FleetAvailability } from '../constants/chauffeurFleetZones';
 
-export type OverviewProfileTab = 'vehicle' | 'service' | 'organization' | 'about' | 'contact';
+export type OverviewProfileTab = 'vehicle' | 'documents' | 'service' | 'organization' | 'about' | 'contact';
 
 type TabDef = { id: OverviewProfileTab; labelFr: string; labelEn: string };
 
 const TABS: TabDef[] = [
   { id: 'vehicle', labelFr: 'Votre véhicule', labelEn: 'Your vehicle' },
+  { id: 'documents', labelFr: 'Documents', labelEn: 'Documents' },
   { id: 'service', labelFr: 'Service (tarifs)', labelEn: 'Service (rates)' },
   { id: 'organization', labelFr: 'Organisation', labelEn: 'Organization' },
   { id: 'about', labelFr: 'À propos', labelEn: 'About' },
@@ -31,8 +32,8 @@ type Props = {
   availability?: FleetAvailability;
   availabilityLabel?: string;
   onAvailabilityClick?: () => void;
-  messagesEnabled?: boolean;
-  onMessagesEnabledChange?: (enabled: boolean) => void;
+  visibilityEnabled?: boolean;
+  onVisibilityEnabledChange?: (enabled: boolean) => void;
   onStatsClick?: () => void;
   onShareClick?: () => void;
   commune: string;
@@ -44,6 +45,7 @@ type Props = {
   showHeroImagePicker?: boolean;
   activeTab: OverviewProfileTab;
   onTabChange: (tab: OverviewProfileTab) => void;
+  tabCompletion?: Partial<Record<OverviewProfileTab, boolean>>;
   children: ReactNode;
 };
 
@@ -63,8 +65,8 @@ export default function ChauffeurOverviewProfile({
   availability = 'available',
   availabilityLabel,
   onAvailabilityClick,
-  messagesEnabled = true,
-  onMessagesEnabledChange,
+  visibilityEnabled = false,
+  onVisibilityEnabledChange,
   onStatsClick,
   onShareClick,
   commune,
@@ -76,9 +78,40 @@ export default function ChauffeurOverviewProfile({
   showHeroImagePicker = false,
   activeTab,
   onTabChange,
+  tabCompletion,
   children,
 }: Props) {
   const isEn = language === 'en';
+  const [isNameEditing, setIsNameEditing] = useState(false);
+  const nameRowRef = useRef<HTMLDivElement>(null);
+  const givenNameRef = useRef<HTMLInputElement>(null);
+  const givenLabel = isEn ? 'First name' : 'Prénom';
+  const familyLabel = isEn ? 'Last name' : 'Nom';
+  const displayName = [prenom.trim(), nom.trim()].filter(Boolean).join(' ');
+  const displayNamePlaceholder = isEn ? 'First name Last name' : 'Prénom Nom';
+
+  useEffect(() => {
+    if (!isNameEditing) return;
+    givenNameRef.current?.focus();
+    const handlePointerDown = (event: MouseEvent) => {
+      if (!nameRowRef.current?.contains(event.target as Node)) {
+        setIsNameEditing(false);
+        if (isPersonalDirty) onSavePersonal?.();
+      }
+    };
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        setIsNameEditing(false);
+      }
+    };
+    document.addEventListener('mousedown', handlePointerDown);
+    document.addEventListener('keydown', handleKeyDown);
+    return () => {
+      document.removeEventListener('mousedown', handlePointerDown);
+      document.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [isNameEditing, isPersonalDirty, onSavePersonal]);
+
   const resolvedAvailabilityLabel =
     availabilityLabel ??
     (isEn
@@ -174,43 +207,88 @@ export default function ChauffeurOverviewProfile({
           </div>
 
           <div className="chauffeur-overview-profile__identity-main">
-            <div className="chauffeur-overview-profile__name-row">
-              <input
-                type="text"
-                className="chauffeur-overview-profile__name-input chauffeur-overview-profile__name-input--given"
-                value={prenom}
-                onChange={(e) => onPrenomChange(e.target.value)}
-                placeholder={isEn ? 'First name' : 'Prénom'}
-                autoComplete="given-name"
-                aria-label={isEn ? 'First name' : 'Prénom'}
-              />
-              <input
-                type="text"
-                className="chauffeur-overview-profile__name-input chauffeur-overview-profile__name-input--family"
-                value={nom}
-                onChange={(e) => onNomChange(e.target.value)}
-                placeholder={isEn ? 'Last name' : 'Nom'}
-                autoComplete="family-name"
-                aria-label={isEn ? 'Last name' : 'Nom'}
-              />
-            </div>
+            {isNameEditing ? (
+              <div
+                ref={nameRowRef}
+                className="chauffeur-overview-profile__name-row chauffeur-overview-profile__name-row--editing"
+              >
+                <label className="chauffeur-overview-profile__name-field">
+                  <input
+                    ref={givenNameRef}
+                    type="text"
+                    className="chauffeur-overview-profile__name-field-input"
+                    value={prenom}
+                    onChange={(e) => onPrenomChange(e.target.value)}
+                    placeholder={givenLabel}
+                    autoComplete="given-name"
+                    aria-label={givenLabel}
+                  />
+                  <span className="chauffeur-overview-profile__name-field-label">{givenLabel}</span>
+                </label>
+                <label className="chauffeur-overview-profile__name-field">
+                  <input
+                    type="text"
+                    className="chauffeur-overview-profile__name-field-input"
+                    value={nom}
+                    onChange={(e) => onNomChange(e.target.value)}
+                    placeholder={familyLabel}
+                    autoComplete="family-name"
+                    aria-label={familyLabel}
+                  />
+                  <span className="chauffeur-overview-profile__name-field-label">{familyLabel}</span>
+                </label>
+              </div>
+            ) : (
+              <button
+                type="button"
+                className="chauffeur-overview-profile__name-display"
+                onClick={() => setIsNameEditing(true)}
+                aria-label={isEn ? 'Edit name' : 'Modifier le nom'}
+              >
+                <span
+                  className={`chauffeur-overview-profile__name-display-text${
+                    displayName ? '' : ' chauffeur-overview-profile__name-display-text--placeholder'
+                  }`}
+                >
+                  {displayName || displayNamePlaceholder}
+                </span>
+                <Pencil
+                  size={20}
+                  strokeWidth={2}
+                  className="chauffeur-overview-profile__name-edit-icon"
+                  aria-hidden
+                />
+              </button>
+            )}
             <p className="chauffeur-overview-profile__subtitle">{subtitle}</p>
           </div>
 
           <div className="chauffeur-overview-profile__identity-actions">
-            <label className="chauffeur-overview-profile__message-toggle">
-              <span>{isEn ? 'Message' : 'Message'}</span>
-              <input
-                type="checkbox"
-                role="switch"
-                className="chauffeur-overview-profile__message-toggle-input"
-                checked={messagesEnabled}
-                onChange={(e) => onMessagesEnabledChange?.(e.target.checked)}
-                disabled={!onMessagesEnabledChange}
-                aria-label={isEn ? 'Allow client messages' : 'Autoriser les messages clients'}
+            <button
+              type="button"
+              role="switch"
+              aria-checked={visibilityEnabled}
+              className="chauffeur-overview-profile__visibility-toggle"
+              onClick={() => onVisibilityEnabledChange?.(!visibilityEnabled)}
+              disabled={!onVisibilityEnabledChange}
+              aria-label={
+                isEn
+                  ? visibilityEnabled
+                    ? 'Visible on Go page'
+                    : 'Hidden on Go page'
+                  : visibilityEnabled
+                    ? 'Visible sur la page Go'
+                    : 'Masqué sur la page Go'
+              }
+            >
+              <span>{isEn ? 'Availability' : 'Disponibilité'}</span>
+              <span
+                className={`chauffeur-overview-profile__visibility-toggle-track${
+                  visibilityEnabled ? ' is-on' : ''
+                }`}
+                aria-hidden
               />
-              <span className="chauffeur-overview-profile__message-toggle-track" aria-hidden />
-            </label>
+            </button>
             <button
               type="button"
               className="chauffeur-overview-profile__icon-action"
@@ -307,6 +385,14 @@ export default function ChauffeurOverviewProfile({
               className={`chauffeur-overview-profile__tab${activeTab === tab.id ? ' is-active' : ''}`}
               onClick={() => onTabChange(tab.id)}
             >
+              {tabCompletion?.[tab.id] ? (
+                <Check
+                  size={12}
+                  strokeWidth={2.5}
+                  className="chauffeur-overview-profile__tab-check"
+                  aria-hidden
+                />
+              ) : null}
               {isEn ? tab.labelEn : tab.labelFr}
             </button>
           ))}
