@@ -79,6 +79,7 @@ import {
   Palette,
   Type,
   Shield,
+  LogOut,
 } from 'lucide-react';
 import { useLanguage, type Language } from '../contexts/LanguageContext';
 import LanguageSwitcher from './LanguageSwitcher';
@@ -2509,6 +2510,16 @@ const Dashboard = ({
           <span>{language === 'en' ? 'Settings' : 'Paramètres'}</span>
         </button>
       </nav>
+      <div className="chauffeur-account-menu__divider" role="separator" aria-hidden />
+      <button
+        type="button"
+        role="menuitem"
+        className="chauffeur-account-menu__item chauffeur-account-menu__item--logout"
+        onClick={handleTopbarLogout}
+      >
+        <LogOut size={18} strokeWidth={2} aria-hidden />
+        <span>{language === 'en' ? 'Sign out' : 'Se déconnecter'}</span>
+      </button>
     </>
   );
 

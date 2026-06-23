@@ -600,6 +600,15 @@
 .chauffeur-account-menu__item--logout {
   margin: 0 4px 4px;
   width: calc(100% - 8px);
+  color: #dc2626;
+}
+
+.chauffeur-account-menu__item--logout svg {
+  color: #dc2626;
+}
+
+.chauffeur-account-menu__item--logout:hover {
+  background: #fef2f2;
 }
 
 .dashboard-container.sidebar-collapsed .dashboard-sidebar-user {
