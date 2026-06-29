@@ -69,7 +69,7 @@ export default function BetaTestBanner({ placement = 'top', inPageFlow = false }
       >
         <div className="beta-test-banner__content">
           <p>
-            Version bêta test v0.0.1 - Votre avis compte. <strong>Nou la fé</strong>.
+            Version bêta test v0.0.2 — modifié via Cursor mobile · Votre avis compte. <strong>Nou la fé</strong>.
           </p>
           <button
             type="button"
@@ -115,7 +115,7 @@ export default function BetaTestBanner({ placement = 'top', inPageFlow = false }
             >
               ×
             </button>
-            <h2 id="beta-test-modal-title">Palto beta test v0.0.1</h2>
+            <h2 id="beta-test-modal-title">Palto beta test v0.0.2</h2>
             <p>
               Face aux embouteillages du quotidien à La Réunion, Palto se lance pour vous faire gagner du temps grâce
               aux taxis-motos. Notre mission : vous garantir des trajets rapides pour arriver à l'heure, à chaque
